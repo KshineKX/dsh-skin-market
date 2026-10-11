@@ -17,24 +17,25 @@
 
 - **2026-09-10 至 2026-10-05**：新增 **7 条**，包括终末地主题（改版）、千夏 · 绝区零外观主题、鲸鱼娘动态壁纸等。详见[收录日志](./docs/recently-added.md#recent-since-2026-09-10)。
 
-
 ## 安装
 
-#### 命令安装：
+### 安装方式
 
 > 安装前请确保已关闭其他皮肤插件，避免冲突
 
-```sh
-# Web 版
-dsh plugin --profile web add "dsh-skin-market@latest"
+#### Web 版（命令行）
 
-# 官方桌面版：不要在终端执行；在桌面应用「插件 → 添加插件」中输入并启用
-dsh-skin-market@latest
+```sh
+dsh plugin --profile web add "dsh-skin-market@latest"
 ```
 
-#### 提示词安装：
+#### 官方 Desktop
+
+APP左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 并启用
+
+#### 提示词安装
 <details>
-<summary><strong>点击展开提示词</strong></summary>
+<summary><strong>点击展开安装提示词</strong></summary>
 
 复制以下给 DSH Agent；它会先判断宿主，再选择安装方式。
 
@@ -54,6 +55,11 @@ dsh-skin-market@latest
 <a id="install-troubleshooting"></a>
 ### 安装失败时，可以让 DSH 自己排查
 
+把完整原始报错粘贴给 DSH Agent；它会先区分 Web 和官方 Desktop，再按实际 profile 排查。
+
+<details>
+<summary><strong>点击展开排查说明与提示词</strong></summary>
+
 > 皮肤市场的安装、更新和卸载会调用 DSH 的 profile 插件管理器；当前 DSH 使用 `pnpm` 管理 profile 依赖。如果出现 `pnpm is not recognized`、`package manifest missing` 或 `allowBuilds` 相关报错，不必手动猜测 profile 状态。
 >
 > 含子目录路径的 GitHub 目标（`github:…#commit&path:/…`）请优先用市场页一键安装。市场安装结束后会校验 `node_modules` 中的包名是否与目录一致，避免 `&path:` 被截断时误把仓库根包装成成功。Windows 上不要把这段 spec 交给 `dsh plugin add`：cmd.exe 会在 `&` 处截断。下面的手动命令仅适用于 Web profile；官方 Desktop 请使用桌面插件管理器：
@@ -63,9 +69,6 @@ dsh-skin-market@latest
 > ```
 >
 > 如果报错含 `ERR_PNPM_UNEXPECTED_STORE`，是 profile 的 `node_modules` 与当前 pnpm store 代际不一致（常见于本机同时装了 pnpm 10 / store v10 和 pnpm 11 / store v11）。在 **profile 目录内** 查看 `node_modules/.modules.yaml` 的 `packageManager` 和 `storeDir`，再对比同一目录下的 `pnpm --version` 与 `pnpm store path`；不要用 DSH 源码仓库目录里的结果来判断。用 `.modules.yaml` 记录的同一版 pnpm 重试，或用当前 pnpm 重建该 profile 的 `node_modules`。Windows 上 `dsh plugin add` 走 PATH 上的 pnpm，不会因为源码仓库写了 `"packageManager": "pnpm@11"` 就自动切换。
-
-<details>
-<summary><strong>点击展开排查提示词</strong></summary>
 
 把完整原始报错填入后复制给你的 DSH Agent。它会先判断当前是 Web 还是官方 Desktop；无法判断时先询问你：
 
@@ -87,31 +90,41 @@ dsh-skin-market@latest
 
 ### 安装来源与长时间等待
 
-Web 市场优先使用目录中已经核验的 npm 精确版本；没有合格 npm 来源时，继续使用原来的 GitHub 固定 commit。npm 来源须与目录的包名、版本、仓库、完整 commit 一致，并通过安装包完整性与已构建客户端入口检查。已有的 GitHub 安装仍然有效，不会仅因目录补充 npm 来源而要求重装。
+Web 市场优先使用目录中已经核验的 npm 精确版本；没有合格 npm 来源时，继续使用 GitHub 固定 commit。遇到长时间等待时，请提供皮肤名、DSH/市场版本、操作系统及市场横幅中的“复制日志”。
+
+<details>
+<summary><strong>点击展开安装来源校验与等待机制</strong></summary>
+
+npm 来源须与目录的包名、版本、仓库、完整 commit 一致，并通过安装包完整性与已构建客户端入口检查。已有的 GitHub 安装仍然有效，不会仅因目录补充 npm 来源而要求重装。
 
 安装横幅显示当前步骤、尝试次数和 pnpm 阶段；连续 30 秒没有输出时会提示，运行中也能复制诊断日志。Web 安装和更新的准备、下载、重试共用 15 分钟预算，达到时限后结束当前任务；已修改 profile 的失败操作只做一次、独立限时 60 秒的依赖恢复。市场会等待执行进程结束后再允许下一次操作，恢复未完成时会明确提示。Desktop 的安装失败恢复由宿主插件服务处理。
 
-遇到长时间等待时，请提供皮肤名、DSH/市场版本、操作系统及市场横幅中的“复制日志”。浏览器能够访问 GitHub，不能单独证明实际运行 DSH 的进程和 pnpm 已使用相同代理；也可能卡在依赖解析或构建阶段。
+浏览器能够访问 GitHub，不能单独证明实际运行 DSH 的进程和 pnpm 已使用相同代理；也可能卡在依赖解析或构建阶段。
+
+</details>
 
 <a id="manual-update"></a>
 ## 更新本插件
 
-#### 方式一，页面更新（推荐）：
+### 方式一：页面更新（推荐）
 
 在「设置 → 皮肤市场」标题右侧点击“更新”，完成后按界面提示重启 DSH Web 或官方 Desktop。
 
-#### 方式二，命令更新：
+### 方式二：命令更新
+
+#### Web 版
 
 ```bash
-# Web 版
 dsh plugin --profile web add "dsh-skin-market@latest"
-
-# 官方桌面版：不要在终端执行；在桌面应用「插件 → 添加插件」中输入并启用
-dsh-skin-market@latest
 ```
+
+#### 官方 Desktop
+
+在桌面应用「插件 → 添加插件」中输入 `dsh-skin-market@latest`
+
 > 完成后按界面提示重启对应宿主。
 
-#### 方式三，提示词更新：
+### 方式三：提示词更新
 <details>
 <summary><strong>点击展开提示词</strong></summary>
 
@@ -202,15 +215,20 @@ url: https://github.com/<owner>/<repo>
 
 ## 兼容性验证
 
-当前面向 DSH Web `0.1.0-rc.6`。目录中的安装目标固定到收录时的完整 commit。
+目录中的安装目标固定到收录时的完整 commit。下面是 **2026-08-17 的历史验证记录**，用于说明当时的版本组合，不代表当前所有第三方皮肤都已完成同等级别的验证。
 
-截至 2026-08-17，npm 的 DSH `latest` 与 `next` 均为 `0.1.0-rc.6`。本项目使用重新安装的该版本完成了以下验证：
+<details>
+<summary><strong>点击展开历史验证记录</strong></summary>
+
+当时面向 DSH Web `0.1.0-rc.6`；npm 的 `latest` 与 `next` 均为 `0.1.0-rc.6`。本项目使用重新安装的该版本完成了以下验证：
 
 - 皮肤市场 `0.1.15`：132 条目录校验、70 项自动化测试、类型检查、Host/Client 构建、站点构建和 package preflight 全部通过
 - DSH Web 实机启动：市场 Host 路由、客户端设置入口、在线目录和 5 分钟静默更新正常加载
 - Liang Intensity `0.1.4` 联合冒烟：8 项测试和客户端 bundle 构建通过，并可在同一 DSH Web profile 中保持 active
 
-这组结果证明上述版本组合可以启动和运行，不代表市场内所有第三方皮肤都已完成同等级别的人工兼容或安全审核。
+这组结果证明上述版本组合可以启动和运行。
+
+</details>
 
 ## 在线目录更新
 
@@ -277,10 +295,11 @@ npm run registry
 npm test
 npm run typecheck
 npm run build
-npm run release -- 0.1.31 --dry-run
+# 先将 VERSION 替换为目标版本，例如 0.1.58
+npm run release -- VERSION --dry-run
 ```
 
-正式发布时去掉 `--dry-run`；脚本会校验工作区、同步 npm 版本、提交并推送 Git tag，再发布 npm。需要同时创建 GitHub Release 时追加 `--github-release`。
+正式发布时将 `VERSION` 换成目标版本并去掉 `--dry-run`；脚本会依次校验工作区、同步版本、提交并创建 Git tag、发布 npm，再推送 `main` 和 tag。需要同时创建 GitHub Release 时追加 `--github-release`。
 
 完整的本地安装和回滚验证步骤见 [TESTING.md](./TESTING.md)。
 
@@ -301,15 +320,17 @@ npm run release -- 0.1.31 --dry-run
 - GitHub Stars 由定时收录任务写入带更新时间的目录快照，页面和 Host 都不在浏览时请求 GitHub API
 - 市场不会代替开发者登录 GitHub，也不会静默创建 PR
 
-## 页面异常时重置皮肤
+## Web 页面异常时重置皮肤
 
-如果皮肤冲突导致 DSH 页面无法操作，先停止当前 DSH 进程，再执行：
+如果皮肤冲突导致 DSH Web 页面无法操作，先停止当前 DSH Web 进程，再执行：
 
 ```bash
 ~/.dsh/profiles/web/node_modules/.bin/dsh-skin-market-reset --profile web
 ```
 
 该命令会关闭皮肤市场管理的所有皮肤并恢复默认外观，但保留已经安装的皮肤包和皮肤市场。随后重新启动 DSH 即可。命令使用原子写入；任何一步失败都会恢复执行前的 profile 文件。
+
+官方 Desktop 请在桌面应用的插件管理器或皮肤市场中停用冲突皮肤，不要执行上面的 Web profile 命令。
 
 ## License
 
