@@ -1,9 +1,50 @@
-url: https://github.com/LorisYounger/dsh-vpet-skin
+id: lorisyounger.dsh.vpet.skin
 name:
   zh: VPet
   en: VPet
 author: LorisYounger
 description: 为 DeepSeek Harness 添加五种 VPet 萝莉斯角色形态和对应配色，通过输入框旁的滑块切换形态，可与模型思考等级联动。
+repo: https://github.com/LorisYounger/dsh-vpet-skin
+package: dsh-client-vpet-skin
+rowId: vpet-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:LorisYounger/dsh-vpet-skin#fd43c0ba5d790042574a6ddc8fa2364731a33f8a
+  version: 0.1.13
+  commit: fd43c0ba5d790042574a6ddc8fa2364731a33f8a
+compatibility:
+  dsh: unverified
+  platform:
+    - web
 screenshots:
   - https://raw.githubusercontent.com/LorisYounger/dsh-vpet-skin/1d720c4d4bc19d3784ea5e22a3557f87fb4a08ea/README.assets/image-20261010015329626.png
   - https://raw.githubusercontent.com/LorisYounger/dsh-vpet-skin/1d720c4d4bc19d3784ea5e22a3557f87fb4a08ea/README.assets/image-20261010015414817.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-11T03:17:27.837Z
+metadataUpdatedAt: 2026-10-11T03:17:27.837Z
+starsUpdatedAt: 2026-10-11T03:17:27.837Z
+updatedAt: 2026-10-11T03:17:27.837Z
