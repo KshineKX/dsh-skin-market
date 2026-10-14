@@ -1,16 +1,150 @@
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, readFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from '../src/build-approval.ts'
-import { assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, InstallConflictError, installedClientPlugins, installedSpecMatches, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, runtimeState, validateInstalledSkin, writeMarketState } from '../src/profile.ts'
+import { assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, InstallConflictError, installedClientPlugins, installedSpecMatches, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
 import { loadCatalog } from '../src/catalog.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-profile-')) }
 
 describe('profile state', () => {
+  it('preserves pending restart facts and discards malformed values', () => {
+    const dir = fixture()
+    writeMarketState(dir, { version: 1, activeSkinId: null, disabledSkinIds: [], pendingRestart: { pid: 1234, skinIds: ['one', 'one', 'two'] } })
+    expect(readMarketState(dir).pendingRestart).toEqual({ pid: 1234, skinIds: ['one', 'two'] })
+    atomicWriteJson(join(dir, '.dsh-skin-market', 'state.json'), { version: 1, activeSkinId: null, disabledSkinIds: [], pendingRestart: { pid: '1234', skinIds: ['one'] } })
+    expect(readMarketState(dir).pendingRestart).toBeUndefined()
+  })
+
+  it('uses every declared bundle patch in order for validation and skin registration', () => {
+    const dir = fixture()
+    const skin = loadCatalog().skins[0]
+    const directory = join(dir, 'node_modules', skin.package)
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.target } })
+    atomicWriteJson(join(directory, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { client: { platform: 'web' }, bundle: { patch: ['./first.yml', './second.yml'] } } })
+    atomicWriteText(join(directory, 'first.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${skin.package}\n`)
+    atomicWriteText(join(directory, 'second.yml'), `- id: ${skin.rowId}\n  config:\n    test: true\n`)
+    expect(validateInstalledSkin(dir, skin).ok).toBe(true)
+    expect(() => assertLoaderMetadata(dir, skin)).not.toThrow()
+    ensureSkinRegistration(dir, skin, false)
+    const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    expect(manifest.dsh.profile.bundles).toEqual([skin.package])
+    const rows = parse(readFileSync(profilePatchFile(dir), 'utf8')) as Array<{ insert?: unknown[] }>
+    expect(rows.flatMap(row => row.insert ?? [])).toHaveLength(0)
+  })
+  it('checks declared executable files and frozen bytes, rather than a surviving manifest alone', () => {
+    const dir = fixture()
+    const name = '@example/recovery-skin'
+    const packageDirectory = join(dir, 'node_modules', name)
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [name]: '1.0.0' } })
+    atomicWriteJson(join(packageDirectory, 'package.json'), {
+      name, version: '1.0.0', exports: { '.': { types: './index.d.ts', default: './host.js' }, './client': './client.js' },
+      dsh: { client: { platform: 'web' }, bundle: { patch: ['./first.yml', './second.yml'] } },
+    })
+    for (const path of ['host.js', 'client.js']) atomicWriteText(join(packageDirectory, path), `export const source = '${path}'`)
+    for (const path of ['first.yml', 'second.yml']) atomicWriteText(join(packageDirectory, path), '[]\n')
+    const baseline = snapshotInstalledArtifact(dir, name)
+    expect(baseline).toMatchObject({ ok: true, name, version: '1.0.0', spec: '1.0.0' })
+    expect(baseline.files.map(file => file.kind)).toEqual(['host', 'client', 'bundle', 'bundle'])
+    expect(compareInstalledArtifact(dir, baseline).ok).toBe(true)
+    atomicWriteText(join(packageDirectory, 'client.js'), 'export const source = "different same-version build"')
+    expect(compareInstalledArtifact(dir, baseline)).toMatchObject({ ok: false, reason: expect.stringContaining('entries differ') })
+    rmSync(join(packageDirectory, 'client.js'))
+    expect(snapshotInstalledArtifact(dir, name).ok).toBe(false)
+  })
+
+  it('refuses entry paths and symlinks outside the package without reading their targets', () => {
+    const dir = fixture()
+    const name = 'recovery-package'
+    const directory = join(dir, 'node_modules', name)
+    atomicWriteJson(join(directory, 'package.json'), { name, version: '1.0.0', main: '../../outside.js' })
+    expect(snapshotInstalledArtifact(dir, name).ok).toBe(false)
+    atomicWriteJson(join(directory, 'package.json'), { name, version: '1.0.0', main: './linked.js' })
+    atomicWriteText(join(dir, 'outside.js'), 'export const unrelated = true')
+    symlinkSync(join(dir, 'outside.js'), join(directory, 'linked.js'))
+    expect(snapshotInstalledArtifact(dir, name).ok).toBe(false)
+  })
+
+  it('does not skip reviewed integrity for an npm caret source resolved by the lock importer', () => {
+    const dir = fixture()
+    const base = loadCatalog().skins[0]
+    const skin = { ...base, install: { ...base.install, npm: { name: base.package, version: base.install.version, integrity: 'sha512-reviewed', repository: base.repo, gitHead: base.install.commit } } }
+    const spec = `^${skin.install.version}`
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: spec } })
+    atomicWriteJson(join(dir, 'node_modules', skin.package, 'package.json'), { name: skin.package, version: skin.install.version, repository: skin.repo, dsh: { client: { platform: 'web' } } })
+    const lock = (specifier: string, version: string, integrity: string) => atomicWriteText(join(dir, 'pnpm-lock.yaml'), `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      '${skin.package}':\n        specifier: '${specifier}'\n        version: '${version}'\npackages:\n  '${skin.package}@${skin.install.version}':\n    resolution:\n      integrity: ${integrity}\n`)
+    lock(spec, skin.install.version, 'sha512-reviewed')
+    expect(validateInstalledSkin(dir, skin).ok).toBe(true)
+    expect(reviewedInstalledSpecMatches(dir, skin, spec)).toBe(true)
+    expect(runtimeState(dir, skin, skin.id, true, true).updateAvailable).toBe(false)
+    lock(spec, skin.install.version, 'sha512-unreviewed')
+    expect(validateInstalledSkin(dir, skin)).toMatchObject({ ok: false, reason: expect.stringContaining('integrity mismatch') })
+    expect(reviewedInstalledSpecMatches(dir, skin, spec)).toBe(false)
+    lock('^0.0.0', skin.install.version, 'sha512-reviewed')
+    expect(validateInstalledSkin(dir, skin)).toMatchObject({ ok: false, reason: expect.stringContaining('importer mismatch') })
+    lock(spec, '0.0.0', 'sha512-reviewed')
+    expect(validateInstalledSkin(dir, skin)).toMatchObject({ ok: false, reason: expect.stringContaining('importer mismatch') })
+  })
+
+  it('validates managed Desktop integrity without requiring synthetic npm repository evidence', () => {
+    const dir = fixture()
+    const base = loadCatalog().skins[0]
+    const skin = { ...base, install: { ...base.install, npm: undefined, desktop: { mode: 'managed' as const, registry: 'npm' as const, packageName: base.package, packageVersion: base.install.version, integrity: 'sha512-reviewed' } } }
+    const directory = join(dir, 'node_modules', skin.package)
+    const spec = `^${skin.install.version}`
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: spec } })
+    atomicWriteJson(join(directory, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { client: { platform: 'web' } } })
+    atomicWriteText(join(directory, 'client.js'), 'export const enabled = true')
+    const lock = (integrity: string) => atomicWriteText(join(dir, 'pnpm-lock.yaml'), `importers:\n  .:\n    dependencies:\n      '${skin.package}':\n        specifier: '${spec}'\n        version: '${skin.install.version}'\npackages:\n  '${skin.package}@${skin.install.version}':\n    resolution:\n      integrity: ${integrity}\n`)
+    lock('sha512-reviewed')
+    expect(validateDesktopArtifact(dir, skin)).toEqual({ ok: true, version: skin.install.version, integrityVerified: true })
+    expect(reviewedInstalledSpecMatches(dir, skin, spec)).toBe(true)
+    lock('sha512-unreviewed')
+    expect(validateDesktopArtifact(dir, skin)).toMatchObject({ ok: false, integrityVerified: false })
+    const legacy = { ...skin, install: { ...skin.install, desktop: { ...skin.install.desktop, integrity: undefined } } }
+    expect(validateDesktopArtifact(dir, legacy)).toEqual({ ok: true, version: skin.install.version, integrityVerified: false })
+  })
+
+  it('requires the matching root importer for an exact Desktop source, including legacy metadata without SRI', () => {
+    const dir = fixture()
+    const base = loadCatalog().skins[0]
+    const skin = { ...base, install: { ...base.install, npm: undefined, desktop: { mode: 'managed' as const, registry: 'npm' as const, packageName: base.package, packageVersion: base.install.version } } }
+    const directory = join(dir, 'node_modules', skin.package)
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.version } })
+    atomicWriteJson(join(directory, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { client: {} } })
+    atomicWriteText(join(directory, 'client.js'), 'export const enabled = true')
+    expect(validateDesktopArtifact(dir, skin)).toMatchObject({ ok: false, reason: expect.stringContaining('root importer'), integrityVerified: false })
+    const lock = (specifier: string, version: string) => atomicWriteText(join(dir, 'pnpm-lock.yaml'), `importers:\n  .:\n    dependencies:\n      '${skin.package}':\n        specifier: '${specifier}'\n        version: '${version}'\n`)
+    lock(skin.install.version, `${skin.install.version}(cordis@3.18.1)`)
+    expect(validateDesktopArtifact(dir, skin)).toEqual({ ok: true, version: skin.install.version, integrityVerified: false })
+    lock(`^${skin.install.version}`, skin.install.version)
+    expect(validateDesktopArtifact(dir, skin)).toMatchObject({ ok: false, reason: expect.stringContaining('root importer') })
+    lock(skin.install.version, '0.0.0')
+    expect(validateDesktopArtifact(dir, skin).ok).toBe(false)
+  })
+
+  it('validates generic npm artifact provenance without accepting a package merely present in the lockfile', () => {
+    const dir = fixture()
+    const name = 'test-market'
+    const source = { name, version: '1.2.3', integrity: 'sha512-reviewed', gitHead: 'c'.repeat(40), tarball: 'https://registry.npmjs.org/test-market/-/test-market-1.2.3.tgz' }
+    const directory = join(dir, 'node_modules', name)
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [name]: '1.2.3' } })
+    atomicWriteJson(join(directory, 'package.json'), { name, version: source.version, main: './host.js', gitHead: source.gitHead })
+    atomicWriteText(join(directory, 'host.js'), 'export const enabled = true')
+    const lock = (specifier: string, version: string, integrity = source.integrity) => atomicWriteText(join(dir, 'pnpm-lock.yaml'), `importers:\n  .:\n    dependencies:\n      '${name}':\n        specifier: '${specifier}'\n        version: '${version}'\npackages:\n  '${name}@${source.version}':\n    resolution:\n      integrity: ${integrity}\n      tarball: ${source.tarball}\n`)
+    lock('1.2.3', '1.2.3')
+    expect(validateNpmArtifact(dir, source)).toEqual({ ok: true, version: '1.2.3', integrityVerified: true })
+    lock('1.2.3', '1.2.4')
+    expect(validateNpmArtifact(dir, source)).toMatchObject({ ok: false, reason: expect.stringContaining('root importer') })
+    lock('1.2.3', '1.2.3', 'sha512-other')
+    expect(validateNpmArtifact(dir, source)).toMatchObject({ ok: false, reason: expect.stringContaining('SRI') })
+    lock('1.2.3', '1.2.3')
+    rmSync(join(directory, 'host.js'))
+    expect(validateNpmArtifact(dir, source)).toMatchObject({ ok: false, reason: expect.stringContaining('可加载入口') })
+  })
   it('atomically persists active and disabled skin state', () => {
     const dir = fixture()
     writeMarketState(dir, { version: 1, activeSkinId: 'a', disabledSkinIds: ['b'] })

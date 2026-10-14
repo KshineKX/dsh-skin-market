@@ -1,5 +1,6 @@
 import type { PluginRunner } from './commands.ts';
 import type { OperationFailure } from './types.ts';
+import type { OfficialApplication } from './official-desktop.ts';
 export declare const MARKET_NPM_PACKAGE = "dsh-skin-market";
 export declare const MARKET_NPM_METADATA_URL = "https://registry.npmjs.org/dsh-skin-market";
 export interface MarketUpdateStatus {
@@ -7,7 +8,7 @@ export interface MarketUpdateStatus {
     latestVersion: string;
     updateAvailable: boolean;
 }
-export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'cancelling' | 'cancelled' | 'done' | 'failed';
+export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed';
 export interface MarketUpdateOperation {
     id: string;
     phase: MarketUpdatePhase;
@@ -18,6 +19,9 @@ export interface MarketUpdateOperation {
     totalBytes?: number;
     bytesPerSecond?: number;
     failure?: OperationFailure;
+    application?: OfficialApplication | 'unknown';
+    restartRequired?: boolean;
+    integrityVerified?: boolean;
     startedAt: string;
     finishedAt?: string;
 }

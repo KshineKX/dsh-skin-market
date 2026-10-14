@@ -13,6 +13,7 @@ function harness(options: HarnessOptions = {}): string[] {
   const localValues = options.localValues ?? values
   const host = {
     get(name: string): unknown { return localValues[name] },
+    inject(_names: readonly string[], callback: (value: unknown) => void): void { callback({ ...host, desktopPnpm: localValues.desktopPnpm }) },
     effect(_factory: () => unknown, label: string): void { labels.push(label) },
     webServer: { register: () => () => undefined },
     loader: { entries: () => [] },
@@ -38,12 +39,20 @@ describe('host branch selection', () => {
     expect(harness({ values: {}, localValues: { profileContext: { name: 'desktop', dir: '/tmp/dsh-desktop-profile' } } })).toEqual(['dsh-skin-market: official Desktop routes'])
   })
 
-  it('uses the official manager when the host exposes it without a desktop profile name', () => {
-    expect(harness({ values: { pluginManager: { installBundle: async () => ({}), removeBundle: async () => ({}) }, profileContext: { name: 'web', dir: '/tmp/dsh-desktop-profile' } } })).toEqual(['dsh-skin-market: official Desktop routes'])
+  it('keeps modern Web on its own route when the shared pluginManager service is present', () => {
+    expect(harness({ values: { pluginManager: { installBundle: async () => ({}), removeBundle: async () => ({}) }, profileContext: { name: 'web', dir: '/tmp/dsh-web-profile' } } })).toEqual(['dsh-skin-market: routes'])
   })
 
-  it('keeps an explicit desktop profile on the official manager path even if another desktop service is present', () => {
-    expect(harness({ config: { profile: 'desktop' }, values: { desktopProfiles: { current: { name: 'other', dir: '/tmp/other-profile' } } } })).toEqual(['dsh-skin-market: official Desktop routes'])
+  it('keeps an explicit third-party desktop configuration on its own desktop services', () => {
+    expect(harness({ config: { profile: 'desktop' }, values: { desktopProfiles: { current: { name: 'other', dir: '/tmp/other-profile' } }, desktopPnpm: {} } })).toEqual(['dsh-skin-market: desktop routes'])
+  })
+
+  it('does not infer Desktop identity from pluginManager without a named Desktop profile', () => {
+    expect(harness({ values: { pluginManager: {} } })).toEqual(['dsh-skin-market: routes'])
+  })
+
+  it('retains the legacy desktop adapter for a launched Desktop name when desktopProfiles owns it', () => {
+    expect(harness({ values: { profileContext: { name: 'desktop', dir: '/tmp/custom-desktop' }, desktopProfiles: { current: { name: 'custom', dir: '/tmp/custom-desktop' } }, desktopPnpm: {} } })).toEqual(['dsh-skin-market: desktop routes'])
   })
 
   it('recognizes a desktop launch profile when profileContext is not available', () => {

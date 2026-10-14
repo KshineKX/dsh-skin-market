@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream'
-import { describe, expect, it } from 'vitest'
-import { loopbackAuthority, readSkinId, sameOrigin } from '../src/http.ts'
-import type { IncomingMessage } from 'node:http'
+import { describe, expect, it, vi } from 'vitest'
+import { directLoopbackRequest, loopbackAuthority, readSkinId, refuseUnadmitted, sameOrigin, trustedAuthority } from '../src/http.ts'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 describe('HTTP guards', () => {
   it('accepts same-origin requests and Desktop proxy requests', () => {
@@ -20,6 +20,55 @@ describe('HTTP guards', () => {
     expect(loopbackAuthority('[::1]:3080')).toBe(true)
     expect(loopbackAuthority('localhost.evil.example:3080')).toBe(false)
     expect(loopbackAuthority(undefined)).toBe(false)
+  })
+
+  it('accepts a non-loopback authority only when the host explicitly declares it', () => {
+    expect(trustedAuthority('Harness.Example.test:8443', ['harness.example.test'])).toBe(true)
+    expect(trustedAuthority('harness.example.test:8443', ['harness.example.test:8443'])).toBe(true)
+    expect(trustedAuthority('harness.example.test:8444', ['harness.example.test:8443'])).toBe(false)
+    expect(trustedAuthority('other.example.test:8443', ['harness.example.test'])).toBe(false)
+    expect(trustedAuthority('harness.example.test.evil.test:8443', ['harness.example.test'])).toBe(false)
+    expect(trustedAuthority('harness.example.test:81', ['harness.example.test:80'])).toBe(false)
+    expect(trustedAuthority('harness.example.test:80', ['harness.example.test:80'])).toBe(true)
+    for (const value of ['https://harness.example.test', 'harness.example.test/path', 'user@harness.example.test', 'harness.example.test#part', 'harness.example.test\\evil', 'harness.example.test:bad']) {
+      expect(trustedAuthority(value, ['harness.example.test'])).toBe(false)
+      expect(trustedAuthority('harness.example.test', [value])).toBe(false)
+    }
+    const request = { headers: { host: 'harness.example.test:8443', origin: 'https://harness.example.test:8443' } } as IncomingMessage
+    expect(sameOrigin(request)).toBe(false)
+    expect(sameOrigin(request, ['harness.example.test:8443'])).toBe(true)
+    expect(sameOrigin({ headers: { ...request.headers, origin: 'https://evil.example.test' } } as IncomingMessage, ['harness.example.test:8443'])).toBe(false)
+    expect(sameOrigin({ headers: { ...request.headers, origin: 'ftp://harness.example.test:8443' } } as IncomingMessage, ['harness.example.test:8443'])).toBe(false)
+  })
+
+  it('consults host admission and preserves 401 while refusing other failures as 403', () => {
+    const request = { headers: {} } as IncomingMessage
+    const response = { writeHead: vi.fn(), end: vi.fn() } as unknown as ServerResponse
+    expect(refuseUnadmitted(request, response)).toBe(false)
+    expect(refuseUnadmitted(request, response, { requestRejection: () => undefined })).toBe(false)
+    expect(response.writeHead).not.toHaveBeenCalled()
+    for (const [rejection, expected] of [[401, 401], [403, 403], [500, 403]] as const) {
+      expect(refuseUnadmitted(request, response, { requestRejection: () => rejection })).toBe(true)
+      expect(response.writeHead).toHaveBeenLastCalledWith(expected, expect.any(Object))
+    }
+    expect(refuseUnadmitted(request, response, { requestRejection: () => { throw new Error('admission unavailable') } })).toBe(true)
+    expect(response.writeHead).toHaveBeenLastCalledWith(403, expect.any(Object))
+  })
+
+  it.each(['127.0.0.1', '::1', '::ffff:127.0.0.1'])('allows direct local restart traffic from %s', remoteAddress => {
+    expect(directLoopbackRequest({ headers: { host: 'localhost:3080' }, socket: { remoteAddress } } as IncomingMessage)).toBe(true)
+  })
+
+  it.each([undefined, '10.0.0.1', '::ffff:10.0.0.1'])('does not trust a loopback Host header without a direct local socket (%s)', remoteAddress => {
+    expect(directLoopbackRequest({ headers: { host: '127.0.0.1:3080' }, socket: { remoteAddress } } as IncomingMessage)).toBe(false)
+  })
+
+  it('refuses header-stripped proxies, trusted public hosts and every forwarding-header family for restart', () => {
+    expect(directLoopbackRequest({ headers: {}, socket: { remoteAddress: '127.0.0.1' } } as IncomingMessage)).toBe(false)
+    expect(directLoopbackRequest({ headers: { host: 'harness.example.test' }, socket: { remoteAddress: '127.0.0.1' } } as IncomingMessage)).toBe(false)
+    for (const header of ['forwarded', 'x-real-ip', 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']) {
+      expect(directLoopbackRequest({ headers: { host: '127.0.0.1:3080', [header]: '127.0.0.1' }, socket: { remoteAddress: '127.0.0.1' } } as IncomingMessage)).toBe(false)
+    }
   })
 
   it('reads a structured skin id and rejects oversized input', async () => {

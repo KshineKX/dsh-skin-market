@@ -1,6 +1,47 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
 import { createMarketUpdater, MARKET_NPM_PACKAGE } from '../src/self-update.ts'
+import type { DshRuntime } from '../src/types.ts'
+import { runPnpmWithRecovery } from '../src/pnpm-recovery.ts'
+
+const runtime = (version: string | null): DshRuntime => ({ version, source: 'injected', capabilities: [] })
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true }) })
+
+function materializeMarket(directory: string, version: string): void {
+  const packageDir = join(directory, 'node_modules', MARKET_NPM_PACKAGE)
+  mkdirSync(join(packageDir, 'lib'), { recursive: true })
+  mkdirSync(join(packageDir, 'client'), { recursive: true })
+  writeFileSync(join(directory, 'package.json'), JSON.stringify({ dependencies: { [MARKET_NPM_PACKAGE]: version }, dsh: { profile: { bundles: [MARKET_NPM_PACKAGE] } } }))
+  writeFileSync(join(directory, 'pnpm-lock.yaml'), JSON.stringify({
+    lockfileVersion: '9.0', importers: { '.': { dependencies: { [MARKET_NPM_PACKAGE]: { specifier: version, version } } } },
+    packages: { [`${MARKET_NPM_PACKAGE}@${version}`]: { resolution: {} } },
+  }))
+  writeFileSync(join(packageDir, 'package.json'), JSON.stringify({
+    name: MARKET_NPM_PACKAGE, version, main: 'lib/index.js', exports: { './client': './client/client.js' },
+    dsh: { client: { platform: 'web' }, bundle: { patch: 'cordis.patch.yml' } },
+  }))
+  writeFileSync(join(packageDir, 'lib/index.js'), `export const version = '${version}'`)
+  writeFileSync(join(packageDir, 'client/client.js'), `export const version = '${version}'`)
+  writeFileSync(join(packageDir, 'cordis.patch.yml'), '[]\n')
+}
+
+function fullManager(): OfficialPluginManagerLike {
+  return {
+    installBundle: vi.fn(async () => ({ changed: true, application: 'applied', stage: 'enable', target: 'skin' })),
+    removeBundle: vi.fn(async () => ({ changed: true, application: 'applied', stage: 'remove', target: 'skin' })),
+    setBundleEnabled: vi.fn(async (target: string, enabled: boolean) => ({ changed: true, application: 'applied', stage: 'enable', target, enabled })),
+    setPluginEnabled: vi.fn(async (target: string, enabled: boolean) => ({ changed: true, application: 'applied', stage: 'enable', target, enabled })),
+    cancelInstall: vi.fn(async () => ({ status: 'not-running' })),
+    waitForInstall: vi.fn(async () => null),
+    inspect: vi.fn(async () => ({ status: 'accepted', kind: 'registry' })),
+    listBundles: vi.fn(async () => []),
+    listPlugins: vi.fn(async () => []),
+  }
+}
 
 describe('official Desktop runner', () => {
   it('installs through the profile plugin manager without enabling the bundle first', async () => {
@@ -35,7 +76,7 @@ describe('official Desktop runner', () => {
 
   it('cancels a manager-owned install when the market operation is aborted', async () => {
     let resolveInstall!: (value: unknown) => void
-    const cancelInstall = vi.fn(async () => ({ cancelled: true }))
+    const cancelInstall = vi.fn(async () => ({ status: 'cancelled' }))
     const installBundle = vi.fn(() => new Promise<unknown>(resolve => { resolveInstall = resolve }))
     const manager: OfficialPluginManagerLike = { installBundle, removeBundle: vi.fn(), cancelInstall }
     const runner = officialDesktopRunner(() => manager)
@@ -48,8 +89,8 @@ describe('official Desktop runner', () => {
 
     controller.abort()
     expect(cancelInstall).toHaveBeenCalledWith('receipt-2')
-    resolveInstall({ cancelled: true })
-    await expect(operation).resolves.toMatchObject({ exitCode: 0, aborted: true })
+    resolveInstall({ application: 'cancelled' })
+    await expect(operation).resolves.toMatchObject({ exitCode: 1, aborted: true, management: { application: 'cancelled' } })
   })
 
   it('fails closed when the official manager is unavailable', async () => {
@@ -59,7 +100,7 @@ describe('official Desktop runner', () => {
     expect(result.stderr).toContain('pluginManager')
   })
 
-  it('fails closed when an install cannot be cancelled by the host', async () => {
+  it('keeps installation available when only cancellation is missing', async () => {
     const installBundle = vi.fn(async () => ({ application: 'applied' }))
     const runner = officialDesktopRunner(() => ({ installBundle, removeBundle: vi.fn() }))
 
@@ -68,13 +109,21 @@ describe('official Desktop runner', () => {
       { packageName: 'dsh-theme-endfield', packageVersion: '1.0.1', receiptId: 'receipt-no-cancel' },
     )
 
-    expect(result.exitCode).toBeNull()
-    expect(result.stderr).toContain('可取消')
-    expect(installBundle).not.toHaveBeenCalled()
+    expect(result.exitCode).toBe(0)
+    expect(runner.management?.capabilities()).toMatchObject({
+      install: { available: true }, update: { available: true }, cancel: { available: false },
+    })
+    expect(installBundle).toHaveBeenCalledWith('dsh-theme-endfield@1.0.1', { enabled: false, requestId: 'receipt-no-cancel' })
   })
 
   it('routes the market self-update through the official manager and leaves it disabled until restart', async () => {
-    const installBundle = vi.fn(async () => ({ application: 'restart-required' }))
+    const directory = mkdtempSync(join(tmpdir(), 'dsh-official-self-update-'))
+    temporaryDirectories.push(directory)
+    materializeMarket(directory, '0.1.57')
+    const installBundle = vi.fn(async () => {
+      materializeMarket(directory, '0.1.58')
+      return { application: 'restart-required' }
+    })
     const manager: OfficialPluginManagerLike = {
       installBundle,
       removeBundle: vi.fn(),
@@ -82,7 +131,7 @@ describe('official Desktop runner', () => {
     }
     const updater = createMarketUpdater('desktop', officialDesktopRunner(() => manager), {
       currentVersion: '0.1.57',
-      profileDir: '/tmp/dsh-skin-market-official-self-update',
+      profileDir: directory,
       cacheMs: 0,
       fetch: vi.fn(async () => ({
         ok: true,
@@ -179,5 +228,303 @@ describe('official Desktop runner', () => {
     expect(cancelInstall).toHaveBeenCalledWith('receipt-timeout')
     expect(result.exitCode).toBe(1)
     expect(result.timedOut).toBe(true)
+  })
+})
+
+describe('official management release contracts', () => {
+  it.each([
+    ['0.1.6-alpha.2', false, false, true],
+    ['0.1.7-alpha.1', true, false, true],
+    ['0.1.7-alpha.2', true, false, true],
+    ['0.1.7-rc.1', true, false, true],
+    ['0.1.7-rc.2', true, false, true],
+    ['0.2.0-rc.1', true, false, true],
+    ['0.2.0-rc.2', true, false, true],
+    ['0.2.1-alpha.1', true, false, false],
+    ['0.2.1-alpha.2', true, true, false],
+  ] as const)('gates %s options and post-install resolution by the audited snapshot', async (version, recovered, exact, requiresRestart) => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime(version))
+    expect(runner.management!.capabilities()).toMatchObject({
+      install: { available: true }, update: { available: true }, enable: { available: true },
+      disable: { available: true }, remove: { available: true }, cancel: { available: true },
+      buildApprovals: { available: true }, wait: { available: recovered },
+      registry: { available: recovered }, saveExact: { available: exact },
+    })
+    expect(runner.management!.installRequiresRestart).toBe(requiresRestart)
+    const result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    expect(result.management?.application).toBe('applied')
+    expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', { enabled: false, requestId: 'request', ...(exact ? { saveExact: true } : {}) })
+  })
+
+  it.each(['0.1.6-alpha.1', '0.1.5-rc.3', '0.3.0', '0.1.7-alpha.3', null])('does not mutate an unaudited runtime %s', async version => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime(version))
+    const caps = runner.management!.capabilities()
+    expect(runner.management!.installRequiresRestart).toBe(false)
+    expect(caps.install.available).toBe(false)
+    expect(caps.install.reason).toBeTruthy()
+    await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    await runner.management!.setBundleEnabled('skin', true)
+    await runner('desktop', ['remove', 'skin'])
+    expect(manager.installBundle).not.toHaveBeenCalled()
+    expect(manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(manager.removeBundle).not.toHaveBeenCalled()
+  })
+
+  it('does not impose an audited Host restart policy on one-argument structural callers', () => {
+    const runner = officialDesktopRunner(() => fullManager())
+    expect(runner.management!.installRequiresRestart).toBe(false)
+  })
+
+  it('does not infer optional argument support from callable proxy methods', () => {
+    const runner = officialDesktopRunner(() => fullManager(), runtime('0.1.6-alpha.2'))
+    expect(runner.management!.capabilities()).toMatchObject({ wait: { available: false }, registry: { available: false }, saveExact: { available: false } })
+  })
+
+  it('fails closed per actual missing method and reads a new manager generation', async () => {
+    let manager = fullManager()
+    manager.setBundleEnabled = undefined
+    manager.setPluginEnabled = undefined
+    const runner = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2'))
+    expect(runner.management!.capabilities().enable.available).toBe(false)
+    manager = fullManager()
+    expect(runner.management!.capabilities().enable.available).toBe(true)
+    const result = await runner.management!.setBundleEnabled('skin', false)
+    expect(manager.setBundleEnabled).toHaveBeenCalledWith('skin', false)
+    expect(result.management).toMatchObject({ application: 'applied', stage: 'enable', target: 'skin', enabled: false })
+  })
+
+  it('keeps individual plugin activation available when only the bundle method is missing', async () => {
+    const manager = fullManager()
+    manager.setBundleEnabled = undefined
+    const management = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!
+    expect(management.capabilities()).toMatchObject({ enable: { available: true }, disable: { available: true } })
+    expect(await management.setPluginEnabled('entry', true)).toMatchObject({ exitCode: 0, management: { application: 'applied', target: 'entry' } })
+    const unavailable = await management.setBundleEnabled('skin', true)
+    expect(unavailable).toMatchObject({ exitCode: null, aborted: false, timedOut: false })
+    expect(unavailable.stderr).toContain('组合包启停接口')
+    expect(unavailable.management?.indeterminate).not.toBe(true)
+    expect(manager.setPluginEnabled).toHaveBeenCalledExactlyOnceWith('entry', true)
+  })
+
+  it('keeps bundle activation available when only the individual plugin method is missing', async () => {
+    const manager = fullManager()
+    manager.setPluginEnabled = undefined
+    const management = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!
+    expect(management.capabilities()).toMatchObject({ enable: { available: true }, disable: { available: true } })
+    expect(await management.setBundleEnabled('skin', false)).toMatchObject({ exitCode: 0, management: { application: 'applied', target: 'skin' } })
+    const unavailable = await management.setPluginEnabled('entry', false)
+    expect(unavailable).toMatchObject({ exitCode: null, aborted: false, timedOut: false })
+    expect(unavailable.stderr).toContain('插件行启停接口')
+    expect(unavailable.management?.indeterminate).not.toBe(true)
+    expect(manager.setBundleEnabled).toHaveBeenCalledExactlyOnceWith('skin', false)
+  })
+
+  it('preserves management failures and exact pending builds without approving them automatically', async () => {
+    const resultValue = {
+      changed: false, application: 'failed', stage: 'install', target: 'skin@1.0.0',
+      error: { code: 'operation-error', diagnostic: 'scripts await approval' }, pendingBuilds: ['native-addon', '@scope/helper'],
+      packageResult: { exitCode: 1, kind: 'build-blocked', output: 'full pnpm output', logPath: '/tmp/output.log' },
+      registries: [null], failedAt: 'registry',
+    }
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => resultValue)
+    const runner = officialDesktopRunner(() => manager, runtime('0.1.6-alpha.2'))
+    const result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    expect(result.exitCode).toBe(1)
+    expect(result.management).toEqual({ ...resultValue, requestId: 'request' })
+    expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', { enabled: false, requestId: 'request' })
+  })
+
+  it('passes explicitly approved exact package names and a supported registry', async () => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2'))
+    await runner.installPlugin!('desktop', {
+      packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request',
+      approvedBuilds: ['@scope/helper', '@scope/helper'], registry: 'https://registry.npmjs.org/',
+    })
+    expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', {
+      enabled: false, requestId: 'request', approvedBuilds: ['@scope/helper'], registry: 'https://registry.npmjs.org/',
+    })
+  })
+
+  it.each(['*', 'native-addon@1.0.0', '', ' native-addon'])('refuses non-exact build approval %j', async name => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2'))
+    const result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request', approvedBuilds: [name] })
+    expect(result.exitCode).toBeNull()
+    expect(manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it('refuses unsupported registry options instead of silently ignoring them', async () => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime('0.1.6-alpha.2'))
+    const result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request', registry: null })
+    expect(result.exitCode).toBeNull()
+    expect(manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it.each(['0.1.6-alpha.2', '0.1.7-alpha.1'])('uses the correct inspect signature for %s', async version => {
+    const manager = fullManager()
+    const runner = officialDesktopRunner(() => manager, runtime(version))
+    const signal = new AbortController().signal
+    await runner.management!.inspect('skin', { signal })
+    expect(manager.inspect).toHaveBeenCalledWith(...(version === '0.1.6-alpha.2' ? ['skin', signal] : ['skin', undefined, signal]))
+  })
+
+  it('preserves a Client Remote envelope without nesting the business result', async () => {
+    const manager = fullManager()
+    manager.setPluginEnabled = vi.fn(async () => ({ ok: true, value: { application: 'overridden', target: 'entry', enabled: true } }))
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.setPluginEnabled('entry', true)
+    expect(result.management).toMatchObject({ application: 'overridden', target: 'entry', enabled: true })
+  })
+
+  it('does not treat a failed Remote inventory read as an empty successful list', async () => {
+    const manager = fullManager()
+    manager.listPlugins = vi.fn(async () => ({ ok: false, error: { code: 'gateway/withdrawn', message: 'inventory unavailable' } }))
+    await expect(officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.listPlugins()).rejects.toThrow('inventory unavailable')
+  })
+})
+
+describe('official installation settlement', () => {
+  it('recovers a resolved Client carrier failure through the original request without reinstalling', async () => {
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => ({ ok: false, error: { code: 'gateway/internal', message: 'carrier disconnected' } }))
+    manager.waitForInstall = vi.fn(async () => ({ ok: true, value: { application: 'applied', stage: 'apply', target: 'skin' } }))
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!(
+      'desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'carrier-request' },
+    )
+    expect(result).toMatchObject({ exitCode: 0, management: { application: 'applied' } })
+    expect(manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(manager.waitForInstall).toHaveBeenCalledExactlyOnceWith('carrier-request')
+  })
+
+  it('keeps a second Client carrier failure unconfirmed when request recovery also fails', async () => {
+    const manager = fullManager()
+    const failure = { ok: false, error: { code: 'gateway/internal', message: 'carrier disconnected' } }
+    manager.installBundle = vi.fn(async () => failure)
+    manager.waitForInstall = vi.fn(async () => failure)
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!(
+      'desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'carrier-request' },
+    )
+    expect(result).toMatchObject({ exitCode: 1, aborted: false, management: { application: 'unknown', indeterminate: true } })
+    expect(manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(manager.waitForInstall).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not report a resolved Client enable carrier failure as a confirmed rejection or cancellation', async () => {
+    const manager = fullManager()
+    const controller = new AbortController()
+    manager.setBundleEnabled = vi.fn(async () => {
+      controller.abort()
+      return { ok: false, error: { code: 'gateway/internal', message: 'enable response lost' } }
+    })
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.setBundleEnabled('skin', true, { signal: controller.signal })
+    expect(result).toMatchObject({ exitCode: 1, aborted: false, management: { application: 'unknown', indeterminate: true } })
+    expect(manager.setBundleEnabled).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps an unconfirmed native removal indeterminate even after an abort request', async () => {
+    const manager = fullManager()
+    const controller = new AbortController()
+    manager.removeBundle = vi.fn(async () => {
+      controller.abort()
+      throw new Error('response lost during removal')
+    })
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2'))('desktop', ['remove', 'skin'], { signal: controller.signal })
+    expect(result).toMatchObject({ exitCode: 1, aborted: false, timedOut: false, management: { application: 'unknown', indeterminate: true } })
+    expect(manager.removeBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not claim success from a malformed result on a known Host contract', async () => {
+    const manager = fullManager()
+    manager.setBundleEnabled = vi.fn(async () => null)
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.setBundleEnabled('skin', true)
+    expect(result).toMatchObject({ exitCode: 1, management: { application: 'unknown', indeterminate: true } })
+  })
+
+  it('does not turn a completed applying phase into a timeout failure', async () => {
+    vi.useFakeTimers()
+    try {
+      let settle!: (value: unknown) => void
+      const manager = fullManager()
+      manager.installBundle = vi.fn(() => new Promise(resolve => { settle = resolve }))
+      manager.cancelInstall = vi.fn(async () => ({ status: 'too-late' }))
+      const operation = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!('desktop', {
+        packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request',
+      }, { timeoutMs: 10 })
+      await vi.advanceTimersByTimeAsync(10)
+      settle({ application: 'restart-required' })
+      expect(await operation).toMatchObject({ exitCode: 0, aborted: false, timedOut: false, management: { application: 'restart-required', cancellationStatus: 'too-late' } })
+    } finally { vi.useRealTimers() }
+  })
+
+  it.each(['applied', 'restart-required', 'failed'] as const)('keeps application=%s authoritative after a late abort', async application => {
+    let settle!: (value: unknown) => void
+    const manager = fullManager()
+    manager.installBundle = vi.fn(() => new Promise(resolve => { settle = resolve }))
+    manager.cancelInstall = vi.fn(async () => ({ status: 'too-late' }))
+    const controller = new AbortController()
+    const operation = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!('desktop', {
+      packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request',
+    }, { signal: controller.signal })
+    controller.abort()
+    settle({ application })
+    expect(await operation).toMatchObject({
+      exitCode: application === 'failed' ? 1 : 0, aborted: false, timedOut: false,
+      management: { application, cancelRequested: true, cancellationStatus: 'too-late' },
+    })
+  })
+
+  it('recovers an active lost result once without repeating installation', async () => {
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => { throw new Error('response lost') })
+    manager.waitForInstall = vi.fn(async () => ({ application: 'restart-required', target: 'skin', version: '1.0.0' }))
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    expect(manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(manager.waitForInstall).toHaveBeenCalledWith('request')
+    expect(result.management).toMatchObject({ application: 'restart-required', version: '1.0.0', requestId: 'request' })
+  })
+
+  it.each(['0.1.6-alpha.2', '0.2.0-rc.2'])('keeps a lost result unknown and non-retryable for %s', async version => {
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => { throw new Error('network ETIMEDOUT response lost') })
+    const runner = officialDesktopRunner(() => manager, runtime(version))
+    let result
+    await expect(runPnpmWithRecovery([], { attempt: async () => {
+      result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+      return result
+    } })).rejects.toThrow()
+    expect(manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(manager.waitForInstall).toHaveBeenCalledTimes(version === '0.1.6-alpha.2' ? 0 : 1)
+    expect(result).toMatchObject({ aborted: false, timedOut: false, management: { application: 'unknown', indeterminate: true } })
+  })
+
+  it('streams only the matching request and withdraws Host listeners after settlement', async () => {
+    const handlers = new Map<string, (value: unknown) => void>()
+    const dispose = vi.fn()
+    const events = { on(event: string, callback: (value: unknown) => void) {
+      handlers.set(event, callback)
+      return () => { handlers.delete(event); dispose() }
+    } }
+    const onStdout = vi.fn()
+    const onStderr = vi.fn()
+    const onManagementState = vi.fn()
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => {
+      handlers.get('plugin-manager/install-log')!({ requestId: 'other', stream: 'stdout', text: 'ignore' })
+      handlers.get('plugin-manager/install-log')!({ requestId: 'request', stream: 'stdout', text: 'progress' })
+      handlers.get('plugin-manager/install-log')!({ requestId: 'request', stream: 'stderr', text: 'diagnostic' })
+      handlers.get('plugin-manager/install-state')!({ requestId: 'request', phase: 'applying' })
+      return { application: 'applied' }
+    })
+    const runner = officialDesktopRunner(() => manager, runtime('0.1.6-alpha.2'), events)
+    await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' }, { onStdout, onStderr, onManagementState })
+    expect(onStdout).toHaveBeenCalledExactlyOnceWith('progress')
+    expect(onStderr).toHaveBeenCalledExactlyOnceWith('diagnostic')
+    expect(onManagementState).toHaveBeenCalledExactlyOnceWith({ requestId: 'request', phase: 'applying' })
+    expect(handlers.size).toBe(0)
+    expect(dispose).toHaveBeenCalledTimes(2)
   })
 })

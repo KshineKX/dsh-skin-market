@@ -112,9 +112,11 @@ export interface Operation {
   id: string
   kind: 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
   skinId: string
-  phase: 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'cancelling' | 'cancelled' | 'done' | 'failed'
+  phase: 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
   message?: string
   cancelable?: boolean
+  application?: 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled'
+  restartRequired?: boolean
   downloadedBytes?: number
   totalBytes?: number
   bytesPerSecond?: number
@@ -124,9 +126,10 @@ export interface Operation {
   lastOutputAt?: string
   pnpmStage?: 'resolving' | 'downloading' | 'linking' | 'building'
   failure?: {
-    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command'
+    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout'
     message: string
     packageName?: string
+  buildKeys?: string[]
     action?: 'retry' | 'approve-build'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }

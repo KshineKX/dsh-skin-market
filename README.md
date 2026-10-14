@@ -31,7 +31,45 @@ dsh plugin --profile web add "dsh-skin-market@latest"
 
 #### 官方 Desktop
 
-APP左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 并启用
+APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安装并按应用提示启用；旧版需按下表先完全退出再重新打开。
+
+使用“关于 DeepSeek Harness”中的应用版本判断 Desktop 兼容性。系统终端里的 `dsh --version` 可能来自另一份 npm 安装，不能代表当前桌面应用。
+
+### 宿主与管理接口兼容性
+
+以下按 **2026-10-14 已核验的官方源码 tag**说明功能边界；自动化检查与 Web、原生 Desktop 的实机验收分别记录，源码支持不等于所有平台已完成实测。
+
+| 官方 DSH 版本 | 市场可用的管理能力 | 额外接口边界 |
+| --- | --- | --- |
+| `0.1.5-alpha.1`～`0.1.5-rc.3`、`0.1.6-alpha.1` | 旧桌面壳的插件 IPC 属于其自有窗口；市场不接入这套私有接口 | 启动/恢复页的内部 restart 不提供给第三方插件 |
+| `0.1.6-alpha.2` | 安装、更新、使用、停用、卸载与精确构建项授权，通过共享 `pluginManager` | 新装/重装后先完全退出并重新打开，再使用；安装结果恢复、registry、`saveExact` 尚不可用 |
+| `0.1.7-alpha.1`、`0.1.7-alpha.2`、`0.1.7-rc.1`、`0.1.7-rc.2` | 上述管理能力；增加安装结果恢复与 registry 选项 | 新装/重装后先完全退出并重新打开，再使用；支持按序读取多个 bundle patch，`saveExact` 尚不可用 |
+| `0.2.0-rc.1`、`0.2.0-rc.2` | 延续共享插件管理能力 | 新装/重装后先完全退出并重新打开，再使用；`0.2.0-rc.2` 起 Desktop 自带命令支持应用退出后的离线插件维护 |
+| `0.2.1-alpha.1` | 上述能力，官方管理器增加安装后的运行时包解析刷新 | 按实际管理结果判断是否仍需重启；`saveExact` 尚不可用 |
+| `0.2.1-alpha.2` | 上述能力，并支持 `saveExact` | 市场可请求精确保存依赖版本 |
+
+市场同时检查实际服务的方法是否存在。官方版本无法识别、尚未核验或缺少方法时，相应按钮会说明原因；不会猜测接口可用，也不会改走另一个 profile。
+
+在已核验的 `0.2.1-alpha.1` 之前的官方 Desktop 上，市场新装/重装先完成安装并显示待重启，完全退出应用再重新打开后才可「使用」或设为常驻。`0.2.0-rc.2` 安装后启用失败可能涉及导入缓存；失败后仅更换包或再次安装不能可靠清除它，应先完成一次应用退出与重新打开。macOS 使用 `⌘Q`，仅关闭窗口不算退出。
+
+表中的离线维护仅由 Desktop 自带命令提供，须先初始化 Desktop profile 并完全退出应用；npm 安装的 dsh 不能修改 Desktop profile。
+
+<details>
+<summary><strong>点击展开 API、结果与来源校验说明</strong></summary>
+
+官方 Desktop 使用 Host 的 `ctx.pluginManager`：安装和更新调用 `installBundle(spec, options)`，组合包启停调用 `setBundleEnabled(name, enabled)`，单个条目启停调用 `setPluginEnabled(entryId, enabled)`，卸载调用 `removeBundle(name)`。安装有独立 `requestId`，取消走 `cancelInstall(requestId)`；支持结果恢复的版本可通过 `waitForInstall(requestId)`核对已有操作，不重新发起安装。安装日志和状态由 `plugin-manager/install-log`、`plugin-manager/install-state` 事件提供。
+
+结果中的 `application` 决定管理事务状态：`applied` 表示本次管理修改已应用，安装事务的这个结果不证明插件代码已加载；市场保留管理器结果并另行显示待重启。`restart-required` 表示仍需重启，`overridden` 表示修改保留但启用状态被其他配置覆盖，`failed`/`cancelled` 分别表示失败/已确认取消。取消请求到达太晚时，以管理器最终结果为准。结果无法确认时，市场保留“等待宿主确认”，阻止重复写入并提示重新启动应用后核验。
+
+较旧服务可能把 `1.2.3` 保存成 `^1.2.3`。市场会核对实际包版本、锁文件 importer 的 specifier/解析版本以及目录记录的 SRI；可验证的范围写法不会绕过完整性检查，也不会被直接声称为精确固定版本。缺少 SRI 的旧 Desktop 元数据只提供包名、版本与入口检查，不代表通过了哈希校验。
+
+所有上述已核验官方 Desktop 版本都由应用拥有重启：市场提示用户手动完全退出并重新打开。`dshDesktop.updates.open()`打开桌面更新确认流程，不是通用重启 App API。市场不调用 Electron 私有 IPC 或从运行中的 Desktop 执行 `dsh plugin --profile desktop`。
+
+第三方桌面壳提供的 `desktopProfiles`/`desktopPnpm` 与官方 `pluginManager` 分开适配。市场使用各自宿主提供的当前 profile 和安装服务；不会自动迁移第三方壳的配置、依赖、启用状态或 profile。
+
+依据：[官方 `0.1.6-alpha.2` 发布说明](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.6-alpha.2)、[官方 `0.2.0-rc.2` Desktop 命令说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/desktop/README.md#bundled-command-runtime)、[`0.2.1-alpha.2` 管理接口](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.2/packages/boot/plugin-manager/src/types.ts)、[Desktop 产品接口](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.2/apps/desktop/src/ipc.ts)。
+
+</details>
 
 #### 提示词安装
 <details>
@@ -40,10 +78,10 @@ APP左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 并�
 复制以下给 DSH Agent；它会先判断宿主，再选择安装方式。
 
 ```text
-请安装 dsh-skin-market。先运行 dsh --version，并根据当前宿主和实际 profile 的 package.json/bundles 判断是 Web 版还是官方 Desktop；无法判断就先问我。
+请安装 dsh-skin-market。先判断当前是 Web 版还是官方 Desktop，并核对当前宿主的实际 profile。Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不把系统终端的 npm dsh 版本当作桌面版本。无法判断就先问我。
 
 - Web 版：先检查冲突，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
-- 官方 Desktop：不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
+- 官方 Desktop：应用运行时不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
 
 安装前只读检查当前宿主实际 profile，发现其他皮肤插件就列出并停下；没有冲突才安装。安装后验证同一 profile 中有 dsh-skin-market 的依赖和 bundle，并告诉我重启哪个宿主、从哪里打开「皮肤市场」。不要替我安装其他皮肤。
 ```
@@ -73,7 +111,7 @@ APP左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 并�
 把完整原始报错填入后复制给你的 DSH Agent。它会先判断当前是 Web 还是官方 Desktop；无法判断时先询问你：
 
 ```text
-请帮我排查 DSH 皮肤市场的安装或启用失败。先运行 dsh --version，并根据当前宿主和实际 profile 判断是 Web 版还是官方 Desktop；无法判断就先问我。下面是完整原始报错：
+请帮我排查 DSH 皮肤市场的安装或启用失败。先判断当前宿主与实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。下面是完整原始报错：
 
 <把完整报错粘贴到这里>
 
@@ -97,7 +135,11 @@ Web 市场优先使用目录中已经核验的 npm 精确版本；没有合格 n
 
 npm 来源须与目录的包名、版本、仓库、完整 commit 一致，并通过安装包完整性与已构建客户端入口检查。已有的 GitHub 安装仍然有效，不会仅因目录补充 npm 来源而要求重装。
 
-安装横幅显示当前步骤、尝试次数和 pnpm 阶段；连续 30 秒没有输出时会提示，运行中也能复制诊断日志。Web 安装和更新的准备、下载、重试共用 15 分钟预算，达到时限后结束当前任务；已修改 profile 的失败操作只做一次、独立限时 60 秒的依赖恢复。市场会等待执行进程结束后再允许下一次操作，恢复未完成时会明确提示。Desktop 的安装失败恢复由宿主插件服务处理。
+安装横幅默认显示当前状态、皮肤名和耗时，下载时保留下载量；展开“详情”可查看具体步骤、尝试次数、pnpm 阶段和连续 30 秒无输出的提示，也可复制诊断日志。Web 安装和更新的准备、下载、重试共用 15 分钟预算，达到时限后结束当前任务；已修改 profile 的失败操作只做一次、独立限时 60 秒的依赖恢复，并核对更新前的实际版本和声明入口。恢复未完成或入口仍缺失时会明确提示。官方 Desktop 的安装事务与失败恢复由宿主插件管理器处理，市场不会额外改写它的 profile 文件。
+
+宿主启停操作超过 10 秒仍未结束时，市场进入“等待宿主确认”并暂停新的 profile 写入；这不表示原操作已经取消。迟到的成功或失败仍会被处理、核对，结束前不会重复启停同一个 loader。读取目录和状态不受这次隔离影响。
+
+锁文件与 manifest 不一致、锁文件缺少依赖条目、安装脚本长期无输出是不同错误，市场分别提示，不把它们都当网络错误自动重试。请保留诊断并先备份再修复，不要删除整个锁文件重新解析其他插件。
 
 浏览器能够访问 GitHub，不能单独证明实际运行 DSH 的进程和 pnpm 已使用相同代理；也可能卡在依赖解析或构建阶段。
 
@@ -131,10 +173,10 @@ dsh plugin --profile web add "dsh-skin-market@latest"
 复制以下内容给 DSH Agent；它会先判断宿主，再选择更新方式：
 
 ```text
-请更新已安装的 dsh-skin-market。先运行 dsh --version，并根据当前宿主和实际 profile 判断是 Web 版还是官方 Desktop；无法判断就先问我。
+请更新已安装的 dsh-skin-market。先判断当前宿主和实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。
 
 - Web 版：只读确认 web profile 已安装 dsh-skin-market，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
-- 官方 Desktop：不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
+- 官方 Desktop：应用运行时不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
 
 更新后验证同一宿主的 dsh-skin-market 依赖和 bundle，告诉我更新前后版本及需要重启哪个宿主。不要替我更新或卸载其他皮肤。
 ```
@@ -316,7 +358,9 @@ npm run release -- VERSION --dry-run
 ## 安全说明
 
 - 浏览器只能提交 registry 中的 `skinId`，不能提交任意命令或安装地址
-- 安装、更新和激活失败时会恢复 profile manifest 快照并清理半安装状态
+- Web 的目录、状态、日志与修改 API 使用宿主登录检查；POST 同时核对同源和宿主声明的可信地址。宿主没有登录接口时保留原有地址限制
+- Web 重启只接受直接回环连接、拒绝代理转发，并检查正在进行的插件操作和 Agent 状态；官方 Desktop 使用手动应用重启
+- Web 失败恢复使用操作前的快照并核验实际构件；官方 Desktop 保留管理器的权威结果，不把未知结果或配置恢复单独当作安装成功
 - GitHub Stars 由定时收录任务写入带更新时间的目录快照，页面和 Host 都不在浏览时请求 GitHub API
 - 市场不会代替开发者登录 GitHub，也不会静默创建 PR
 

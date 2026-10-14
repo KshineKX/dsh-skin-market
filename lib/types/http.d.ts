@@ -10,12 +10,15 @@ export declare function sendText(response: ServerResponse, status: number, value
  * able to make a matching Origin/Host pair for an arbitrary authority.
  */
 export declare function loopbackAuthority(host: string | undefined): boolean;
-/**
- * Accept same-origin browser requests and the official Desktop proxy's
- * header-stripped requests. A missing Origin is allowed because the proxy
- * strips it; a present but invalid/cross-site Origin remains rejected.
- */
-export declare function sameOrigin(request: IncomingMessage): boolean;
+export declare function trustedAuthority(host: string, trustedHosts: readonly string[]): boolean;
+export declare function sameOrigin(request: IncomingMessage, trustedHosts?: readonly string[]): boolean;
+export interface HostConnectionLike {
+    trustedHosts?: unknown;
+    requestRejection?(request: IncomingMessage): number | undefined;
+}
+/** Consult the same host admission policy as its own API, including browser login. */
+export declare function refuseUnadmitted(request: IncomingMessage, response: ServerResponse, connection?: HostConnectionLike): boolean;
+export declare function directLoopbackRequest(request: IncomingMessage): boolean;
 export declare function readSkinId(request: IncomingMessage, limit?: number): Promise<string>;
 export declare function readOperationRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-build'>;
 export type RestartTarget = {

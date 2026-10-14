@@ -14,6 +14,25 @@ function success(): CommandResult {
 }
 
 describe('pnpm recovery', () => {
+  it.each([
+    ['ERR_PNPM_OUTDATED_LOCKFILE', 'lockfile-outdated'],
+    ['ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY', 'lockfile-broken'],
+    ['Broken lockfile: no entry for dependency', 'lockfile-broken'],
+  ])('classifies %s on either output stream without an automatic retry', async (diagnostic, kind) => {
+    const result = { ...failed(''), stdout: JSON.stringify({ level: 'error', code: diagnostic, err: { message: diagnostic } }) }
+    expect(classifyPnpmFailure(result).kind).toBe(kind)
+    let attempts = 0
+    await expect(runPnpmWithRecovery(['add', 'skin@1.0.0'], { attempt: async () => { attempts += 1; return result } })).rejects.toMatchObject({ failure: { kind } })
+    expect(attempts).toBe(1)
+  })
+
+  it('reports the last silent install script without treating it as a network retry', async () => {
+    const result = failed('node_modules/first postinstall: started\nnode_modules/@example/binary-fetcher postinstall: waiting\nfetch failed\ndsh: pnpm printed nothing for 600000ms and was terminated')
+    expect(classifyPnpmFailure(result)).toMatchObject({ kind: 'script-timeout', packageName: '@example/binary-fetcher', message: expect.stringContaining('10 分钟') })
+    let attempts = 0
+    await expect(runPnpmWithRecovery(['add', 'skin@1.0.0'], { attempt: async () => { attempts += 1; return result } })).rejects.toMatchObject({ failure: { kind: 'script-timeout' } })
+    expect(attempts).toBe(1)
+  })
   it('retries a release-age failure with a command-scoped override', async () => {
     const calls: Array<{ args: readonly string[]; env?: NodeJS.ProcessEnv }> = []
     await runPnpmWithRecovery(['add', '@example/skin@1.0.0'], {

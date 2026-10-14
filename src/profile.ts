@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
 import { parse, stringify } from 'yaml'
 import { effectiveBuildApprovalKey } from './build-approval.ts'
 import { npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError } from './install-resolution.ts'
 import { parseInsertedLoaderRows, primaryLoaderCandidates, sharedLoaderIdentifiers, type LoaderIdentity } from './loader-ownership.ts'
+import { isVersionRange, satisfiesVersionRange } from './semver.ts'
 import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, PersistedMarketState, SkinActivity, SkinEntry, SkinRuntimeState } from './types.ts'
 
 export type { LoaderIdentity } from './loader-ownership.ts'
@@ -52,6 +53,13 @@ export function readMarketState(profileDir: string): PersistedMarketState {
     const normalized = normalizeManagedLoaders(value.managedLoaders)
     if (normalized === undefined) delete value.managedLoaders
     else value.managedLoaders = normalized
+  }
+  if (value.pendingRestart !== undefined) {
+    const pending = value.pendingRestart
+    if (!isRecord(pending) || !Number.isInteger(pending.pid) || (pending.pid as number) <= 0
+      || !Array.isArray(pending.skinIds) || pending.skinIds.some(id => typeof id !== 'string' || id.length === 0)) {
+      delete value.pendingRestart
+    } else value.pendingRestart = { pid: pending.pid as number, skinIds: [...new Set(pending.skinIds as string[])] }
   }
   return value
 }
@@ -144,7 +152,7 @@ export function packageManifest(profileDir: string, packageName: string): Record
   return readJson<Record<string, unknown> | null>(file, null)
 }
 
-function npmLockfileIntegrity(profileDir: string, packageName: string, version: string): string | null {
+function npmLockfileResolution(profileDir: string, packageName: string, version: string): { integrity: string | null; tarball: string | null } | null {
   const file = pnpmLockfile(profileDir)
   if (!existsSync(file)) return null
   let value: unknown
@@ -153,15 +161,47 @@ function npmLockfileIntegrity(profileDir: string, packageName: string, version: 
   const packages = value.packages as Record<string, unknown>
   const prefix = `${packageName}@${version}`
   for (const [key, entry] of Object.entries(packages)) {
-    if (!(key === prefix || key.startsWith(`${prefix}(`) || key.startsWith(`/${prefix}/`))) continue
-    if (!isRecord(entry) || !isRecord(entry.resolution) || typeof entry.resolution.integrity !== 'string') continue
-    return entry.resolution.integrity
+    if (!(key === prefix || key === `/${prefix}` || key.startsWith(`${prefix}(`) || key.startsWith(`/${prefix}(`) || key.startsWith(`/${prefix}/`))) continue
+    if (!isRecord(entry) || !isRecord(entry.resolution)) continue
+    return {
+      integrity: typeof entry.resolution.integrity === 'string' ? entry.resolution.integrity : null,
+      tarball: typeof entry.resolution.tarball === 'string' ? entry.resolution.tarball : null,
+    }
   }
   return null
 }
 
+function npmLockfileIntegrity(profileDir: string, packageName: string, version: string): string | null {
+  return npmLockfileResolution(profileDir, packageName, version)?.integrity ?? null
+}
+
 function exactNpmSpecMatches(spec: string | null | undefined, packageName: string, version: string): boolean {
   return spec === version || spec === `${packageName}@${version}` || spec === `npm:${packageName}@${version}`
+}
+
+function npmRange(spec: string | undefined, packageName: string): string | null {
+  if (spec === undefined) return null
+  const range = spec.startsWith(`npm:${packageName}@`) ? spec.slice(`npm:${packageName}@`.length)
+    : spec.startsWith(`${packageName}@`) ? spec.slice(`${packageName}@`.length) : spec
+  return isVersionRange(range) && range !== 'unverified' ? range : null
+}
+
+function npmImporterResolution(profileDir: string, packageName: string): { specifier: string; version: string } | null {
+  let lock: unknown
+  try { lock = parse(readFileSync(pnpmLockfile(profileDir), 'utf8')) as unknown } catch { return null }
+  if (!isRecord(lock) || !isRecord(lock.importers) || !isRecord(lock.importers['.'])) return null
+  const importer = lock.importers['.']
+  const dependency = isRecord(importer.dependencies) ? importer.dependencies[packageName] : undefined
+  if (!isRecord(dependency) || typeof dependency.specifier !== 'string' || typeof dependency.version !== 'string') return null
+  return { specifier: dependency.specifier, version: dependency.version }
+}
+
+/** Every accepted npm source must resolve through its matching root importer. */
+function npmImporterMatches(profileDir: string, packageName: string, spec: string, version: string): boolean {
+  const importer = npmImporterResolution(profileDir, packageName)
+  if (importer === null || importer.specifier !== spec) return false
+  const resolved = importer.version.replace(/\(.*$/, '')
+  return exactNpmSpecMatches(resolved, packageName, version)
 }
 
 function validateInstalledNpmSource(profileDir: string, skin: SkinEntry, manifest: Record<string, unknown>): string | null {
@@ -171,7 +211,21 @@ function validateInstalledNpmSource(profileDir: string, skin: SkinEntry, manifes
   // existing GitHub install. Older npm versions also remain updateable; the
   // current artifact's integrity cannot validate a different release.
   const spec = readDependencies(profileDir)[skin.package]
-  if (!exactNpmSpecMatches(spec, npm.name, npm.version)) return null
+  const exact = exactNpmSpecMatches(spec, npm.name, npm.version)
+  const range = npmRange(spec, npm.name)
+  if (!exact && range === null) return null
+  if (!exact && typeof manifest.version === 'string' && exactNpmSpecMatches(spec, npm.name, manifest.version)) return null
+  if (!exact) {
+    if (typeof manifest.version !== 'string' || !satisfiesVersionRange(manifest.version, range!)) {
+      return `installed npm package ${skin.package} version mismatch; the materialized version does not satisfy its declared source`
+    }
+    if (!npmImporterMatches(profileDir, skin.package, spec!, manifest.version)) {
+      return `installed npm package ${skin.package} lockfile importer mismatch; the declared source is not resolved to its materialized version`
+    }
+    // The current reviewed SRI cannot validate an older release, but a range
+    // resolving to the reviewed release must never bypass that validation.
+    if (manifest.version !== npm.version) return null
+  }
   const sourceError = reviewedNpmSourceError(skin)
   if (sourceError !== null) return sourceError
   if (manifest.version !== npm.version) {
@@ -192,6 +246,104 @@ function validateInstalledNpmSource(profileDir: string, skin: SkinEntry, manifes
     return `installed npm package ${skin.package} integrity mismatch; expected the reviewed npm artifact`
   }
   return null
+}
+
+export interface InstalledArtifactSnapshot {
+  packageName: string
+  name: string | null
+  version: string | null
+  spec: string | null
+  ok: boolean
+  reason?: string
+  files: Array<{ kind: 'host' | 'client' | 'bundle'; path: string; sha256: string }>
+  resolution?: { specifier: string; version: string; integrity: string | null; tarball: string | null } | null
+}
+
+function runtimeExport(value: unknown): string | null {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map(runtimeExport).find((target): target is string => target !== null) ?? null
+  if (!isRecord(value)) return null
+  for (const condition of ['node', 'import', 'default', 'require']) {
+    const target = runtimeExport(value[condition])
+    if (target !== null) return target
+  }
+  return null
+}
+
+/** Inspect only this package's declared executable entries; never import code. */
+export function snapshotInstalledArtifact(profileDir: string, packageName: string): InstalledArtifactSnapshot {
+  const snapshot: InstalledArtifactSnapshot = { packageName, name: null, version: null, spec: readDependencies(profileDir)[packageName] ?? null, ok: false, files: [] }
+  if (!/^(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9._~-]+$/.test(packageName)) {
+    snapshot.reason = 'invalid package name'
+    return snapshot
+  }
+  const manifest = packageManifest(profileDir, packageName)
+  snapshot.name = typeof manifest?.name === 'string' ? manifest.name : null
+  snapshot.version = typeof manifest?.version === 'string' ? manifest.version : null
+  if (manifest === null || snapshot.name !== packageName || snapshot.version === null) {
+    snapshot.reason = `installed artifact metadata missing or mismatched for ${packageName}`
+    return snapshot
+  }
+  const importer = npmImporterResolution(profileDir, packageName)
+  snapshot.resolution = importer === null ? null : { ...importer, integrity: null, tarball: null, ...npmLockfileResolution(profileDir, packageName, snapshot.version) }
+  const directory = resolve(packageDir(profileDir, packageName))
+  const add = (kind: 'host' | 'client' | 'bundle', target: string): void => {
+    const file = resolve(directory, target)
+    // Declared files stay inside the package; secret-shaped targets are never
+    // read even when a malformed package declares one as an executable entry.
+    if (!file.startsWith(`${directory}${sep}`) || target.split(/[\\/]/).some(part => part === '.env' || part.startsWith('.env.'))) {
+      throw new Error(`unsafe ${kind} entry declared by ${packageName}`)
+    }
+    const physicalDirectory = realpathSync(directory)
+    const physicalFile = realpathSync(file)
+    if (!physicalFile.startsWith(`${physicalDirectory}${sep}`) || !statSync(file).isFile()) throw new Error(`${kind} entry missing for ${packageName}`)
+    const sha256 = createHash('sha256').update(readFileSync(file)).digest('hex')
+    if (!snapshot.files.some(entry => entry.kind === kind && entry.path === target)) snapshot.files.push({ kind, path: target, sha256 })
+  }
+  try {
+    const exports = manifest.exports
+    const host = runtimeExport(isRecord(exports) && Object.keys(exports).some(key => key.startsWith('.')) ? exports['.'] : exports)
+      ?? (typeof manifest.main === 'string' ? manifest.main : null)
+    if (host !== null) add('host', host)
+    const dsh = isRecord(manifest.dsh) ? manifest.dsh : undefined
+    if (isRecord(dsh?.client)) {
+      const client = runtimeExport(isRecord(exports) ? exports['./client'] : undefined)
+      if (client === null) throw new Error(`client export missing for ${packageName}`)
+      add('client', client)
+    }
+    if (isRecord(dsh?.bundle)) {
+      const patches = dsh.bundle.patch
+      const targets = typeof patches === 'string' ? [patches] : Array.isArray(patches) && patches.every(path => typeof path === 'string') ? patches : null
+      if (targets === null) throw new Error(`bundle patch declaration invalid for ${packageName}`)
+      for (const target of targets) {
+        add('bundle', target)
+        if (!Array.isArray(parse(readFileSync(resolve(directory, target), 'utf8')))) throw new Error(`bundle patch invalid for ${packageName}`)
+      }
+    }
+    if (snapshot.files.length === 0) throw new Error(`no executable artifact declared by ${packageName}`)
+    snapshot.ok = true
+  } catch {
+    // Do not surface filesystem diagnostics or package-provided paths here.
+    snapshot.reason = `declared executable artifact missing or invalid for ${packageName}`
+  }
+  return snapshot
+}
+
+/** Compare recovery to the installed release before the operation, not today's catalog. */
+export function compareInstalledArtifact(profileDir: string, baseline: InstalledArtifactSnapshot): { ok: boolean; reason?: string; artifact: InstalledArtifactSnapshot } {
+  const artifact = snapshotInstalledArtifact(profileDir, baseline.packageName)
+  if (!baseline.ok) return { ok: false, reason: 'the pre-operation artifact was not verifiable', artifact }
+  if (!artifact.ok) return { ok: false, reason: artifact.reason, artifact }
+  if (artifact.name !== baseline.name || artifact.version !== baseline.version || artifact.spec !== baseline.spec) {
+    return { ok: false, reason: 'the recovered package identity or source differs from the pre-operation artifact', artifact }
+  }
+  if (JSON.stringify(artifact.resolution) !== JSON.stringify(baseline.resolution)) {
+    return { ok: false, reason: 'the recovered lockfile resolution differs from the pre-operation artifact', artifact }
+  }
+  if (JSON.stringify(artifact.files) !== JSON.stringify(baseline.files)) {
+    return { ok: false, reason: 'the recovered executable entries differ from the pre-operation artifact', artifact }
+  }
+  return { ok: true, artifact }
 }
 
 /** Hint when a GitHub subdirectory install may have lost `&path:` in shell/cmd. */
@@ -242,6 +394,67 @@ export function installedSpecMatches(skin: SkinEntry, spec: string | null | unde
   if (npm !== undefined && exactNpmSpecMatches(spec, npm.name, npm.version)) return true
   const desktop = skin.install.desktop
   return desktop?.mode === 'managed' && exactNpmSpecMatches(spec, desktop.packageName, desktop.packageVersion)
+}
+
+/** A manager-written npm range is accepted only through its installed resolution. */
+export function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined): boolean {
+  if (installedSpecMatches(skin, spec)) return true
+  if (typeof spec !== 'string' || readDependencies(profileDir)[skin.package] !== spec) return false
+  const manifest = packageManifest(profileDir, skin.package)
+  const npm = skin.install.npm
+  if (manifest?.name === skin.package && npm !== undefined && manifest.version === npm.version && npmRange(spec, npm.name) !== null) {
+    return npmImporterMatches(profileDir, skin.package, spec, npm.version) && validateInstalledNpmSource(profileDir, skin, manifest) === null
+  }
+  return skin.install.desktop?.mode === 'managed' && validateDesktopArtifact(profileDir, skin).ok
+}
+
+export interface NpmArtifactSource {
+  name: string
+  version: string
+  integrity?: string
+  gitHead?: string
+  tarball?: string
+}
+
+/** Validate materialized npm entries and the root lock contract without importing code. */
+export function validateNpmArtifact(profileDir: string, source: NpmArtifactSource): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
+  const failure = (reason: string) => ({ ok: false, reason, integrityVerified: false })
+  const artifact = snapshotInstalledArtifact(profileDir, source.name)
+  if (!artifact.ok || artifact.name !== source.name || artifact.version !== source.version) {
+    return failure('npm 未物化预期包版本或声明的可加载入口')
+  }
+  const spec = artifact.spec
+  if (!exactNpmSpecMatches(spec, source.name, source.version)) {
+    const range = npmRange(spec ?? undefined, source.name)
+    if (range === null || !satisfiesVersionRange(source.version, range)) {
+      return failure('npm 包来源与预期包版本不一致')
+    }
+  }
+  if (spec === null || !npmImporterMatches(profileDir, source.name, spec, source.version)) {
+    return failure('npm 包来源与锁文件 root importer 实际解析版本不一致')
+  }
+  const resolution = npmLockfileResolution(profileDir, source.name, source.version)
+  if (source.integrity !== undefined && resolution?.integrity !== source.integrity) {
+    return failure('npm 包完整性与已核验的 SRI 不一致')
+  }
+  if (source.tarball !== undefined && resolution?.tarball !== null && resolution?.tarball !== undefined && resolution.tarball !== source.tarball) {
+    return failure('npm 锁文件下载地址与已核验构件不一致')
+  }
+  const manifest = packageManifest(profileDir, source.name)
+  if (source.gitHead !== undefined && manifest?.gitHead !== undefined
+    && (typeof manifest.gitHead !== 'string' || manifest.gitHead.toLowerCase() !== source.gitHead.toLowerCase())) {
+    return failure('npm 包 gitHead 与已核验构件不一致')
+  }
+  return { ok: true, version: source.version, integrityVerified: source.integrity !== undefined }
+}
+
+/** Validate managed Desktop metadata without inventing missing npm provenance. */
+export function validateDesktopArtifact(profileDir: string, skin: SkinEntry): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
+  const capability = skin.install.desktop
+  if (capability?.mode !== 'managed' || capability.packageName !== skin.package || capability.packageVersion !== skin.install.version) {
+    return { ok: false, reason: 'Desktop 安装元数据与市场固定包或版本不一致', integrityVerified: false }
+  }
+  return validateNpmArtifact(profileDir, { name: capability.packageName, version: capability.packageVersion, ...(capability.integrity === undefined ? {} : { integrity: capability.integrity }) })
 }
 
 /** Only offer an explicit migration between the same reviewed GitHub/npm release. */
@@ -426,14 +639,24 @@ function bundlePatchOperationsAt(packageDirectory: string, packageName: string):
   const manifest = packageManifestAt(packageDirectory)
   const dsh = isRecord(manifest?.dsh) ? manifest.dsh : undefined
   if (dsh?.bundle === undefined) return null
-  if (!isRecord(dsh.bundle) || typeof dsh.bundle.patch !== 'string') {
+  const declaration = isRecord(dsh.bundle) ? dsh.bundle.patch : undefined
+  const targets = typeof declaration === 'string' ? [declaration]
+    : Array.isArray(declaration) && declaration.every(path => typeof path === 'string') ? declaration : null
+  if (targets === null) {
     throw new Error(`${packageName} declares dsh.bundle without a valid patch path`)
   }
-  const file = resolve(packageDirectory, dsh.bundle.patch)
-  if (!existsSync(file)) throw new Error(`${packageName} bundle patch is missing: ${dsh.bundle.patch}`)
-  const value = parse(readFileSync(file, 'utf8')) as unknown
-  if (!Array.isArray(value)) throw new Error(`${packageName} cordis.patch.yml must contain a YAML sequence`)
-  return value as PatchOperation[]
+  const directory = resolve(packageDirectory)
+  return targets.flatMap(target => {
+    const file = resolve(directory, target)
+    if (!file.startsWith(`${directory}${sep}`) || target.split(/[\\/]/).some(part => part === '.env' || part.startsWith('.env.'))) {
+      throw new Error(`${packageName} bundle patch path is unsafe`)
+    }
+    if (!existsSync(file)) throw new Error(`${packageName} bundle patch is missing: ${target}`)
+    if (!realpathSync(file).startsWith(`${realpathSync(directory)}${sep}`)) throw new Error(`${packageName} bundle patch path is unsafe`)
+    const value = parse(readFileSync(file, 'utf8')) as unknown
+    if (!Array.isArray(value)) throw new Error(`${packageName} cordis.patch.yml must contain a YAML sequence`)
+    return value as PatchOperation[]
+  })
 }
 
 function bundlePatchOperations(profileDir: string, packageName: string): PatchOperation[] | null {
@@ -813,7 +1036,7 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
   }
   const active = primary || pinned
   const activation = active ? (loaderFound ? (loaderLive ? 'active' : 'restart-required') : 'restart-required') : 'inactive'
-  const pinnedSpecMatches = installedSpecMatches(skin, spec)
+  const pinnedSpecMatches = reviewedInstalledSpecMatches(profileDir, skin, spec)
   const updateAvailable = validation.version !== skin.install.version || !pinnedSpecMatches || companionsNeedInstall(profileDir, skin)
   return {
     skinId: skin.id,

@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from './build-approval.ts'
 import { assessCompatibility } from './compatibility.ts'
 import { persistCompatibilityPatch, planCompatibilityPatch } from './compatibility-adapter.ts'
-import type { CommandOptions, PluginInstallRequest, PluginRunner } from './commands.ts'
+import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { loadCatalog } from './catalog.ts'
 import { companionAsSkin, discoverMonorepoTarget, isNpmInstallTarget, preferredInstallTarget, reviewedNpmSourceError, updateInstallTarget } from './install-resolution.ts'
 import { sharedLoaderIdentifiers } from './loader-ownership.ts'
@@ -14,12 +14,13 @@ import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
 import { cleanOrphanedStore } from './store.ts'
 import { logEvent } from './log.ts'
+import { compareVersions, isVersionRange, satisfiesVersionRange } from './semver.ts'
 import {
   companionNeedsInstall,
   ensureBuildAllowed,
   ensureSkinRegistration,
   hasLoaderOverride,
-  installedSpecMatches,
+  reviewedInstalledSpecMatches,
   npmSourceMigration,
   cleanupCompatibilityPatchFiles,
   detachCompatibilityPatches,
@@ -44,10 +45,14 @@ import {
   restoreManifest,
   runtimeState,
   snapshotFile,
+  snapshotInstalledArtifact,
+  compareInstalledArtifact,
   validateInstalledSkin,
+  validateDesktopArtifact,
   writeMarketState,
   type FileSnapshot,
   type LoaderIdentity,
+  type InstalledArtifactSnapshot,
 } from './profile.ts'
 import type { DesktopInstallCapability, DshRuntime, InstallConflict, LoaderEntry, MarketHostKind, Operation, OperationFailure, OperationKind, PersistedMarketState, SkinEntry, SkinRuntimeState } from './types.ts'
 
@@ -65,6 +70,7 @@ export interface LifecycleOptions {
   /** Shared by all preparation/install attempts; recovery has its own budget. */
   operationTimeoutMs?: number
   recoveryTimeoutMs?: number
+  lifecycleWaitMs?: number
 }
 
 const OPERATION_TIMEOUT_MS = 15 * 60 * 1000
@@ -108,6 +114,10 @@ function removePrefetchDirectory(directory: string): void {
 
 function errorMessage(error: unknown): string { return error instanceof Error ? error.message : String(error) }
 
+class ManagedOperationError extends Error {
+  constructor(readonly result: CommandResult, message: string) { super(message) }
+}
+
 function recoveryMessage(failure: PnpmFailure): string {
   if (failure.recovery === 'disable-peer-autoinstall') return '检测到宿主提供但 npm 未发布的 peer，正在关闭 peer 自动安装并重试'
   if (failure.kind === 'release-age') return '检测到新包保护，正在临时放宽本次命令并重试'
@@ -123,6 +133,7 @@ interface ProfileInstallSnapshot {
   workspace: FileSnapshot
   lockfile: FileSnapshot
   compatibility: FileSnapshot
+  artifact: InstalledArtifactSnapshot
 }
 
 function snapshotInstallFiles(profileDir: string, packageName: string, version: string): ProfileInstallSnapshot {
@@ -133,6 +144,7 @@ function snapshotInstallFiles(profileDir: string, packageName: string, version: 
     workspace: snapshotFile(pnpmWorkspaceFile(profileDir)),
     lockfile: snapshotFile(pnpmLockfile(profileDir)),
     compatibility: snapshotFile(compatibilityPatchFile(profileDir, packageName, version)),
+    artifact: snapshotInstalledArtifact(profileDir, packageName),
   }
 }
 
@@ -207,6 +219,14 @@ export class SkinLifecycle {
   private skinById: Map<string, SkinEntry>
   private disposeEvent?: () => void
   private disposed = false
+  private readonly pendingLifecycle = new Set<Promise<unknown>>()
+  private unresolvedManager = false
+
+  get waitingReason(): string | undefined {
+    if (this.unresolvedManager) return '宿主未返回可确认的操作结果，请重新打开宿主后核对插件状态'
+    if (this.pendingLifecycle.size > 0) return '插件仍在完成启停，结果尚未确认；暂时不能继续修改此 profile'
+    return undefined
+  }
 
   constructor(private readonly host: LifecycleHost, private readonly options: LifecycleOptions, catalog = loadCatalog().skins) {
     this.catalogEntries = catalog
@@ -216,19 +236,104 @@ export class SkinLifecycle {
   get catalog(): SkinEntry[] { return this.catalogEntries }
 
   private get hostKind(): MarketHostKind { return this.options.hostKind ?? this.options.runner.hostKind ?? 'dsh' }
+  private get management() { return this.options.runner.management }
+
+  private acceptManagement(result: CommandResult, operation?: Operation): void {
+    const managed = result.management
+    if (managed?.indeterminate === true) {
+      this.unresolvedManager = true
+      if (operation !== undefined) this.update(operation, 'waiting', this.waitingReason)
+      throw new Error(this.waitingReason)
+    }
+    if (managed?.application !== undefined && operation !== undefined) {
+      operation.application = managed.application
+      if (managed.application === 'restart-required') operation.restartRequired = true
+      if (managed.pendingBuilds !== undefined) this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
+    }
+    if (result.exitCode !== 0 || managed?.application === 'overridden') {
+      throw new ManagedOperationError(result, managed?.application === 'overridden' ? '启停设置已保存，但被其他配置覆盖，尚未生效' : result.stderr || result.stdout || '官方插件管理操作未完成')
+    }
+  }
+
+  private async awaitLifecycle<T>(promise: Promise<T>, operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)): Promise<T> {
+    let delayed = false
+    const timer = setTimeout(() => {
+      delayed = true
+      this.pendingLifecycle.add(promise)
+      if (operation !== undefined) this.update(operation, 'waiting', this.waitingReason)
+    }, this.options.lifecycleWaitMs ?? 10_000)
+    timer.unref?.()
+    try {
+      const result = await promise
+      if (this.disposed) throw new Error('皮肤市场宿主已停止')
+      return result
+    } finally {
+      clearTimeout(timer)
+      this.pendingLifecycle.delete(promise)
+      if (delayed && operation?.phase === 'waiting' && !this.unresolvedManager && !this.disposed) this.update(operation, 'activating', '宿主启停已结束，正在核对结果')
+    }
+  }
+
+  private recordRestart(state: PersistedMarketState, skinId: string, required: boolean, removed = false): void {
+    const ids = new Set(state.pendingRestart?.pid === process.pid ? state.pendingRestart.skinIds : [])
+    if (required) ids.add(skinId)
+    else if (removed || this.management === undefined) ids.delete(skinId)
+    state.pendingRestart = ids.size === 0 ? undefined : { pid: process.pid, skinIds: [...ids] }
+  }
+
+  private async registerSkin(skin: SkinEntry, disabled = true): Promise<void> {
+    if (this.management === undefined) return ensureSkinRegistration(this.options.profileDir, skin, disabled)
+    const manifest = packageManifest(this.options.profileDir, skin.package)
+    if (!disabled) this.assertLegacyOfficialPeers(manifest)
+    const operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)
+    const bundled = manifest !== null && typeof manifest.dsh === 'object' && manifest.dsh !== null && (manifest.dsh as Record<string, unknown>).bundle !== undefined
+    if (bundled) {
+      const selected = readProfileBundles(this.options.profileDir).includes(skin.package)
+      const installing = operation !== undefined && ['install', 'update', 'migrate'].includes(operation.kind)
+      if (selected === !disabled && (operation === undefined || installing && operation.restartRequired === true)) return
+      this.acceptManagement(await this.awaitLifecycle(this.management.setBundleEnabled(skin.package, !disabled)), operation)
+      return
+    }
+    if (operation === undefined) return
+    const rows = await this.management.listPlugins()
+    const matches = Array.isArray(rows) ? rows.filter((row: Record<string, unknown>) => row.patchId === skin.rowId && row.moduleName === skin.package && typeof row.entryId === 'string') : []
+    if (matches.length !== 1) throw new Error('此插件没有可由当前官方管理服务启停的组合包或唯一插件行，请使用官方插件页')
+    this.acceptManagement(await this.awaitLifecycle(this.management.setPluginEnabled(matches[0].entryId as string, !disabled)), operation)
+  }
 
   private get runtime(): DshRuntime {
     return this.options.runtime ?? { version: null, capabilities: [], source: 'unknown' }
   }
 
+  private assertLegacyOfficialPeers(manifest: Record<string, unknown> | null): void {
+    if (this.management === undefined || this.runtime.version === null || compareVersions(this.runtime.version, '0.1.7-rc.1') >= 0) return
+    const peers = manifest?.peerDependencies
+    if (peers === undefined) return
+    if (peers === null || typeof peers !== 'object' || Array.isArray(peers)) throw new Error('插件 peerDependencies 无效，旧版官方宿主无法核验兼容性')
+    for (const [name, value] of Object.entries(peers)) {
+      if (name !== '@deepseek-ai/dsh' && !name.startsWith('@deepseek-ai/dsh-')) continue
+      if (typeof value !== 'string' || value.trim() === '') throw new Error(`插件 ${name} 的兼容范围无效`)
+      const range = value.trim()
+      if (['workspace:^', 'workspace:~', 'workspace:*', '*', 'x', 'X'].includes(range)) continue
+      const canonicalNumbers = range.split(/[\s|]+/).filter(Boolean).every(term => {
+        const raw = term.replace(/^[><=^~]+/, '').split('+')[0]!
+        const [core, ...suffix] = raw.split('-')
+        return !core!.split('.').some(part => /^0\d+$/.test(part)) && !suffix.join('-').split('.').some(part => /^0\d+$/.test(part))
+      })
+      if (!canonicalNumbers || !isVersionRange(range) || !satisfiesVersionRange(this.runtime.version, range)) throw new Error(`旧版官方宿主不能确认 ${name} ${range} 与 DSH ${this.runtime.version} 兼容，请使用维护者声明兼容的版本`)
+    }
+  }
+
   private async applyCompatibility(skin: SkinEntry, operation: Operation): Promise<void> {
     const plan = planCompatibilityPatch(this.options.profileDir, skin, this.runtime)
     if (plan === null || plan.adapterIds.length === 0) return
+    if (this.management !== undefined) throw new Error('当前官方 Desktop 的插件事务不能由市场改写兼容补丁，请使用适合当前宿主的插件版本')
     persistCompatibilityPatch(this.options.profileDir, plan)
     await this.syncPnpmMetadata(operation, `正在应用兼容适配：${plan.adapterIds.join('、')}`)
   }
 
   private async syncPnpmMetadata(operation: Operation, message = '正在同步 pnpm 锁文件'): Promise<void> {
+    if (this.management !== undefined) return
     if (!patchedDependenciesNeedSync(this.options.profileDir)) return
     this.update(operation, 'installing', message)
     await this.run(['install', '--no-frozen-lockfile'], operation)
@@ -272,15 +377,16 @@ export class SkinLifecycle {
 
   start(): void {
     if (this.disposed) return
-    void this.replay()
+    void this.replay().catch(error => logEvent('error', 'startup-replay', errorMessage(error)))
     this.disposeEvent = this.host.on?.('internal/plugin', fiber => {
+      if (this.disposed || this.profileLockOwner !== null || this.waitingReason !== undefined) return
       const name = fiber.entry?.options?.name
       const id = fiber.entry?.options?.id
       const skin = this.catalog.find(item => item.rowId === name || item.rowId === id || item.package === name)
       if (skin === undefined) return
       const state = readMarketState(this.options.profileDir)
       const shouldDisable = !enabledSkinIds(state).has(skin.id)
-      void this.setEntryDisabled(skin, shouldDisable)
+      void this.setEntryDisabled(skin, shouldDisable).catch(error => logEvent('error', 'loader-replay', errorMessage(error)))
     })
   }
 
@@ -290,7 +396,12 @@ export class SkinLifecycle {
     this.disposeEvent?.()
     this.disposeEvent = undefined
     for (const controller of this.abortControllers.values()) controller.abort()
-    await Promise.allSettled([...this.executions.values()])
+    let timer: ReturnType<typeof setTimeout> | undefined
+    await Promise.race([
+      Promise.allSettled([...this.executions.values()]),
+      new Promise<void>(resolve => { timer = setTimeout(resolve, this.options.lifecycleWaitMs ?? 10_000) }),
+    ])
+    if (timer !== undefined) clearTimeout(timer)
     for (const timer of this.deadlineTimers.values()) clearTimeout(timer)
     for (const timer of this.operationCleanupTimers.values()) clearTimeout(timer)
     this.deadlineTimers.clear()
@@ -322,6 +433,10 @@ export class SkinLifecycle {
   }
 
   private async setEntryDisabled(skin: SkinEntry, disabled: boolean): Promise<{ found: boolean; live: boolean }> {
+    if (this.management !== undefined) {
+      const entries = this.entriesFor(skin)
+      return { found: entries.length > 0, live: entries.some(entry => entry.fiber !== undefined && entry.options.disabled !== true) }
+    }
     return await this.setLoaderDisabled({ id: skin.rowId, name: skin.package }, disabled)
   }
 
@@ -338,7 +453,8 @@ export class SkinLifecycle {
       // restart.
       const currentlyDisabled = entry.options.disabled === true
       if (currentlyDisabled === disabled) continue
-      await entry.update({ disabled: disabled ? true : null }, false, true)
+      if (this.disposed) throw new Error('皮肤市场宿主已停止')
+      await this.awaitLifecycle(entry.update({ disabled: disabled ? true : null }, false, true))
     }
     return { found: entries.length > 0, live: entries.some(entry => entry.fiber !== undefined) }
   }
@@ -377,13 +493,14 @@ export class SkinLifecycle {
       if (!identity.ownerSkinIds.includes(skinId)) continue
       identity.ownerSkinIds = identity.ownerSkinIds.filter(ownerSkinId => ownerSkinId !== skinId)
       if (identity.ownerSkinIds.length > 0) continue
-      setManagedLoaderOverride(this.options.profileDir, identity, false)
+      if (this.management === undefined) setManagedLoaderOverride(this.options.profileDir, identity, false)
       delete state.managedLoaders?.[key]
     }
     if (state.managedLoaders !== undefined && Object.keys(state.managedLoaders).length === 0) delete state.managedLoaders
   }
 
   private async syncManagedLoaders(state: PersistedMarketState, live: boolean): Promise<void> {
+    if (this.management !== undefined) return
     const enabled = enabledSkinIds(state)
     for (const identity of Object.values(state.managedLoaders ?? {})) {
       const disabled = !identity.ownerSkinIds.some(ownerSkinId => enabled.has(ownerSkinId))
@@ -401,6 +518,7 @@ export class SkinLifecycle {
   }
 
   private requiresRestartForTransition(previous: PersistedMarketState, next: PersistedMarketState): boolean {
+    if (this.management !== undefined) return false
     const changed = new Set([...enabledSkinIds(previous), ...enabledSkinIds(next)])
     const dependencies = readDependencies(this.options.profileDir)
     return [...changed].some(id => {
@@ -410,7 +528,12 @@ export class SkinLifecycle {
   }
 
   async replay(): Promise<void> {
+    if (this.disposed || this.waitingReason !== undefined) return
     const state = readMarketState(this.options.profileDir)
+    if (state.pendingRestart !== undefined && state.pendingRestart.pid !== process.pid) {
+      delete state.pendingRestart
+      writeMarketState(this.options.profileDir, state)
+    }
     const dependencies = readDependencies(this.options.profileDir)
     const installed = this.catalog.filter(skin => dependencies[skin.package] !== undefined)
     const rootBundles = new Set(readProfileBundles(this.options.profileDir))
@@ -432,7 +555,7 @@ export class SkinLifecycle {
       writeMarketState(this.options.profileDir, state)
     }
     const enabled = enabledSkinIds(state)
-    for (const skin of installed) ensureSkinRegistration(this.options.profileDir, skin, !enabled.has(skin.id))
+    for (const skin of installed) await this.registerSkin(skin, !enabled.has(skin.id))
     // On startup, preserve the active entry's initial loader state. Toggling
     // it off and back on here races the client-module registry, which builds
     // the browser boot graph while loader entries are becoming live. Only
@@ -453,7 +576,8 @@ export class SkinLifecycle {
       const entries = this.entriesFor(skin)
       const runtime = runtimeState(this.options.profileDir, skin, state.activeSkinId, entries.some(entry => entry.fiber !== undefined), entries.length > 0, pinnedSkinIds(state), state.activity?.[skin.id])
       const sourceMigration = this.hostKind === 'desktop' ? undefined : npmSourceMigration(this.options.profileDir, skin)
-      return { ...runtime, ...(sourceMigration === undefined ? {} : { sourceMigration }) }
+      const restartPending = state.pendingRestart?.pid === process.pid && state.pendingRestart.skinIds.includes(skin.id)
+      return { ...runtime, ...(restartPending ? { activation: 'restart-required' as const } : {}), ...(sourceMigration === undefined ? {} : { sourceMigration }) }
     })
   }
 
@@ -478,7 +602,19 @@ export class SkinLifecycle {
 
   begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
+    if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
+    const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
+    const capability = this.management?.capabilities()[action]
+    if (capability?.available === false) throw new Error(capability.reason ?? '当前宿主不支持此操作，请使用官方插件页')
     const skin = this.skin(skinId)
+    if (this.management?.installRequiresRestart && (kind === 'activate' || kind === 'pin')) {
+      const restart = readMarketState(this.options.profileDir).pendingRestart
+      if (restart?.pid === process.pid && restart.skinIds.includes(skinId)) throw new Error('此版本官方 Desktop 安装后需要先完全退出并重开应用，再使用或常驻此皮肤；重复安装不能刷新当前宿主的加载缓存')
+    }
+    if (this.management !== undefined && ['install', 'update', 'migrate', 'activate', 'pin'].includes(kind)) {
+      const assessment = assessCompatibility(skin, this.runtime)
+      if (assessment.decision === 'incompatible') throw new Error(assessment.reason)
+    }
     if (kind === 'install' || kind === 'update' || kind === 'migrate') {
       if (this.hostKind === 'desktop' && skin.install.desktop?.mode !== 'managed') {
         throw new Error(desktopInstallError(skin.install.desktop))
@@ -493,7 +629,7 @@ export class SkinLifecycle {
     }
     const operation: Operation = {
       id: randomUUID(), kind, skinId, phase: 'queued', startedAt: new Date().toISOString(),
-      cancelable: kind === 'install' || kind === 'update' || kind === 'migrate',
+      cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
     this.abortControllers.set(operation.id, new AbortController())
@@ -534,6 +670,7 @@ export class SkinLifecycle {
     operation.message = message
     operation.cancelable = (operation.kind === 'install' || operation.kind === 'update' || operation.kind === 'migrate')
       && (phase === 'queued' || phase === 'resolving' || phase === 'downloading')
+      && this.management?.capabilities().cancel.available !== false
     if (phase === 'done' || phase === 'failed' || phase === 'cancelled') operation.finishedAt = new Date().toISOString()
   }
 
@@ -556,6 +693,8 @@ export class SkinLifecycle {
     this.profileChain = previous.then(() => held, () => held)
     try {
       await previous
+      if (this.disposed) throw new Error('皮肤市场宿主已停止')
+      if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
       this.checkDeadline(operation)
       if (operation.phase === 'queued' || operation.phase === 'resolving' || operation.phase === 'downloading') {
         operation.message = operation.phase === 'queued' ? '正在等待其他皮肤操作完成' : '下载完成，正在等待写入'
@@ -611,12 +750,28 @@ export class SkinLifecycle {
       else await this.uninstall(operation)
       this.update(operation, 'done', operation.message)
     } catch (error) {
+      if (this.disposed) {
+        if (this.abortControllers.get(operation.id)?.signal.aborted && operation.application === undefined && this.management === undefined) this.update(operation, 'cancelled', '宿主已停止，操作已结束')
+        return
+      }
+      if (this.unresolvedManager) {
+        this.update(operation, 'waiting', this.waitingReason)
+        return
+      }
+      if (error instanceof ManagedOperationError) {
+        const managed = error.result.management
+        if (managed?.indeterminate !== true && managed?.application !== undefined) operation.application = managed.application
+        if (managed?.pendingBuilds?.length) {
+          this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
+          operation.failure = { kind: 'build-approval', message: error.message, buildKeys: managed.pendingBuilds, ...(this.management?.capabilities().buildApprovals.available ? { action: 'approve-build' as const } : {}) }
+        } else if (managed?.error?.code === 'incompatible-version') operation.failure = { kind: 'compatibility', message: error.message }
+      }
       if (this.expired.has(operation.id)) {
         const message = `安装已达到总时限，已停止继续重试${this.recoveryErrors.has(operation.id) ? `；${this.recoveryErrors.get(operation.id)}` : ''}`
         operation.failure = { kind: 'command', message, ...(this.recoveryErrors.has(operation.id) ? {} : { action: 'retry' as const }) }
         logEvent('error', 'operation-timeout', message, operation.id)
         this.update(operation, 'failed', message)
-      } else if (this.abortControllers.get(operation.id)?.signal.aborted === true && !this.recoveryErrors.has(operation.id)) this.update(operation, 'cancelled', '操作已取消')
+      } else if ((operation.application === 'cancelled' || operation.application === undefined && this.abortControllers.get(operation.id)?.signal.aborted === true) && !this.recoveryErrors.has(operation.id)) this.update(operation, 'cancelled', '操作已取消')
       else {
         if (error instanceof PnpmCommandError) {
           const failure = error.failure
@@ -630,6 +785,7 @@ export class SkinLifecycle {
             kind: failure.kind,
             message: failure.message,
             ...(failure.packageName === undefined ? {} : { packageName: failure.packageName }),
+            ...(buildKeys.length === 0 ? {} : { buildKeys }),
             ...(action === undefined ? {} : { action }),
           }
           operation.failure = operationFailure
@@ -663,6 +819,7 @@ export class SkinLifecycle {
       this.desktopManagedAttempts.delete(operation.id)
       this.desktopRecoveryBaselines.delete(operation.id)
       this.abortControllers.delete(operation.id)
+      if (this.disposed || operation.phase === 'waiting') return
       const timer = setTimeout(() => {
         this.operationCleanupTimers.delete(operation.id)
         this.operations.delete(operation.id)
@@ -674,6 +831,15 @@ export class SkinLifecycle {
   }
 
   private async run(args: readonly string[], operation?: Operation): Promise<void> {
+    if (this.management !== undefined) {
+      this.checkDeadline(operation)
+      const pending = this.options.runner(this.options.profile, args, {
+        signal: operation === undefined ? undefined : this.abortControllers.get(operation.id)?.signal,
+        timeoutMs: this.remainingTime(operation),
+      })
+      this.acceptManagement(await (args[0] === 'remove' ? this.awaitLifecycle(pending, operation) : pending), operation)
+      return
+    }
     this.checkDeadline(operation)
     const controller = operation === undefined ? undefined : this.abortControllers.get(operation.id)
     if (controller?.signal.aborted === true) throw new Error('操作已取消')
@@ -744,6 +910,14 @@ export class SkinLifecycle {
 
   /** Restore metadata first, then reconcile dependencies once within a separate budget. */
   private async recoverProfile(skin: SkinEntry, operation: Operation, snapshot: ProfileInstallSnapshot, mutationsBefore: number): Promise<void> {
+    if (this.disposed || this.waitingReason !== undefined) return
+    if (this.management !== undefined) {
+      restoreFile(marketStateFile(this.options.profileDir), snapshot.marketState)
+      if (snapshot.artifact.spec !== null && !compareInstalledArtifact(this.options.profileDir, snapshot.artifact).ok) {
+        this.recoveryErrors.set(operation.id, '官方管理操作后构件与原有版本不一致，请在官方插件页核对实际状态')
+      }
+      return
+    }
     clearTimeout(this.deadlineTimers.get(operation.id))
     if (this.desktopManagedAttempts.has(operation.id)) {
       // The host owns failed managed installs, including refusal before start.
@@ -785,6 +959,7 @@ export class SkinLifecycle {
         onStderr: chunk => tracker.push(chunk, operation),
       }
       const result = await this.options.runner(this.options.profile, ['install', '--prefer-offline', '--reporter=ndjson'], options)
+      if (snapshot.artifact.spec !== null && !compareInstalledArtifact(this.options.profileDir, snapshot.artifact).ok) throw new Error('恢复后原有包的版本或声明入口未还原')
       logEvent('info', 'recovery-finished', failureDiagnostic(result), operation.id)
       if (result.exitCode !== 0 || result.timedOut || result.aborted) throw new Error('recovery did not complete')
     } catch (error) {
@@ -832,6 +1007,28 @@ export class SkinLifecycle {
         packageVersion: capability.packageVersion,
         receiptId: randomUUID(),
         pnpmOptions: ['--prefer-offline', '--reporter=ndjson'],
+        approvedBuilds: this.pendingBuildKeys.get(operation.id),
+      }
+      if (this.management !== undefined) {
+        operation.cancelable = this.management.capabilities().cancel.available
+        const result = await installPlugin(this.options.profile, request, {
+          signal: controller?.signal,
+          timeoutMs: this.remainingTime(operation),
+          onStdout: chunk => tracker.push(chunk, operation),
+          onStderr: chunk => tracker.push(chunk, operation),
+          onManagementState: progress => {
+            if (progress.phase === 'applying') {
+              this.update(operation, 'validating', '下载已完成，正在由宿主应用插件')
+            } else if (progress.phase === 'installing') operation.cancelable = this.management?.capabilities().cancel.available === true
+          },
+        })
+        this.acceptManagement(result, operation)
+        if (result.management?.version !== undefined && result.management.version !== capability.packageVersion) throw new Error('官方宿主安装的版本与已核验目标不一致')
+        const artifact = validateDesktopArtifact(this.options.profileDir, skin)
+        if (!artifact.ok) throw new Error(artifact.reason ?? '官方宿主安装构件未通过核验')
+        this.assertLegacyOfficialPeers(packageManifest(this.options.profileDir, skin.package))
+        if (this.management.installRequiresRestart) operation.restartRequired = true
+        return
       }
       await runPnpmWithRecovery(request.pnpmOptions ?? [], {
         attempt: (pnpmOptions) => {
@@ -873,6 +1070,7 @@ export class SkinLifecycle {
   }
 
   private async installCompanions(skin: SkinEntry, operation: Operation, state: PersistedMarketState): Promise<void> {
+    if (this.management !== undefined) return
     const enabled = enabledSkinIds(state)
     for (const companion of skin.install.companions ?? []) {
       const existingSpec = readDependencies(this.options.profileDir)[companion.package]
@@ -894,8 +1092,7 @@ export class SkinLifecycle {
         // Do not acquire enable/disable or delete rights over it.
         continue
       }
-      ensureSkinRegistration(
-        this.options.profileDir,
+      await this.registerSkin(
         companionAsSkin(skin, companion),
         !this.companionOwnersEnabled(companion.package, state, enabled),
       )
@@ -929,7 +1126,7 @@ export class SkinLifecycle {
         seen.add(companion.package)
         const entry = companionAsSkin(item, companion)
         const disabled = !this.companionOwnersEnabled(companion.package, state, enabled)
-        ensureSkinRegistration(this.options.profileDir, entry, disabled)
+        await this.registerSkin( entry, disabled)
         if (live) await this.setEntryDisabled(entry, disabled)
       }
     }
@@ -949,12 +1146,12 @@ export class SkinLifecycle {
       }
       if (managed.installedByMarket && readDependencies(this.options.profileDir)[companion.package] !== undefined) {
         await this.run(['remove', companion.package], operation)
-        removeSkinRegistration(this.options.profileDir, companionAsSkin(skin, companion))
+        if (this.management === undefined) removeSkinRegistration(this.options.profileDir, companionAsSkin(skin, companion))
       } else if (readDependencies(this.options.profileDir)[companion.package] !== undefined) {
         // Activation-linked but user-owned companions survive the last owner
         // and return to their independent enabled state.
         const entry = companionAsSkin(skin, companion)
-        ensureSkinRegistration(this.options.profileDir, entry, false)
+        await this.registerSkin( entry, false)
         await this.setEntryDisabled(entry, false)
       }
       delete state.managedCompanions?.[companion.package]
@@ -1078,7 +1275,7 @@ export class SkinLifecycle {
         })
       }
       if (!validation.ok) throw new Error(validation.reason)
-      if (!installedSpecMatches(skin, existingSpec)) {
+      if (!reviewedInstalledSpecMatches(this.options.profileDir, skin, existingSpec)) {
         throw new Error(`installed package ${skin.package} does not match the reviewed source/version; use Update to replace it with ${skin.install.target}`)
       }
       const snapshot = snapshotInstallFiles(this.options.profileDir, skin.package, skin.install.version)
@@ -1089,10 +1286,11 @@ export class SkinLifecycle {
         await this.applyCompatibility(skin, operation)
         validation = validateInstalledSkin(this.options.profileDir, skin)
         if (!validation.ok) throw new Error(validation.reason)
-        ensureSkinRegistration(this.options.profileDir, skin, !enabledSkinIds(state).has(skin.id))
+        await this.registerSkin( skin, !enabledSkinIds(state).has(skin.id))
         this.reconcileDisabledSkinIds(state)
+        this.recordRestart(state, skin.id, operation.restartRequired === true)
         writeMarketState(this.options.profileDir, state)
-        operation.message = 'skin was already installed; market state reconciled'
+        operation.message = operation.restartRequired ? '安装构件已修复；此版本官方 Desktop 需要完全退出并重开应用后再使用' : 'skin was already installed; market state reconciled'
         return
       } catch (error) {
         await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
@@ -1112,22 +1310,37 @@ export class SkinLifecycle {
       this.update(operation, 'validating')
       const validation = validateInstalledSkin(this.options.profileDir, skin)
       if (!validation.ok) throw new Error(validation.reason)
-      if (!installedSpecMatches(skin, readDependencies(this.options.profileDir)[skin.package])) {
+      if (!reviewedInstalledSpecMatches(this.options.profileDir, skin, readDependencies(this.options.profileDir)[skin.package])) {
         throw new Error(`installed package ${skin.package} does not match the reviewed source/version ${skin.install.target}`)
       }
       assertNoLoaderConflicts(this.options.profileDir, skin)
-      ensureSkinRegistration(this.options.profileDir, skin)
+      await this.registerSkin( skin)
       state.activeSkinId = state.activeSkinId === skin.id ? null : state.activeSkinId
       if (!state.disabledSkinIds.includes(skin.id)) state.disabledSkinIds.push(skin.id)
       recordActivity(state, skin.id, 'installedAt', operation.startedAt)
       await this.syncManagedLoaders(state, false)
+      this.recordRestart(state, skin.id, operation.restartRequired === true)
       writeMarketState(this.options.profileDir, state)
       cleanupCompatibilityPatchFiles(detachedPatchFiles.filter(file => file !== compatibilityPatchFile(this.options.profileDir, skin.package, skin.install.version)))
-      operation.message = 'installed; choose Use to activate'
+      operation.message = operation.restartRequired ? '安装构件已验证；此版本官方 Desktop 需要完全退出并重开应用后再使用' : 'installed; choose Use to activate'
     } catch (error) {
       await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
       throw error
     }
+  }
+
+  private selectionSnapshot(): { manifest: FileSnapshot; patch: FileSnapshot } {
+    return { manifest: snapshotFile(join(this.options.profileDir, 'package.json')), patch: snapshotFile(profilePatchFile(this.options.profileDir)) }
+  }
+
+  private async rollbackSelection(previous: PersistedMarketState, snapshot: { manifest: FileSnapshot; patch: FileSnapshot }): Promise<void> {
+    if (this.disposed || this.waitingReason !== undefined) return
+    if (this.management === undefined) {
+      restoreManifest(this.options.profileDir, snapshot.manifest)
+      restoreFile(profilePatchFile(this.options.profileDir), snapshot.patch)
+    }
+    writeMarketState(this.options.profileDir, previous)
+    await this.replay()
   }
 
   private async activate(operation: Operation): Promise<void> {
@@ -1139,6 +1352,7 @@ export class SkinLifecycle {
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before using it')
     this.update(operation, 'activating')
     const previous = readMarketState(this.options.profileDir)
+    const selection = this.selectionSnapshot()
     const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: pinnedSkinIds(previous) }
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)
     this.reconcileDisabledSkinIds(next)
@@ -1148,9 +1362,9 @@ export class SkinLifecycle {
       for (const item of this.catalog) {
         const installed = readDependencies(this.options.profileDir)[item.package] !== undefined
         if (installed && enabled.has(item.id)) {
-          ensureSkinRegistration(this.options.profileDir, item, false)
+          await this.registerSkin( item, false)
         }
-        if (installed && !enabled.has(item.id)) ensureSkinRegistration(this.options.profileDir, item, true)
+        if (installed && !enabled.has(item.id)) await this.registerSkin( item, true)
       }
       await this.syncInstalledCompanions(next, !requiresRestart)
       let active: { found: boolean; live: boolean } | undefined
@@ -1166,15 +1380,15 @@ export class SkinLifecycle {
         active = await this.setEntryDisabled(skin, false)
       }
       await this.syncManagedLoaders(next, !requiresRestart)
+      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true)
       writeMarketState(this.options.profileDir, next)
-      if (requiresRestart) {
+      if (requiresRestart || operation.restartRequired === true) {
         operation.message = 'activation saved; restart DSH to load this skin'
       } else {
         operation.message = active?.found && active.live ? 'skin is active' : 'activation saved; restart DSH to load this skin'
       }
     } catch (error) {
-      writeMarketState(this.options.profileDir, previous)
-      await this.replay()
+      await this.rollbackSelection(previous, selection)
       throw error
     }
   }
@@ -1187,23 +1401,24 @@ export class SkinLifecycle {
     const skin = this.skin(operation.skinId)
     this.update(operation, 'activating')
     const previous = readMarketState(this.options.profileDir)
+    const selection = this.selectionSnapshot()
     const state = { ...previous, pinnedSkinIds: pinnedSkinIds(previous) }
     state.activeSkinId = state.activeSkinId === skin.id ? null : state.activeSkinId
     state.pinnedSkinIds = state.pinnedSkinIds.filter(id => id !== skin.id)
     this.reconcileDisabledSkinIds(state)
     const requiresRestart = this.requiresRestartForTransition(previous, state)
     try {
-      ensureSkinRegistration(this.options.profileDir, skin, true)
+      await this.registerSkin( skin, true)
       if (!requiresRestart) await this.setEntryDisabled(skin, true)
       await this.syncInstalledCompanions(state, !requiresRestart)
       await this.syncManagedLoaders(state, !requiresRestart)
+      this.recordRestart(state, skin.id, requiresRestart || operation.restartRequired === true)
       writeMarketState(this.options.profileDir, state)
-      operation.message = requiresRestart
+      operation.message = requiresRestart || operation.restartRequired === true
         ? 'skin disabled; restart DSH to apply the change'
         : enabledSkinIds(state).size === 0 ? 'DSH default appearance restored; package kept installed' : 'skin disabled; other enabled skins were kept active'
     } catch (error) {
-      writeMarketState(this.options.profileDir, previous)
-      await this.replay()
+      await this.rollbackSelection(previous, selection)
       throw error
     }
   }
@@ -1215,25 +1430,26 @@ export class SkinLifecycle {
   private async pinLocked(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
     const previous = readMarketState(this.options.profileDir)
+    const selection = this.selectionSnapshot()
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before pinning it')
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: [...new Set([...pinnedSkinIds(previous), skin.id])] }
     this.reconcileDisabledSkinIds(next)
     const requiresRestart = this.requiresRestartForTransition(previous, next)
     try {
-      ensureSkinRegistration(this.options.profileDir, skin, false)
+      await this.registerSkin( skin, false)
       await this.syncInstalledCompanions(next, !requiresRestart)
       await this.syncManagedLoaders(next, !requiresRestart)
+      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true)
       writeMarketState(this.options.profileDir, next)
-      if (requiresRestart) {
+      if (requiresRestart || operation.restartRequired === true) {
         operation.message = 'pin saved; restart DSH to load this skin'
       } else {
         const active = await this.setEntryDisabled(skin, false)
         operation.message = active.found && active.live ? 'skin is pinned and active' : 'pin saved; restart DSH to load this skin'
       }
     } catch (error) {
-      writeMarketState(this.options.profileDir, previous)
-      await this.replay()
+      await this.rollbackSelection(previous, selection)
       throw error
     }
   }
@@ -1245,6 +1461,7 @@ export class SkinLifecycle {
   private async unpinLocked(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
     const previous = readMarketState(this.options.profileDir)
+    const selection = this.selectionSnapshot()
     if (!pinnedSkinIds(previous).includes(skin.id)) throw new Error('skin is not pinned')
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: pinnedSkinIds(previous).filter(id => id !== skin.id) }
@@ -1252,18 +1469,18 @@ export class SkinLifecycle {
     const requiresRestart = this.requiresRestartForTransition(previous, next)
     try {
       if (next.activeSkinId !== skin.id) {
-        ensureSkinRegistration(this.options.profileDir, skin, true)
+        await this.registerSkin( skin, true)
         if (!requiresRestart) await this.setEntryDisabled(skin, true)
       }
       await this.syncInstalledCompanions(next, !requiresRestart)
       await this.syncManagedLoaders(next, !requiresRestart)
+      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true)
       writeMarketState(this.options.profileDir, next)
-      operation.message = requiresRestart
+      operation.message = requiresRestart || operation.restartRequired === true
         ? 'skin is no longer pinned; restart DSH to apply the change'
         : next.activeSkinId === skin.id ? 'skin is no longer pinned and remains the current skin' : 'skin is no longer pinned and was disabled'
     } catch (error) {
-      writeMarketState(this.options.profileDir, previous)
-      await this.replay()
+      await this.rollbackSelection(previous, selection)
       throw error
     }
   }
@@ -1303,24 +1520,25 @@ export class SkinLifecycle {
         this.update(operation, 'validating')
         const validation = validateInstalledSkin(this.options.profileDir, skin)
         if (!validation.ok) throw new Error(validation.reason)
-        if (validation.version !== skin.install.version || !installedSpecMatches(skin, readDependencies(this.options.profileDir)[skin.package])) {
+        if (validation.version !== skin.install.version || !reviewedInstalledSpecMatches(this.options.profileDir, skin, readDependencies(this.options.profileDir)[skin.package])) {
           throw new Error(`installed package did not change to the reviewed source/version ${skin.install.target}`)
         }
         if (operation.kind === 'migrate' && readDependencies(this.options.profileDir)[skin.package] !== skin.install.npm?.version) {
           throw new Error('npm 换源后未保存精确版本，已停止并恢复原有安装')
         }
         assertNoLoaderConflicts(this.options.profileDir, skin)
-        ensureSkinRegistration(this.options.profileDir, skin, !wasActive)
+        await this.registerSkin( skin, !wasActive)
         await this.syncInstalledCompanions(previousState, false)
         await this.setEntryDisabled(skin, !wasActive)
         await this.syncManagedLoaders(previousState, false)
         const nextState = previousState
         recordActivity(nextState, skin.id, 'updatedAt', operation.startedAt)
+        this.recordRestart(nextState, skin.id, operation.restartRequired === true)
         writeMarketState(this.options.profileDir, nextState)
         cleanupCompatibilityPatchFiles(detachedPatchFiles.filter(file => file !== compatibilityPatchFile(this.options.profileDir, skin.package, skin.install.version)))
         operation.message = operation.kind === 'migrate'
           ? wasActive ? '已换用 npm 并保留启用状态；重启 DSH 后生效' : '已换用 npm 并保留停用状态'
-          : wasActive ? 'updated and kept active' : 'updated and kept inactive'
+          : operation.restartRequired ? '更新已验证，原启停状态已保留；重启宿主后加载新版本' : wasActive ? 'updated and kept active' : 'updated and kept inactive'
       } catch (error) {
         await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
         throw error
@@ -1343,9 +1561,9 @@ export class SkinLifecycle {
       // pnpm rejects removing a dependency while that same dependency remains
       // in patchedDependencies. Detach both workspace and lockfile metadata
       // before the remove command; the snapshot restores them on failure.
-      detachedPatchFiles = detachCompatibilityPatches(this.options.profileDir, skin.package)
+      detachedPatchFiles = this.management === undefined ? detachCompatibilityPatches(this.options.profileDir, skin.package) : []
       const state = readMarketState(this.options.profileDir)
-      if (enabledSkinIds(state).has(skin.id)) await this.deactivate(operation)
+      if (this.management === undefined && enabledSkinIds(state).has(skin.id)) await this.deactivate(operation)
       this.update(operation, 'downloading')
       await this.run(['remove', skin.package], operation)
       await this.syncPnpmMetadata(operation, '正在清理兼容适配并同步 pnpm 锁文件')
@@ -1358,14 +1576,15 @@ export class SkinLifecycle {
       const staleLiveRows = loaderRowsBefore.filter(row =>
         !remainingLoaderRows.some(remaining => sharedLoaderIdentifiers(row, remaining).length > 0),
       )
-      for (const row of staleLiveRows) await this.setLoaderDisabled(row, true)
-      removeSkinRegistration(this.options.profileDir, skin)
+      if (this.management === undefined) for (const row of staleLiveRows) await this.setLoaderDisabled(row, true)
+      if (this.management === undefined) removeSkinRegistration(this.options.profileDir, skin)
       const next = readMarketState(this.options.profileDir)
       await this.uninstallUnusedCompanions(skin, operation, next)
       next.disabledSkinIds = next.disabledSkinIds.filter(id => id !== skin.id)
       next.pinnedSkinIds = pinnedSkinIds(next).filter(id => id !== skin.id)
       if (next.activeSkinId === skin.id) next.activeSkinId = null
       if (next.activity !== undefined) delete next.activity[skin.id]
+      this.recordRestart(next, skin.id, false, true)
       this.releaseManagedLoaders(next, skin.id)
       await this.syncManagedLoaders(next, false)
       writeMarketState(this.options.profileDir, next)

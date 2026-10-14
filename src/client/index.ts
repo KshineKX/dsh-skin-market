@@ -64,7 +64,12 @@ export function apply(ctx: ClientContext): void {
   const clientRuntime = createClientSkinRuntime(ctx.loader)
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section', id: 'skin-market', order: 45, label: () => t('nav'), locale: namespace, inject: () => ({ t }),
-  }, () => h(SkinMarketSection, { t, clientRuntime })))
+  }, () => h(SkinMarketSection, { t, clientRuntime, layout: 'fill' })))
+  // The injection stays dormant on older hosts and registers when the new
+  // Plugins page owns this slot. Both entry points use the same market UI.
+  ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
+    name: 'plugins.bundle.config', key: namespace, locale: namespace, inject: () => ({ t }),
+  }, () => h(SkinMarketSection, { t, clientRuntime, layout: 'embedded' })))
 }
 
 export { SkinMarketSection } from './SkinMarketSection.tsx'

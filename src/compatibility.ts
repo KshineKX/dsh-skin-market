@@ -4,21 +4,14 @@ import type { CompatibilityAdapter, DshRuntime, SkinEntry } from './types.ts'
 type CompatibilitySkin = Pick<SkinEntry, 'compatibility'>
 
 const KEYED_SLOT_CAPABILITY_PREFIX = 'slot:keyed:'
+// Keep this browser-safe module independent from the host runtime detector.
+const LEGACY_KEYED_SETTINGS_RANGE = '>=0.1.0-rc.7 <0.1.6-alpha.2'
 
 export interface CompatibilityAssessment {
   decision: 'compatible' | 'adaptable' | 'unknown' | 'incompatible'
   reason: string
   adapterIds: string[]
 }
-
-const DEFAULT_ADAPTER: CompatibilityAdapter = {
-  id: 'builtin-keyed-settings-plugin-item',
-  kind: 'keyed-slot-id-to-key',
-  when: '>=0.1.0-rc.6 <0.2.0-0',
-  slot: 'settings.plugin.item',
-  key: 'locale',
-}
-const BUILTIN_ADAPTER_BASE_VERSION = '0.1.0-rc.6'
 
 function declaredAdapters(skin: CompatibilitySkin): CompatibilityAdapter[] {
   return skin.compatibility.adapters ?? []
@@ -31,15 +24,16 @@ function sameAdapter(left: CompatibilityAdapter, right: CompatibilityAdapter): b
     && left.key === right.key
 }
 
-export function applicableAdapters(skin: CompatibilitySkin, runtime: DshRuntime, includeBuiltIns: boolean): CompatibilityAdapter[] {
-  if (runtime.version === null) return []
+export function applicableAdapters(skin: CompatibilitySkin, runtime: DshRuntime, _legacyIncludeBuiltIns?: boolean): CompatibilityAdapter[] {
+  // Keep the optional argument for existing callers, but never invent source
+  // migrations or expand the author's supported versions. Only a reviewed,
+  // explicitly declared rule may run within that range.
+  if (runtime.version === null || skin.compatibility.dsh === 'unverified' || !satisfiesVersionRange(runtime.version, skin.compatibility.dsh)) return []
   const declared = declaredAdapters(skin)
-  const adapters = includeBuiltIns && skin.compatibility.dsh !== 'unverified' && satisfiesVersionRange(BUILTIN_ADAPTER_BASE_VERSION, skin.compatibility.dsh)
-    ? [...declared, DEFAULT_ADAPTER]
-    : declared
-  const uniqueAdapters = adapters.filter((adapter, index, all) => all.findIndex(item => sameAdapter(item, adapter)) === index)
+  const uniqueAdapters = declared.filter((adapter, index, all) => all.findIndex(item => sameAdapter(item, adapter)) === index)
   return uniqueAdapters.filter(adapter =>
     satisfiesVersionRange(runtime.version!, adapter.when)
+    && (adapter.slot !== 'settings.plugin.item' || satisfiesVersionRange(runtime.version!, LEGACY_KEYED_SETTINGS_RANGE))
     && runtime.capabilities.includes(`${KEYED_SLOT_CAPABILITY_PREFIX}${adapter.slot}`),
   )
 }
@@ -47,7 +41,7 @@ export function applicableAdapters(skin: CompatibilitySkin, runtime: DshRuntime,
 export function assessCompatibility(skin: CompatibilitySkin, runtime: DshRuntime): CompatibilityAssessment {
   if (runtime.version === null) return {
     decision: 'unknown',
-    reason: '无法读取当前 DSH 版本，暂时拦截安装以避免破坏 profile',
+    reason: '无法确认当前 DSH 版本，兼容性需要实际验证',
     adapterIds: [],
   }
 
@@ -59,7 +53,7 @@ export function assessCompatibility(skin: CompatibilitySkin, runtime: DshRuntime
   }
   if (declared.length > 0) return {
     decision: 'adaptable',
-    reason: `当前 DSH ${runtime.version} 命中可选兼容适配器`,
+    reason: `当前 DSH ${runtime.version} 命中可选兼容适配器，安装时仍需验证源码是否可安全适配`,
     adapterIds: declared.map(adapter => adapter.id),
   }
   if (satisfiesVersionRange(runtime.version, skin.compatibility.dsh)) return {
@@ -68,18 +62,9 @@ export function assessCompatibility(skin: CompatibilitySkin, runtime: DshRuntime
     adapterIds: [],
   }
 
-  // Built-in adapters are generic migrations. Their applicability is known
-  // from the runtime capability; the installed package is still inspected
-  // before a patch is actually persisted.
-  const builtIns = applicableAdapters(skin, runtime, true)
-  if (builtIns.length > 0) return {
-    decision: 'adaptable',
-    reason: `当前 DSH ${runtime.version} 可通过通用兼容适配器安装`,
-    adapterIds: builtIns.map(adapter => adapter.id),
-  }
   return {
     decision: 'incompatible',
-    reason: `当前 DSH ${runtime.version} 不在皮肤声明的兼容范围 ${skin.compatibility.dsh} 内，且没有可用适配器`,
+    reason: `当前 DSH ${runtime.version} 不在作者声明的兼容范围 ${skin.compatibility.dsh} 内；市场不会通过源码适配扩大该范围`,
     adapterIds: [],
   }
 }

@@ -2,18 +2,19 @@ import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { PluginRunner } from './commands.ts'
-import { PnpmCommandError, failureDiagnostic, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
+import type { CommandResult, PluginRunner } from './commands.ts'
+import { PnpmCommandError, classifyPnpmFailure, failureDiagnostic, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
-import { cleanOrphanedStore } from './store.ts'
 import { logEvent } from './log.ts'
-import { resolveProfileDir } from './profile.ts'
+import { compareInstalledArtifact, manifestFile, pnpmLockfile, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
 import { compareVersions, parseVersion } from './semver.ts'
 import type { OperationFailure } from './types.ts'
+import type { OfficialApplication } from './official-desktop.ts'
 
 export const MARKET_NPM_PACKAGE = 'dsh-skin-market'
 export const MARKET_NPM_METADATA_URL = `https://registry.npmjs.org/${MARKET_NPM_PACKAGE}`
 const PNPM_FETCH_TIMEOUT_MS = 10 * 60 * 1000
+const RECOVERY_TIMEOUT_MS = 60_000
 
 export interface MarketUpdateStatus {
   currentVersion: string
@@ -21,7 +22,7 @@ export interface MarketUpdateStatus {
   updateAvailable: boolean
 }
 
-export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'cancelling' | 'cancelled' | 'done' | 'failed'
+export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
 
 export interface MarketUpdateOperation {
   id: string
@@ -33,6 +34,9 @@ export interface MarketUpdateOperation {
   totalBytes?: number
   bytesPerSecond?: number
   failure?: OperationFailure
+  application?: OfficialApplication | 'unknown'
+  restartRequired?: boolean
+  integrityVerified?: boolean
   startedAt: string
   finishedAt?: string
 }
@@ -43,6 +47,7 @@ interface MarketRelease {
   version: string
   gitHead: string
   tarball: string
+  integrity?: string
 }
 
 class MarketProgressTracker {
@@ -144,10 +149,11 @@ export function createMarketUpdater(
   const abortControllers = new Map<string, AbortController>()
   const updatePromises = new Map<string, Promise<void>>()
   const profileDir = options.profileDir ?? resolveProfileDir(profile)
+  const cancellationAvailable = (): boolean => runner.management === undefined || runner.management.capabilities().cancel.available
 
   const setOperation = (operation: MarketUpdateOperation, patch: Partial<MarketUpdateOperation>): void => {
     Object.assign(operation, patch)
-    operation.cancelable = !['done', 'failed', 'cancelled', 'cancelling'].includes(operation.phase)
+    operation.cancelable = patch.cancelable !== false && cancellationAvailable() && !['done', 'failed', 'cancelled', 'cancelling', 'waiting'].includes(operation.phase)
     if (operation.phase === 'done' || operation.phase === 'failed' || operation.phase === 'cancelled') {
       operation.finishedAt = new Date().toISOString()
       if (activeOperation === operation.id) activeOperation = null
@@ -155,6 +161,40 @@ export function createMarketUpdater(
   }
 
   const updateTarget = async (operation: MarketUpdateOperation, controller: AbortController): Promise<void> => {
+    let baseline: InstalledArtifactSnapshot | undefined
+    let metadata: { manifest: FileSnapshot; lockfile: FileSnapshot } | undefined
+    let mutationStarted = false
+    let lastResult: CommandResult | undefined
+    const managerOwned = runner.management !== undefined
+    const recover = async (): Promise<string | undefined> => {
+      if (!mutationStarted || baseline === undefined) return undefined
+      if (managerOwned) {
+        return compareInstalledArtifact(profileDir, baseline).ok ? undefined
+          : '官方 Desktop 的实际市场构件或锁文件解析与更新前状态不一致，不能确认取消或失败已恢复；请在应用插件管理器核验'
+      }
+      if (metadata === undefined) return undefined
+      const restore = (): void => {
+        restoreFile(manifestFile(profileDir), metadata!.manifest)
+        restoreFile(pnpmLockfile(profileDir), metadata!.lockfile)
+      }
+      try {
+        restore()
+        if (compareInstalledArtifact(profileDir, baseline).ok) return undefined
+        setOperation(operation, { phase: 'installing', cancelable: false, message: '正在恢复更新前的皮肤市场' })
+        const recovery = await runner(profile, pluginArgsFor(profileDir, ['install', '--prefer-offline', '--reporter=ndjson']), {
+          timeoutMs: RECOVERY_TIMEOUT_MS,
+          signal: AbortSignal.timeout(RECOVERY_TIMEOUT_MS),
+        })
+        restore()
+        if (recovery.exitCode !== 0 || recovery.timedOut || recovery.aborted || !compareInstalledArtifact(profileDir, baseline).ok) {
+          return '原有配置已恢复，但更新前的皮肤市场构件未能验证恢复；请完全退出 DSH 后修复依赖'
+        }
+        return undefined
+      } catch {
+        try { restore() } catch { /* report the uncertain recovery without replacing its cause */ }
+        return '更新前的配置或皮肤市场构件未能验证恢复；请完全退出 DSH 后修复依赖'
+      }
+    }
     try {
       setOperation(operation, { phase: 'checking', message: '正在检查皮肤市场版本' })
       const before = await status(true)
@@ -163,6 +203,9 @@ export function createMarketUpdater(
         setOperation(operation, { phase: 'done', message: '已经是最新版本', status: before })
         return
       }
+      baseline = snapshotInstalledArtifact(profileDir, MARKET_NPM_PACKAGE)
+      if (!baseline.ok && !managerOwned) throw new Error('更新前的皮肤市场构件无法验证，请先修复安装后再更新')
+      if (!managerOwned) metadata = { manifest: snapshotFile(manifestFile(profileDir)), lockfile: snapshotFile(pnpmLockfile(profileDir)) }
 
       const tracker = new MarketProgressTracker()
       const report = (chunk: string): void => {
@@ -173,24 +216,32 @@ export function createMarketUpdater(
       const run = async (args: readonly string[]) => {
         await runner.ensurePnpm?.({ signal: controller.signal })
         const effectiveArgs = pluginArgsFor(profileDir, args)
+        if (managerOwned) {
+          lastResult = await runner(profile, args, { signal: controller.signal, onStdout: report, onStderr: report })
+          const managed = lastResult.management
+          if (managed?.indeterminate === true || managed?.application === 'failed' || managed?.application === 'cancelled') {
+            throw new PnpmCommandError(classifyPnpmFailure(lastResult), lastResult)
+          }
+          if (managed?.application === 'applied' || managed?.application === 'restart-required' || managed?.application === 'overridden') return
+          throw new Error('官方 Desktop 未返回可确认的市场更新结果')
+        }
         try {
           await runPnpmWithRecovery(effectiveArgs, {
             profileDir,
-            attempt: (attemptArgs, attemptOptions) => runner(profile, attemptArgs, {
-              signal: controller.signal,
-              // Keep self-update on the same 10 minute network budget as ordinary
-              // skin installs without writing a persistent .npmrc into the user's
-              // profile. The update target is the immutable npm package version,
-              // so repository-only assets such as market screenshots are not
-              // included in the downloaded package.
-              env: { pnpm_config_fetch_timeout: String(PNPM_FETCH_TIMEOUT_MS), ...attemptOptions?.env },
-              onStdout: report,
-              onStderr: report,
-            }),
+            attempt: async (attemptArgs, attemptOptions) => {
+              lastResult = await runner(profile, attemptArgs, {
+                signal: controller.signal,
+                // Keep self-update on the same 10 minute network budget as ordinary
+                // skin installs without writing persistent profile configuration.
+                env: { pnpm_config_fetch_timeout: String(PNPM_FETCH_TIMEOUT_MS), ...attemptOptions?.env },
+                onStdout: report,
+                onStderr: report,
+              })
+              return lastResult
+            },
             onRetry: failure => setOperation(operation, { message: recoveryMessage(failure) }),
           })
         } catch (error) {
-          if (!controller.signal.aborted) await cleanOrphanedStore(runner, profile, operation.id)
           if (error instanceof PnpmCommandError) {
             logEvent('error', 'market-update-pnpm', `kind=${error.failure.kind}${error.failure.packageName === undefined ? '' : ` package=${error.failure.packageName}`} ${failureDiagnostic(error.result)}`, operation.id)
           }
@@ -202,15 +253,40 @@ export function createMarketUpdater(
       // packument that still lacks the latest we just read from npm.
       setOperation(operation, { phase: 'downloading', message: '正在下载皮肤市场更新包' })
       if (latestRelease === null) throw new Error('npm 未返回可验证的市场构件')
+      const targetRelease = latestRelease
+      mutationStarted = true
       await run(['add', `${MARKET_NPM_PACKAGE}@${latestRelease.version}`, '--reporter=ndjson'])
-
-      installedVersion = before.latestVersion
+      const materialized = validateNpmArtifact(profileDir, { name: MARKET_NPM_PACKAGE, ...targetRelease })
+      if (!materialized.ok || materialized.version === undefined) {
+        throw new Error(`市场更新未通过构件校验，不能确认更新成功：${materialized.reason ?? '未物化预期版本或可加载入口'}`)
+      }
+      // A managed transaction that completed remains authoritative even when
+      // cancellation arrived too late. Web cancellation still restores its
+      // frozen pre-operation state before returning a cancelled result.
+      if (controller.signal.aborted && !managerOwned) throw new Error('更新已取消')
+      installedVersion = materialized.version
       restartRequired = true
       const next = { currentVersion: installedVersion, latestVersion: installedVersion, updateAvailable: false }
-      cached = { checkedAt: Date.now(), status: next, release: latestRelease }
-      setOperation(operation, { phase: 'done', message: '更新完成，重启 DSH 后生效', status: next })
+      cached = { checkedAt: Date.now(), status: next, release: targetRelease }
+      setOperation(operation, {
+        phase: 'done',
+        ...(lastResult?.management?.application === undefined ? {} : { application: lastResult.management.application }),
+        restartRequired: true,
+        integrityVerified: materialized.integrityVerified,
+        message: lastResult?.management?.application === 'overridden'
+          ? '更新包版本已验证，但启用状态被其他配置覆盖；请在设置 → 插件核验，重启后仍可能未启用'
+          : '更新完成，重启 DSH 后生效',
+        status: next,
+      })
     } catch (error) {
-      if (controller.signal.aborted) setOperation(operation, { phase: 'cancelled', message: '更新已取消' })
+      if (lastResult?.management?.application !== undefined) operation.application = lastResult.management.application
+      if (managerOwned && lastResult?.management?.indeterminate === true) {
+        setOperation(operation, { phase: 'waiting', application: 'unknown', message: '官方 Desktop 的市场更新结果尚未确认；请等待或重新启动应用后核验，期间不会再修改插件' })
+        return
+      }
+      const recoveryError = await recover()
+      const cancelled = managerOwned ? lastResult?.management?.application === 'cancelled' : controller.signal.aborted
+      if (cancelled && recoveryError === undefined) setOperation(operation, { phase: 'cancelled', message: '更新已取消' })
       else {
         if (error instanceof PnpmCommandError) {
           const failure = error.failure
@@ -223,11 +299,16 @@ export function createMarketUpdater(
           }
         }
         if (!(error instanceof PnpmCommandError)) logEvent('error', 'market-update', error instanceof Error ? error.message : String(error), operation.id)
-        setOperation(operation, { phase: 'failed', message: error instanceof Error ? error.message : String(error) })
+        if (recoveryError !== undefined) operation.failure = { kind: 'command', message: recoveryError }
+        const managedFailure = lastResult?.management?.application === 'failed' && controller.signal.aborted
+          ? '官方 Desktop 返回市场更新失败；取消请求没有替代管理器的最终结果，请查看插件管理器诊断'
+          : undefined
+        const cause = managedFailure ?? (error instanceof Error ? error.message : String(error))
+        setOperation(operation, { phase: 'failed', message: recoveryError === undefined ? cause : managerOwned ? `${cause}；${recoveryError}` : recoveryError })
       }
     } finally {
       abortControllers.delete(operation.id)
-      updating = false
+      updating = operation.phase === 'waiting'
     }
   }
 
@@ -254,10 +335,15 @@ export function createMarketUpdater(
     const gitHead = releaseRecord.gitHead
     const dist = releaseRecord.dist
     const tarball = dist !== null && typeof dist === 'object' ? (dist as Record<string, unknown>).tarball : undefined
+    const integrity = dist !== null && typeof dist === 'object' ? (dist as Record<string, unknown>).integrity : undefined
     if (typeof gitHead !== 'string' || !/^[0-9a-f]{40}$/i.test(gitHead) || typeof tarball !== 'string' || !tarball.startsWith('https://registry.npmjs.org/')) {
       throw new Error('npm 市场构件缺少可验证的版本来源或下载地址')
     }
-    const release: MarketRelease = { version: latestVersion, gitHead: gitHead.toLowerCase(), tarball }
+    if ((releaseRecord.name !== undefined && releaseRecord.name !== MARKET_NPM_PACKAGE)
+      || releaseRecord.version !== latestVersion || (integrity !== undefined && (typeof integrity !== 'string' || integrity.trim() === ''))) {
+      throw new Error('npm 市场构件的包名、版本或完整性元数据不一致')
+    }
+    const release: MarketRelease = { version: latestVersion, gitHead: gitHead.toLowerCase(), tarball, ...(typeof integrity === 'string' ? { integrity } : {}) }
     const next = { currentVersion: installedVersion, latestVersion: release.version, updateAvailable: compareVersions(release.version, installedVersion) > 0 }
     latestRelease = release
     cached = { checkedAt: Date.now(), status: next, release }
@@ -267,7 +353,7 @@ export function createMarketUpdater(
   const startUpdate = (): MarketUpdateOperation => {
     if (disposed) throw new Error('皮肤市场更新器已停止')
     if (activeOperation !== null) return operations.get(activeOperation)!
-    const operation: MarketUpdateOperation = { id: randomUUID(), phase: 'queued', cancelable: true, startedAt: new Date().toISOString() }
+    const operation: MarketUpdateOperation = { id: randomUUID(), phase: 'queued', cancelable: cancellationAvailable(), startedAt: new Date().toISOString() }
     operations.set(operation.id, operation)
     activeOperation = operation.id
     updating = true
@@ -279,7 +365,7 @@ export function createMarketUpdater(
       () => { updatePromises.delete(operation.id) },
       () => { updatePromises.delete(operation.id) },
     )
-    const timer = setTimeout(() => operations.delete(operation.id), 30 * 60 * 1000)
+    const timer = setTimeout(() => { if (activeOperation !== operation.id) operations.delete(operation.id) }, 30 * 60 * 1000)
     timer.unref?.()
     return operation
   }
@@ -290,7 +376,7 @@ export function createMarketUpdater(
     async update() {
       if (updating) throw new Error('皮肤市场正在更新')
       const operation = startUpdate()
-      while (operation.phase !== 'done' && operation.phase !== 'failed' && operation.phase !== 'cancelled') {
+      while (operation.phase !== 'done' && operation.phase !== 'failed' && operation.phase !== 'cancelled' && operation.phase !== 'waiting') {
         await new Promise(resolve => setTimeout(resolve, 10))
       }
       if (operation.phase !== 'done' || operation.status === undefined) throw new Error(operation.message ?? '皮肤市场更新失败')
@@ -303,6 +389,7 @@ export function createMarketUpdater(
       const operation = operations.get(id)
       if (operation === undefined) throw new Error('更新任务不存在')
       if (operation.cancelable !== true) return operation
+      if (!cancellationAvailable()) { operation.cancelable = false; return operation }
       setOperation(operation, { phase: 'cancelling', message: '正在取消皮肤市场更新' })
       abortControllers.get(id)?.abort()
       return operation

@@ -31,12 +31,55 @@ export function loopbackAuthority(host: string | undefined): boolean {
  * header-stripped requests. A missing Origin is allowed because the proxy
  * strips it; a present but invalid/cross-site Origin remains rejected.
  */
-export function sameOrigin(request: IncomingMessage): boolean {
+function authority(value: string): URL | null {
+  if (/[\s/@?#\\]/.test(value)) return null
+  try {
+    const parsed = new URL(`http://${value}`)
+    return parsed.hostname === '' || parsed.pathname !== '/' ? null : parsed
+  } catch { return null }
+}
+
+export function trustedAuthority(host: string, trustedHosts: readonly string[]): boolean {
+  const parsed = authority(host)
+  if (parsed === null) return false
+  return trustedHosts.some(value => {
+    const trusted = authority(value)
+    const explicitPort = value.startsWith('[') ? /\]:\d+$/.test(value) : /:\d+$/.test(value)
+    return trusted !== null && (explicitPort ? trusted.host === parsed.host : trusted.hostname === parsed.hostname)
+  })
+}
+
+export function sameOrigin(request: IncomingMessage, trustedHosts: readonly string[] = []): boolean {
   const host = request.headers.host
-  if (host !== undefined && !loopbackAuthority(host)) return false
+  if (host !== undefined && !loopbackAuthority(host) && !trustedAuthority(host, trustedHosts)) return false
   const origin = request.headers.origin
   if (origin === undefined) return true
-  try { return new URL(origin).host === host } catch { return false }
+  try {
+    const parsed = new URL(origin)
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.host === authority(host ?? '')?.host
+  } catch { return false }
+}
+
+export interface HostConnectionLike {
+  trustedHosts?: unknown
+  requestRejection?(request: IncomingMessage): number | undefined
+}
+
+/** Consult the same host admission policy as its own API, including browser login. */
+export function refuseUnadmitted(request: IncomingMessage, response: ServerResponse, connection?: HostConnectionLike): boolean {
+  if (typeof connection?.requestRejection !== 'function') return false
+  let status: number | undefined
+  try { status = connection.requestRejection(request) } catch { status = 403 }
+  if (status === undefined) return false
+  sendJson(response, status === 401 ? 401 : 403, { error: status === 401 ? '请先登录当前 DSH 宿主' : '请求未通过宿主验证' })
+  return true
+}
+
+export function directLoopbackRequest(request: IncomingMessage): boolean {
+  const address = request.socket?.remoteAddress
+  return loopbackAuthority(request.headers.host)
+    && (address === '127.0.0.1' || address === '::1' || address === '::ffff:127.0.0.1')
+    && !Object.keys(request.headers).some(key => key === 'forwarded' || key === 'x-real-ip' || key.startsWith('x-forwarded-'))
 }
 
 async function readJsonBody(request: IncomingMessage, limit: number): Promise<Record<string, unknown>> {

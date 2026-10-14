@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-14T22:19:40.617Z",
+  "generatedAt": "2026-10-15T04:49:29.022Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -3797,7 +3797,7 @@
           {
             "id": "dsh-keyed-settings-plugin-item",
             "kind": "keyed-slot-id-to-key",
-            "when": ">=0.1.0-rc.6 <0.2.0-0",
+            "when": ">=0.1.0-rc.7 <0.1.6-alpha.2",
             "slot": "settings.plugin.item",
             "key": "locale"
           }

@@ -21,6 +21,33 @@ export declare function packageDir(profileDir: string, packageName: string): str
 export declare function compatibilityPatchDir(profileDir: string): string;
 export declare function compatibilityPatchFile(profileDir: string, packageName: string, version: string): string;
 export declare function packageManifest(profileDir: string, packageName: string): Record<string, unknown> | null;
+export interface InstalledArtifactSnapshot {
+    packageName: string;
+    name: string | null;
+    version: string | null;
+    spec: string | null;
+    ok: boolean;
+    reason?: string;
+    files: Array<{
+        kind: 'host' | 'client' | 'bundle';
+        path: string;
+        sha256: string;
+    }>;
+    resolution?: {
+        specifier: string;
+        version: string;
+        integrity: string | null;
+        tarball: string | null;
+    } | null;
+}
+/** Inspect only this package's declared executable entries; never import code. */
+export declare function snapshotInstalledArtifact(profileDir: string, packageName: string): InstalledArtifactSnapshot;
+/** Compare recovery to the installed release before the operation, not today's catalog. */
+export declare function compareInstalledArtifact(profileDir: string, baseline: InstalledArtifactSnapshot): {
+    ok: boolean;
+    reason?: string;
+    artifact: InstalledArtifactSnapshot;
+};
 export declare function validateInstalledSkin(profileDir: string, skin: SkinEntry): {
     ok: boolean;
     reason?: string;
@@ -28,6 +55,29 @@ export declare function validateInstalledSkin(profileDir: string, skin: SkinEntr
     repairable?: boolean;
 };
 export declare function installedSpecMatches(skin: SkinEntry, spec: string | null | undefined): boolean;
+/** A manager-written npm range is accepted only through its installed resolution. */
+export declare function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined): boolean;
+export interface NpmArtifactSource {
+    name: string;
+    version: string;
+    integrity?: string;
+    gitHead?: string;
+    tarball?: string;
+}
+/** Validate materialized npm entries and the root lock contract without importing code. */
+export declare function validateNpmArtifact(profileDir: string, source: NpmArtifactSource): {
+    ok: boolean;
+    version?: string;
+    reason?: string;
+    integrityVerified: boolean;
+};
+/** Validate managed Desktop metadata without inventing missing npm provenance. */
+export declare function validateDesktopArtifact(profileDir: string, skin: SkinEntry): {
+    ok: boolean;
+    version?: string;
+    reason?: string;
+    integrityVerified: boolean;
+};
 /** Only offer an explicit migration between the same reviewed GitHub/npm release. */
 export declare function npmSourceMigration(profileDir: string, skin: SkinEntry): {
     target: string;

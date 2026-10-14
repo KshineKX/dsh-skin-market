@@ -5,6 +5,6 @@ export interface CompatibilityAssessment {
     reason: string;
     adapterIds: string[];
 }
-export declare function applicableAdapters(skin: CompatibilitySkin, runtime: DshRuntime, includeBuiltIns: boolean): CompatibilityAdapter[];
+export declare function applicableAdapters(skin: CompatibilitySkin, runtime: DshRuntime, _legacyIncludeBuiltIns?: boolean): CompatibilityAdapter[];
 export declare function assessCompatibility(skin: CompatibilitySkin, runtime: DshRuntime): CompatibilityAssessment;
 export {};

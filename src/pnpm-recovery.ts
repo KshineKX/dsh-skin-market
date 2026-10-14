@@ -1,7 +1,7 @@
 import { commandError, type CommandResult } from './commands.ts'
 import { readDependencies } from './profile.ts'
 
-export type PnpmFailureKind = 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'command'
+export type PnpmFailureKind = 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'command'
 
 export interface PnpmFailure {
   kind: PnpmFailureKind
@@ -80,6 +80,19 @@ export function classifyPnpmFailure(result: CommandResult): PnpmFailure {
   if (result.aborted) return { kind: 'command', message: '操作已取消' }
 
   const output = outputOf(result)
+  const stalled = /printed nothing for (\d+)ms and was terminated/.exec(output)
+  if (stalled !== null) {
+    const scripts = [...output.matchAll(/node_modules[\\/]((?:@[^\\/\s]+[\\/])?[^\\/\s]+) (?:pre|post)?install[:$]/g)]
+    const packageName = scripts.at(-1)?.[1]?.replace(/\\/g, '/')
+    const minutes = Math.max(1, Math.round(Number(stalled[1]) / 60000))
+    return { kind: 'script-timeout', ...(packageName === undefined ? {} : { packageName }), message: `${packageName === undefined ? '安装步骤' : `依赖 ${packageName} 的安装脚本`} ${minutes} 分钟没有输出，被宿主终止；请检查脚本与下载连接后重试。此结果不证明文件尚未改变。` }
+  }
+  if (output.includes('ERR_PNPM_OUTDATED_LOCKFILE')) {
+    return { kind: 'lockfile-outdated', message: 'profile 的 pnpm-lock.yaml 与 package.json 不一致，pnpm 已拒绝此次操作；请备份锁文件并在该 profile 中对齐声明后重试，不要删除整个锁文件。' }
+  }
+  if (output.includes('ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY') || /Broken lockfile/i.test(output)) {
+    return { kind: 'lockfile-broken', message: 'profile 的 pnpm-lock.yaml 缺少其引用的依赖条目，pnpm 已拒绝此次操作；请备份锁文件并修复缺失记录后重试，不要删除整个锁文件或直接替换其他插件版本。' }
+  }
   const ignoredKeys = ignoredBuildKeys(output)
   if (ignoredKeys.length > 0 || /ERR_PNPM_IGNORED_BUILDS/i.test(output)) {
     const packageName = ignoredKeys[0]

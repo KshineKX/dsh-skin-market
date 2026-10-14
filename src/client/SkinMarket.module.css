@@ -9,6 +9,24 @@
   overflow: hidden;
 }
 
+/* Plugin details already have a scrolling page. Let the embedded market
+   expand with its content and leave scrolling to that page. */
+.root[data-layout="embedded"] {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.root[data-layout="embedded"] .home {
+  height: auto;
+  grid-template-rows: auto auto;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+.root[data-layout="embedded"] .homeContent {
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
 .home {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -392,15 +410,20 @@
 
 .operation,
 .error { order: 3; padding: 9px 12px; border-radius: 10px; font-size: 12px; line-height: 18px; }
-.operation { display: flex; min-width: 0; align-items: center; gap: 7px; overflow: hidden; color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-interactive-bg-hover); }
+.operation { display: flex; flex-wrap: wrap; min-width: 0; align-items: center; gap: 7px; overflow: hidden; color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-interactive-bg-hover); }
 .operation > svg { flex: 0 0 auto; animation: spin 1s linear infinite; }
 .operation[data-terminal="true"] > svg { animation: none; }
 .operation[data-terminal="true"] { background: var(--dsw-alias-bg-layer-1); }
 .operation[data-failed="true"] { color: var(--dsw-alias-state-error-primary); background: var(--dsw-alias-state-error-tertiary); }
-.operation strong { min-width: 0; flex: 0 1 auto; overflow: hidden; color: var(--dsw-alias-label-primary); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.operationMeta { display: flex; min-width: 0; flex: 0 1 auto; align-items: center; gap: 7px; overflow: hidden; white-space: nowrap; }
-.operationMeta small { flex: none; color: var(--dsw-alias-label-secondary); font-size: 12px; overflow-wrap: anywhere; }
-.operationMessage { min-width: 0; flex: 1 1 auto; overflow: hidden; color: var(--dsw-alias-label-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.operation strong { min-width: 0; flex: 1 1 120px; overflow: hidden; color: var(--dsw-alias-label-primary); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.operationElapsed { flex: none; color: var(--dsw-alias-label-secondary); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.operationMeta { display: flex; min-width: 0; flex-wrap: wrap; gap: 4px 12px; }
+.operationMeta small { color: var(--dsw-alias-label-secondary); font-size: 12px; overflow-wrap: anywhere; }
+.operationMessage { flex-basis: 100%; min-width: 0; color: var(--dsw-alias-label-secondary); overflow-wrap: anywhere; }
+.operationDetails { display: flex; flex: 1 0 100%; min-width: 0; align-items: flex-start; gap: 12px; padding-top: 8px; border-top: 1px solid var(--dsw-alias-border-l3); }
+.operationDetails[hidden] { display: none; }
+.operationDiagnostics { min-width: 0; flex: 1; }
+.operationDiagnostics p { margin: 0 0 4px; overflow-wrap: anywhere; }
 .operation[data-failed="true"] .operationMessage { color: var(--dsw-alias-state-error-primary); font-weight: 550; }
 .operationActions { display: flex; min-width: 0; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; }
 .operation .operationCancel,
@@ -525,7 +548,9 @@
   .titleBlock .version { flex-wrap: wrap; row-gap: 2px; margin-top: 6px; }
   .actionRow { justify-content: flex-start; }
   .operation { flex-wrap: wrap; row-gap: 6px; }
+  .operation strong { flex-basis: calc(100% - 24px); white-space: normal; overflow-wrap: anywhere; }
   .operationActions { flex: 1 0 auto; margin-left: 0; justify-content: flex-end; }
+  .operationDetails { flex-wrap: wrap; }
   .homeOperations { gap: 6px; }
   .aboutGrid { grid-template-columns: 1fr; }
   .aboutGrid > aside { border-top: 1px solid var(--dsw-alias-border-l2); border-left: 0; }

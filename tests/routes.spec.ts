@@ -1,8 +1,223 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { describe, expect, it } from 'vitest'
-import { assertRestartClearOfSkinOperations, canRestartSkin, mountRoutes, runningAgentCount, waitForRestartSafety, type AgentLike, type WebServerService } from '../src/routes.ts'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { Readable } from 'node:stream'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { assertRestartClearOfSkinOperations, canRestartSkin, mountRoutes, runningAgentCount, waitForRestartSafety, type AgentLike, type RouteOptions, type WebServerService } from '../src/routes.ts'
 import type { Operation } from '../src/types.ts'
 import type { LoaderEntry } from '../src/types.ts'
+import type { HostConnectionLike } from '../src/http.ts'
+import { SkinLifecycle } from '../src/lifecycle.ts'
+import type { MarketUpdater } from '../src/self-update.ts'
+
+const admissionFixtures: Array<{ directory: string; dispose: () => void | Promise<void> }> = []
+afterEach(async () => {
+  for (const { directory, dispose } of admissionFixtures.splice(0)) {
+    await dispose()
+    rmSync(directory, { recursive: true, force: true })
+  }
+  vi.restoreAllMocks()
+})
+
+function admissionFixture(options: Pick<RouteOptions, 'connection' | 'hostKind'> = {}) {
+  const directory = mkdtempSync(join(tmpdir(), 'market-route-admission-'))
+  const routes: Array<Parameters<WebServerService['register']>[0]> = []
+  const snapshot = { catalog: { schemaVersion: 1, generatedAt: '2026-10-14T00:00:00Z', skins: [] }, source: 'embedded', lastCheckedAt: null }
+  const refresh = vi.fn(async () => snapshot)
+  const operation = { id: 'market-operation', phase: 'queued' as const, startedAt: '2026-10-14T00:00:00Z' }
+  let liveMarketOperation: ReturnType<MarketUpdater['currentOperation']> = null
+  const updater = {
+    restartRequired: true,
+    status: vi.fn(async () => ({ currentVersion: '0.1.57', latestVersion: '0.1.57', updateAvailable: false })),
+    update: vi.fn(async () => ({ currentVersion: '0.1.57', latestVersion: '0.1.57', updateAvailable: false })),
+    startUpdate: vi.fn(() => operation),
+    operation: vi.fn(() => operation),
+    currentOperation: vi.fn(() => liveMarketOperation),
+    cancel: vi.fn(() => ({ ...operation, phase: 'cancelled' as const })),
+    retry: vi.fn(() => operation),
+    dispose: vi.fn(async () => undefined),
+  }
+  const begin = vi.spyOn(SkinLifecycle.prototype, 'begin').mockImplementation((kind, skinId) => ({
+    id: 'skin-operation', kind, skinId, phase: 'queued', startedAt: '2026-10-14T00:00:00Z',
+  }))
+  const schedule = vi.fn()
+  const dispose = mountRoutes({
+    webServer: { register(route) { routes.push(route); return () => undefined } },
+    agents: { list: () => [] },
+    loader: { entries: (): Iterable<LoaderEntry> => [] },
+  }, {
+    ...options,
+    profile: 'test', profileDir: directory,
+    runner: vi.fn(async () => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false })),
+    catalogStore: { snapshot: () => snapshot, refresh } as unknown as RouteOptions['catalogStore'],
+    marketUpdater: updater,
+    restart: { available: true, schedule },
+  })
+  admissionFixtures.push({ directory, dispose })
+  const request = async (path: string, method: 'GET' | 'POST', headers: IncomingMessage['headers'] = {}, remoteAddress: string | null = '127.0.0.1') => {
+    const pathname = path.split('?')[0]!
+    const route = routes.find(item => item.path === pathname || item.kind === 'prefix' && pathname.startsWith(`${item.path}/`))
+    if (route === undefined) throw new Error(`unregistered route ${path}`)
+    const body = path === '/dsh-skin-market/restart' ? { reason: 'market-update' } : { skinId: 'fixture-skin', action: 'retry' }
+    const incoming = Readable.from(method === 'POST' ? [JSON.stringify(body)] : []) as IncomingMessage
+    Object.assign(incoming, { method, url: path, headers: { ...(method === 'POST' ? { 'content-type': 'application/json' } : {}), ...headers }, socket: remoteAddress === null ? {} : { remoteAddress } })
+    const response = { writeHead: vi.fn(), end: vi.fn() }
+    await route.handler(incoming, response as unknown as ServerResponse)
+    return { incoming, response, status: response.writeHead.mock.calls.at(-1)?.[0] as number, body: response.end.mock.calls.at(-1)?.[0] as string }
+  }
+  return { request, routes, refresh, updater, begin, schedule, setMarketOperation: (value: typeof liveMarketOperation) => { liveMarketOperation = value } }
+}
+
+const guardedRequests = [
+  ['/dsh-skin-market/catalog', 'GET'],
+  ['/dsh-skin-market/logs', 'GET'],
+  ['/dsh-skin-market/state', 'GET'],
+  ['/dsh-skin-market/market-update', 'GET'],
+  ['/dsh-skin-market/market-update', 'POST'],
+  ['/dsh-skin-market/operations/fixture', 'GET'],
+  ['/dsh-skin-market/operations/fixture/cancel', 'POST'],
+  ['/dsh-skin-market/operations/fixture/retry', 'POST'],
+  ['/dsh-skin-market/market-update/operations/fixture', 'GET'],
+  ['/dsh-skin-market/market-update/operations/fixture/cancel', 'POST'],
+  ['/dsh-skin-market/market-update/operations/fixture/retry', 'POST'],
+  ...['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'migrate', 'uninstall', 'restart'].map(action => [`/dsh-skin-market/${action}`, 'POST'] as const),
+] as const
+
+describe('host admission for every market route', () => {
+  it.each([401, 403, 'throw'] as const)('refuses all exact and prefix read/mutation paths when host admission returns %s', rejection => {
+    const gate = vi.fn(() => { if (rejection === 'throw') throw new Error('host admission unavailable'); return rejection })
+    const fixture = admissionFixture({ connection: () => ({ requestRejection: gate }) })
+    return (async () => {
+      expect(fixture.routes.filter(route => !guardedRequests.some(([path]) => path === route.path || route.kind === 'prefix' && path.startsWith(`${route.path}/`))).map(route => route.path)).toEqual([])
+      for (const [path, method] of guardedRequests) {
+        const result = await fixture.request(path, method)
+        expect(result.status, `${method} ${path}`).toBe(rejection === 401 ? 401 : 403)
+        expect(JSON.parse(result.body).error).toBe(rejection === 401 ? '请先登录当前 DSH 宿主' : '请求未通过宿主验证')
+      }
+      expect(gate).toHaveBeenCalledTimes(guardedRequests.length)
+      expect(fixture.refresh).not.toHaveBeenCalled()
+      expect(fixture.updater.status).not.toHaveBeenCalled()
+      expect(fixture.updater.startUpdate).not.toHaveBeenCalled()
+      expect(fixture.updater.operation).not.toHaveBeenCalled()
+      expect(fixture.updater.cancel).not.toHaveBeenCalled()
+      expect(fixture.updater.retry).not.toHaveBeenCalled()
+      expect(fixture.begin).not.toHaveBeenCalled()
+      expect(fixture.schedule).not.toHaveBeenCalled()
+    })()
+  })
+
+  it('fails closed when resolving the host admission service throws', async () => {
+    const fixture = admissionFixture({ connection: () => { throw new Error('connection service unavailable') } })
+    expect((await fixture.request('/dsh-skin-market/catalog', 'GET')).status).toBe(403)
+    expect((await fixture.request('/dsh-skin-market/install', 'POST')).status).toBe(403)
+    expect(fixture.refresh).not.toHaveBeenCalled()
+    expect(fixture.begin).not.toHaveBeenCalled()
+  })
+
+  it('looks up admission for every request, including late service appearance and changed login state', async () => {
+    let connection: HostConnectionLike | undefined
+    let admitted = false
+    const gate = vi.fn(() => admitted ? undefined : 401)
+    const fixture = admissionFixture({ connection: () => connection })
+    expect((await fixture.request('/dsh-skin-market/state', 'GET')).status).toBe(200)
+    connection = { requestRejection: gate }
+    expect((await fixture.request('/dsh-skin-market/state', 'GET')).status).toBe(401)
+    admitted = true
+    expect((await fixture.request('/dsh-skin-market/state', 'GET')).status).toBe(200)
+    admitted = false
+    expect((await fixture.request('/dsh-skin-market/market-update/operations/fixture', 'GET')).status).toBe(401)
+    expect(gate).toHaveBeenCalledTimes(3)
+  })
+
+  it('accepts Desktop proxy requests with stripped Origin/Host only after host admission', async () => {
+    const gate = vi.fn((request: IncomingMessage) => request.headers.cookie === 'admitted-test-session' ? undefined : 401)
+    const fixture = admissionFixture({ hostKind: 'desktop', connection: () => ({ requestRejection: gate }) })
+    const refused = await fixture.request('/dsh-skin-market/install', 'POST')
+    expect(refused.status).toBe(401)
+    expect(fixture.begin).not.toHaveBeenCalled()
+    const accepted = await fixture.request('/dsh-skin-market/install', 'POST', { cookie: 'admitted-test-session' })
+    expect(accepted.status).toBe(202)
+    expect(accepted.incoming.headers.host).toBeUndefined()
+    expect(accepted.incoming.headers.origin).toBeUndefined()
+    expect(gate).toHaveBeenLastCalledWith(accepted.incoming)
+    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith('install', 'fixture-skin')
+  })
+
+  it('honors only explicitly declared non-loopback authorities for admitted mutation requests', async () => {
+    let trustedHosts: string[] = []
+    const fixture = admissionFixture({ connection: () => ({ requestRejection: () => undefined, trustedHosts }) })
+    const headers = { host: 'harness.example.test:8443', origin: 'https://harness.example.test:8443' }
+    expect((await fixture.request('/dsh-skin-market/install', 'POST', headers)).status).toBe(403)
+    trustedHosts = ['harness.example.test:8443']
+    expect((await fixture.request('/dsh-skin-market/install', 'POST', headers)).status).toBe(202)
+    expect((await fixture.request('/dsh-skin-market/install', 'POST', { host: 'harness.example.test:8444', origin: 'https://harness.example.test:8444' })).status).toBe(403)
+    expect((await fixture.request('/dsh-skin-market/install', 'POST', { ...headers, origin: 'https://evil.example.test:8443' })).status).toBe(403)
+    expect(fixture.begin).toHaveBeenCalledTimes(1)
+  })
+
+  it('schedules restart only for an admitted direct loopback socket', async () => {
+    const fixture = admissionFixture({ connection: () => ({ requestRejection: () => undefined, trustedHosts: ['harness.example.test'] }) })
+    const base = { host: '127.0.0.1:3080', origin: 'http://127.0.0.1:3080' }
+    for (const remoteAddress of [null, '10.0.0.1', '::ffff:10.0.0.1']) {
+      expect((await fixture.request('/dsh-skin-market/restart', 'POST', base, remoteAddress)).status).toBe(403)
+    }
+    expect((await fixture.request('/dsh-skin-market/restart', 'POST')).status).toBe(403)
+    expect((await fixture.request('/dsh-skin-market/restart', 'POST', { host: 'harness.example.test', origin: 'https://harness.example.test' })).status).toBe(403)
+    for (const header of ['forwarded', 'x-real-ip', 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto']) {
+      expect((await fixture.request('/dsh-skin-market/restart', 'POST', { ...base, [header]: '127.0.0.1' })).status).toBe(403)
+    }
+    expect(fixture.schedule).not.toHaveBeenCalled()
+    const accepted = await fixture.request('/dsh-skin-market/restart', 'POST', base)
+    expect(accepted.status).toBe(202)
+    expect(JSON.parse(accepted.body)).toMatchObject({ restarting: true })
+    expect(fixture.schedule).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['checking', 'installing', 'waiting'] as const)('blocks skin writes and retries while market self-update is %s, and keeps cancellation available', async phase => {
+    const fixture = admissionFixture()
+    const operation = { id: 'existing-skin', kind: 'install' as const, skinId: 'fixture-skin', phase: 'queued' as const, startedAt: '2026-10-14T00:00:00Z' }
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry').mockImplementation(() => operation)
+    const cancel = vi.spyOn(SkinLifecycle.prototype, 'cancel').mockImplementation(() => ({ ...operation, phase: 'cancelled' }))
+    fixture.setMarketOperation({ id: 'active-market-update', phase, startedAt: operation.startedAt })
+    for (const action of ['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'migrate', 'uninstall']) {
+      const result = await fixture.request(`/dsh-skin-market/${action}`, 'POST')
+      expect(result.status).toBe(409)
+      expect(JSON.parse(result.body).error).toContain(phase === 'waiting' ? '宿主尚未确认' : '皮肤市场正在更新')
+    }
+    expect((await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST')).status).toBe(409)
+    expect(fixture.begin).not.toHaveBeenCalled()
+    expect(retry).not.toHaveBeenCalled()
+    expect((await fixture.request('/dsh-skin-market/operations/existing-skin/cancel', 'POST')).status).toBe(202)
+    expect(cancel).toHaveBeenCalledExactlyOnceWith('existing-skin')
+
+    fixture.setMarketOperation({ id: 'active-market-update', phase: 'done', startedAt: operation.startedAt })
+    expect((await fixture.request('/dsh-skin-market/install', 'POST')).status).toBe(202)
+    expect((await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST')).status).toBe(202)
+    expect(fixture.begin).toHaveBeenCalledTimes(1)
+    expect(retry).toHaveBeenCalledExactlyOnceWith('existing-skin', 'retry')
+  })
+
+  it.each(['downloading', 'activating', 'waiting'] as const)('blocks market self-update writes and retries while a skin operation is %s', async phase => {
+    const fixture = admissionFixture()
+    const currentOperations = vi.spyOn(SkinLifecycle.prototype, 'currentOperations').mockReturnValue([{
+      id: 'active-skin', kind: phase === 'activating' ? 'activate' : 'install', skinId: 'fixture-skin', phase, startedAt: '2026-10-14T00:00:00Z',
+    }])
+    expect((await fixture.request('/dsh-skin-market/market-update', 'POST')).status).toBe(409)
+    expect((await fixture.request('/dsh-skin-market/market-update/operations/existing-update/retry', 'POST')).status).toBe(409)
+    expect(fixture.updater.startUpdate).not.toHaveBeenCalled()
+    expect(fixture.updater.retry).not.toHaveBeenCalled()
+    expect((await fixture.request('/dsh-skin-market/market-update', 'GET')).status).toBe(200)
+    expect((await fixture.request('/dsh-skin-market/market-update/operations/existing-update/cancel', 'POST')).status).toBe(202)
+    expect(fixture.updater.cancel).toHaveBeenCalledExactlyOnceWith('existing-update')
+
+    currentOperations.mockReturnValue([])
+    expect((await fixture.request('/dsh-skin-market/market-update', 'POST')).status).toBe(202)
+    expect((await fixture.request('/dsh-skin-market/market-update/operations/existing-update/retry', 'POST')).status).toBe(202)
+    expect(fixture.updater.startUpdate).toHaveBeenCalledTimes(1)
+    expect(fixture.updater.retry).toHaveBeenCalledExactlyOnceWith('existing-update')
+  })
+})
 
 describe('market routes', () => {
   it('blocks restart while an Agent is running and waits for idle maintenance', async () => {
@@ -23,9 +238,9 @@ describe('market routes', () => {
     const downloading = {
       id: 'op', kind: 'install', skinId: 'skin', phase: 'downloading', startedAt: '2026-01-01T00:00:00Z',
     } satisfies Operation
-    expect(() => assertRestartClearOfSkinOperations([downloading])).toThrow('正在安装或更新')
+    expect(() => assertRestartClearOfSkinOperations([downloading])).toThrow('皮肤操作未完成')
     expect(() => assertRestartClearOfSkinOperations([], { phase: 'installing' })).toThrow('皮肤市场正在更新')
-    expect(() => assertRestartClearOfSkinOperations([{ ...downloading, kind: 'activate', phase: 'activating' }])).not.toThrow()
+    expect(() => assertRestartClearOfSkinOperations([{ ...downloading, kind: 'activate', phase: 'activating' }])).toThrow('皮肤操作未完成')
     expect(() => assertRestartClearOfSkinOperations([{ ...downloading, phase: 'done' }])).not.toThrow()
   })
 

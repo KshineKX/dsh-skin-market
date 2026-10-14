@@ -160,13 +160,14 @@ export interface InstallConflict {
 }
 
 export type OperationKind = 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
-export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'cancelling' | 'cancelled' | 'done' | 'failed'
+export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
 export type OperationRetryAction = 'retry' | 'approve-build'
 
 export interface OperationFailure {
-  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command'
+  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout'
   message: string
   packageName?: string
+  buildKeys?: string[]
   action?: OperationRetryAction
   conflicts?: InstallConflict[]
 }
@@ -178,6 +179,8 @@ export interface Operation {
   phase: OperationPhase
   message?: string
   cancelable?: boolean
+  application?: 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled'
+  restartRequired?: boolean
   downloadedBytes?: number
   totalBytes?: number
   bytesPerSecond?: number
@@ -196,6 +199,7 @@ export interface PersistedMarketState {
   activeSkinId: string | null
   disabledSkinIds: string[]
   pinnedSkinIds?: string[]
+  pendingRestart?: { pid: number; skinIds: string[] }
   activity?: Record<string, SkinActivity>
   /** Companion packages linked to installed owner skins. */
   managedCompanions?: Record<string, ManagedCompanionState>

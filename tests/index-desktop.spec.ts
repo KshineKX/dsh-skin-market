@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { loadCatalog } from '../src/catalog.ts'
 import { apply } from '../src/index.ts'
 import type { LoaderEntry } from '../src/types.ts'
+import type { HostConnectionLike } from '../src/http.ts'
 
 describe('official Desktop entrypoint', () => {
   it('uses the Desktop route for explicit profile=desktop without profileContext.dir and fails closed without pluginManager', async () => {
@@ -44,9 +45,10 @@ describe('official Desktop entrypoint', () => {
 
       const stateResponse = { writeHead: vi.fn(), end: vi.fn() }
       await handlers.get('/dsh-skin-market/state')?.({ method: 'GET', headers: {} }, stateResponse)
-      const state = JSON.parse(stateResponse.end.mock.calls.at(-1)?.[0] as string) as { hostKind: string; runningAgentCount: number }
+      const state = JSON.parse(stateResponse.end.mock.calls.at(-1)?.[0] as string) as { hostKind: string; runningAgentCount: number; management: { capabilities: { install: { available: boolean; reason: string } } } }
       expect(state.hostKind).toBe('desktop')
       expect(state.runningAgentCount).toBe(0)
+      expect(state.management.capabilities.install).toMatchObject({ available: false, reason: expect.stringContaining('pluginManager') })
       expect(existsSync(join(desktopDir, '.dsh-skin-market', 'state.json'))).toBe(true)
       expect(existsSync(join(profileRoot, 'profiles', 'web', '.dsh-skin-market', 'state.json'))).toBe(false)
 
@@ -58,23 +60,67 @@ describe('official Desktop entrypoint', () => {
       await handlers.get('/dsh-skin-market/install')?.(request, operationResponse)
       expect(operationResponse.end).toHaveBeenCalled()
 
-      // The operation is asynchronous; wait until the manager lookup is
-      // observed in the operation result rather than treating a 202 as success.
-      const operationId = JSON.parse(operationResponse.end.mock.calls.at(-1)?.[0] as string).operationId as string
-      let operation: { phase: string; message?: string } | undefined
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        const response = { writeHead: vi.fn(), end: vi.fn() }
-        await handlers.get('/dsh-skin-market/operations')?.({ method: 'GET', url: `/dsh-skin-market/operations/${operationId}`, headers: {} }, response)
-        if (response.end.mock.calls.length > 0) {
-          const value = JSON.parse(response.end.mock.calls.at(-1)?.[0] as string) as { phase: string; message?: string }
-          operation = value
-          if (value.phase === 'failed' || value.phase === 'done') break
-        }
-        await new Promise(resolve => setTimeout(resolve, 5))
-      }
-      expect(operation?.phase).toBe('failed')
-      expect(operation?.message).toContain('pluginManager')
+      expect(operationResponse.writeHead.mock.calls.at(-1)?.[0]).toBe(409)
+      expect(JSON.parse(operationResponse.end.mock.calls.at(-1)?.[0] as string)).toEqual({ error: expect.stringContaining('pluginManager') })
+      const afterResponse = { writeHead: vi.fn(), end: vi.fn() }
+      await handlers.get('/dsh-skin-market/state')?.({ method: 'GET', headers: {} }, afterResponse)
+      expect(JSON.parse(afterResponse.end.mock.calls.at(-1)?.[0] as string).operations).toEqual([])
+      expect(existsSync(join(desktopDir, 'package.json'))).toBe(false)
       expect(host.get).toHaveBeenCalledWith('pluginManager')
+    } finally {
+      await cleanup?.()
+      if (previousHome === undefined) delete process.env.DSH_HOME
+      else process.env.DSH_HOME = previousHome
+      rmSync(profileRoot, { recursive: true, force: true })
+    }
+  })
+
+  it.each(['web', 'desktop'] as const)('preserves the actual %s profile and re-reads a host admission service that appears after startup', async profile => {
+    const profileRoot = mkdtempSync(join(tmpdir(), 'dsh-market-host-entry-'))
+    const previousHome = process.env.DSH_HOME
+    process.env.DSH_HOME = profileRoot
+    const profileDir = join(profileRoot, 'profiles', profile)
+    const handlers = new Map<string, (request: any, response: any) => void | Promise<void>>()
+    const installBundle = vi.fn()
+    const removeBundle = vi.fn()
+    const values: Record<string, unknown> = {
+      profileContext: { name: profile, dir: profileDir },
+      pluginManager: { installBundle, removeBundle, cancelInstall: vi.fn() },
+    }
+    let cleanup: (() => void | Promise<void>) | undefined
+    const host = {
+      webServer: { register(route: { path: string; handler: (request: any, response: any) => void | Promise<void> }) { handlers.set(route.path, route.handler); return () => undefined } },
+      loader: { entries: (): Iterable<LoaderEntry> => [] },
+      get: (name: string) => values[name],
+      effect(callback: () => (() => void | Promise<void>)) { cleanup = callback() },
+    }
+    const context = {
+      get: (name: string) => values[name],
+      inject: (_names: readonly string[], callback: (value: unknown) => unknown) => callback(host),
+    } as unknown as Context
+    const state = async () => {
+      const response = { writeHead: vi.fn(), end: vi.fn() }
+      await handlers.get('/dsh-skin-market/state')!({ method: 'GET', headers: {} }, response)
+      return { status: response.writeHead.mock.calls.at(-1)?.[0], value: JSON.parse(response.end.mock.calls.at(-1)?.[0] as string) }
+    }
+    try {
+      apply(context)
+      const initial = await state()
+      expect(initial.status).toBe(200)
+      expect(initial.value.hostKind).toBe(profile === 'desktop' ? 'desktop' : 'dsh')
+      expect(existsSync(join(profileDir, '.dsh-skin-market', 'state.json'))).toBe(true)
+      expect(existsSync(join(profileRoot, 'profiles', profile === 'desktop' ? 'web' : 'desktop', '.dsh-skin-market', 'state.json'))).toBe(false)
+
+      const requestRejection = vi.fn((): number | undefined => 401)
+      values.connection = { requestRejection } satisfies HostConnectionLike
+      expect(await state()).toEqual({ status: 401, value: { error: '请先登录当前 DSH 宿主' } })
+      requestRejection.mockImplementation(() => undefined)
+      expect((await state()).status).toBe(200)
+      requestRejection.mockImplementation(() => { throw new Error('admission unavailable') })
+      expect(await state()).toEqual({ status: 403, value: { error: '请求未通过宿主验证' } })
+      expect(requestRejection).toHaveBeenCalledTimes(3)
+      expect(installBundle).not.toHaveBeenCalled()
+      expect(removeBundle).not.toHaveBeenCalled()
     } finally {
       await cleanup?.()
       if (previousHome === undefined) delete process.env.DSH_HOME

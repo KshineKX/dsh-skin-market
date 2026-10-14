@@ -1,10 +1,12 @@
 import type { MarketHostKind } from './types.ts';
+import type { OfficialInstallProgress, OfficialManagementAdapter, OfficialManagementResult } from './official-desktop.ts';
 export interface CommandResult {
     exitCode: number | null;
     stdout: string;
     stderr: string;
     timedOut: boolean;
     aborted?: boolean;
+    management?: OfficialManagementResult;
 }
 export interface CommandOptions {
     signal?: AbortSignal;
@@ -13,6 +15,7 @@ export interface CommandOptions {
     env?: NodeJS.ProcessEnv;
     onStdout?: (chunk: string) => void;
     onStderr?: (chunk: string) => void;
+    onManagementState?: (state: OfficialInstallProgress) => void;
 }
 export type CommandExecutor = (file: string, args: readonly string[], options?: CommandOptions) => Promise<CommandResult>;
 export interface PluginInstallRequest {
@@ -20,12 +23,17 @@ export interface PluginInstallRequest {
     packageVersion: string;
     receiptId: string;
     pnpmOptions?: readonly string[];
+    /** Exact pending package names explicitly approved by the user. */
+    approvedBuilds?: readonly string[];
+    registry?: string | null;
+    saveExact?: boolean;
 }
 export interface PluginRunner {
     (profile: string, args: readonly string[], options?: CommandOptions): Promise<CommandResult>;
     hostKind?: MarketHostKind;
     ensurePnpm?: (options?: CommandOptions) => Promise<void>;
     installPlugin?: (profile: string, request: PluginInstallRequest, options?: CommandOptions) => Promise<CommandResult>;
+    management?: OfficialManagementAdapter;
 }
 export declare function normalizedEnvironment(options?: CommandOptions): NodeJS.ProcessEnv | undefined;
 export declare const winCmdShim: boolean;

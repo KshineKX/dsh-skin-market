@@ -1,162 +1,373 @@
 import { randomUUID } from 'node:crypto'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
+import { compareVersions } from './semver.ts'
+import type { DshRuntime } from './types.ts'
 
-/**
- * The official Electron Desktop host owns profile mutations through this
- * Remote. Keep the shape structural so the market does not take a runtime
- * dependency on the Desktop application package.
- */
+/** Structural Host service contract; no Electron or generated Client proxy dependency. */
 export interface OfficialPluginManagerLike {
   installBundle(spec: string, options?: Record<string, unknown>): Promise<unknown>
   removeBundle(name: string): Promise<unknown>
   cancelInstall?(requestId: string): Promise<unknown>
+  waitForInstall?(requestId: string): Promise<unknown>
+  setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>
+  setPluginEnabled?(entryId: string, enabled: boolean): Promise<unknown>
+  inspect?(spec: string, optionsOrSignal?: unknown, signal?: AbortSignal): Promise<unknown>
+  listBundles?(): Promise<unknown>
+  listPlugins?(): Promise<unknown>
 }
 
+export interface OfficialManagementError {
+  code?: string
+  message?: string
+  diagnostic?: string
+  incompatible?: unknown[]
+  [key: string]: unknown
+}
+
+export type OfficialApplication = 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled'
+interface OfficialManagementFields {
+  changed?: boolean
+  stage?: string
+  target?: string
+  enabled?: boolean
+  error?: OfficialManagementError
+  warnings?: string[]
+  pendingBuilds?: string[]
+  approvedBuilds?: string[]
+  bundle?: string
+  version?: string
+  registries?: Array<string | null>
+  failedAt?: string
+  packageResult?: { exitCode?: number; output?: string; kind?: string; [key: string]: unknown }
+  requestId?: string
+  /** A lost result could not be recovered. This must never trigger an implicit repeat installation. */
+  cancelRequested?: boolean
+  cancellationStatus?: string
+  [key: string]: unknown
+}
+export type OfficialManagementResult = OfficialManagementFields & (
+  | { indeterminate?: false; application?: OfficialApplication }
+  | { indeterminate: true; application: 'unknown' }
+)
+
+export interface OfficialInstallProgress {
+  requestId: string
+  phase: 'installing' | 'cancelling' | 'applying'
+  attempt?: { registry: string | null; index: number; total: number }
+}
+export interface OfficialManagementEvents {
+  on(event: string, callback: (payload: unknown) => void): (() => void) | void
+}
+export interface OfficialCapability { available: boolean; reason?: string }
+export interface OfficialManagementCapabilities {
+  install: OfficialCapability
+  update: OfficialCapability
+  enable: OfficialCapability
+  disable: OfficialCapability
+  remove: OfficialCapability
+  cancel: OfficialCapability
+  wait: OfficialCapability
+  buildApprovals: OfficialCapability
+  registry: OfficialCapability
+  saveExact: OfficialCapability
+}
+export interface OfficialInspectionOptions { registry?: string | null; signal?: AbortSignal }
+export interface OfficialManagementAdapter {
+  /** These audited Hosts cannot reliably resolve a newly installed bundle before restarting. */
+  readonly installRequiresRestart: boolean
+  capabilities(): OfficialManagementCapabilities
+  setBundleEnabled(name: string, enabled: boolean, options?: CommandOptions): Promise<CommandResult>
+  setPluginEnabled(entryId: string, enabled: boolean, options?: CommandOptions): Promise<CommandResult>
+  inspect(spec: string, options?: OfficialInspectionOptions): Promise<unknown>
+  listBundles(): Promise<unknown>
+  listPlugins(): Promise<unknown>
+}
+
+const CORE_VERSION = '0.1.6-alpha.2'
+const RECOVERY_VERSION = '0.1.7-alpha.1'
+const RESOLUTION_REFRESH_VERSION = '0.2.1-alpha.1'
+const EXACT_VERSION = '0.2.1-alpha.2'
+// Published snapshots, not a promise that future or untagged releases share the contract.
+const AUDITED_VERSIONS = new Set([
+  CORE_VERSION, '0.1.7-alpha.1', '0.1.7-alpha.2', '0.1.7-rc.1', '0.1.7-rc.2',
+  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION,
+])
 type RecordLike = Record<string, unknown>
 
 function asRecord(value: unknown): RecordLike | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as RecordLike : undefined
 }
-
+function unwrapResult(value: unknown): unknown {
+  const record = asRecord(value)
+  return record?.ok === true && Object.hasOwn(record, 'value') ? record.value : value
+}
+function readManagerResult(value: unknown): unknown {
+  if (asRecord(value)?.ok === false) throw new Error(resultText(value))
+  return unwrapResult(value)
+}
 function resultText(value: unknown): string {
   const record = asRecord(value)
   const error = record?.error
   if (typeof error === 'string' && error.trim() !== '') return error
   const errorRecord = asRecord(error)
-  if (typeof errorRecord?.message === 'string' && errorRecord.message.trim() !== '') return errorRecord.message
+  const details = [errorRecord?.message, errorRecord?.diagnostic, errorRecord?.code]
+    .filter((part): part is string => typeof part === 'string' && part.trim() !== '')
+  if (details.length > 0) return details.join(': ')
   const packageResult = asRecord(record?.packageResult)
   if (typeof packageResult?.output === 'string' && packageResult.output.trim() !== '') return packageResult.output
   if (typeof packageResult?.message === 'string' && packageResult.message.trim() !== '') return packageResult.message
-  try {
-    const json = JSON.stringify(value)
-    return json === undefined ? String(value) : json
-  } catch {
-    return String(value)
-  }
+  try { return JSON.stringify(value) ?? String(value) } catch { return String(value) }
 }
-
-function resultFailed(value: unknown): boolean {
+function managerResult(value: unknown, requestId?: string, strict = false): CommandResult {
+  value = unwrapResult(value)
   const record = asRecord(value)
-  if (record === undefined) return false
-  // The official manager reports the host-side outcome separately from the
-  // package-manager result.  Once that field is present it is authoritative:
-  // a successful package install can still be rejected while applying the
-  // profile, and a non-zero package exit can be wrapped by a successful host
-  // application result.
-  const application = record.application
-  if (application !== undefined) {
-    return application !== 'applied' && application !== 'restart-required' && application !== 'overridden'
+  const application = record?.application
+  if (strict && (record === undefined || application === undefined && record.ok !== false)) {
+    return unknownResult(new Error('官方宿主未返回可确认的管理结果'), requestId)
   }
-  return record.ok === false
-    || record.success === false
-    || record.application === 'failed'
-    || record.changed === 'failed'
-    || asRecord(record.packageResult)?.exitCode !== undefined && asRecord(record.packageResult)?.exitCode !== 0
-}
-
-function managerResult(value: unknown): CommandResult {
+  const normalized: RecordLike = { ...record, ...(requestId === undefined ? {} : { requestId }) }
+  delete normalized.indeterminate
+  if (typeof normalized.error === 'string') normalized.error = { message: normalized.error }
+  if (application !== undefined && !['applied', 'restart-required', 'overridden', 'failed', 'cancelled'].includes(String(application))) {
+    normalized.reportedApplication = application
+    normalized.application = 'failed'
+  }
+  const management = normalized as OfficialManagementResult
+  // The independently observed Host result outranks package-manager diagnostics.
+  const failed = application !== undefined
+    ? application !== 'applied' && application !== 'restart-required' && application !== 'overridden'
+    : record?.ok === false || record?.success === false || record?.changed === 'failed'
+      || asRecord(record?.packageResult)?.exitCode !== undefined && asRecord(record?.packageResult)?.exitCode !== 0
   const output = resultText(value)
-  if (resultFailed(value)) return { exitCode: 1, stdout: '', stderr: output, timedOut: false, aborted: false }
-  return { exitCode: 0, stdout: output, stderr: '', timedOut: false, aborted: false }
-}
-
-function managerError(error: unknown, options?: CommandOptions, timedOut = false): CommandResult {
   return {
-    exitCode: null,
-    stdout: '',
-    stderr: error instanceof Error ? error.message : String(error),
-    timedOut,
-    aborted: options?.signal?.aborted === true,
+    exitCode: failed ? 1 : 0, stdout: failed ? '' : output, stderr: failed ? output : '',
+    timedOut: false, aborted: application === 'cancelled', management,
   }
 }
-
-async function callManager(
-  operation: () => Promise<unknown>,
-  options?: CommandOptions,
-  cancel?: () => Promise<unknown> | undefined,
-): Promise<CommandResult> {
-  const stopped = options?.signal?.aborted === true || options?.timeoutMs !== undefined && options.timeoutMs <= 0
-  if (stopped) return {
-    exitCode: null,
-    stdout: '',
-    stderr: '',
-    timedOut: options?.signal?.aborted !== true && options?.timeoutMs !== undefined && options.timeoutMs <= 0,
-    aborted: options?.signal?.aborted === true,
+function managerError(error: unknown, _options?: CommandOptions): CommandResult {
+  return {
+    exitCode: null, stdout: '', stderr: error instanceof Error ? error.message : String(error),
+    timedOut: false, aborted: false,
   }
-  let timedOut = false
+}
+function unknownResult(error: unknown, requestId?: string, cancellationStatus?: string): CommandResult {
+  // Keep carrier diagnostics structured: generic pnpm recovery must not repeat an unconfirmed mutation.
+  return {
+    exitCode: 1, stdout: '', stderr: '官方管理结果未确认；请刷新状态后核对，不能自动重复操作', timedOut: false, aborted: false,
+    management: {
+      application: 'unknown', indeterminate: true, ...(requestId === undefined ? {} : { requestId }),
+      error: { code: 'result-unconfirmed', diagnostic: error instanceof Error ? error.message : String(error) },
+      ...(cancellationStatus === undefined ? {} : { cancellationStatus }),
+    },
+  }
+}
+interface CallRecovery {
+  requestId: string
+  cancel?(): Promise<unknown>
+  wait?: () => Promise<unknown>
+}
+async function callManager(operation: () => Promise<unknown>, options?: CommandOptions, recovery?: CallRecovery, strict = false): Promise<CommandResult> {
+  const aborted = options?.signal?.aborted === true
+  const timedOutBeforeStart = options?.timeoutMs !== undefined && options.timeoutMs <= 0
+  if (aborted || timedOutBeforeStart) return { exitCode: null, stdout: '', stderr: '', timedOut: !aborted && timedOutBeforeStart, aborted }
+  let deadlineRequested = false
   let cancellation: Promise<unknown> | undefined
+  let cancellationStatus: string | undefined
   let cancelRequested = false
   const requestCancel = (): void => {
-    if (cancelRequested || cancel === undefined) return
+    if (cancelRequested || recovery?.cancel === undefined) return
     cancelRequested = true
-    try { cancellation = Promise.resolve(cancel()) } catch { /* the operation result remains authoritative */ }
+    try {
+      cancellation = Promise.resolve(recovery.cancel()).then(value => {
+        const status = asRecord(unwrapResult(value))?.status
+        if (typeof status === 'string') cancellationStatus = status
+        return value
+      }, () => undefined)
+    } catch { /* Original result or recovery remains authoritative. */ }
   }
-  const onAbort = (): void => requestCancel()
-  options?.signal?.addEventListener('abort', onAbort, { once: true })
-  const timer = options?.timeoutMs === undefined ? undefined : setTimeout(() => {
-    timedOut = true
+  options?.signal?.addEventListener('abort', requestCancel, { once: true })
+  const timer = recovery?.cancel === undefined || options?.timeoutMs === undefined ? undefined : setTimeout(() => {
+    deadlineRequested = true
     requestCancel()
   }, Math.max(0, options.timeoutMs))
   try {
-    const value = await operation()
-    if (cancellation !== undefined) await cancellation.catch(() => undefined)
-    const result = managerResult(value)
-    return { ...result, timedOut, aborted: options?.signal?.aborted === true }
-  } catch (error) {
-    if (cancellation !== undefined) await cancellation.catch(() => undefined)
-    return managerError(error, options, timedOut)
+    let value: unknown
+    try {
+      value = await operation()
+      // Generated Client calls resolve carrier failures rather than reject;
+      // they provide no authoritative Host mutation result to accept.
+      if (strict && asRecord(value)?.ok === false && asRecord(value)?.application === undefined) throw new Error(resultText(value))
+    } catch (error) {
+      if (recovery === undefined) return strict ? unknownResult(error) : managerError(error)
+      if (recovery.wait !== undefined) {
+        try { value = await recovery.wait() } catch (waitError) { return unknownResult(waitError, recovery.requestId, cancellationStatus) }
+      }
+      if (value === undefined || value === null) return unknownResult(error, recovery.requestId, cancellationStatus)
+      if (strict && asRecord(value)?.ok === false && asRecord(value)?.application === undefined) return unknownResult(new Error(resultText(value)), recovery.requestId, cancellationStatus)
+    }
+    if (cancellation !== undefined) await cancellation
+    const result = managerResult(value, recovery?.requestId, strict)
+    const confirmedCancelled = result.management?.application === 'cancelled'
+    if (result.management !== undefined && cancelRequested) {
+      result.management.cancelRequested = true
+      if (cancellationStatus !== undefined) result.management.cancellationStatus = cancellationStatus
+    }
+    // An abort during applying cannot overturn success or a required restart.
+    result.aborted = confirmedCancelled
+    result.timedOut = confirmedCancelled && deadlineRequested
+    return result
   } finally {
     if (timer !== undefined) clearTimeout(timer)
-    options?.signal?.removeEventListener('abort', onAbort)
+    options?.signal?.removeEventListener('abort', requestCancel)
   }
 }
-
-function targetAfterVerb(args: readonly string[]): string | undefined {
-  return args.slice(1).find(argument => !argument.startsWith('-'))
+function capability(available: boolean, reason: string): OfficialCapability {
+  return available ? { available: true } : { available: false, reason }
+}
+function subscribeProgress(events: OfficialManagementEvents | undefined, requestId: string, options?: CommandOptions): () => void {
+  if (events === undefined) return () => undefined
+  const disposers: Array<() => void> = []
+  try {
+    const log = events.on('plugin-manager/install-log', value => {
+      const chunk = asRecord(value)
+      if (chunk?.requestId !== requestId || typeof chunk.text !== 'string') return
+      if (chunk.stream === 'stderr') options?.onStderr?.(chunk.text)
+      else if (chunk.stream === 'stdout') options?.onStdout?.(chunk.text)
+    })
+    if (log !== undefined) disposers.push(log)
+    const state = events.on('plugin-manager/install-state', value => {
+      const record = asRecord(value)
+      if (record?.requestId !== requestId || !['installing', 'cancelling', 'applying'].includes(String(record.phase))) return
+      options?.onManagementState?.(record as unknown as OfficialInstallProgress)
+    })
+    if (state !== undefined) disposers.push(state)
+  } catch (error) {
+    for (const dispose of disposers) dispose()
+    throw error
+  }
+  return () => { for (const dispose of disposers) dispose() }
 }
 
-/**
- * Adapt the official Desktop plugin manager to the market's existing runner.
- * The manager is looked up for every operation because its Remote is owned by
- * the current Cordis generation and may not survive a profile switch.
- */
+/** One-argument callers retain structural compatibility; added option fields require audited runtime versions. */
 export function officialDesktopRunner(
   getManager: () => OfficialPluginManagerLike | undefined,
+  runtime?: DshRuntime,
+  events?: OfficialManagementEvents,
 ): PluginRunner {
-  const runner: PluginRunner = async (_profile, args, options) => {
+  const version = runtime?.version?.trim().replace(/\+.*/, '') ?? null
+  const coreVersion = version === null ? runtime === undefined : AUDITED_VERSIONS.has(version)
+  const versionAtLeast = (minimum: string): boolean => version !== null && AUDITED_VERSIONS.has(version) && compareVersions(version, minimum) >= 0
+  const versionReason = version === null ? '未能识别官方 DSH 版本'
+    : `官方管理接口尚未核验 DSH ${version}；最低已核验版本为 ${CORE_VERSION}`
+  const capabilities = (): OfficialManagementCapabilities => {
     const manager = getManager()
-    if (manager === undefined) return managerError(new Error('官方 Desktop 未提供 pluginManager'), options)
-    const verb = args[0]
-    if (verb === 'remove') {
-      const target = targetAfterVerb(args)
-      if (target === undefined) return managerError(new Error('官方 Desktop remove 缺少插件名'), options)
-      return await callManager(() => manager.removeBundle(target), options)
+    const core = coreVersion && manager !== undefined
+    const unavailable = manager === undefined ? '官方宿主未提供 pluginManager' : versionReason
+    const method = (name: keyof OfficialPluginManagerLike): boolean => core && typeof manager?.[name] === 'function'
+    const cancel = method('cancelInstall')
+    const install = method('installBundle')
+    const enabled = method('setBundleEnabled') || method('setPluginEnabled')
+    return {
+      install: capability(install, !core ? unavailable : '官方 pluginManager 未提供安装接口'),
+      update: capability(install, !core ? unavailable : '官方 pluginManager 未提供更新接口'),
+      enable: capability(enabled, !core ? unavailable : '官方 pluginManager 未提供启用接口'),
+      disable: capability(enabled, !core ? unavailable : '官方 pluginManager 未提供停用接口'),
+      remove: capability(method('removeBundle'), !core ? unavailable : '官方 pluginManager 未提供卸载接口'),
+      cancel: capability(cancel, !core ? unavailable : '官方 pluginManager 未提供取消接口'),
+      wait: capability(method('waitForInstall') && (runtime === undefined || versionAtLeast(RECOVERY_VERSION)), !core ? unavailable : '此 DSH 版本未提供安装结果恢复接口'),
+      buildApprovals: capability(install, !core ? unavailable : '官方 pluginManager 不支持构建脚本授权'),
+      registry: capability(core && versionAtLeast(RECOVERY_VERSION), !core ? unavailable : `安装源选项需要已核验的 DSH ${RECOVERY_VERSION} 或更新版本`),
+      saveExact: capability(core && versionAtLeast(EXACT_VERSION), !core ? unavailable : `精确保存依赖需要已核验的 DSH ${EXACT_VERSION} 或更新版本`),
     }
+  }
+  const requireCapability = (key: keyof OfficialManagementCapabilities): OfficialPluginManagerLike => {
+    const state = capabilities()[key]
+    if (!state.available) throw new Error(state.reason)
+    return getManager()!
+  }
+  const install = async (spec: string, requestId: string, request: Partial<PluginInstallRequest>, options?: CommandOptions): Promise<CommandResult> => {
+    try {
+      const manager = requireCapability('install')
+      const caps = capabilities()
+      const installOptions: Record<string, unknown> = { enabled: false, requestId }
+      if (request.registry !== undefined) {
+        if (!caps.registry.available) throw new Error(caps.registry.reason)
+        if (request.registry !== null) {
+          const url = new URL(request.registry)
+          if (!['http:', 'https:'].includes(url.protocol) || url.username !== '' || url.password !== '') throw new Error('安装源必须是无凭据的 HTTP(S) 地址')
+        }
+        installOptions.registry = request.registry
+      }
+      if (request.approvedBuilds !== undefined) {
+        if (!caps.buildApprovals.available) throw new Error(caps.buildApprovals.reason)
+        const names = [...new Set(request.approvedBuilds)]
+        if (names.some(name => !/^(?:@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*$/.test(name))) throw new Error('构建授权只接受官方返回的精确待定包名')
+        installOptions.approvedBuilds = names
+      }
+      if (caps.saveExact.available && request.saveExact !== false) installOptions.saveExact = true
+      const unsubscribe = subscribeProgress(events, requestId, options)
+      try {
+        return await callManager(() => manager.installBundle(spec, installOptions), options, {
+          requestId, ...(caps.cancel.available ? { cancel: () => manager.cancelInstall!(requestId) } : {}),
+          ...(caps.wait.available ? { wait: () => manager.waitForInstall!(requestId) } : {}),
+        }, runtime !== undefined)
+      } finally { unsubscribe() }
+    } catch (error) { return managerError(error, options) }
+  }
+  const runner: PluginRunner = async (_profile, args, options) => {
+    const verb = args[0]
+    const target = args.slice(1).find(argument => !argument.startsWith('-'))
     if (verb === 'add') {
-      const target = targetAfterVerb(args)
       if (target === undefined) return managerError(new Error('官方 Desktop add 缺少插件目标'), options)
-      if (manager.cancelInstall === undefined) return managerError(new Error('官方 Desktop pluginManager 不支持可取消的安装操作'), options)
-      const requestId = randomUUID()
-      return await callManager(
-        () => manager.installBundle(target, { enabled: false, requestId }),
-        options,
-        () => manager.cancelInstall!(requestId),
-      )
+      return install(target, randomUUID(), {}, options)
+    }
+    if (verb === 'remove') {
+      if (target === undefined) return managerError(new Error('官方 Desktop remove 缺少插件名'), options)
+      try {
+        const manager = requireCapability('remove')
+        return await callManager(() => manager.removeBundle(target), options, undefined, runtime !== undefined)
+      } catch (error) { return managerError(error, options) }
     }
     return managerError(new Error(`官方 Desktop pluginManager 不支持 ${verb ?? '空命令'}`), options)
   }
   runner.hostKind = 'desktop'
   runner.ensurePnpm = async () => undefined
-  runner.installPlugin = async (_profile, request: PluginInstallRequest, options) => {
-    const manager = getManager()
-    if (manager === undefined) return managerError(new Error('官方 Desktop 未提供 pluginManager'), options)
-    if (manager.cancelInstall === undefined) return managerError(new Error('官方 Desktop pluginManager 不支持可取消的安装操作'), options)
-    const target = `${request.packageName}@${request.packageVersion}`
-    return await callManager(
-      () => manager.installBundle(target, { enabled: false, requestId: request.receiptId }),
-      options,
-      () => manager.cancelInstall!(request.receiptId),
-    )
+  runner.installPlugin = (_profile, request, options) => install(`${request.packageName}@${request.packageVersion}`, request.receiptId, request, options)
+  runner.management = {
+    installRequiresRestart: version !== null && AUDITED_VERSIONS.has(version) && !versionAtLeast(RESOLUTION_REFRESH_VERSION),
+    capabilities,
+    async setBundleEnabled(name, enabled, options) {
+      try {
+        const manager = requireCapability(enabled ? 'enable' : 'disable')
+        if (typeof manager.setBundleEnabled !== 'function') throw new Error('官方 pluginManager 未提供组合包启停接口')
+        return await callManager(() => manager.setBundleEnabled!(name, enabled), options, undefined, runtime !== undefined)
+      } catch (error) { return managerError(error, options) }
+    },
+    async setPluginEnabled(entryId, enabled, options) {
+      try {
+        const manager = requireCapability(enabled ? 'enable' : 'disable')
+        if (typeof manager.setPluginEnabled !== 'function') throw new Error('官方 pluginManager 未提供插件行启停接口')
+        return await callManager(() => manager.setPluginEnabled!(entryId, enabled), options, undefined, runtime !== undefined)
+      } catch (error) { return managerError(error, options) }
+    },
+    async inspect(spec, options) {
+      const manager = requireCapability('install')
+      if (typeof manager.inspect !== 'function') throw new Error('官方 pluginManager 未提供安装预检接口')
+      if (options?.registry !== undefined && !capabilities().registry.available) throw new Error(capabilities().registry.reason)
+      return readManagerResult(await (versionAtLeast(RECOVERY_VERSION)
+        ? manager.inspect(spec, options?.registry === undefined ? undefined : { registry: options.registry }, options?.signal)
+        : manager.inspect(spec, options?.signal)))
+    },
+    async listBundles() {
+      const manager = getManager()
+      if (!coreVersion || typeof manager?.listBundles !== 'function') throw new Error('官方 pluginManager 未提供可用的组合包清单')
+      return readManagerResult(await manager.listBundles())
+    },
+    async listPlugins() {
+      const manager = getManager()
+      if (!coreVersion || typeof manager?.listPlugins !== 'function') throw new Error('官方 pluginManager 未提供可用的插件清单')
+      return readManagerResult(await manager.listPlugins())
+    },
   }
   return runner
 }

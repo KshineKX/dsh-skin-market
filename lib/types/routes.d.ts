@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { CatalogStore } from './catalog.ts';
+import { type HostConnectionLike } from './http.ts';
 import { SkinLifecycle, type LifecycleHost } from './lifecycle.ts';
 import type { PluginRunner } from './commands.ts';
 import type { DshRuntime, MarketHostKind, Operation } from './types.ts';
@@ -33,6 +34,7 @@ export interface RouteOptions {
     agents?: AgentRegistryLike;
     catalogStore?: CatalogStore;
     marketUpdater?: MarketUpdater;
+    connection?: () => HostConnectionLike | undefined;
 }
 export declare function canRestartSkin(state: ReturnType<SkinLifecycle['states']>[number] | undefined): boolean;
 export declare function runningAgentCount(host: Pick<SkinMarketHost, 'agents'>): number;

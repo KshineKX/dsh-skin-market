@@ -1,10 +1,11 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { desktopRunner, runPluginCli, type DesktopPnpmLike } from './commands.ts'
-import { officialDesktopRunner, type OfficialPluginManagerLike } from './official-desktop.ts'
+import { officialDesktopRunner, type OfficialPluginManagerLike, type OfficialManagementEvents } from './official-desktop.ts'
 import { resolveProfileDir } from './profile.ts'
 import { mountRoutes, type SkinMarketHost } from './routes.ts'
 import { createCliRestartScheduler } from './restart.ts'
 import { detectDshRuntime } from './runtime.ts'
+import type { HostConnectionLike } from './http.ts'
 
 export const name = 'dsh-skin-market'
 export interface Config { profile?: string }
@@ -43,10 +44,10 @@ export function apply(ctx: Context, config?: Config): void {
     const configuredProfile = typeof config?.profile === 'string' ? config.profile.trim() : undefined
     const launchedProfile = contextName !== '' ? contextName : argvProfile()
     const agents = readService('agents') as SkinMarketHost['agents']
-    const pluginManager = readService('pluginManager') as OfficialPluginManagerLike | undefined
-    const officialDesktop = configuredProfile?.toLowerCase() === 'desktop'
-      || (configuredProfile === undefined && launchedProfile?.toLowerCase() === 'desktop')
-      || (desktopProfiles === undefined && pluginManager !== undefined)
+    const runtime = detectDshRuntime()
+    const connection = (): HostConnectionLike | undefined => readService('connection') as HostConnectionLike | undefined
+    const officialDesktop = desktopProfiles === undefined && (configuredProfile?.toLowerCase() === 'desktop'
+      || (configuredProfile === undefined && launchedProfile?.toLowerCase() === 'desktop'))
     // Official Electron Desktop owns its profile through profileContext and
     // pluginManager; its CLI rejects `--profile desktop`. Resolve this branch
     // before the ordinary CLI fallback so actions mutate the visible profile.
@@ -56,9 +57,9 @@ export function apply(ctx: Context, config?: Config): void {
       // after startup. Never fall back to the Web profile in that case: the
       // canonical Desktop directory is the explicit profile name's directory.
       const profileDir = contextDir !== '' ? contextDir : resolveProfileDir(profile)
-      const runner = officialDesktopRunner(() => (readService('pluginManager') as OfficialPluginManagerLike | undefined))
+      const runner = officialDesktopRunner(() => (readService('pluginManager') as OfficialPluginManagerLike | undefined), runtime, hostContext as unknown as OfficialManagementEvents)
       host.effect(
-        () => mountRoutes(host, { profile, profileDir, runner, hostKind: 'desktop', runtime: detectDshRuntime(), agents: undefined }),
+        () => mountRoutes(host, { profile, profileDir, runner, hostKind: 'desktop', runtime, agents: undefined, connection }),
         'dsh-skin-market: official Desktop routes',
       )
       return
@@ -68,7 +69,7 @@ export function apply(ctx: Context, config?: Config): void {
       const profileDir = configuredProfile === undefined && contextDir !== '' ? contextDir : resolveProfileDir(profile)
       const appExit = readService('appExit') as ((code: number) => void) | undefined
       const restart = appExit === undefined ? undefined : createCliRestartScheduler(appExit)
-      host.effect(() => mountRoutes(host, { profile, profileDir, runner: runPluginCli, hostKind: 'dsh', runtime: detectDshRuntime(), restart, agents }), 'dsh-skin-market: routes')
+      host.effect(() => mountRoutes(host, { profile, profileDir, runner: runPluginCli, hostKind: 'dsh', runtime, restart, agents, connection }), 'dsh-skin-market: routes')
       return
     }
     hostContext.inject(['desktopPnpm'], desktopContext => {
@@ -76,7 +77,7 @@ export function apply(ctx: Context, config?: Config): void {
       const service = (desktopContext as unknown as { desktopPnpm: DesktopPnpmLike }).desktopPnpm
       const desktopHost = desktopContext as unknown as EffectHost
       desktopHost.effect(
-        () => mountRoutes(host, { profile: current.name, profileDir: current.dir, runner: desktopRunner(service, current.dir), hostKind: 'desktop', runtime: detectDshRuntime(), agents }),
+        () => mountRoutes(host, { profile: current.name, profileDir: current.dir, runner: desktopRunner(service, current.dir), hostKind: 'desktop', runtime, agents, connection }),
         'dsh-skin-market: desktop routes',
       )
     })

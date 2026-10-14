@@ -22,6 +22,7 @@ export interface LifecycleOptions {
     /** Shared by all preparation/install attempts; recovery has its own budget. */
     operationTimeoutMs?: number;
     recoveryTimeoutMs?: number;
+    lifecycleWaitMs?: number;
 }
 /** Isolated temp-dir prefetches may overlap; live profile pnpm stays serial. */
 export declare function maxParallelDownloads(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv, memoryBytes?: number): number;
@@ -49,10 +50,19 @@ export declare class SkinLifecycle {
     private skinById;
     private disposeEvent?;
     private disposed;
+    private readonly pendingLifecycle;
+    private unresolvedManager;
+    get waitingReason(): string | undefined;
     constructor(host: LifecycleHost, options: LifecycleOptions, catalog?: SkinEntry[]);
     get catalog(): SkinEntry[];
     private get hostKind();
+    private get management();
+    private acceptManagement;
+    private awaitLifecycle;
+    private recordRestart;
+    private registerSkin;
     private get runtime();
+    private assertLegacyOfficialPeers;
     private applyCompatibility;
     private syncPnpmMetadata;
     private applyPendingBuildApprovals;
@@ -102,6 +112,8 @@ export declare class SkinLifecycle {
     private prefetch;
     private install;
     private installIntoProfile;
+    private selectionSnapshot;
+    private rollbackSelection;
     private activate;
     private activateLocked;
     private deactivate;
