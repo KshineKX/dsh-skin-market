@@ -13,6 +13,17 @@ export interface CompatibilityAssessment {
   adapterIds: string[]
 }
 
+/** Bind a one-operation acknowledgement to the package and runtime shown. */
+export function compatibilityContext(skin: Pick<SkinEntry, 'id' | 'package' | 'install' | 'compatibility'>, runtime: DshRuntime | null): string {
+  const desktop = skin.install.desktop
+  return JSON.stringify([
+    skin.id, skin.package, skin.install.version, skin.install.commit, skin.install.target,
+    skin.install.npm?.integrity ?? null,
+    desktop?.mode === 'managed' ? [desktop.packageName, desktop.packageVersion, desktop.integrity ?? null] : null,
+    skin.compatibility.dsh, runtime?.version ?? null,
+  ])
+}
+
 function declaredAdapters(skin: CompatibilitySkin): CompatibilityAdapter[] {
   return skin.compatibility.adapters ?? []
 }
@@ -64,7 +75,7 @@ export function assessCompatibility(skin: CompatibilitySkin, runtime: DshRuntime
 
   return {
     decision: 'incompatible',
-    reason: `当前 DSH ${runtime.version} 不在作者声明的兼容范围 ${skin.compatibility.dsh} 内；市场不会通过源码适配扩大该范围`,
+    reason: `当前 DSH ${runtime.version} 不在作者声明的兼容范围 ${skin.compatibility.dsh} 内，尚未确认此版本能否正常运行该皮肤`,
     adapterIds: [],
   }
 }

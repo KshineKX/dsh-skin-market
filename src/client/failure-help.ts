@@ -107,9 +107,9 @@ export function interceptNotice(operation: Operation, skinName: string, skin?: F
   }
   if (operation.failure?.kind === 'compatibility') {
     return {
-      title: '已拦截安装',
-      what: `市场没有继续安装「${skinName}」。`,
-      why: message || '当前 DSH 版本不在该皮肤声明的兼容范围内。',
+      title: `${kind}未完成`,
+      what: `DSH 宿主未通过「${skinName}」的插件兼容检查。`,
+      why: `${message || '插件自身声明的依赖范围与当前 DSH 版本不匹配。'} 市场的风险确认允许尝试操作，宿主仍会检查插件自身的依赖要求。`,
       links,
     }
   }

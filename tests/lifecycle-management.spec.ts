@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { stringify } from 'yaml'
 import { SkinLifecycle } from '../src/lifecycle.ts'
+import { compatibilityContext } from '../src/compatibility.ts'
 import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
 import { atomicWriteJson, atomicWriteText, packageDir, profilePatchFile, readDependencies, readMarketState, readProfileBundles, writeMarketState } from '../src/profile.ts'
 import type { DshRuntime, LoaderEntry, Operation, SkinEntry } from '../src/types.ts'
@@ -144,10 +145,119 @@ function fixture(catalog: SkinEntry[], options: { lifecycleWaitMs?: number; host
     lifecycleWaitMs: options.lifecycleWaitMs ?? 10,
   }, catalog)
   lifecycles.push(lifecycle)
-  return { directory, originalPatch, entries, manager, lifecycle, runner, materialize, select, applyInstall, applyEnable, applyRemove }
+  return { directory, originalPatch, entries, manager, lifecycle, runner, materialize, select, applyInstall, applyEnable, applyRemove, runtime: injectedRuntime }
 }
 
 describe('official plugin manager lifecycle', () => {
+  it.each(['install', 'update'] as const)('allows an out-of-range %s only after acknowledgement on DSH 0.2.0-rc.2', async kind => {
+    const item = skin(`range-${kind}`)
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    if (kind === 'update') host.materialize(skin(item.id, '0.9.0'))
+    const before = readFileSync(join(host.directory, 'package.json'), 'utf8')
+    expect(() => host.lifecycle.begin(kind, item.id)).toThrow('请在兼容性提示中确认后继续')
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+    expect(readFileSync(join(host.directory, 'package.json'), 'utf8')).toBe(before)
+    const operation = await finished(host.lifecycle.begin(kind, item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    expect(operation.phase).toBe('done')
+    expect(readDependencies(host.directory)[item.package]).toBe('1.0.0')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    const options = host.manager.installBundle.mock.calls[0]![1]!
+    expect(options).not.toHaveProperty('force')
+    expect(options).not.toHaveProperty('acceptRisk')
+    expect(readFileSync(profilePatchFile(host.directory), 'utf8')).toBe(host.originalPatch)
+  })
+
+  it.each(['activate', 'pin'] as const)('allows an out-of-range %s only for the acknowledged request', async kind => {
+    const item = skin(`range-${kind}`)
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    host.materialize(item)
+    expect(() => host.lifecycle.begin(kind, item.id)).toThrow('请在兼容性提示中确认后继续')
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect((await finished(host.lifecycle.begin(kind, item.id, undefined, true, compatibilityContext(item, host.runtime)))).phase).toBe('done')
+    expect(readProfileBundles(host.directory)).toContain(item.package)
+    expect(() => host.lifecycle.begin(kind, item.id)).toThrow('请在兼容性提示中确认后继续')
+  })
+
+  it('keeps a host compatibility refusal after the user accepted the author-range warning', async () => {
+    const item = skin('host-refusal')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValue({ application: 'failed', changed: false, error: { code: 'incompatible-version', message: 'host peer version mismatch' } })
+    const operation = await finished(host.lifecycle.begin('install', item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    expect(operation).toMatchObject({ phase: 'failed', failure: { kind: 'compatibility' } })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(readDependencies(host.directory)).toEqual({})
+  })
+
+  it('requires fresh compatibility acknowledgement when retrying a failed install', async () => {
+    const item = skin('range-retry')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValueOnce({ application: 'failed', pendingBuilds: ['fixture-build'], error: { code: 'build-approval-required', message: 'approval required' } })
+    const first = await finished(host.lifecycle.begin('install', item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    expect(first).toMatchObject({ phase: 'failed', failure: { action: 'approve-build' } })
+    expect(() => host.lifecycle.retry(first.id, 'approve-build')).toThrow('请在兼容性提示中确认后继续')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    const retry = await finished(host.lifecycle.retry(first.id, 'approve-build', true, compatibilityContext(item, host.runtime)))
+    expect(retry.phase, retry.message).toBe('done')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not misclassify unrelated errors as compatibility failures after acknowledgement', async () => {
+    const item = skin('range-other-error')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValueOnce({ application: 'failed', error: { code: 'artifact-error', message: 'invalid artifact' } })
+    const operation = await finished(host.lifecycle.begin('install', item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    expect(operation.phase).toBe('failed')
+    expect(operation.message).toContain('invalid artifact')
+    expect(operation.failure?.kind).not.toBe('compatibility')
+  })
+
+  it.each(['package', 'range', 'runtime'] as const)('rejects a compatibility acknowledgement when the shown %s changes', async change => {
+    const item = skin(`stale-${change}`)
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    const context = compatibilityContext(item, host.runtime)
+    if (change === 'package') await host.lifecycle.replaceCatalog([{ ...item, install: skin(item.id, '1.1.0').install }])
+    else if (change === 'range') await host.lifecycle.replaceCatalog([{ ...item, compatibility: { ...item.compatibility, dsh: '*' } }])
+    else host.runtime.version = '0.2.1-alpha.2'
+    const before = readFileSync(join(host.directory, 'package.json'), 'utf8')
+    expect(() => host.lifecycle.begin('install', item.id, undefined, true, context)).toThrow('已变化，请重新确认')
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+    expect(readFileSync(join(host.directory, 'package.json'), 'utf8')).toBe(before)
+  })
+
+  it('requires the shown compatibility context along with acknowledgement', () => {
+    const item = skin('missing-context')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item])
+    expect(() => host.lifecycle.begin('install', item.id, undefined, true)).toThrow('已变化，请重新确认')
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it('rechecks acknowledged activation after waiting for another profile operation', async () => {
+    const blocker = skin('context-blocker')
+    const item = skin('queued-context')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([blocker, item])
+    host.materialize(item)
+    const pending = deferred()
+    host.manager.installBundle.mockImplementationOnce(async () => pending.promise)
+    const install = host.lifecycle.begin('install', blocker.id)
+    await until(() => host.manager.installBundle.mock.calls.length === 1)
+    const activation = host.lifecycle.begin('activate', item.id, undefined, true, compatibilityContext(item, host.runtime))
+    await host.lifecycle.replaceCatalog([blocker, { ...item, compatibility: { ...item.compatibility, dsh: '*' } }])
+    pending.resolve(host.applyInstall(`${blocker.package}@${blocker.install.version}`))
+    expect((await finished(install)).phase).toBe('done')
+    expect(await finished(activation)).toMatchObject({ phase: 'failed', message: expect.stringContaining('已变化，请重新确认') })
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalledWith(item.package, true)
+    expect(readProfileBundles(host.directory)).not.toContain(item.package)
+  })
+
   it('delegates install, enable and removal without rewriting user cordis patches or directly updating loaders', async () => {
     const item = skin('native-a')
     const host = fixture([item], { saveRange: true })

@@ -37,6 +37,7 @@ export declare class SkinLifecycle {
     private readonly downloadWaiters;
     private readonly abortControllers;
     private readonly pendingBuildKeys;
+    private readonly compatibilityContexts;
     private readonly deadlines;
     private readonly deadlineTimers;
     private readonly operationCleanupTimers;
@@ -62,6 +63,7 @@ export declare class SkinLifecycle {
     private recordRestart;
     private registerSkin;
     private get runtime();
+    private assertCompatibilityContext;
     private assertLegacyOfficialPeers;
     private applyCompatibility;
     private syncPnpmMetadata;
@@ -86,8 +88,8 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string): Operation;
-    retry(id: string, action: 'retry' | 'approve-build'): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
+    retry(id: string, action: 'retry' | 'approve-build', acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
     private withProfileLock;

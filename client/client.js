@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({
 		_deepseek_ai_dsh_client_ui_primitives = __toESM(_deepseek_ai_dsh_client_ui_primitives, 1);
 		let react_dom = require("react-dom");
 		let react_jsx_runtime = require("react/jsx-runtime");
-		//#region node_modules/@phosphor-icons/react/dist/defs/SquaresFour.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/defs/SquaresFour.es.js
 		const e$3 = /* @__PURE__ */ new Map([
 			["bold", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M100,36H56A20,20,0,0,0,36,56v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,100,36ZM96,96H60V60H96ZM200,36H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,200,36Zm-4,60H160V60h36Zm-96,40H56a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,100,136Zm-4,60H60V160H96Zm104-60H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,200,136Zm-4,60H160V160h36Z" }))],
 			["duotone", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", {
@@ -45,7 +45,7 @@ window.__ModuleLoader__.load({
 			["thin", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M104,44H56A12,12,0,0,0,44,56v48a12,12,0,0,0,12,12h48a12,12,0,0,0,12-12V56A12,12,0,0,0,104,44Zm4,60a4,4,0,0,1-4,4H56a4,4,0,0,1-4-4V56a4,4,0,0,1,4-4h48a4,4,0,0,1,4,4Zm92-60H152a12,12,0,0,0-12,12v48a12,12,0,0,0,12,12h48a12,12,0,0,0,12-12V56A12,12,0,0,0,200,44Zm4,60a4,4,0,0,1-4,4H152a4,4,0,0,1-4-4V56a4,4,0,0,1,4-4h48a4,4,0,0,1,4,4ZM104,140H56a12,12,0,0,0-12,12v48a12,12,0,0,0,12,12h48a12,12,0,0,0,12-12V152A12,12,0,0,0,104,140Zm4,60a4,4,0,0,1-4,4H56a4,4,0,0,1-4-4V152a4,4,0,0,1,4-4h48a4,4,0,0,1,4,4Zm92-60H152a12,12,0,0,0-12,12v48a12,12,0,0,0,12,12h48a12,12,0,0,0,12-12V152A12,12,0,0,0,200,140Zm4,60a4,4,0,0,1-4,4H152a4,4,0,0,1-4-4V152a4,4,0,0,1,4-4h48a4,4,0,0,1,4,4Z" }))]
 		]);
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/defs/UploadSimple.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/defs/UploadSimple.es.js
 		const e$2 = /* @__PURE__ */ new Map([
 			["bold", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M228,144v64a12,12,0,0,1-12,12H40a12,12,0,0,1-12-12V144a12,12,0,0,1,24,0v52H204V144a12,12,0,0,1,24,0ZM96.49,80.49,116,61v83a12,12,0,0,0,24,0V61l19.51,19.52a12,12,0,1,0,17-17l-40-40a12,12,0,0,0-17,0l-40,40a12,12,0,1,0,17,17Z" }))],
 			["duotone", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", {
@@ -58,7 +58,7 @@ window.__ModuleLoader__.load({
 			["thin", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M220,144v64a4,4,0,0,1-4,4H40a4,4,0,0,1-4-4V144a4,4,0,0,1,8,0v60H212V144a4,4,0,0,1,8,0ZM90.83,74.83,124,41.66V144a4,4,0,0,0,8,0V41.66l33.17,33.17a4,4,0,1,0,5.66-5.66l-40-40a4,4,0,0,0-5.66,0l-40,40a4,4,0,0,0,5.66,5.66Z" }))]
 		]);
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/defs/X.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/defs/X.es.js
 		const a = /* @__PURE__ */ new Map([
 			["bold", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z" }))],
 			["duotone", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", {
@@ -71,7 +71,7 @@ window.__ModuleLoader__.load({
 			["thin", /* @__PURE__ */ react.createElement(react.Fragment, null, /* @__PURE__ */ react.createElement("path", { d: "M202.83,197.17a4,4,0,0,1-5.66,5.66L128,133.66,58.83,202.83a4,4,0,0,1-5.66-5.66L122.34,128,53.17,58.83a4,4,0,0,1,5.66-5.66L128,122.34l69.17-69.17a4,4,0,1,1,5.66,5.66L133.66,128Z" }))]
 		]);
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/lib/context.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/lib/context.es.js
 		const o = (0, react.createContext)({
 			color: "currentColor",
 			size: "1em",
@@ -79,7 +79,7 @@ window.__ModuleLoader__.load({
 			mirrored: !1
 		});
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/lib/IconBase.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/lib/IconBase.es.js
 		const p = react.forwardRef((s, a) => {
 			const { alt: n, color: r, size: t, weight: o$1, mirrored: c, children: i, weights: m, ...x } = s, { color: d = "currentColor", size: l, weight: f = "regular", mirrored: g = !1, ...w } = react.useContext(o);
 			return /* @__PURE__ */ react.createElement("svg", {
@@ -96,7 +96,7 @@ window.__ModuleLoader__.load({
 		});
 		p.displayName = "IconBase";
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/csr/SquaresFour.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/csr/SquaresFour.es.js
 		const r = react.forwardRef((e, a) => /* @__PURE__ */ react.createElement(p, {
 			ref: a,
 			...e,
@@ -104,7 +104,7 @@ window.__ModuleLoader__.load({
 		}));
 		r.displayName = "SquaresFourIcon";
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/csr/UploadSimple.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/csr/UploadSimple.es.js
 		const e$1 = react.forwardRef((a, m) => /* @__PURE__ */ react.createElement(p, {
 			ref: m,
 			...a,
@@ -112,7 +112,7 @@ window.__ModuleLoader__.load({
 		}));
 		e$1.displayName = "UploadSimpleIcon";
 		//#endregion
-		//#region node_modules/@phosphor-icons/react/dist/csr/X.es.js
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@phosphor-icons/react/dist/csr/X.es.js
 		const e = react.forwardRef((r, t) => /* @__PURE__ */ react.createElement(p, {
 			ref: t,
 			...r,
@@ -120,7 +120,7 @@ window.__ModuleLoader__.load({
 		}));
 		e.displayName = "XIcon";
 		//#endregion
-		//#region node_modules/@primer/octicons-react/dist/renderOcticon-DuMQdmQC.mjs
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@primer/octicons-react/dist/renderOcticon-DuMQdmQC.mjs
 		function _typeof(o) {
 			"@babel/helpers - typeof";
 			return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -256,7 +256,7 @@ window.__ModuleLoader__.load({
 			}, naturalHeights[0]);
 		}
 		//#endregion
-		//#region node_modules/@primer/octicons-react/dist/icons/MarkGithubIcon.mjs
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@primer/octicons-react/dist/icons/MarkGithubIcon.mjs
 		var heights$1 = ["16", "24"];
 		var svgDataByHeight$1 = {
 			"16": {
@@ -273,7 +273,7 @@ window.__ModuleLoader__.load({
 		});
 		MarkGithubIcon.displayName = "MarkGithubIcon";
 		//#endregion
-		//#region node_modules/@primer/octicons-react/dist/icons/StarIcon.mjs
+		//#region ../../../Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/node_modules/@primer/octicons-react/dist/icons/StarIcon.mjs
 		var heights = ["16", "24"];
 		var svgDataByHeight = {
 			"16": {
@@ -301,139 +301,139 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var SkinMarket_module_css_default = {
-			"filterPill": "VqXecW_filterPill",
-			"heroNav": "VqXecW_heroNav",
-			"skinCard": "VqXecW_skinCard",
-			"heroOpen": "VqXecW_heroOpen",
-			"skinCardPreview": "VqXecW_skinCardPreview",
-			"operationDiagnostics": "VqXecW_operationDiagnostics",
-			"cardAction": "VqXecW_cardAction",
-			"operationActions": "VqXecW_operationActions",
-			"listLoading": "VqXecW_listLoading",
-			"lightboxStage": "VqXecW_lightboxStage",
-			"manualInstallGuide": "VqXecW_manualInstallGuide",
-			"repoLink": "VqXecW_repoLink",
-			"cardMetaLine": "VqXecW_cardMetaLine",
-			"tags": "VqXecW_tags",
-			"cardInlineActions": "VqXecW_cardInlineActions",
-			"heroNext": "VqXecW_heroNext",
-			"actionDivider": "VqXecW_actionDivider",
-			"homeError": "VqXecW_homeError",
-			"notice": "VqXecW_notice",
-			"homeContent": "VqXecW_homeContent",
-			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
-			"catalogTitleMain": "VqXecW_catalogTitleMain",
-			"detail": "VqXecW_detail",
-			"lightboxThumbnails": "VqXecW_lightboxThumbnails",
-			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
-			"operationCancel": "VqXecW_operationCancel",
-			"lightboxClose": "VqXecW_lightboxClose",
-			"collectionTitle": "VqXecW_collectionTitle",
-			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
-			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
-			"homeCardTitleRow": "VqXecW_homeCardTitleRow",
-			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
-			"operationDetails": "VqXecW_operationDetails",
-			"browserContent": "VqXecW_browserContent",
-			"homeGithubLabel": "VqXecW_homeGithubLabel",
-			"migrationSource": "VqXecW_migrationSource",
-			"lightboxNext": "VqXecW_lightboxNext",
-			"homeGithubAction": "VqXecW_homeGithubAction",
-			"heroPrev": "VqXecW_heroPrev",
-			"version": "VqXecW_version",
-			"actionRow": "VqXecW_actionRow",
-			"changelog": "VqXecW_changelog",
-			"galleryGroup": "VqXecW_galleryGroup",
-			"homeSubmitAction": "VqXecW_homeSubmitAction",
-			"homeActions": "VqXecW_homeActions",
-			"installedMoreCard": "VqXecW_installedMoreCard",
-			"browserPanel": "VqXecW_browserPanel",
-			"homeTitleRow": "VqXecW_homeTitleRow",
-			"homeOperation": "VqXecW_homeOperation",
-			"browserHomeBack": "VqXecW_browserHomeBack",
-			"feedMeta": "VqXecW_feedMeta",
-			"homeOperations": "VqXecW_homeOperations",
-			"detailHeader": "VqXecW_detailHeader",
-			"operationMeta": "VqXecW_operationMeta",
-			"stars": "VqXecW_stars",
-			"spin": "VqXecW_spin",
-			"discoveryGrid": "VqXecW_discoveryGrid",
-			"healthList": "VqXecW_healthList",
-			"cardStars": "VqXecW_cardStars",
-			"empty": "VqXecW_empty",
-			"homeSectionTitle": "VqXecW_homeSectionTitle",
-			"skinAvatar": "VqXecW_skinAvatar",
-			"aboutGrid": "VqXecW_aboutGrid",
-			"marketUpdateButton": "VqXecW_marketUpdateButton",
-			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
-			"skinList": "VqXecW_skinList",
-			"homeCardFooter": "VqXecW_homeCardFooter",
-			"cardTitle": "VqXecW_cardTitle",
-			"homeCardMedia": "VqXecW_homeCardMedia",
-			"statusLabel": "VqXecW_statusLabel",
-			"error": "VqXecW_error",
-			"submission": "VqXecW_submission",
-			"interceptNotice": "VqXecW_interceptNotice",
-			"homeCardDescription": "VqXecW_homeCardDescription",
-			"operation": "VqXecW_operation",
-			"cardDescription": "VqXecW_cardDescription",
-			"thumbnailFrame": "VqXecW_thumbnailFrame",
-			"interceptHelp": "VqXecW_interceptHelp",
-			"loadMoreHint": "VqXecW_loadMoreHint",
-			"cardActionProgress": "VqXecW_cardActionProgress",
-			"homeSection": "VqXecW_homeSection",
-			"installedRow": "VqXecW_installedRow",
-			"homeSearch": "VqXecW_homeSearch",
-			"externalPlugin": "VqXecW_externalPlugin",
-			"skeletonCard": "VqXecW_skeletonCard",
-			"browser": "VqXecW_browser",
-			"author": "VqXecW_author",
-			"thumbnailProgress": "VqXecW_thumbnailProgress",
-			"sortButton": "VqXecW_sortButton",
-			"listSkeleton": "VqXecW_listSkeleton",
-			"homeHeader": "VqXecW_homeHeader",
-			"homeCardCopy": "VqXecW_homeCardCopy",
-			"srOnly": "VqXecW_srOnly",
-			"homeCardOpen": "VqXecW_homeCardOpen",
-			"catalogHeader": "VqXecW_catalogHeader",
-			"installOptions": "VqXecW_installOptions",
-			"catalogTitle": "VqXecW_catalogTitle",
-			"skinCardBody": "VqXecW_skinCardBody",
-			"recommendations": "VqXecW_recommendations",
-			"copyCapsule": "VqXecW_copyCapsule",
-			"homeCardRepo": "VqXecW_homeCardRepo",
-			"thumbnails": "VqXecW_thumbnails",
-			"catalog": "VqXecW_catalog",
-			"homeLoading": "VqXecW_homeLoading",
-			"cardMeta": "VqXecW_cardMeta",
-			"iconOnlyButton": "VqXecW_iconOnlyButton",
-			"previewPlaceholder": "VqXecW_previewPlaceholder",
 			"hero": "VqXecW_hero",
-			"lightbox": "VqXecW_lightbox",
-			"detailSkeleton": "VqXecW_detailSkeleton",
-			"repoMeta": "VqXecW_repoMeta",
-			"root": "VqXecW_root",
-			"homeCard": "VqXecW_homeCard",
-			"mobileBack": "VqXecW_mobileBack",
-			"filters": "VqXecW_filters",
-			"homeUpdateAction": "VqXecW_homeUpdateAction",
-			"operationElapsed": "VqXecW_operationElapsed",
-			"healthSuggestion": "VqXecW_healthSuggestion",
+			"browserHomeBack": "VqXecW_browserHomeBack",
+			"operationCancel": "VqXecW_operationCancel",
+			"loadMoreHint": "VqXecW_loadMoreHint",
+			"filterBar": "VqXecW_filterBar",
+			"feedMeta": "VqXecW_feedMeta",
+			"catalogTitle": "VqXecW_catalogTitle",
+			"heroNext": "VqXecW_heroNext",
+			"heroOpen": "VqXecW_heroOpen",
+			"collectionTitle": "VqXecW_collectionTitle",
+			"operationMeta": "VqXecW_operationMeta",
+			"homeSubmitAction": "VqXecW_homeSubmitAction",
+			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
+			"error": "VqXecW_error",
 			"home": "VqXecW_home",
-			"operationMessage": "VqXecW_operationMessage",
-			"lightboxNav": "VqXecW_lightboxNav",
-			"description": "VqXecW_description",
-			"lightboxPrev": "VqXecW_lightboxPrev",
-			"homeLoadMore": "VqXecW_homeLoadMore",
-			"skeletonShimmer": "VqXecW_skeletonShimmer",
-			"browserModal": "VqXecW_browserModal",
-			"titleBlock": "VqXecW_titleBlock",
-			"galleryProgress": "VqXecW_galleryProgress",
+			"root": "VqXecW_root",
+			"listSkeleton": "VqXecW_listSkeleton",
+			"homeContent": "VqXecW_homeContent",
+			"homeSearch": "VqXecW_homeSearch",
+			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
+			"homeCardMedia": "VqXecW_homeCardMedia",
+			"installedMoreCard": "VqXecW_installedMoreCard",
+			"submission": "VqXecW_submission",
+			"homeCardOpen": "VqXecW_homeCardOpen",
+			"cardActionProgress": "VqXecW_cardActionProgress",
+			"thumbnailProgress": "VqXecW_thumbnailProgress",
 			"pinWarning": "VqXecW_pinWarning",
-			"operationDismiss": "VqXecW_operationDismiss",
+			"interceptNotice": "VqXecW_interceptNotice",
+			"lightbox": "VqXecW_lightbox",
+			"cardStars": "VqXecW_cardStars",
+			"homeHeader": "VqXecW_homeHeader",
+			"lightboxClose": "VqXecW_lightboxClose",
+			"cardAction": "VqXecW_cardAction",
+			"lightboxThumbnails": "VqXecW_lightboxThumbnails",
+			"operationDiagnostics": "VqXecW_operationDiagnostics",
+			"homeActions": "VqXecW_homeActions",
+			"homeLoading": "VqXecW_homeLoading",
+			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
+			"statusLabel": "VqXecW_statusLabel",
+			"manualInstallGuide": "VqXecW_manualInstallGuide",
+			"author": "VqXecW_author",
+			"installedRow": "VqXecW_installedRow",
+			"notice": "VqXecW_notice",
+			"changelog": "VqXecW_changelog",
+			"empty": "VqXecW_empty",
+			"discoveryGrid": "VqXecW_discoveryGrid",
+			"homeSection": "VqXecW_homeSection",
+			"galleryProgress": "VqXecW_galleryProgress",
+			"healthList": "VqXecW_healthList",
+			"cardInlineActions": "VqXecW_cardInlineActions",
+			"homeLoadMore": "VqXecW_homeLoadMore",
+			"operationDetails": "VqXecW_operationDetails",
+			"actionRow": "VqXecW_actionRow",
+			"homeCardCopy": "VqXecW_homeCardCopy",
+			"spin": "VqXecW_spin",
+			"cardDescription": "VqXecW_cardDescription",
+			"lightboxNav": "VqXecW_lightboxNav",
+			"skeletonCard": "VqXecW_skeletonCard",
+			"description": "VqXecW_description",
+			"homeError": "VqXecW_homeError",
+			"browserContent": "VqXecW_browserContent",
+			"titleBlock": "VqXecW_titleBlock",
+			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
+			"skinAvatar": "VqXecW_skinAvatar",
+			"lightboxNext": "VqXecW_lightboxNext",
+			"previewPlaceholder": "VqXecW_previewPlaceholder",
+			"operationActions": "VqXecW_operationActions",
+			"heroNav": "VqXecW_heroNav",
+			"cardMeta": "VqXecW_cardMeta",
+			"homeCardFooter": "VqXecW_homeCardFooter",
+			"version": "VqXecW_version",
+			"operationMessage": "VqXecW_operationMessage",
+			"skinList": "VqXecW_skinList",
+			"homeGithubAction": "VqXecW_homeGithubAction",
+			"cardTitle": "VqXecW_cardTitle",
+			"thumbnails": "VqXecW_thumbnails",
+			"detailSkeleton": "VqXecW_detailSkeleton",
+			"lightboxStage": "VqXecW_lightboxStage",
+			"healthSuggestion": "VqXecW_healthSuggestion",
+			"copyCapsule": "VqXecW_copyCapsule",
+			"browserModal": "VqXecW_browserModal",
+			"repoLink": "VqXecW_repoLink",
+			"srOnly": "VqXecW_srOnly",
+			"skeletonShimmer": "VqXecW_skeletonShimmer",
+			"browserPanel": "VqXecW_browserPanel",
+			"catalog": "VqXecW_catalog",
+			"detail": "VqXecW_detail",
+			"skinCardBody": "VqXecW_skinCardBody",
+			"heroPrev": "VqXecW_heroPrev",
 			"operationCopyLog": "VqXecW_operationCopyLog",
+			"tags": "VqXecW_tags",
+			"actionDivider": "VqXecW_actionDivider",
+			"listLoading": "VqXecW_listLoading",
+			"detailHeader": "VqXecW_detailHeader",
+			"operation": "VqXecW_operation",
+			"installOptions": "VqXecW_installOptions",
+			"lightboxPrev": "VqXecW_lightboxPrev",
+			"homeCardTitleRow": "VqXecW_homeCardTitleRow",
+			"externalPlugin": "VqXecW_externalPlugin",
+			"filters": "VqXecW_filters",
+			"homeCardRepo": "VqXecW_homeCardRepo",
+			"skinCardPreview": "VqXecW_skinCardPreview",
+			"homeCard": "VqXecW_homeCard",
+			"operationElapsed": "VqXecW_operationElapsed",
+			"skinCard": "VqXecW_skinCard",
+			"filterPill": "VqXecW_filterPill",
+			"mobileBack": "VqXecW_mobileBack",
+			"marketUpdateButton": "VqXecW_marketUpdateButton",
+			"iconOnlyButton": "VqXecW_iconOnlyButton",
+			"homeSectionTitle": "VqXecW_homeSectionTitle",
+			"homeUpdateAction": "VqXecW_homeUpdateAction",
+			"thumbnailFrame": "VqXecW_thumbnailFrame",
+			"homeCardDescription": "VqXecW_homeCardDescription",
+			"interceptHelp": "VqXecW_interceptHelp",
+			"cardMetaLine": "VqXecW_cardMetaLine",
+			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
+			"stars": "VqXecW_stars",
+			"catalogTitleMain": "VqXecW_catalogTitleMain",
+			"catalogHeader": "VqXecW_catalogHeader",
+			"migrationSource": "VqXecW_migrationSource",
+			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
+			"browser": "VqXecW_browser",
+			"operationDismiss": "VqXecW_operationDismiss",
+			"sortButton": "VqXecW_sortButton",
+			"homeGithubLabel": "VqXecW_homeGithubLabel",
+			"galleryGroup": "VqXecW_galleryGroup",
+			"aboutGrid": "VqXecW_aboutGrid",
+			"homeOperation": "VqXecW_homeOperation",
 			"loading": "VqXecW_loading",
-			"filterBar": "VqXecW_filterBar"
+			"homeOperations": "VqXecW_homeOperations",
+			"homeTitleRow": "VqXecW_homeTitleRow",
+			"recommendations": "VqXecW_recommendations",
+			"repoMeta": "VqXecW_repoMeta"
 		};
 		//#endregion
 		//#region \0dsh-skin-market-css:/Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/src/client/media-hover.module.css.mjs
@@ -860,9 +860,9 @@ url: https://github.com/<owner>/<repo>
 				links
 			};
 			if (operation.failure?.kind === "compatibility") return {
-				title: "已拦截安装",
-				what: `市场没有继续安装「${skinName}」。`,
-				why: message || "当前 DSH 版本不在该皮肤声明的兼容范围内。",
+				title: `${kind}未完成`,
+				what: `DSH 宿主未通过「${skinName}」的插件兼容检查。`,
+				why: `${message || "插件自身声明的依赖范围与当前 DSH 版本不匹配。"} 市场的风险确认允许尝试操作，宿主仍会检查插件自身的依赖要求。`,
 				links
 			};
 			if (message.includes("目录元数据与包实际声明不一致")) return {
@@ -1022,6 +1022,25 @@ url: https://github.com/<owner>/<repo>
 		//#region src/compatibility.ts
 		const KEYED_SLOT_CAPABILITY_PREFIX = "slot:keyed:";
 		const LEGACY_KEYED_SETTINGS_RANGE = ">=0.1.0-rc.7 <0.1.6-alpha.2";
+		/** Bind a one-operation acknowledgement to the package and runtime shown. */
+		function compatibilityContext(skin, runtime) {
+			const desktop = skin.install.desktop;
+			return JSON.stringify([
+				skin.id,
+				skin.package,
+				skin.install.version,
+				skin.install.commit,
+				skin.install.target,
+				skin.install.npm?.integrity ?? null,
+				desktop?.mode === "managed" ? [
+					desktop.packageName,
+					desktop.packageVersion,
+					desktop.integrity ?? null
+				] : null,
+				skin.compatibility.dsh,
+				runtime?.version ?? null
+			]);
+		}
 		function declaredAdapters(skin) {
 			return skin.compatibility.adapters ?? [];
 		}
@@ -1056,7 +1075,7 @@ url: https://github.com/<owner>/<repo>
 			};
 			return {
 				decision: "incompatible",
-				reason: `当前 DSH ${runtime.version} 不在作者声明的兼容范围 ${skin.compatibility.dsh} 内；市场不会通过源码适配扩大该范围`,
+				reason: `当前 DSH ${runtime.version} 不在作者声明的兼容范围 ${skin.compatibility.dsh} 内，尚未确认此版本能否正常运行该皮肤`,
 				adapterIds: []
 			};
 		}
@@ -1665,6 +1684,9 @@ url: https://github.com/<owner>/<repo>
 			const [restartTarget, setRestartTarget] = (0, react.useState)(null);
 			const [pendingRestart, setPendingRestart] = (0, react.useState)(null);
 			const [compatibilityWarning, setCompatibilityWarning] = (0, react.useState)(null);
+			const [compatibilityConfirmation, setCompatibilityConfirmation] = (0, react.useState)(null);
+			const compatibilityConsentResolver = (0, react.useRef)(null);
+			const compatibilityConfirmationRef = (0, react.useRef)(null);
 			const [homeCompact, setHomeCompact] = (0, react.useState)(false);
 			const skinListRef = (0, react.useRef)(null);
 			const homeRef = (0, react.useRef)(null);
@@ -1675,14 +1697,19 @@ url: https://github.com/<owner>/<repo>
 			const thumbnailScrollRequest = (0, react.useRef)(false);
 			const marketUpdatePolls = (0, react.useRef)(/* @__PURE__ */ new Set());
 			const dismissedMarketOperationIds = (0, react.useRef)(/* @__PURE__ */ new Set());
-			const pendingInstallActivation = (0, react.useRef)(null);
+			const pendingInstallActivation = (0, react.useRef)(/* @__PURE__ */ new Map());
 			const inflightSkinIds = (0, react.useRef)(/* @__PURE__ */ new Set());
 			const skinsRef = (0, react.useRef)([]);
 			const statesRef = (0, react.useRef)([]);
+			const runtimeRef = (0, react.useRef)(null);
 			const runtimeReadyRef = (0, react.useRef)(false);
 			const catalogSettledRef = (0, react.useRef)(false);
 			const selectedIdRef = (0, react.useRef)("");
 			const userSelectedRef = (0, react.useRef)(false);
+			(0, react.useEffect)(() => () => {
+				compatibilityConsentResolver.current?.(null);
+				compatibilityConsentResolver.current = null;
+			}, []);
 			const buildApprovalOperation = operations.find((operation) => operation.phase === "failed" && operation.failure?.action === "approve-build" && operation.id !== dismissedBuildApprovalId) ?? null;
 			const acceptCatalog = (0, react.useCallback)((incoming, runtimeStates = statesRef.current) => {
 				pendingScrollAnchor.current = captureListScroll(skinListRef.current);
@@ -1702,6 +1729,7 @@ url: https://github.com/<owner>/<repo>
 			}, []);
 			const applyMarketState = (0, react.useCallback)((state) => {
 				statesRef.current = state.skins;
+				runtimeRef.current = state.runtime ?? null;
 				runtimeReadyRef.current = true;
 				setStates(state.skins);
 				setHostKind(state.hostKind ?? "dsh");
@@ -2274,17 +2302,94 @@ url: https://github.com/<owner>/<repo>
 				marketUpdating,
 				profileBusy
 			]);
-			const runForSkin = (0, react.useCallback)(async (skinId, kind, existingOperationId) => {
-				const target = skins.find((skin) => skin.id === skinId);
+			const currentActionReason = (0, react.useRef)(actionReason);
+			currentActionReason.current = actionReason;
+			const requestCompatibilityConsent = (0, react.useCallback)(async (skin, kind, installAndUse = false, changed = false) => {
+				if (![
+					"install",
+					"update",
+					"migrate",
+					"activate",
+					"pin"
+				].includes(kind)) return { decision: "not-required" };
+				const target = skinsRef.current.find((item) => item.id === skin.id);
+				if (target === void 0) return { decision: "cancelled" };
+				const assessment = installCompatibility(target, "dsh", runtimeRef.current);
+				if (!changed && assessment.decision !== "incompatible") return { decision: "not-required" };
+				const actionLabel = kind === "install" ? installAndUse ? "安装并使用" : "安装" : kind === "update" ? "更新" : kind === "migrate" ? "换用 npm" : kind === "pin" ? "常驻使用" : "使用";
+				compatibilityConsentResolver.current?.(null);
+				const context = await new Promise((resolve) => {
+					compatibilityConsentResolver.current = resolve;
+					const confirmation = {
+						skin: target,
+						assessment,
+						actionLabel,
+						context: compatibilityContext(target, runtimeRef.current),
+						changed
+					};
+					compatibilityConfirmationRef.current = confirmation;
+					setCompatibilityConfirmation(confirmation);
+				});
+				return context === null ? { decision: "cancelled" } : {
+					decision: "accepted",
+					context
+				};
+			}, []);
+			const finishCompatibilityConfirmation = (0, react.useCallback)((accepted) => {
+				const resolve = compatibilityConsentResolver.current;
+				const confirmation = compatibilityConfirmationRef.current;
+				if (accepted && confirmation !== null) {
+					const target = skinsRef.current.find((item) => item.id === confirmation.skin.id);
+					if (target !== void 0) {
+						const context = compatibilityContext(target, runtimeRef.current);
+						if (context !== confirmation.context) {
+							const updated = {
+								...confirmation,
+								skin: target,
+								assessment: installCompatibility(target, "dsh", runtimeRef.current),
+								context,
+								changed: true
+							};
+							compatibilityConfirmationRef.current = updated;
+							setCompatibilityConfirmation(updated);
+							return;
+						}
+					} else accepted = false;
+				}
+				compatibilityConsentResolver.current = null;
+				compatibilityConfirmationRef.current = null;
+				setCompatibilityConfirmation(null);
+				resolve?.(accepted ? confirmation?.context ?? null : null);
+			}, []);
+			const runForSkin = (0, react.useCallback)(async (skinId, kind, existingOperationId, options = {}) => {
+				let target = skinsRef.current.find((skin) => skin.id === skinId);
 				if (target === void 0) return false;
+				let acceptedContext = options.compatibilityContext;
 				if (existingOperationId === void 0) {
 					const reason = actionReason(kind);
 					if (reason !== null) {
 						setError(reason);
 						return false;
 					}
+					while (acceptedContext === void 0 || acceptedContext !== compatibilityContext(target, runtimeRef.current)) {
+						const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, acceptedContext !== void 0);
+						if (consent.decision === "cancelled" || !mounted.current) return false;
+						acceptedContext = consent.decision === "accepted" ? consent.context : void 0;
+						target = skinsRef.current.find((skin) => skin.id === skinId);
+						if (target === void 0) return false;
+						if (consent.decision === "not-required") break;
+					}
+					const currentReason = currentActionReason.current(kind);
+					if (currentReason !== null) {
+						setError(currentReason);
+						return false;
+					}
+					if (kind === "install") {
+						if (options.installAndUse === true) pendingInstallActivation.current.set(target.id, acceptedContext);
+						else pendingInstallActivation.current.delete(target.id);
+					}
 				}
-				const targetState = runtimeFor(states, target.id);
+				const targetState = runtimeFor(statesRef.current, target.id);
 				setError(null);
 				inflightSkinIds.current.add(target.id);
 				if (existingOperationId === void 0) setOperations((list) => upsertOperation(list, {
@@ -2298,7 +2403,13 @@ url: https://github.com/<owner>/<repo>
 					const operationId = existingOperationId ?? (await json(`/dsh-skin-market/${kind}`, {
 						method: "POST",
 						headers: { "content-type": "application/json" },
-						body: JSON.stringify({ skinId: target.id })
+						body: JSON.stringify({
+							skinId: target.id,
+							...acceptedContext !== void 0 && {
+								acknowledgeCompatibility: true,
+								compatibilityContext: acceptedContext
+							}
+						})
 					})).operationId;
 					for (;;) {
 						if (!mounted.current) return false;
@@ -2324,7 +2435,7 @@ url: https://github.com/<owner>/<repo>
 								needsRestart = !await switchClientSkin(clientRuntime, skins.map((skin) => skin.package), target.package, pinnedPackages);
 								restoreMarketStyleOrder();
 							}
-							const advisory = kind === "activate" ? advisoryCompatibility(target, hostKind, runtime) : null;
+							const advisory = kind === "activate" && acceptedContext === void 0 ? advisoryCompatibility(target, hostKind, runtime) : null;
 							await refresh();
 							if (needsRestart) {
 								setStates((value) => value.map((item) => item.skinId === target.id ? {
@@ -2382,29 +2493,48 @@ url: https://github.com/<owner>/<repo>
 				management,
 				openRestartConfirm,
 				refresh,
+				requestCompatibilityConsent,
 				runtime,
 				skins,
 				states
 			]);
-			const activateSkin = (0, react.useCallback)((skinId) => {
+			const activateSkin = (0, react.useCallback)((skinId, compatibilityContext) => {
 				if (!mounted.current) return;
-				pendingInstallActivation.current = null;
+				pendingInstallActivation.current.delete(skinId);
 				try {
 					window.localStorage.setItem(ACTIVATION_WARNING_KEY, "true");
 				} catch {}
 				setActivationWarningAccepted(true);
-				runForSkin(skinId, "activate");
+				runForSkin(skinId, "activate", void 0, { compatibilityContext });
 			}, [runForSkin]);
 			const retrySkinOperation = (0, react.useCallback)(async (operation) => {
 				const action = operation.failure?.action;
 				if (action === void 0) return;
 				try {
+					const skin = skinsRef.current.find((item) => item.id === operation.skinId);
+					if (skin === void 0) return;
+					const installAndUse = operation.kind === "install" && pendingInstallActivation.current.has(operation.skinId);
+					const consent = await requestCompatibilityConsent(skin, operation.kind, installAndUse);
+					if (consent.decision === "cancelled" || !mounted.current) return;
+					const reason = currentActionReason.current(operation.kind);
+					if (reason !== null) {
+						setError(reason);
+						return;
+					}
+					const acceptedContext = consent.decision === "accepted" ? consent.context : void 0;
+					if (installAndUse) pendingInstallActivation.current.set(operation.skinId, acceptedContext);
 					const result = await json(`/dsh-skin-market/operations/${operation.id}/retry`, {
 						method: "POST",
 						headers: { "content-type": "application/json" },
-						body: JSON.stringify({ action })
+						body: JSON.stringify({
+							action,
+							...acceptedContext !== void 0 && {
+								acknowledgeCompatibility: true,
+								compatibilityContext: acceptedContext
+							}
+						})
 					});
-					if (await runForSkin(operation.skinId, operation.kind, result.operationId) && operation.kind === "install" && pendingInstallActivation.current === operation.skinId) activateSkin(operation.skinId);
+					if (await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext }) && operation.kind === "install" && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext);
 				} catch (reason) {
 					const message = reason instanceof Error ? reason.message : String(reason);
 					setOperations((list) => list.map((item) => item.id === operation.id ? {
@@ -2413,7 +2543,11 @@ url: https://github.com/<owner>/<repo>
 					} : item));
 					setError(null);
 				}
-			}, [activateSkin, runForSkin]);
+			}, [
+				activateSkin,
+				requestCompatibilityConsent,
+				runForSkin
+			]);
 			const approveBuildAndRetry = (0, react.useCallback)(() => {
 				if (buildApprovalOperation === null) return;
 				setDismissedBuildApprovalId(buildApprovalOperation.id);
@@ -2426,16 +2560,14 @@ url: https://github.com/<owner>/<repo>
 			}, [activateSkin, selected]);
 			const installAndActivate = (0, react.useCallback)(async () => {
 				if (selected === void 0) return;
-				pendingInstallActivation.current = selected.id;
-				if (await runForSkin(selected.id, "install") && mounted.current) activateSkin(selected.id);
+				if (await runForSkin(selected.id, "install", void 0, { installAndUse: true }) && mounted.current) activateSkin(selected.id, pendingInstallActivation.current.get(selected.id));
 			}, [
 				activateSkin,
 				runForSkin,
 				selected
 			]);
 			const installAndActivateSkin = (0, react.useCallback)(async (skinId) => {
-				pendingInstallActivation.current = skinId;
-				if (await runForSkin(skinId, "install") && mounted.current) activateSkin(skinId);
+				if (await runForSkin(skinId, "install", void 0, { installAndUse: true }) && mounted.current) activateSkin(skinId, pendingInstallActivation.current.get(skinId));
 			}, [activateSkin, runForSkin]);
 			const restartNow = (0, react.useCallback)(async () => {
 				if (hostKind === "desktop" && !restartAvailable) {
@@ -3847,6 +3979,32 @@ url: https://github.com/<owner>/<repo>
 									}),
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("small", { children: "安装前请确保已关闭其他皮肤插件，避免全局样式冲突；也可以复制提示词，让 Agent 先检查冲突再安装。" })
 								] })
+							]
+						})
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Modal, {
+						open: compatibilityConfirmation !== null,
+						onClose: () => finishCompatibilityConfirmation(false),
+						title: "兼容性提示",
+						closeLabel: "关闭",
+						description: `${compatibilityConfirmation?.changed ? "皮肤安装目标或当前 DSH 信息已变化，请重新确认。" : ""}${compatibilityConfirmation?.skin.name.zh ?? "此皮肤"}（版本 ${compatibilityConfirmation?.skin.install.version ?? ""}）：${compatibilityConfirmation?.assessment.reason ?? ""}。继续后可能安装失败、功能异常或页面无法操作。你可以取消，或确认后继续本次${compatibilityConfirmation?.actionLabel ?? "操作"}。`,
+						footer: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+							variant: "outline",
+							size: "sm",
+							onClick: () => finishCompatibilityConfirmation(false),
+							children: "取消"
+						}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+							variant: "primary",
+							size: "sm",
+							onClick: () => finishCompatibilityConfirmation(true),
+							children: ["仍然", compatibilityConfirmation?.actionLabel]
+						})] }),
+						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("p", {
+							className: SkinMarket_module_css_default.notice,
+							children: [
+								"若使用后页面异常，请查看 ",
+								/* @__PURE__ */ (0, react_jsx_runtime.jsx)(ResetHelpLink, {}),
+								"。"
 							]
 						})
 					}),

@@ -55,11 +55,11 @@ function admissionFixture(options: Pick<RouteOptions, 'connection' | 'hostKind'>
     restart: { available: true, schedule },
   })
   admissionFixtures.push({ directory, dispose })
-  const request = async (path: string, method: 'GET' | 'POST', headers: IncomingMessage['headers'] = {}, remoteAddress: string | null = '127.0.0.1') => {
+  const request = async (path: string, method: 'GET' | 'POST', headers: IncomingMessage['headers'] = {}, remoteAddress: string | null = '127.0.0.1', requestBody?: Record<string, unknown>) => {
     const pathname = path.split('?')[0]!
     const route = routes.find(item => item.path === pathname || item.kind === 'prefix' && pathname.startsWith(`${item.path}/`))
     if (route === undefined) throw new Error(`unregistered route ${path}`)
-    const body = path === '/dsh-skin-market/restart' ? { reason: 'market-update' } : { skinId: 'fixture-skin', action: 'retry' }
+    const body = requestBody ?? (path === '/dsh-skin-market/restart' ? { reason: 'market-update' } : { skinId: 'fixture-skin', action: 'retry' })
     const incoming = Readable.from(method === 'POST' ? [JSON.stringify(body)] : []) as IncomingMessage
     Object.assign(incoming, { method, url: path, headers: { ...(method === 'POST' ? { 'content-type': 'application/json' } : {}), ...headers }, socket: remoteAddress === null ? {} : { remoteAddress } })
     const response = { writeHead: vi.fn(), end: vi.fn() }
@@ -141,7 +141,7 @@ describe('host admission for every market route', () => {
     expect(accepted.incoming.headers.host).toBeUndefined()
     expect(accepted.incoming.headers.origin).toBeUndefined()
     expect(gate).toHaveBeenLastCalledWith(accepted.incoming)
-    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith('install', 'fixture-skin')
+    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith('install', 'fixture-skin', undefined, false, undefined)
   })
 
   it('honors only explicitly declared non-loopback authorities for admitted mutation requests', async () => {
@@ -195,7 +195,7 @@ describe('host admission for every market route', () => {
     expect((await fixture.request('/dsh-skin-market/install', 'POST')).status).toBe(202)
     expect((await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST')).status).toBe(202)
     expect(fixture.begin).toHaveBeenCalledTimes(1)
-    expect(retry).toHaveBeenCalledExactlyOnceWith('existing-skin', 'retry')
+    expect(retry).toHaveBeenCalledExactlyOnceWith('existing-skin', 'retry', false, undefined)
   })
 
   it.each(['downloading', 'activating', 'waiting'] as const)('blocks market self-update writes and retries while a skin operation is %s', async phase => {
@@ -220,6 +220,56 @@ describe('host admission for every market route', () => {
 })
 
 describe('market routes', () => {
+  it.each(['install', 'update'] as const)('forwards explicit and omitted compatibility acknowledgement for %s', async kind => {
+    const fixture = admissionFixture()
+    for (const acknowledgement of [undefined, false, true]) {
+      const body = acknowledgement === undefined ? { compatibilityContext: 'ignored-version' } : { acknowledgeCompatibility: acknowledgement, compatibilityContext: acknowledgement ? 'shown-version' : 'ignored-version' }
+      const result = await fixture.request(`/dsh-skin-market/${kind}`, 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', ...body })
+      expect(result.status).toBe(202)
+      expect(fixture.begin).toHaveBeenLastCalledWith(kind, 'fixture-skin', undefined, acknowledgement === true, acknowledgement ? 'shown-version' : undefined)
+    }
+    expect(fixture.begin).toHaveBeenCalledTimes(3)
+  })
+
+  it.each(['retry', 'approve-build'] as const)('forwards compatibility acknowledgement with the %s retry action', async action => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry').mockImplementation(() => ({
+      id: 'retried-operation', kind: 'install', skinId: 'fixture-skin', phase: 'queued', startedAt: '2026-10-14T00:00:00Z',
+    }))
+    for (const acknowledgement of [undefined, false, true]) {
+      const body = acknowledgement === undefined ? { compatibilityContext: 'ignored-version' } : { acknowledgeCompatibility: acknowledgement, compatibilityContext: acknowledgement ? 'shown-version' : 'ignored-version' }
+      const result = await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST', {}, '127.0.0.1', { action, ...body })
+      expect(result.status).toBe(202)
+      expect(JSON.parse(result.body)).toEqual({ operationId: 'retried-operation' })
+      expect(retry).toHaveBeenLastCalledWith('existing-skin', action, acknowledgement === true, acknowledgement ? 'shown-version' : undefined)
+    }
+    expect(retry).toHaveBeenCalledTimes(3)
+  })
+
+  it.each(['true', 'false', 1, 0, null, {}, []])('refuses non-boolean compatibility acknowledgements before beginning or retrying (%j)', async acknowledgeCompatibility => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry')
+    for (const path of ['/dsh-skin-market/install', '/dsh-skin-market/update', '/dsh-skin-market/operations/existing-skin/retry']) {
+      const result = await fixture.request(path, 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', action: 'retry', acknowledgeCompatibility })
+      expect(result.status).toBe(409)
+      expect(JSON.parse(result.body).error).toBe('invalid compatibility acknowledgement')
+    }
+    expect(fixture.begin).not.toHaveBeenCalled()
+    expect(retry).not.toHaveBeenCalled()
+  })
+
+  it.each([undefined, '', 1, null, {}, [], 'x'.repeat(4097)])('refuses acknowledgements without bounded compatibility context before beginning or retrying (%j)', async compatibilityContext => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry')
+    for (const path of ['/dsh-skin-market/install', '/dsh-skin-market/update', '/dsh-skin-market/operations/existing-skin/retry']) {
+      const result = await fixture.request(path, 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', action: 'retry', acknowledgeCompatibility: true, compatibilityContext })
+      expect(result.status).toBe(409)
+      expect(JSON.parse(result.body).error).toMatch(/compatibility/)
+    }
+    expect(fixture.begin).not.toHaveBeenCalled()
+    expect(retry).not.toHaveBeenCalled()
+  })
+
   it('blocks restart while an Agent is running and waits for idle maintenance', async () => {
     const idle = { status: 'idle', whenIdle: async () => undefined } satisfies AgentLike
     const running = { status: 'running', whenIdle: async () => undefined } satisfies AgentLike

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir, totalmem } from 'node:os'
 import { join } from 'node:path'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from './build-approval.ts'
-import { assessCompatibility } from './compatibility.ts'
+import { assessCompatibility, compatibilityContext } from './compatibility.ts'
 import { persistCompatibilityPatch, planCompatibilityPatch } from './compatibility-adapter.ts'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { loadCatalog } from './catalog.ts'
@@ -206,6 +206,7 @@ export class SkinLifecycle {
   private readonly downloadWaiters: Array<() => void> = []
   private readonly abortControllers = new Map<string, AbortController>()
   private readonly pendingBuildKeys = new Map<string, string[]>()
+  private readonly compatibilityContexts = new Map<string, string>()
   private readonly deadlines = new Map<string, number>()
   private readonly deadlineTimers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly operationCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -303,6 +304,11 @@ export class SkinLifecycle {
 
   private get runtime(): DshRuntime {
     return this.options.runtime ?? { version: null, capabilities: [], source: 'unknown' }
+  }
+
+  private assertCompatibilityContext(operation: Operation, skin: SkinEntry): void {
+    const context = this.compatibilityContexts.get(operation.id)
+    if (context !== undefined && context !== compatibilityContext(skin, this.runtime)) throw new Error('皮肤版本、兼容范围或 DSH 版本已变化，请重新确认兼容性提示')
   }
 
   private assertLegacyOfficialPeers(manifest: Record<string, unknown> | null): void {
@@ -408,6 +414,7 @@ export class SkinLifecycle {
     this.operationCleanupTimers.clear()
     this.operations.clear()
     this.pendingBuildKeys.clear()
+    this.compatibilityContexts.clear()
     this.deadlines.clear()
     this.expired.clear()
     this.profileMutations.clear()
@@ -600,7 +607,7 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
     const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
@@ -611,9 +618,10 @@ export class SkinLifecycle {
       const restart = readMarketState(this.options.profileDir).pendingRestart
       if (restart?.pid === process.pid && restart.skinIds.includes(skinId)) throw new Error('此版本官方 Desktop 安装后需要先完全退出并重开应用，再使用或常驻此皮肤；重复安装不能刷新当前宿主的加载缓存')
     }
-    if (this.management !== undefined && ['install', 'update', 'migrate', 'activate', 'pin'].includes(kind)) {
+    if (['install', 'update', 'migrate', 'activate', 'pin'].includes(kind)) {
+      if (acknowledgeCompatibility === true && acknowledgedContext !== compatibilityContext(skin, this.runtime)) throw new Error('皮肤版本、兼容范围或 DSH 版本已变化，请重新确认兼容性提示')
       const assessment = assessCompatibility(skin, this.runtime)
-      if (assessment.decision === 'incompatible') throw new Error(assessment.reason)
+      if (this.management !== undefined && assessment.decision === 'incompatible' && acknowledgeCompatibility !== true) throw new Error(`${assessment.reason}；请在兼容性提示中确认后继续`)
     }
     if (kind === 'install' || kind === 'update' || kind === 'migrate') {
       if (this.hostKind === 'desktop' && skin.install.desktop?.mode !== 'managed') {
@@ -632,6 +640,7 @@ export class SkinLifecycle {
       cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
+    if (acknowledgeCompatibility === true && acknowledgedContext !== undefined) this.compatibilityContexts.set(operation.id, acknowledgedContext)
     this.abortControllers.set(operation.id, new AbortController())
     if (kind === 'install' || kind === 'update' || kind === 'migrate') {
       const timeoutMs = this.options.operationTimeoutMs ?? OPERATION_TIMEOUT_MS
@@ -656,13 +665,13 @@ export class SkinLifecycle {
     return operation
   }
 
-  retry(id: string, action: 'retry' | 'approve-build'): Operation {
+  retry(id: string, action: 'retry' | 'approve-build', acknowledgeCompatibility = false, acknowledgedContext?: string): Operation {
     const failed = this.operations.get(id)
     if (failed === undefined || failed.phase !== 'failed') throw new Error('operation is not retryable')
     if (failed.failure?.action !== action) throw new Error('该操作不支持此恢复动作')
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -794,9 +803,6 @@ export class SkinLifecycle {
         if (error instanceof InstallConflictError) {
           operation.failure = { kind: 'conflict', message: error.message, conflicts: error.conflicts }
         }
-        if (operation.failure === undefined && (operation.kind === 'install' || operation.kind === 'update' || operation.kind === 'migrate') && assessCompatibility(this.skin(operation.skinId), this.runtime).decision === 'incompatible') {
-          operation.failure = { kind: 'compatibility', message: errorMessage(error) }
-        }
         logEvent(
           'error',
           error instanceof PnpmCommandError ? 'pnpm' : 'operation',
@@ -819,6 +825,7 @@ export class SkinLifecycle {
       this.desktopManagedAttempts.delete(operation.id)
       this.desktopRecoveryBaselines.delete(operation.id)
       this.abortControllers.delete(operation.id)
+      this.compatibilityContexts.delete(operation.id)
       if (this.disposed || operation.phase === 'waiting') return
       const timer = setTimeout(() => {
         this.operationCleanupTimers.delete(operation.id)
@@ -1260,6 +1267,7 @@ export class SkinLifecycle {
   }
 
   private async installIntoProfile(operation: Operation, skin: SkinEntry, prefetched?: PrefetchedPackage): Promise<void> {
+    this.assertCompatibilityContext(operation, skin)
     if (this.hostKind !== 'desktop') {
       await this.prepareProfile(skin, operation, () => this.syncPnpmMetadata(operation, '正在修复 profile 的 pnpm 锁文件'))
     }
@@ -1349,6 +1357,7 @@ export class SkinLifecycle {
 
   private async activateLocked(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
+    this.assertCompatibilityContext(operation, skin)
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before using it')
     this.update(operation, 'activating')
     const previous = readMarketState(this.options.profileDir)
@@ -1429,6 +1438,7 @@ export class SkinLifecycle {
 
   private async pinLocked(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
+    this.assertCompatibilityContext(operation, skin)
     const previous = readMarketState(this.options.profileDir)
     const selection = this.selectionSnapshot()
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before pinning it')
@@ -1503,6 +1513,7 @@ export class SkinLifecycle {
       }
     }
     await this.withProfileLock(operation, async () => {
+      this.assertCompatibilityContext(operation, skin)
       if (this.hostKind !== 'desktop') {
         await this.prepareProfile(skin, operation, () => this.syncPnpmMetadata(operation, '正在修复 profile 的 pnpm 锁文件'))
       }

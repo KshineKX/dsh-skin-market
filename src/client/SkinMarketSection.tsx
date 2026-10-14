@@ -20,7 +20,7 @@ import { interceptNotice, isInterceptFailure, marketUpdateNotice } from './failu
 import { CLI_INSTALL_WARNING, createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
 import { switchClientSkin, type ClientSkinRuntime } from './index.ts'
 import { displayTitle, githubRepoLabel } from '../display-title.ts'
-import { assessCompatibility, type CompatibilityAssessment } from '../compatibility.ts'
+import { assessCompatibility, compatibilityContext as skinCompatibilityContext, type CompatibilityAssessment } from '../compatibility.ts'
 import { matchesCatalogSearch } from '../catalog-search.ts'
 import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin } from './types.ts'
 
@@ -66,6 +66,20 @@ export interface SkinMarketSectionProps {
 }
 
 type MutationKind = Operation['kind']
+type CompatibilityConsent = { decision: 'not-required' | 'cancelled' } | { decision: 'accepted'; context: string }
+
+interface CompatibilityConfirmation {
+  skin: CatalogSkin
+  assessment: CompatibilityAssessment
+  actionLabel: string
+  context: string
+  changed?: boolean
+}
+
+interface SkinOperationOptions {
+  compatibilityContext?: string
+  installAndUse?: boolean
+}
 
 interface CatalogResponse {
   skins: CatalogSkin[]
@@ -648,6 +662,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [restartTarget, setRestartTarget] = useState<RestartTarget | null>(null)
   const [pendingRestart, setPendingRestart] = useState<PendingRestartNotice | null>(null)
   const [compatibilityWarning, setCompatibilityWarning] = useState<CompatibilityAssessment | null>(null)
+  const [compatibilityConfirmation, setCompatibilityConfirmation] = useState<CompatibilityConfirmation | null>(null)
+  const compatibilityConsentResolver = useRef<((context: string | null) => void) | null>(null)
+  const compatibilityConfirmationRef = useRef<CompatibilityConfirmation | null>(null)
   const [homeCompact, setHomeCompact] = useState(false)
   const skinListRef = useRef<HTMLDivElement | null>(null)
   const homeRef = useRef<HTMLDivElement | null>(null)
@@ -658,14 +675,20 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const thumbnailScrollRequest = useRef(false)
   const marketUpdatePolls = useRef(new Set<string>())
   const dismissedMarketOperationIds = useRef(new Set<string>())
-  const pendingInstallActivation = useRef<string | null>(null)
+  const pendingInstallActivation = useRef(new Map<string, string | undefined>())
   const inflightSkinIds = useRef(new Set<string>())
   const skinsRef = useRef<CatalogSkin[]>([])
   const statesRef = useRef<RuntimeSkin[]>([])
+  const runtimeRef = useRef<DshRuntime | null>(null)
   const runtimeReadyRef = useRef(false)
   const catalogSettledRef = useRef(false)
   const selectedIdRef = useRef('')
   const userSelectedRef = useRef(false)
+
+  useEffect(() => () => {
+    compatibilityConsentResolver.current?.(null)
+    compatibilityConsentResolver.current = null
+  }, [])
 
   const buildApprovalOperation = operations.find(operation =>
     operation.phase === 'failed'
@@ -692,6 +715,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
   const applyMarketState = useCallback((state: MarketStateResponse) => {
     statesRef.current = state.skins
+    runtimeRef.current = state.runtime ?? null
     runtimeReadyRef.current = true
     setStates(state.skins)
     setHostKind(state.hostKind ?? 'dsh')
@@ -1160,15 +1184,71 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     const capability = management?.capabilities[action]
     return capability?.available === false ? capability.reason ?? '当前宿主暂不支持此操作，请使用官方插件页' : null
   }, [management, marketOperation, marketUpdating, profileBusy])
+  const currentActionReason = useRef(actionReason)
+  currentActionReason.current = actionReason
 
-  const runForSkin = useCallback(async (skinId: string, kind: MutationKind, existingOperationId?: string) => {
-    const target = skins.find(skin => skin.id === skinId)
+  const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, installAndUse = false, changed = false): Promise<CompatibilityConsent> => {
+    if (!['install', 'update', 'migrate', 'activate', 'pin'].includes(kind)) return { decision: 'not-required' }
+    const target = skinsRef.current.find(item => item.id === skin.id)
+    if (target === undefined) return { decision: 'cancelled' }
+    const assessment = installCompatibility(target, 'dsh', runtimeRef.current)!
+    if (!changed && assessment.decision !== 'incompatible') return { decision: 'not-required' }
+    const actionLabel = kind === 'install' ? installAndUse ? '安装并使用' : '安装'
+      : kind === 'update' ? '更新' : kind === 'migrate' ? '换用 npm' : kind === 'pin' ? '常驻使用' : '使用'
+    compatibilityConsentResolver.current?.(null)
+    const context = await new Promise<string | null>(resolve => {
+      compatibilityConsentResolver.current = resolve
+      const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), changed }
+      compatibilityConfirmationRef.current = confirmation
+      setCompatibilityConfirmation(confirmation)
+    })
+    return context === null ? { decision: 'cancelled' } : { decision: 'accepted', context }
+  }, [])
+
+  const finishCompatibilityConfirmation = useCallback((accepted: boolean) => {
+    const resolve = compatibilityConsentResolver.current
+    const confirmation = compatibilityConfirmationRef.current
+    if (accepted && confirmation !== null) {
+      const target = skinsRef.current.find(item => item.id === confirmation.skin.id)
+      if (target !== undefined) {
+        const context = skinCompatibilityContext(target, runtimeRef.current)
+        if (context !== confirmation.context) {
+          const updated = { ...confirmation, skin: target, assessment: installCompatibility(target, 'dsh', runtimeRef.current)!, context, changed: true }
+          compatibilityConfirmationRef.current = updated
+          setCompatibilityConfirmation(updated)
+          return
+        }
+      } else accepted = false
+    }
+    compatibilityConsentResolver.current = null
+    compatibilityConfirmationRef.current = null
+    setCompatibilityConfirmation(null)
+    resolve?.(accepted ? confirmation?.context ?? null : null)
+  }, [])
+
+  const runForSkin = useCallback(async (skinId: string, kind: MutationKind, existingOperationId?: string, options: SkinOperationOptions = {}) => {
+    let target = skinsRef.current.find(skin => skin.id === skinId)
     if (target === undefined) return false
+    let acceptedContext = options.compatibilityContext
     if (existingOperationId === undefined) {
       const reason = actionReason(kind)
       if (reason !== null) { setError(reason); return false }
+      while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)) {
+        const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, acceptedContext !== undefined)
+        if (consent.decision === 'cancelled' || !mounted.current) return false
+        acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
+        target = skinsRef.current.find(skin => skin.id === skinId)
+        if (target === undefined) return false
+        if (consent.decision === 'not-required') break
+      }
+      const currentReason = currentActionReason.current(kind)
+      if (currentReason !== null) { setError(currentReason); return false }
+      if (kind === 'install') {
+        if (options.installAndUse === true) pendingInstallActivation.current.set(target.id, acceptedContext)
+        else pendingInstallActivation.current.delete(target.id)
+      }
     }
-    const targetState = runtimeFor(states, target.id)
+    const targetState = runtimeFor(statesRef.current, target.id)
     setError(null)
     inflightSkinIds.current.add(target.id)
     if (existingOperationId === undefined) {
@@ -1178,7 +1258,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
     try {
       const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id }),
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }) }),
       })).operationId
       for (;;) {
         if (!mounted.current) return false
@@ -1221,7 +1301,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             needsRestart = !(await switchClientSkin(clientRuntime, skins.map(skin => skin.package), target.package, pinnedPackages))
             restoreMarketStyleOrder()
           }
-          const advisory = kind === 'activate' ? advisoryCompatibility(target, hostKind, runtime) : null
+          const advisory = kind === 'activate' && acceptedContext === undefined ? advisoryCompatibility(target, hostKind, runtime) : null
           await refresh()
           if (needsRestart) {
             setStates(value => value.map(item => item.skinId === target.id
@@ -1264,31 +1344,40 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setError(null)
       return false
     }
-  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, openRestartConfirm, refresh, runtime, skins, states])
+  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, openRestartConfirm, refresh, requestCompatibilityConsent, runtime, skins, states])
 
-  const activateSkin = useCallback((skinId: string) => {
+  const activateSkin = useCallback((skinId: string, compatibilityContext?: string) => {
     if (!mounted.current) return
-    pendingInstallActivation.current = null
+    pendingInstallActivation.current.delete(skinId)
     try { window.localStorage.setItem(ACTIVATION_WARNING_KEY, 'true') } catch { /* storage may be unavailable */ }
     setActivationWarningAccepted(true)
-    void runForSkin(skinId, 'activate')
+    void runForSkin(skinId, 'activate', undefined, { compatibilityContext })
   }, [runForSkin])
 
   const retrySkinOperation = useCallback(async (operation: Operation) => {
     const action = operation.failure?.action
     if (action === undefined) return
     try {
+      const skin = skinsRef.current.find(item => item.id === operation.skinId)
+      if (skin === undefined) return
+      const installAndUse = operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)
+      const consent = await requestCompatibilityConsent(skin, operation.kind, installAndUse)
+      if (consent.decision === 'cancelled' || !mounted.current) return
+      const reason = currentActionReason.current(operation.kind)
+      if (reason !== null) { setError(reason); return }
+      const acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
+      if (installAndUse) pendingInstallActivation.current.set(operation.skinId, acceptedContext)
       const result = await json<{ operationId: string }>(`/dsh-skin-market/operations/${operation.id}/retry`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action }),
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }) }),
       })
-      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId)
-      if (retried && operation.kind === 'install' && pendingInstallActivation.current === operation.skinId) activateSkin(operation.skinId)
+      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext })
+      if (retried && operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason)
       setOperations(list => list.map(item => item.id === operation.id ? { ...item, message } : item))
       setError(null)
     }
-  }, [activateSkin, runForSkin])
+  }, [activateSkin, requestCompatibilityConsent, runForSkin])
 
   const approveBuildAndRetry = useCallback(() => {
     if (buildApprovalOperation === null) return
@@ -1305,13 +1394,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
   const installAndActivate = useCallback(async () => {
     if (selected === undefined) return
-    pendingInstallActivation.current = selected.id
-    if (await runForSkin(selected.id, 'install') && mounted.current) activateSkin(selected.id)
+    if (await runForSkin(selected.id, 'install', undefined, { installAndUse: true }) && mounted.current) activateSkin(selected.id, pendingInstallActivation.current.get(selected.id))
   }, [activateSkin, runForSkin, selected])
 
   const installAndActivateSkin = useCallback(async (skinId: string) => {
-    pendingInstallActivation.current = skinId
-    if (await runForSkin(skinId, 'install') && mounted.current) activateSkin(skinId)
+    if (await runForSkin(skinId, 'install', undefined, { installAndUse: true }) && mounted.current) activateSkin(skinId, pendingInstallActivation.current.get(skinId))
   }, [activateSkin, runForSkin])
 
   const restartNow = useCallback(async () => {
@@ -1812,6 +1899,16 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           </div>}
           {!manualOnly && <div><strong>命令</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:command` ? '命令已复制' : '复制命令'} title="复制命令" onClick={() => void copyInstallOption('command')} /></span><small>{CLI_INSTALL_WARNING}</small></div>}
         </div>
+      </Modal>
+      <Modal
+        open={compatibilityConfirmation !== null}
+        onClose={() => finishCompatibilityConfirmation(false)}
+        title="兼容性提示"
+        closeLabel="关闭"
+        description={`${compatibilityConfirmation?.changed ? '皮肤安装目标或当前 DSH 信息已变化，请重新确认。' : ''}${compatibilityConfirmation?.skin.name.zh ?? '此皮肤'}（版本 ${compatibilityConfirmation?.skin.install.version ?? ''}）：${compatibilityConfirmation?.assessment.reason ?? ''}。继续后可能安装失败、功能异常或页面无法操作。你可以取消，或确认后继续本次${compatibilityConfirmation?.actionLabel ?? '操作'}。`}
+        footer={<><Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(false)}>取消</Button><Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>仍然{compatibilityConfirmation?.actionLabel}</Button></>}
+      >
+        <p className={css.notice}>若使用后页面异常，请查看 <ResetHelpLink />。</p>
       </Modal>
       <Modal
         open={confirmRestart || compatibilityWarning !== null}

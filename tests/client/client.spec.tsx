@@ -51,6 +51,7 @@ import { MARKET_INSTALL_TROUBLESHOOT_URL, MARKET_MANUAL_UPDATE_URL } from '../..
 import { apply as applyClient, createClientSkinRuntime, missingPrimitives, switchClientSkin } from '../../src/client/index.ts'
 import { createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
 import { setGeneratedMediaSources } from '../../src/media-preview.ts'
+import { compatibilityContext } from '../../src/compatibility.ts'
 import type { CatalogSkin } from '../../src/client/types.ts'
 
 const skin = {
@@ -902,7 +903,7 @@ describe('client market', () => {
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && (init as RequestInit | undefined)?.method === 'POST')).toBe(false)
   })
 
-  it('warns about a known incompatible DSH version after Use, not on the detail page', async () => {
+  it('asks before installing an incompatible skin and carries consent through this install-and-use action', async () => {
     const incompatible = { ...skin, id: 'test.incompatible', name: { zh: '不兼容皮肤', en: 'Incompatible Skin' }, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
@@ -923,10 +924,191 @@ describe('client market', () => {
     fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
     const dialog = await screen.findByRole('dialog', { name: '兼容性提示' })
     expect(dialog.textContent).toMatch(/不在作者声明的兼容范围/)
-    expect(dialog.textContent).toMatch(/仍可继续使用/)
+    expect(dialog.textContent).toMatch(/可能安装失败、功能异常或页面无法操作/)
     expect(within(dialog).getByRole('link', { name: '页面异常时重置皮肤' }).getAttribute('href')).toContain('#页面异常时重置皮肤')
     expect(screen.queryByRole('button', { name: '确认无任务，立即重启' })).toBeNull()
-    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(true))
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
+    expect(screen.queryByRole('dialog', { name: '兼容性提示' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '仍然安装并使用' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toHaveLength(1))
+    for (const endpoint of ['install', 'activate']) {
+      expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith(`/${endpoint}`) && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: incompatible.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, { ...dshRuntime, version: '0.1.1-rc.1' }) })
+    }
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '兼容性提示' })).toBeNull())
+
+    fireEvent.click(screen.getByRole('button', { name: '仅安装' }))
+    const nextAttempt = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(within(nextAttempt).getByRole('button', { name: '仍然安装' })).toBeTruthy()
+    expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && init?.method === 'POST')).toHaveLength(1)
+    fireEvent.click(within(nextAttempt).getByRole('button', { name: '关闭' }))
+    expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && init?.method === 'POST')).toHaveLength(1)
+  })
+
+  it.each(['discovery', 'detail'])('asks before an incompatible update in the %s view without sending a request on cancel', async entry => {
+    const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '0.9.0', updateAvailable: true }] }) }
+      if (url.endsWith('/update') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-update' }) }
+      if (url.endsWith('/operations/incompatible-update')) return { ok: true, json: async () => ({ id: 'incompatible-update', kind: 'update', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    if (entry === 'detail') {
+      fireEvent.click(await screen.findByRole('button', { name: '测试皮肤 已安装卡片' }))
+    }
+    fireEvent.click((await screen.findAllByRole('button', { name: '更新' }))[0]!)
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '取消' }))
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(screen.getAllByRole('button', { name: '更新' })[0]!)
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '仍然更新' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/update') && init?.method === 'POST')).toHaveLength(1))
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/update') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
+  })
+
+  it('asks for compatibility consent after migration confirmation and sends it only when accepted', async () => {
+    const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const sourceMigration = { target: 'skin@1.0.0', currentSource: skin.install.target }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false, sourceMigration }] }) }
+      if (url.endsWith('/migrate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-migrate' }) }
+      if (url.endsWith('/operations/incompatible-migrate')) return { ok: true, json: async () => ({ id: 'incompatible-migrate', kind: 'migrate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click((await screen.findAllByRole('button', { name: '换用 npm' }))[0]!)
+    fireEvent.click(screen.getByRole('button', { name: '确认换用 npm' }))
+    const dialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: '仍然换用 npm' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')).toBe(true))
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
+  })
+
+  it('warns before installing an incompatible skin on official Desktop and respects install-only restart guidance', async () => {
+    const incompatible = { ...managedDesktopSkin, compatibility: { dsh: '0.1.0-rc.6', platform: ['web', 'desktop'] } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, management: { ...officialManagement, installRequiresRestart: true }, skins: [] }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-desktop' }) }
+      if (url.endsWith('/operations/incompatible-desktop')) return { ok: true, json: async () => ({ id: 'incompatible-desktop', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
+    const dialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(dialog.textContent).toContain('当前 DSH 0.2.0-rc.2')
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: '仍然安装' }))
+    expect(await screen.findByText('测试皮肤 已安装，请完全退出官方 Desktop 并重新打开后再使用')).toBeTruthy()
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/install') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, { ...dshRuntime, version: '0.2.0-rc.2' }) })
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
+  })
+
+  it.each(['unmount', 'profile-busy'])('does not start an incompatible install if %s interrupts its confirmation', async interruption => {
+    const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    let profileBusy = false
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [incompatible] } : url.endsWith('/state') ? { skins: [], runtime: dshRuntime, ...(profileBusy && { profileBusy: '当前 profile 正在等待宿主确认' }) } : {} }))
+    vi.stubGlobal('fetch', fetchMock)
+    const view = render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    const dialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    if (interruption === 'unmount') {
+      view.unmount()
+      await act(async () => undefined)
+    } else {
+      profileBusy = true
+      fireEvent.focus(window)
+      await waitFor(() => expect(screen.getByRole('button', { name: '安装并使用' }).hasAttribute('disabled')).toBe(true))
+      fireEvent.click(within(dialog).getByRole('button', { name: '仍然安装并使用' }))
+      expect(await screen.findByRole('alert')).toHaveProperty('textContent', '当前 profile 正在等待宿主确认')
+    }
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it.each(['catalog', 'runtime', 'compatible', 'unknown'])('refreshes a pending warning after a %s change and requires another confirmation', async changed => {
+    const original = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const updated = { ...original, install: { ...skin.install, version: '2.0.0', commit: 'b'.repeat(40), target: `https://github.com/a/b.git#${'b'.repeat(40)}` }, compatibility: { ...original.compatibility, dsh: changed === 'compatible' ? '>=0.1.0-rc.6' : '<0.0.9' } }
+    let currentSkin = original
+    let currentRuntime: typeof dshRuntime | null = dshRuntime
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [currentSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], ...(currentRuntime !== null && { runtime: currentRuntime }) }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'refreshed-install' }) }
+      if (url.endsWith('/operations/refreshed-install')) return { ok: true, json: async () => ({ id: 'refreshed-install', kind: 'install', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '仅安装' }))
+    const warning = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(warning.textContent).toContain('版本 1.0.0')
+    const originalContext = compatibilityContext(original, dshRuntime)
+
+    if (changed === 'runtime') currentRuntime = { ...dshRuntime, version: '0.2.0-rc.2' }
+    else if (changed === 'unknown') currentRuntime = null
+    else currentSkin = updated
+    fireEvent.focus(window)
+    await waitFor(() => {
+      const detail = screen.getByRole('dialog', { name: '皮肤详情' }).textContent
+      if (changed === 'runtime') expect(detail).toContain('当前 DSH 0.2.0-rc.2')
+      else if (changed === 'unknown') expect(detail).not.toContain('当前 DSH')
+      else expect(detail).toContain('版本 2.0.0')
+    })
+    fireEvent.click(within(warning).getByRole('button', { name: '仍然安装' }))
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    expect(warning.textContent).toContain('皮肤安装目标或当前 DSH 信息已变化，请重新确认')
+    if (changed === 'runtime') expect(warning.textContent).toContain('当前 DSH 0.2.0-rc.2')
+    else if (changed === 'unknown') expect(warning.textContent).toContain('无法读取当前 DSH 版本')
+    else expect(warning.textContent).toContain('版本 2.0.0')
+    fireEvent.click(within(warning).getByRole('button', { name: '仍然安装' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && init?.method === 'POST')).toHaveLength(1))
+    const request = JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/install') && init?.method === 'POST')?.[1]?.body))
+    expect(request).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(currentSkin, currentRuntime) })
+    expect(request.compatibilityContext).not.toBe(originalContext)
+  })
+
+  it('asks again before activation if the install completion refresh changes the acknowledged package', async () => {
+    const original = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const updated = { ...original, install: { ...skin.install, version: '2.0.0', commit: 'b'.repeat(40), target: `https://github.com/a/b.git#${'b'.repeat(40)}` }, compatibility: { ...original.compatibility, dsh: '<0.0.9' } }
+    let installed = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [installed ? updated : original] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ runtime: dshRuntime, skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: true }] : [] }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'changed-before-use-install' }) }
+      if (url.endsWith('/operations/changed-before-use-install')) {
+        installed = true
+        return { ok: true, json: async () => ({ id: 'changed-before-use-install', kind: 'install', skinId: skin.id, phase: 'done' }) }
+      }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'changed-before-use-activate' }) }
+      if (url.endsWith('/operations/changed-before-use-activate')) return { ok: true, json: async () => ({ id: 'changed-before-use-activate', kind: 'activate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '仍然安装并使用' }))
+    const useConfirmation = await screen.findByRole('button', { name: '仍然使用' })
+    expect(screen.getByRole('dialog', { name: '兼容性提示' }).textContent).toContain('版本 2.0.0')
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
+    fireEvent.click(useConfirmation)
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(true))
+    const installRequest = JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/install') && init?.method === 'POST')?.[1]?.body))
+    const activateRequest = JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')?.[1]?.body))
+    expect(installRequest.compatibilityContext).toBe(compatibilityContext(original, dshRuntime))
+    expect(activateRequest.compatibilityContext).toBe(compatibilityContext(updated, dshRuntime))
+    expect(activateRequest.compatibilityContext).not.toBe(installRequest.compatibilityContext)
   })
 
   it('still installs when runtime version is unknown', async () => {
@@ -1423,27 +1605,52 @@ describe('client market', () => {
     expect(clientRuntime.setActive).toHaveBeenCalledWith(skin.package, true)
   })
 
-  it('puts the compatibility warning into the restart panel after Use', async () => {
+  it('asks before using an incompatible installed skin and preserves the restart flow after consent', async () => {
     const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
       if (url.endsWith('/state')) return { ok: true, json: async () => ({ runningAgentCount: 0, skins: [{ skinId: incompatible.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }], runtime: { version: '0.1.1-rc.1', capabilities: ['slot:keyed:settings.plugin.item'], source: 'injected' } }) }
       if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'activate-1' }) }
       if (url.endsWith('/operations/activate-1')) return { ok: true, json: async () => ({ id: 'activate-1', phase: 'done' }) }
       throw new Error(`Unexpected request: ${url}`)
-    }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
     const clientRuntime = { setActive: vi.fn(async () => false) }
     render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
     await openSkinCard()
 
     expect(screen.queryByText(/仍可继续使用/)).toBeNull()
     fireEvent.click(await screen.findByRole('button', { name: '使用' }))
+    const compatibilityDialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(compatibilityDialog.textContent).toMatch(/不在作者声明的兼容范围/)
+    expect(within(compatibilityDialog).getByRole('link', { name: '页面异常时重置皮肤' })).toBeTruthy()
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(compatibilityDialog).getByRole('button', { name: '仍然使用' }))
     const dialog = await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })
-    expect(dialog.textContent).toMatch(/不在作者声明的兼容范围/)
-    expect(dialog.textContent).toMatch(/仍可继续使用/)
     expect(dialog.textContent).toMatch(/Agent 状态检查已通过/)
-    expect(within(dialog).getByRole('link', { name: '页面异常时重置皮肤' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '确认无任务，立即重启' })).toBeTruthy()
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: incompatible.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, { ...dshRuntime, version: '0.1.1-rc.1' }) })
+  })
+
+  it('asks separately for an incompatible skin before enabling it as a pinned plugin', async () => {
+    const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] }) }
+      if (url.endsWith('/pin') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-pin' }) }
+      if (url.endsWith('/operations/incompatible-pin')) return { ok: true, json: async () => ({ id: 'incompatible-pin', kind: 'pin', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click(await screen.findByRole('button', { name: '测试皮肤 已安装卡片' }))
+    fireEvent.click(screen.getByRole('button', { name: '常驻使用' }))
+    fireEvent.click(screen.getByRole('button', { name: '确认常驻' }))
+    const dialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: '仍然常驻使用' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/pin') && init?.method === 'POST')).toBe(true))
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/pin') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
   })
 
   it('filters the catalog from the native search input', async () => {
@@ -1779,6 +1986,41 @@ describe('client market', () => {
     fireEvent.click(screen.getAllByRole('button', { name: '重试' })[0]!)
 
     await waitFor(() => expect(retryRequests).toBe(1))
+  })
+
+  it('requires fresh compatibility consent for retry and preserves only its install-and-use intent', async () => {
+    const incompatible = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    let installed = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ runtime: dshRuntime, skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] : [] }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-retry-source' }) }
+      if (url.endsWith('/operations/incompatible-retry-source')) return { ok: true, json: async () => ({ id: 'incompatible-retry-source', kind: 'install', skinId: skin.id, phase: 'failed', message: '插件下载遇到临时网络错误', failure: { kind: 'network', message: '插件下载遇到临时网络错误', action: 'retry' } }) }
+      if (url.endsWith('/operations/incompatible-retry-source/retry') && init?.method === 'POST') {
+        installed = true
+        return { ok: true, json: async () => ({ operationId: 'incompatible-retry-target' }) }
+      }
+      if (url.endsWith('/operations/incompatible-retry-target')) return { ok: true, json: async () => ({ id: 'incompatible-retry-target', kind: 'install', skinId: skin.id, phase: 'done' }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-retry-activate' }) }
+      if (url.endsWith('/operations/incompatible-retry-activate')) return { ok: true, json: async () => ({ id: 'incompatible-retry-activate', kind: 'activate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '仍然安装并使用' }))
+    fireEvent.click((await screen.findAllByRole('button', { name: '重试' }))[0]!)
+    const retryDialog = await screen.findByRole('dialog', { name: '兼容性提示' })
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/retry') && init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(retryDialog).getByRole('button', { name: '取消' }))
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/retry') && init?.method === 'POST')).toBe(false)
+    fireEvent.click(screen.getAllByRole('button', { name: '重试' })[0]!)
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '兼容性提示' })).getByRole('button', { name: '仍然安装并使用' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(true))
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/retry') && init?.method === 'POST')?.[1]?.body))).toEqual({ action: 'retry', acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '兼容性提示' })).toBeNull())
   })
 
   it('puts build approval in a confirmation modal instead of the failure banner', async () => {

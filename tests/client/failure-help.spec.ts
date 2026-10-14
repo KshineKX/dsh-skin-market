@@ -72,6 +72,15 @@ describe('failure help', () => {
     expect(notice.links).toEqual([{ href: `https://github.com/a/b/tree/${'a'.repeat(40)}`, label: '打开皮肤仓库' }])
   })
 
+  it('explains the host compatibility failure after a user accepted the market warning', () => {
+    const notice = interceptNotice(failed('compatibility', '插件依赖不兼容', { kind: 'update' }), '测试皮肤', skin)
+    expect(notice.title).toBe('更新未完成')
+    expect(notice.what).toContain('DSH 宿主')
+    expect(notice.why).toContain('插件依赖不兼容')
+    expect(notice.why).toContain('宿主仍会检查插件自身的依赖要求')
+    expect(notice.what).not.toContain('没有改动')
+  })
+
   it('explains a market store mismatch with the troubleshooting README', () => {
     const notice = marketUpdateNotice({
       failure: { kind: 'unexpected-store', message: '当前 profile 的 node_modules 由另一代 pnpm store 链接' },

@@ -97,16 +97,31 @@ async function readJsonBody(request: IncomingMessage, limit: number): Promise<Re
   return body as Record<string, unknown>
 }
 
-export async function readSkinId(request: IncomingMessage, limit = 8192): Promise<string> {
+function compatibilityAcknowledgement(body: Record<string, unknown>): { acknowledgeCompatibility: boolean; compatibilityContext?: string } {
+  if (body.acknowledgeCompatibility !== undefined && typeof body.acknowledgeCompatibility !== 'boolean') throw new Error('invalid compatibility acknowledgement')
+  if (body.acknowledgeCompatibility !== true) return { acknowledgeCompatibility: false }
+  if (typeof body.compatibilityContext !== 'string' || body.compatibilityContext.length === 0 || body.compatibilityContext.length > 4096) throw new Error('invalid compatibility context')
+  return { acknowledgeCompatibility: true, compatibilityContext: body.compatibilityContext }
+}
+
+export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
   const body = await readJsonBody(request, limit)
   if (typeof body.skinId !== 'string' || body.skinId.length > 128) throw new Error('invalid skinId')
-  return body.skinId
+  return { skinId: body.skinId, ...compatibilityAcknowledgement(body) }
+}
+
+export async function readSkinId(request: IncomingMessage, limit = 8192): Promise<string> {
+  return (await readSkinMutation(request, limit)).skinId
+}
+
+export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: 'retry' | 'approve-build'; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
+  const body = await readJsonBody(request, limit)
+  if (body.action !== 'retry' && body.action !== 'approve-build') throw new Error('invalid operation retry action')
+  return { action: body.action, ...compatibilityAcknowledgement(body) }
 }
 
 export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<'retry' | 'approve-build'> {
-  const body = await readJsonBody(request, limit)
-  if (body.action === 'retry' || body.action === 'approve-build') return body.action
-  throw new Error('invalid operation retry action')
+  return (await readOperationRetry(request, limit)).action
 }
 
 export type RestartTarget = { kind: 'skin'; skinId: string } | { kind: 'market-update' }

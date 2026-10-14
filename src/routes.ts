@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { CatalogStore, catalogWithStars } from './catalog.ts'
-import { directLoopbackRequest, readOperationRetryAction, readRestartTarget, readSkinId, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
+import { directLoopbackRequest, readOperationRetry, readRestartTarget, readSkinMutation, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
 import { SkinLifecycle, type LifecycleHost } from './lifecycle.ts'
 import { installedClientPlugins, resolveProfileDir } from './profile.ts'
 import type { PluginRunner } from './commands.ts'
@@ -157,9 +157,9 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     if (!method(request, response, 'POST')) return
     if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
     try {
-      const skinId = await readSkinId(request)
+      const { skinId, acknowledgeCompatibility, compatibilityContext } = await readSkinMutation(request)
       if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-      const operation = lifecycle.begin(kind, skinId)
+      const operation = lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
       sendJson(response, 202, { operationId: operation.id })
     } catch (error) {
       sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
@@ -264,8 +264,8 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         try {
           if (cancelling) return sendJson(response, 202, lifecycle.cancel(id))
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-          const action = await readOperationRetryAction(request)
-          return sendJson(response, 202, { operationId: lifecycle.retry(id, action).id })
+          const { action, acknowledgeCompatibility, compatibilityContext } = await readOperationRetry(request)
+          return sendJson(response, 202, { operationId: lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext).id })
         } catch (error) {
           return sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
         }

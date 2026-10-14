@@ -19,7 +19,17 @@ export interface HostConnectionLike {
 /** Consult the same host admission policy as its own API, including browser login. */
 export declare function refuseUnadmitted(request: IncomingMessage, response: ServerResponse, connection?: HostConnectionLike): boolean;
 export declare function directLoopbackRequest(request: IncomingMessage): boolean;
+export declare function readSkinMutation(request: IncomingMessage, limit?: number): Promise<{
+    skinId: string;
+    acknowledgeCompatibility: boolean;
+    compatibilityContext?: string;
+}>;
 export declare function readSkinId(request: IncomingMessage, limit?: number): Promise<string>;
+export declare function readOperationRetry(request: IncomingMessage, limit?: number): Promise<{
+    action: 'retry' | 'approve-build';
+    acknowledgeCompatibility: boolean;
+    compatibilityContext?: string;
+}>;
 export declare function readOperationRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-build'>;
 export type RestartTarget = {
     kind: 'skin';

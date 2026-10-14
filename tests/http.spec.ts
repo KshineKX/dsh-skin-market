@@ -1,7 +1,13 @@
 import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-import { directLoopbackRequest, loopbackAuthority, readSkinId, refuseUnadmitted, sameOrigin, trustedAuthority } from '../src/http.ts'
+import { directLoopbackRequest, loopbackAuthority, readOperationRetry, readSkinId, readSkinMutation, refuseUnadmitted, sameOrigin, trustedAuthority } from '../src/http.ts'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+
+function jsonRequest(body: Record<string, unknown>): IncomingMessage {
+  const request = Readable.from([JSON.stringify(body)]) as IncomingMessage
+  request.headers = { 'content-type': 'application/json' }
+  return request
+}
 
 describe('HTTP guards', () => {
   it('accepts same-origin requests and Desktop proxy requests', () => {
@@ -79,5 +85,35 @@ describe('HTTP guards', () => {
     const oversized = Readable.from([JSON.stringify({ skinId: 'x'.repeat(9000) })]) as IncomingMessage
     oversized.headers = { 'content-type': 'application/json' }
     await expect(readSkinId(oversized)).rejects.toThrow('too large')
+  })
+
+  it.each([undefined, false, true])('reads only an explicit boolean compatibility acknowledgement (%s)', async acknowledgement => {
+    const body = acknowledgement === undefined ? { compatibilityContext: 'ignored-version' } : { acknowledgeCompatibility: acknowledgement, compatibilityContext: acknowledgement ? 'shown-version' : 'ignored-version' }
+    const context = acknowledgement ? { compatibilityContext: 'shown-version' } : {}
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({
+      skinId: 'fixture-skin', acknowledgeCompatibility: acknowledgement === true, ...context,
+    })
+    for (const action of ['retry', 'approve-build'] as const) {
+      await expect(readOperationRetry(jsonRequest({ action, ...body }))).resolves.toEqual({
+        action, acknowledgeCompatibility: acknowledgement === true, ...context,
+      })
+    }
+  })
+
+  it.each(['true', 'false', 1, 0, null, {}, []])('rejects a non-boolean compatibility acknowledgement (%j)', async acknowledgeCompatibility => {
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', acknowledgeCompatibility }))).rejects.toThrow('invalid compatibility acknowledgement')
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', acknowledgeCompatibility }))).rejects.toThrow('invalid compatibility acknowledgement')
+  })
+
+  it.each([undefined, '', 1, null, {}, [], 'x'.repeat(4097)])('requires bounded compatibility context for acknowledgement (%j)', async compatibilityContext => {
+    const body = { acknowledgeCompatibility: true, compatibilityContext }
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).rejects.toThrow(/compatibility/)
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', ...body }))).rejects.toThrow(/compatibility/)
+  })
+
+  it('accepts compatibility context at the maximum length', async () => {
+    const body = { acknowledgeCompatibility: true, compatibilityContext: 'x'.repeat(4096) }
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({ skinId: 'fixture-skin', ...body })
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', ...body }))).resolves.toEqual({ action: 'retry', ...body })
   })
 })
