@@ -1001,6 +1001,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     : '该仓库距离市场的一键安装规范还差少量信息；可参考右侧仓库健康建议完善，当前请按维护者说明安装。'
   const autoInstallable = !manualOnly
   const manualInstallKeyword = selected === undefined ? '' : createSkinInstallSearchKeyword(selected)
+  const installPrompt = selected === undefined ? '' : createSkinInstallPrompt(selected, hostKind)
   const filtered = useMemo(() => skins.filter(skin => {
     if (!matchesCatalogSearch(skin, query)) return false
     if (filter === 'installed') return runtimeFor(states, skin.id).installation !== 'missing'
@@ -1473,7 +1474,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const copyInstallOption = async (method: 'prompt' | 'command' | 'keyword') => {
     if (selected === undefined) return
     const content = method === 'prompt'
-      ? createSkinInstallPrompt(selected)
+      ? installPrompt
       : method === 'command'
         ? createSkinInstallCommand(selected)
         : createSkinInstallSearchKeyword(selected)
@@ -1758,7 +1759,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
                 {autoInstallable && !deferInstallAndUse && !installRequiresRestart && <Button variant="primary" size="sm" icon={<IconDownloadOutline />} disabled={selectedBusy !== undefined || actionReason('install') !== null} onClick={() => void installAndActivate()}>安装并使用</Button>}
                 {autoInstallable && <Button variant={deferInstallAndUse || installRequiresRestart ? 'primary' : 'outline'} size="sm" icon={deferInstallAndUse || installRequiresRestart ? <IconDownloadOutline /> : undefined} disabled={selectedBusy !== undefined || actionReason('install') !== null} title={installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : undefined} onClick={() => void run('install')}>{installRequiresRestart ? '安装后需重启' : deferInstallAndUse ? '安装' : '仅安装'}</Button>}
                 {autoInstallable && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined} onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>其他安装方式</Button>}
-                {manualOnly && <Button variant="outline" size="sm" icon={<MarkGithubIcon size={16} />} disabled={selectedBusy !== undefined} title="打开手动安装面板" onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>查看安装说明</Button>}
+                {manualOnly && <Button variant="outline" size="sm" icon={<MarkGithubIcon size={16} />} disabled={selectedBusy !== undefined} title="打开手动安装面板" onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>检查并指导安装</Button>}
               </>}
               {state.installation === 'installed' && state.activation === 'inactive' && <Button variant="primary" size="sm" disabled={selectedBusy !== undefined || actionReason('activate') !== null} onClick={activateSelected}>使用</Button>}
               {state.installation === 'installed' && state.activation === 'inactive' && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed="false" title="在不替换当前主皮肤的情况下启用并常驻，适合宠物、音效等可叠加插件；多个皮肤可能发生冲突" disabled={selectedBusy !== undefined || actionReason('pin') !== null} onClick={() => setConfirmPin(true)}>常驻使用</Button>}
@@ -1884,14 +1885,14 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         onClose={() => setShowInstallOptions(false)}
         title={`安装 ${selected?.name.zh ?? '皮肤'}`}
         closeLabel="关闭"
-        description={manualOnly ? manualInstallNotice : '任选一种，不用都执行。'}
+        description={manualOnly ? `${manualInstallNotice}复制提示词，让 Agent 检查冲突并逐步指导；桌面端由你在插件页操作。` : '任选一种，不用都执行。'}
         footer={manualOnly ? undefined : <Button variant="outline" size="sm" onClick={() => setShowInstallOptions(false)}>关闭</Button>}
       >
         <div className={css.installOptions}>
-          <div><strong>{manualOnly ? '方式一：复制提示词' : '提示词'}</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallPrompt(selected)}>{selected === undefined ? '' : createSkinInstallPrompt(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:prompt` ? '提示词已复制' : '复制提示词'} title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
+          <div><strong>{manualOnly ? '让 Agent 检查并指导安装' : '提示词'}</strong><span className={css.copyCapsule}><code title={installPrompt}>{installPrompt}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:prompt` ? '提示词已复制' : '复制提示词'} title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
           {manualOnly && selected !== undefined && <div className={css.manualInstallGuide}>
-            <strong>方式二：在插件页手动安装</strong>
-            <p>插件 → 添加插件，输入：</p>
+            <strong>插件页安装目标</strong>
+            <p>也可自行打开「插件 → 添加插件」，输入：</p>
             <span className={css.copyCapsule}>
               <Input className={css.copyCapsuleInput} readOnly value={manualInstallKeyword} aria-label="插件页安装目标" />
               <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected.id}:keyword` ? '插件页安装目标已复制' : '复制插件页安装目标'} title="复制插件页安装目标" onClick={() => void copyInstallOption('keyword')} />

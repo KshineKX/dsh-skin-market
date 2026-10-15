@@ -7,7 +7,7 @@ import { comparePublicCatalogOrder, shouldRenderPublicPreview } from './catalog-
 import { getCatalogListScreenshot, getCatalogScreenshotUrls, usesMarketScreenshots } from '../src/catalog-order.ts'
 import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, hasGeneratedMediaBase, parseGeneratedMediaManifest, previewSourceCandidates, setGeneratedMediaSources } from '../src/media-preview.ts'
 import { useLazyMedia } from '../src/media-visibility.ts'
-import type { CatalogMedia, NpmInstallSource } from '../src/types.ts'
+import type { CatalogSkin } from '../src/client/types.ts'
 import { preferredInstallTarget } from '../src/install-source.ts'
 import { CLI_INSTALL_WARNING, MARKET_CLI_COMMAND, MARKET_PROMPT, MARKET_PUBLIC_URL, MARKET_REPOSITORY, skinCommand, skinPrompt } from './prompts.ts'
 import { displayTitle, githubRepoLabel } from '../src/display-title.ts'
@@ -15,24 +15,7 @@ import { matchesCatalogSearch } from '../src/catalog-search.ts'
 import './site.css'
 import '../src/client/media-hover.module.css'
 
-interface Skin {
-  id: string
-  name: { zh: string; en: string }
-  author: string
-  description: string
-  repo: string
-  subpath?: string
-  tags: string[]
-  modes: string[]
-  install: { target: string; version: string; commit: string; npm?: NpmInstallSource }
-  compatibility: { dsh: string; platform: string[] }
-  marketScreenshots?: string[]
-  listScreenshot?: string
-  screenshots: string[]
-  media?: CatalogMedia
-  review?: { compatibility: 'verified' | 'unverified'; preview: 'verified' | 'repository-card'; installation: 'verified' | 'manual-only' }
-  health?: { status: 'healthy' | 'improvements'; checks: { readmeScreenshots: 'pass' | 'improve'; compatibility: 'pass' | 'improve'; installation: 'pass' | 'improve'; installCommand?: 'pass' | 'improve'; topic?: 'pass' | 'improve' }; suggestions: string[] }
-  license: { code: string; commercialUse: boolean; notice?: string }
+interface Skin extends CatalogSkin {
   featuredRank: number
   starsSnapshot: number
   updatedAt: string
@@ -315,9 +298,9 @@ function App({ skins }: { skins: Skin[] }) {
 
     {installDialog !== null && <div className="install-dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setInstallDialog(null) }}>
       <section className="install-dialog" role="dialog" aria-modal="true" aria-labelledby="install-dialog-title">
-        <header><div><h2 id="install-dialog-title">{installDialog === 'market' ? '安装皮肤市场' : `安装 ${selected.name.zh}`}</h2><p>{installDialog === 'skin' && manualOnly ? '需要按仓库说明完成安装。' : '任选一种，不用都执行。'}</p></div><button aria-label="关闭" onClick={() => setInstallDialog(null)}><X size={18} /></button></header>
+        <header><div><h2 id="install-dialog-title">{installDialog === 'market' ? '安装皮肤市场' : `安装 ${selected.name.zh}`}</h2><p>{installDialog === 'skin' && manualOnly ? '让 Agent 检查冲突，并逐步指导安装。' : '任选一种，不用都执行。'}</p></div><button aria-label="关闭" onClick={() => setInstallDialog(null)}><X size={18} /></button></header>
         <div className="install-method-grid" data-single={installDialog === 'market' ? 'true' : 'false'}>
-          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected.repo, verified, preferredInstallTarget(selected))} command={manualOnly ? undefined : skinCommand(preferredInstallTarget(selected))} manualOnly={manualOnly} repo={selected.repo} copyKey="skin" copied={copied} onCopy={copyPrompt} />}
+          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected)} command={manualOnly ? undefined : skinCommand(preferredInstallTarget(selected))} manualOnly={manualOnly} repo={selected.repo} copyKey="skin" copied={copied} onCopy={copyPrompt} commandNote={CLI_INSTALL_WARNING} />}
           <InstallGroup title={installDialog === 'skin' ? '皮肤市场插件内安装' : undefined} prompt={MARKET_PROMPT} command={MARKET_CLI_COMMAND} copyKey="market" copied={copied} onCopy={copyPrompt} />
         </div>
       </section>
@@ -331,8 +314,8 @@ function InstallOption({ label, value, copied, onCopy, note }: { label: string; 
   return <div className="install-option"><strong>{label}</strong><div className="copy-capsule"><code title={value}>{value}</code><button aria-label={`复制${label}`} title={`复制${label}`} onClick={onCopy}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>{note && <small>{note}</small>}</div>
 }
 
-function InstallGroup({ title, prompt, command, manualOnly = false, repo, copyKey, copied, onCopy }: { title?: string; prompt: string; command?: string; manualOnly?: boolean; repo?: string; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void> }) {
-  return <section className="install-group">{title && <h3>{title}</h3>}<InstallOption label="提示词" value={prompt} copied={copied === `${copyKey}:prompt`} onCopy={() => void onCopy(`${copyKey}:prompt`, prompt)} />{manualOnly && repo !== undefined && <div className="manual-install-guide"><strong>按仓库说明安装</strong><p>市场不提供这款皮肤的一键安装命令。复制左侧提示词，让 Agent 先检查仓库，再按维护者说明完成安装。</p><a href={repo} target="_blank" rel="noreferrer"><GithubLogo size={15} />打开 GitHub 仓库</a></div>}{command !== undefined && <InstallOption label="命令" value={command} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, command)} note={CLI_INSTALL_WARNING} />}</section>
+function InstallGroup({ title, prompt, command, manualOnly = false, repo, copyKey, copied, onCopy, commandNote }: { title?: string; prompt: string; command?: string; manualOnly?: boolean; repo?: string; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void>; commandNote?: string }) {
+  return <section className="install-group">{title && <h3>{title}</h3>}<InstallOption label={manualOnly ? '让 Agent 检查并指导安装' : '提示词'} value={prompt} copied={copied === `${copyKey}:prompt`} onCopy={() => void onCopy(`${copyKey}:prompt`, prompt)} />{manualOnly && repo !== undefined && <div className="manual-install-guide"><strong>安装说明</strong><p>复制提示词，让 Agent 核对仓库和冲突。桌面端由你在插件页操作，Agent 每次指导一步并跟进结果。</p><a href={repo} target="_blank" rel="noreferrer"><GithubLogo size={15} />打开 GitHub 仓库</a></div>}{command !== undefined && <InstallOption label="命令" value={command} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, command)} note={commandNote} />}</section>
 }
 
 function Site() {

@@ -301,139 +301,139 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var SkinMarket_module_css_default = {
-			"hero": "VqXecW_hero",
-			"browserHomeBack": "VqXecW_browserHomeBack",
-			"operationCancel": "VqXecW_operationCancel",
-			"loadMoreHint": "VqXecW_loadMoreHint",
-			"filterBar": "VqXecW_filterBar",
-			"feedMeta": "VqXecW_feedMeta",
-			"catalogTitle": "VqXecW_catalogTitle",
-			"heroNext": "VqXecW_heroNext",
-			"heroOpen": "VqXecW_heroOpen",
-			"collectionTitle": "VqXecW_collectionTitle",
-			"operationMeta": "VqXecW_operationMeta",
-			"homeSubmitAction": "VqXecW_homeSubmitAction",
-			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
-			"error": "VqXecW_error",
-			"home": "VqXecW_home",
-			"root": "VqXecW_root",
-			"listSkeleton": "VqXecW_listSkeleton",
-			"homeContent": "VqXecW_homeContent",
-			"homeSearch": "VqXecW_homeSearch",
-			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
-			"homeCardMedia": "VqXecW_homeCardMedia",
-			"installedMoreCard": "VqXecW_installedMoreCard",
-			"submission": "VqXecW_submission",
-			"homeCardOpen": "VqXecW_homeCardOpen",
-			"cardActionProgress": "VqXecW_cardActionProgress",
-			"thumbnailProgress": "VqXecW_thumbnailProgress",
-			"pinWarning": "VqXecW_pinWarning",
-			"interceptNotice": "VqXecW_interceptNotice",
-			"lightbox": "VqXecW_lightbox",
-			"cardStars": "VqXecW_cardStars",
-			"homeHeader": "VqXecW_homeHeader",
-			"lightboxClose": "VqXecW_lightboxClose",
+			"cardMetaLine": "VqXecW_cardMetaLine",
+			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
 			"cardAction": "VqXecW_cardAction",
 			"lightboxThumbnails": "VqXecW_lightboxThumbnails",
-			"operationDiagnostics": "VqXecW_operationDiagnostics",
-			"homeActions": "VqXecW_homeActions",
-			"homeLoading": "VqXecW_homeLoading",
-			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
-			"statusLabel": "VqXecW_statusLabel",
-			"manualInstallGuide": "VqXecW_manualInstallGuide",
-			"author": "VqXecW_author",
-			"installedRow": "VqXecW_installedRow",
-			"notice": "VqXecW_notice",
-			"changelog": "VqXecW_changelog",
-			"empty": "VqXecW_empty",
-			"discoveryGrid": "VqXecW_discoveryGrid",
-			"homeSection": "VqXecW_homeSection",
-			"galleryProgress": "VqXecW_galleryProgress",
-			"healthList": "VqXecW_healthList",
-			"cardInlineActions": "VqXecW_cardInlineActions",
-			"homeLoadMore": "VqXecW_homeLoadMore",
-			"operationDetails": "VqXecW_operationDetails",
-			"actionRow": "VqXecW_actionRow",
-			"homeCardCopy": "VqXecW_homeCardCopy",
-			"spin": "VqXecW_spin",
-			"cardDescription": "VqXecW_cardDescription",
-			"lightboxNav": "VqXecW_lightboxNav",
-			"skeletonCard": "VqXecW_skeletonCard",
-			"description": "VqXecW_description",
-			"homeError": "VqXecW_homeError",
-			"browserContent": "VqXecW_browserContent",
-			"titleBlock": "VqXecW_titleBlock",
-			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
-			"skinAvatar": "VqXecW_skinAvatar",
-			"lightboxNext": "VqXecW_lightboxNext",
 			"previewPlaceholder": "VqXecW_previewPlaceholder",
-			"operationActions": "VqXecW_operationActions",
-			"heroNav": "VqXecW_heroNav",
-			"cardMeta": "VqXecW_cardMeta",
-			"homeCardFooter": "VqXecW_homeCardFooter",
-			"version": "VqXecW_version",
-			"operationMessage": "VqXecW_operationMessage",
-			"skinList": "VqXecW_skinList",
-			"homeGithubAction": "VqXecW_homeGithubAction",
-			"cardTitle": "VqXecW_cardTitle",
-			"thumbnails": "VqXecW_thumbnails",
-			"detailSkeleton": "VqXecW_detailSkeleton",
-			"lightboxStage": "VqXecW_lightboxStage",
-			"healthSuggestion": "VqXecW_healthSuggestion",
-			"copyCapsule": "VqXecW_copyCapsule",
-			"browserModal": "VqXecW_browserModal",
-			"repoLink": "VqXecW_repoLink",
-			"srOnly": "VqXecW_srOnly",
-			"skeletonShimmer": "VqXecW_skeletonShimmer",
-			"browserPanel": "VqXecW_browserPanel",
-			"catalog": "VqXecW_catalog",
-			"detail": "VqXecW_detail",
-			"skinCardBody": "VqXecW_skinCardBody",
-			"heroPrev": "VqXecW_heroPrev",
-			"operationCopyLog": "VqXecW_operationCopyLog",
-			"tags": "VqXecW_tags",
-			"actionDivider": "VqXecW_actionDivider",
-			"listLoading": "VqXecW_listLoading",
-			"detailHeader": "VqXecW_detailHeader",
-			"operation": "VqXecW_operation",
-			"installOptions": "VqXecW_installOptions",
-			"lightboxPrev": "VqXecW_lightboxPrev",
+			"homeLoadMore": "VqXecW_homeLoadMore",
+			"feedMeta": "VqXecW_feedMeta",
+			"pinWarning": "VqXecW_pinWarning",
 			"homeCardTitleRow": "VqXecW_homeCardTitleRow",
-			"externalPlugin": "VqXecW_externalPlugin",
-			"filters": "VqXecW_filters",
-			"homeCardRepo": "VqXecW_homeCardRepo",
-			"skinCardPreview": "VqXecW_skinCardPreview",
-			"homeCard": "VqXecW_homeCard",
-			"operationElapsed": "VqXecW_operationElapsed",
+			"discoveryGrid": "VqXecW_discoveryGrid",
+			"lightboxPrev": "VqXecW_lightboxPrev",
+			"installedMoreCard": "VqXecW_installedMoreCard",
+			"listLoading": "VqXecW_listLoading",
+			"homeContent": "VqXecW_homeContent",
+			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
+			"homeCardFooter": "VqXecW_homeCardFooter",
 			"skinCard": "VqXecW_skinCard",
 			"filterPill": "VqXecW_filterPill",
-			"mobileBack": "VqXecW_mobileBack",
-			"marketUpdateButton": "VqXecW_marketUpdateButton",
-			"iconOnlyButton": "VqXecW_iconOnlyButton",
-			"homeSectionTitle": "VqXecW_homeSectionTitle",
-			"homeUpdateAction": "VqXecW_homeUpdateAction",
-			"thumbnailFrame": "VqXecW_thumbnailFrame",
-			"homeCardDescription": "VqXecW_homeCardDescription",
-			"interceptHelp": "VqXecW_interceptHelp",
-			"cardMetaLine": "VqXecW_cardMetaLine",
-			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
-			"stars": "VqXecW_stars",
-			"catalogTitleMain": "VqXecW_catalogTitleMain",
-			"catalogHeader": "VqXecW_catalogHeader",
-			"migrationSource": "VqXecW_migrationSource",
-			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
-			"browser": "VqXecW_browser",
-			"operationDismiss": "VqXecW_operationDismiss",
-			"sortButton": "VqXecW_sortButton",
-			"homeGithubLabel": "VqXecW_homeGithubLabel",
-			"galleryGroup": "VqXecW_galleryGroup",
+			"cardInlineActions": "VqXecW_cardInlineActions",
+			"tags": "VqXecW_tags",
+			"collectionTitle": "VqXecW_collectionTitle",
+			"titleBlock": "VqXecW_titleBlock",
+			"homeSection": "VqXecW_homeSection",
+			"heroNav": "VqXecW_heroNav",
+			"homeActions": "VqXecW_homeActions",
+			"catalogTitle": "VqXecW_catalogTitle",
 			"aboutGrid": "VqXecW_aboutGrid",
-			"homeOperation": "VqXecW_homeOperation",
-			"loading": "VqXecW_loading",
-			"homeOperations": "VqXecW_homeOperations",
-			"homeTitleRow": "VqXecW_homeTitleRow",
+			"operationDetails": "VqXecW_operationDetails",
+			"cardTitle": "VqXecW_cardTitle",
+			"filters": "VqXecW_filters",
+			"catalog": "VqXecW_catalog",
+			"hero": "VqXecW_hero",
+			"root": "VqXecW_root",
+			"heroOpen": "VqXecW_heroOpen",
+			"lightboxNext": "VqXecW_lightboxNext",
+			"operationElapsed": "VqXecW_operationElapsed",
+			"operationMeta": "VqXecW_operationMeta",
+			"browser": "VqXecW_browser",
+			"srOnly": "VqXecW_srOnly",
+			"skinCardPreview": "VqXecW_skinCardPreview",
+			"browserPanel": "VqXecW_browserPanel",
+			"homeSectionTitle": "VqXecW_homeSectionTitle",
+			"homeCardOpen": "VqXecW_homeCardOpen",
+			"browserHomeBack": "VqXecW_browserHomeBack",
+			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
+			"thumbnailProgress": "VqXecW_thumbnailProgress",
+			"author": "VqXecW_author",
+			"cardActionProgress": "VqXecW_cardActionProgress",
+			"operationDiagnostics": "VqXecW_operationDiagnostics",
+			"interceptHelp": "VqXecW_interceptHelp",
+			"detailHeader": "VqXecW_detailHeader",
+			"homeGithubAction": "VqXecW_homeGithubAction",
+			"operationCancel": "VqXecW_operationCancel",
+			"manualInstallGuide": "VqXecW_manualInstallGuide",
+			"copyCapsule": "VqXecW_copyCapsule",
+			"healthList": "VqXecW_healthList",
+			"externalPlugin": "VqXecW_externalPlugin",
+			"browserContent": "VqXecW_browserContent",
+			"catalogHeader": "VqXecW_catalogHeader",
+			"homeCardMedia": "VqXecW_homeCardMedia",
+			"loadMoreHint": "VqXecW_loadMoreHint",
+			"galleryProgress": "VqXecW_galleryProgress",
+			"home": "VqXecW_home",
+			"thumbnails": "VqXecW_thumbnails",
+			"detail": "VqXecW_detail",
+			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
+			"homeCardRepo": "VqXecW_homeCardRepo",
+			"heroNext": "VqXecW_heroNext",
+			"cardMeta": "VqXecW_cardMeta",
+			"migrationSource": "VqXecW_migrationSource",
+			"repoLink": "VqXecW_repoLink",
+			"lightboxClose": "VqXecW_lightboxClose",
 			"recommendations": "VqXecW_recommendations",
-			"repoMeta": "VqXecW_repoMeta"
+			"loading": "VqXecW_loading",
+			"empty": "VqXecW_empty",
+			"interceptNotice": "VqXecW_interceptNotice",
+			"catalogTitleMain": "VqXecW_catalogTitleMain",
+			"marketUpdateButton": "VqXecW_marketUpdateButton",
+			"homeOperation": "VqXecW_homeOperation",
+			"lightboxStage": "VqXecW_lightboxStage",
+			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
+			"homeLoading": "VqXecW_homeLoading",
+			"mobileBack": "VqXecW_mobileBack",
+			"filterBar": "VqXecW_filterBar",
+			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
+			"galleryGroup": "VqXecW_galleryGroup",
+			"healthSuggestion": "VqXecW_healthSuggestion",
+			"homeCardDescription": "VqXecW_homeCardDescription",
+			"thumbnailFrame": "VqXecW_thumbnailFrame",
+			"listSkeleton": "VqXecW_listSkeleton",
+			"operationActions": "VqXecW_operationActions",
+			"skinAvatar": "VqXecW_skinAvatar",
+			"homeTitleRow": "VqXecW_homeTitleRow",
+			"sortButton": "VqXecW_sortButton",
+			"lightbox": "VqXecW_lightbox",
+			"lightboxNav": "VqXecW_lightboxNav",
+			"operationCopyLog": "VqXecW_operationCopyLog",
+			"installedRow": "VqXecW_installedRow",
+			"spin": "VqXecW_spin",
+			"skinCardBody": "VqXecW_skinCardBody",
+			"actionDivider": "VqXecW_actionDivider",
+			"homeGithubLabel": "VqXecW_homeGithubLabel",
+			"detailSkeleton": "VqXecW_detailSkeleton",
+			"description": "VqXecW_description",
+			"homeOperations": "VqXecW_homeOperations",
+			"operationMessage": "VqXecW_operationMessage",
+			"notice": "VqXecW_notice",
+			"skeletonShimmer": "VqXecW_skeletonShimmer",
+			"iconOnlyButton": "VqXecW_iconOnlyButton",
+			"statusLabel": "VqXecW_statusLabel",
+			"actionRow": "VqXecW_actionRow",
+			"homeSubmitAction": "VqXecW_homeSubmitAction",
+			"homeError": "VqXecW_homeError",
+			"submission": "VqXecW_submission",
+			"homeHeader": "VqXecW_homeHeader",
+			"homeCard": "VqXecW_homeCard",
+			"installOptions": "VqXecW_installOptions",
+			"changelog": "VqXecW_changelog",
+			"homeUpdateAction": "VqXecW_homeUpdateAction",
+			"operationDismiss": "VqXecW_operationDismiss",
+			"skinList": "VqXecW_skinList",
+			"homeSearch": "VqXecW_homeSearch",
+			"error": "VqXecW_error",
+			"version": "VqXecW_version",
+			"cardStars": "VqXecW_cardStars",
+			"browserModal": "VqXecW_browserModal",
+			"cardDescription": "VqXecW_cardDescription",
+			"homeCardCopy": "VqXecW_homeCardCopy",
+			"heroPrev": "VqXecW_heroPrev",
+			"stars": "VqXecW_stars",
+			"repoMeta": "VqXecW_repoMeta",
+			"skeletonCard": "VqXecW_skeletonCard",
+			"operation": "VqXecW_operation"
 		};
 		//#endregion
 		//#region \0dsh-skin-market-css:/Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/src/client/media-hover.module.css.mjs
@@ -745,16 +745,23 @@ url: https://github.com/<owner>/<repo>
 
 收录不等于安全认证。不要声称该皮肤已被 DSH 官方、安全团队或市场背书。`;
 		}
-		function createSkinInstallPrompt(skin) {
+		function createSkinInstallPrompt(skin, hostKind) {
 			const target = preferredInstallTarget(skin);
 			const buildApprovalKey = skin.install.npm === void 0 ? effectiveBuildApprovalKey(skin) : void 0;
-			const buildApproval = buildApprovalKey === void 0 ? "" : `\n- 这个固定版本包含 prepare 构建脚本。只允许精确构件键 \`${buildApprovalKey}\`：在 profile 的 pnpm-workspace.yaml 里合并 \`allowBuilds:\n    '${buildApprovalKey}': true\`，不得开启 dangerouslyAllowAllBuilds。`;
+			const buildApproval = buildApprovalKey === void 0 ? "" : `\n- 这个固定版本包含 prepare 构建脚本。只允许精确构件键 \`${buildApprovalKey}\`：在 Web profile 的 pnpm-workspace.yaml 里合并 \`allowBuilds:\n    '${buildApprovalKey}': true\`，不得开启 dangerouslyAllowAllBuilds。`;
 			const companions = skin.install.companions ?? [];
 			const companionLines = companions.length === 0 ? "" : `\n${companions.map((companion) => `- 伴生包：${companion.package}（rowId ${companion.rowId}）\n- 伴生安装目标：${companion.target}`).join("\n")}`;
-			const command = createSkinInstallCommand(skin);
+			const targets = [.../* @__PURE__ */ new Set([target, ...companions.map((companion) => companion.target)])];
+			const command = targets.map((target) => createInstallCommand(target)).join("\n");
 			const packages = [skin.package, ...companions.map((companion) => companion.package)].join("、");
 			const rowIds = [skin.rowId ?? skin.package, ...companions.map((companion) => companion.rowId)].join("、");
-			return `请安装下面这个已固定版本的 DSH 皮肤，先判断当前是 Web 还是官方 Desktop；无法判断就先问我。必须先完成只读冲突检查，确认可以继续后再安装。\n\n- 仓库：${skin.repo}\n- 固定安装目标：${target}\n- Web 安装命令：\n${command}\n- package：${skin.package}\n- loader rowId：${skin.rowId ?? skin.package}${companionLines}\n- 版本：${skin.install.version}\n- commit：${skin.install.commit}${buildApproval}\n\n- Web 版：按下面的冲突检查执行固定安装命令。\n- 官方 Desktop：不要执行 dsh plugin --profile desktop；在「设置 → 皮肤市场」中打开该皮肤并安装。市场里没有该皮肤时先告诉我，不要修改 profile。\n\n严格按以下顺序执行：\n1. 不要改成 main、HEAD 或最新版本，必须使用上面的固定安装目标；npm 使用精确版本，GitHub 使用完整 commit。\n2. 安装前只读检查当前宿主实际 profile 的 package.json（dependencies 与 dsh.profile.bundles）、profile 的 cordis.patch.yml 和 $DSH_HOME/cordis.patch.yml（如有）。不要读取 .env、凭据或聊天记录。\n3. 从当前启用的 bundles 中识别其他皮肤、主题或外观插件：排除 @deepseek-ai/dsh-base、@deepseek-ai/dsh-web-app、dsh-skin-market 和本次目标 package ${skin.package}；读取候选 package.json 的名称、描述、dsh.client/dsh.bundle 声明，必要时再读 README。无法确定的候选先列出包名和描述。\n4. 如果发现其他已启用的皮肤插件，列出它们并停在安装前，提醒我先在“设置 → 皮肤市场”或 profile 的 cordis.patch.yml 中停用；未经我确认不得修改任何 profile 文件，也不得执行安装。\n5. 如果没有冲突，明确说“未检测到其他已启用的皮肤插件”；Web 才执行上面的全部固定安装命令（含伴生包），Desktop 由皮肤市场负责安装。不要替我安装、停用或卸载其他皮肤。\n6. 如果目标只有 dsh.client，幂等地确认 package ${packages} 和 rowId ${rowIds} 已注册到当前 profile 的 cordis.patch.yml；不要放宽其他包的构建权限。\n7. 安装后验证当前 profile 的 dependencies 和 dsh.profile.bundles、node_modules 中目标 package.json 的 dsh.client/dsh.bundle 声明，以及 loader rowId 注册项。任一缺失都要报告为安装或注册失败。\n8. 告诉我如何重启当前 DSH 宿主使皮肤生效。`;
+			const metadata = `- 仓库：${skin.repo}\n- 固定安装目标：${target}\n- package：${skin.package}\n- loader rowId：${skin.rowId ?? skin.package}${companionLines}\n- 版本：${skin.install.version}\n- commit：${skin.install.commit}`;
+			const compatibility = skin.review?.compatibility !== "unverified" ? "" : "\n维护者尚未声明可验证的 DSH 兼容范围。先只读检查仓库，核对当前宿主版本和安装方式；先告诉我结论和风险，等待我确认后再安装，不要直接安装。\n";
+			const conflictCheck = `必须先完成只读冲突检查：从当前宿主的插件清单和实际启用状态识别其他皮肤、主题或外观插件，不能把“已安装”直接当成“已启用”。排除 @deepseek-ai/dsh-base、@deepseek-ai/dsh-web-app、dsh-skin-market 和本次目标 package ${packages}。可只读核对 package.json 的名称、描述、dsh.client/dsh.bundle 声明及仓库 README。不要读取 .env、凭据、聊天记录或其他存放秘密的配置。发现可能冲突的已启用皮肤时，列出名称和依据并停在安装前，指导我通过当前宿主插件页停用；未经我确认不得修改任何 profile 文件，也不得执行安装。无法读取启用状态时，先请我提供插件页中的状态，不要声称没有冲突。确认没有其他已启用皮肤后，才说“未检测到其他已启用的皮肤插件”。`;
+			const desktop = `官方 Desktop：你负责只读检查和指导，我负责点击安装、启用、停用和重启；不要代替我操作。以应用“关于”中的版本为准，不用系统终端的 npm dsh 版本代表桌面版本。不要执行 dsh plugin --profile desktop，不要用 npm/pnpm 写入 Desktop profile，也不要修改其 package.json、cordis.patch.yml 或构建权限。\n${skin.install.desktop?.mode !== "managed" ? `这款皮肤在桌面市场需要手动安装。不要让我回到「设置 → 皮肤市场」重复点击无法使用的安装按钮。先只读查看仓库维护者的安装说明，确认固定安装目标及子目录（如有）可用于当前 Desktop；无法确认时说明缺少什么，不要猜测安装方式。\n${conflictCheck}\n确认可以继续后，逐步指导我打开桌面应用「插件 → 添加插件」，按顺序输入以下完整固定安装目标（含伴生包），由我点击安装、处理应用提示并启用：\n${targets.map((target) => `- ${target}`).join("\n")}\nGitHub 目标必须保留完整 commit 和 &path: 子目录，不要改成包名、main、HEAD 或最新版本。遇到构建授权，仅指导我在应用界面确认本次目标需要的精确构建项；界面不支持或安装失败时，收集完整错误并说明卡在哪一步，不要绕过限制。` : `${conflictCheck}\n确认可以继续后，指导我在「设置 → 皮肤市场」打开这款皮肤，由我点击一键安装并按应用提示使用。`}\n每次只给我一个具体操作，等我反馈后再给下一步；不要只丢给我仓库说明。安装后只读核对当前宿主的插件安装结果、版本和启用状态；读不到时请我提供插件页状态，未核实不能宣称安装成功。按应用提示指导我重启；需要时完全退出后重新打开（macOS 使用 ⌘Q，关闭窗口不算退出），然后确认皮肤已生效。`;
+			const web = `Web 版：\n${conflictCheck}\n安装前只读确认实际 Web profile 的 package.json 中 dependencies 与 dsh.profile.bundles，以及当前插件启用状态；不要把 Desktop profile 当作 Web profile。\n没有冲突且兼容性确认完成后，先处理目标所需的精确构建授权，再执行下面的全部固定安装命令（含伴生包），不要改成 main、HEAD 或最新版本：${buildApproval}\n${command}\n如果目标只有 dsh.client，幂等地确认 package ${packages} 和 rowId ${rowIds} 已注册到 Web profile 的 cordis.patch.yml；不要放宽其他包的构建权限。安装后验证同一 profile 的 dependencies、dsh.profile.bundles、目标 package 的 dsh.client/dsh.bundle 声明及 loader 注册项；缺失则报告失败。告诉我如何重启当前 Web 宿主。`;
+			const workflow = hostKind === "desktop" ? desktop : hostKind === "dsh" ? web : `先判断当前是 Web 版还是官方 Desktop，并核对实际 profile；无法判断就先问我。Web 查看 dsh --version；Desktop 查看应用“关于”中的版本。只执行对应宿主的流程。\n\n${desktop}\n\n${web}`;
+			return `请帮我安装这个固定版本的 DSH 皮肤。${hostKind === "desktop" ? "你负责检查和逐步指导，由我在桌面应用中操作。" : ""}\n\n${metadata}\n${compatibility}\n${workflow}\n\n不要替我安装、停用或卸载其他皮肤。`;
 		}
 		function createSkinInstallCommand(skin) {
 			const targets = [preferredInstallTarget(skin), ...(skin.install.companions ?? []).map((companion) => companion.target)];
@@ -2064,6 +2071,7 @@ url: https://github.com/<owner>/<repo>
 			const manualHealthNotice = hostKind === "desktop" ? manualInstallNotice : "该仓库距离市场的一键安装规范还差少量信息；可参考右侧仓库健康建议完善，当前请按维护者说明安装。";
 			const autoInstallable = !manualOnly;
 			const manualInstallKeyword = selected === void 0 ? "" : createSkinInstallSearchKeyword(selected);
+			const installPrompt = selected === void 0 ? "" : createSkinInstallPrompt(selected, hostKind);
 			const filtered = (0, react.useMemo)(() => skins.filter((skin) => {
 				if (!matchesCatalogSearch(skin, query)) return false;
 				if (filter === "installed") return runtimeFor(states, skin.id).installation !== "missing";
@@ -2665,7 +2673,7 @@ url: https://github.com/<owner>/<repo>
 			};
 			const copyInstallOption = async (method) => {
 				if (selected === void 0) return;
-				await copyTextToClipboard(method === "prompt" ? createSkinInstallPrompt(selected) : method === "command" ? createSkinInstallCommand(selected) : createSkinInstallSearchKeyword(selected));
+				await copyTextToClipboard(method === "prompt" ? installPrompt : method === "command" ? createSkinInstallCommand(selected) : createSkinInstallSearchKeyword(selected));
 				setInstallCopied(`${selected.id}:${method}`);
 			};
 			const renderHomeCard = (skin, location) => {
@@ -3402,7 +3410,7 @@ url: https://github.com/<owner>/<repo>
 															setInstallCopied(null);
 															setShowInstallOptions(true);
 														},
-														children: "查看安装说明"
+														children: "检查并指导安装"
 													})
 												] }),
 												state.installation === "installed" && state.activation === "inactive" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
@@ -3911,7 +3919,7 @@ url: https://github.com/<owner>/<repo>
 						onClose: () => setShowInstallOptions(false),
 						title: `安装 ${selected?.name.zh ?? "皮肤"}`,
 						closeLabel: "关闭",
-						description: manualOnly ? manualInstallNotice : "任选一种，不用都执行。",
+						description: manualOnly ? `${manualInstallNotice}复制提示词，让 Agent 检查冲突并逐步指导；桌面端由你在插件页操作。` : "任选一种，不用都执行。",
 						footer: manualOnly ? void 0 : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 							variant: "outline",
 							size: "sm",
@@ -3921,11 +3929,11 @@ url: https://github.com/<owner>/<repo>
 						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 							className: SkinMarket_module_css_default.installOptions,
 							children: [
-								/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("strong", { children: manualOnly ? "方式一：复制提示词" : "提示词" }), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("strong", { children: manualOnly ? "让 Agent 检查并指导安装" : "提示词" }), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 									className: SkinMarket_module_css_default.copyCapsule,
 									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("code", {
-										title: selected === void 0 ? "" : createSkinInstallPrompt(selected),
-										children: selected === void 0 ? "" : createSkinInstallPrompt(selected)
+										title: installPrompt,
+										children: installPrompt
 									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 										className: SkinMarket_module_css_default.copyCapsuleButton,
 										variant: "outline",
@@ -3939,8 +3947,8 @@ url: https://github.com/<owner>/<repo>
 								manualOnly && selected !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 									className: SkinMarket_module_css_default.manualInstallGuide,
 									children: [
-										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("strong", { children: "方式二：在插件页手动安装" }),
-										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", { children: "插件 → 添加插件，输入：" }),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("strong", { children: "插件页安装目标" }),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", { children: "也可自行打开「插件 → 添加插件」，输入：" }),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 											className: SkinMarket_module_css_default.copyCapsule,
 											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
@@ -3977,7 +3985,7 @@ url: https://github.com/<owner>/<repo>
 											onClick: () => void copyInstallOption("command")
 										})]
 									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("small", { children: "安装前请确保已关闭其他皮肤插件，避免全局样式冲突；也可以复制提示词，让 Agent 先检查冲突再安装。" })
+									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("small", { children: "安装皮肤前请先检查其他已启用的皮肤，避免全局样式冲突；可复制提示词，让 Agent 检查并指导操作。" })
 								] })
 							]
 						})

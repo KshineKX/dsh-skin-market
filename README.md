@@ -21,7 +21,7 @@
 
 ### 安装方式
 
-> 安装前请确保已关闭其他皮肤插件，避免冲突
+> 安装皮肤市场本身不要求停用现有皮肤；安装或切换具体皮肤前再检查冲突。
 
 #### Web 版（命令行）
 
@@ -75,16 +75,33 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 <details>
 <summary><strong>点击展开安装提示词</strong></summary>
 
-复制以下给 DSH Agent；它会先判断宿主，再选择安装方式。
+复制以下给 DSH Agent；Web 可由 Agent 执行安装，官方 Desktop 由 Agent 逐步指导你操作。
 
 ```text
-请安装 dsh-skin-market。先判断当前是 Web 版还是官方 Desktop，并核对当前宿主的实际 profile。Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不把系统终端的 npm dsh 版本当作桌面版本。无法判断就先问我。
+请帮我安装 dsh-skin-market。先只读确认当前是 Web 版还是官方 Desktop，以及当前宿主和实际 profile。Web 查看 dsh --version；官方 Desktop 以应用“关于”中的版本为准，不把系统终端的 npm dsh 版本当作桌面版本。无法读取应用信息时，请让我提供该版本；无法判断宿主就先问我。
 
-- Web 版：先检查冲突，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
-- 官方 Desktop：应用运行时不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
+- Web 版：执行 dsh plugin --profile web add "dsh-skin-market@latest"，然后核对同一 web profile 中的依赖和 bundle。
+- 官方 Desktop：你负责只读核查和操作指导，安装、启用及重启由我在应用界面完成。不要代我点击安装或启用，不要执行 dsh plugin --profile desktop、pnpm 或其他安装命令，也不要修改 Desktop profile。每次只给下一项操作，等我反馈后继续：打开「插件 → 添加插件」，输入 dsh-skin-market@latest，确认安装结果，再按应用提示启用；需要重启时指导我完全退出并重新打开应用。
 
-安装前只读检查当前宿主实际 profile，发现其他皮肤插件就列出并停下；没有冲突才安装。安装后验证同一 profile 中有 dsh-skin-market 的依赖和 bundle，并告诉我重启哪个宿主、从哪里打开「皮肤市场」。不要替我安装其他皮肤。
+这次只安装皮肤市场，不做其他皮肤的冲突检查，也不要求停用它们。不要替我安装其他皮肤。安装后告诉我从哪里打开「皮肤市场」；Desktop 以插件页状态和我的实际操作反馈核对结果，没有核实就不要声称安装或启用成功。不要读取 .env、凭据或聊天记录。
 ```
+
+</details>
+
+#### 官方 Desktop 安装具体皮肤
+
+支持一键安装的 npm 皮肤，继续使用市场中的「安装」按钮。标为「需手动安装」的 GitHub 或子目录皮肤，可以复制安装面板中的提示词，让 Agent 检查冲突、核对目标并指导你在插件页安装。
+
+<details>
+<summary><strong>点击展开手动皮肤安装流程</strong></summary>
+
+Agent 先只读确认当前 Desktop 版本和其他已启用的皮肤；发现冲突时列出名称，指导你在应用中停用，并核对停用结果后再继续。拿不到启用状态时，应请你提供插件列表或界面状态，不能把“无法确认”当成“没有冲突”。
+
+安装目标使用面板给出的完整固定 spec。GitHub 目标保留完整 commit；monorepo 子包还要保留 `&path:/子目录`，例如 `github:owner/repo#<完整 commit>&path:/packages/skin`。没有 npm 包时，不要把该目标换成包名、`latest` 或仓库主分支。
+
+Agent 每次只指导一项操作，等你反馈后继续：打开「插件 → 添加插件」、粘贴完整目标、确认安装结果、按提示启用，最后按当前版本要求完全退出并重新打开应用。Agent 不代点安装或启用，不执行 Desktop 安装命令，也不修改 profile。界面不支持该目标或安装失败时，先核对原始报错和维护者说明，再决定下一步；依赖伴生包的皮肤须核对完整安装要求。
+
+这些说明不改变市场的 npm 一键安装流程，也不代表所有 GitHub 或子目录皮肤已通过官方 Desktop 实机验收。
 
 </details>
 
@@ -176,9 +193,9 @@ dsh plugin --profile web add "dsh-skin-market@latest"
 请更新已安装的 dsh-skin-market。先判断当前宿主和实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。
 
 - Web 版：只读确认 web profile 已安装 dsh-skin-market，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
-- 官方 Desktop：应用运行时不要执行 dsh plugin --profile desktop；在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest 并启用。
+- 官方 Desktop：只读核对版本和插件状态，逐步指导我在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest、确认更新结果并按提示启用；每次只给下一项操作，等我反馈后继续。安装、启用及重启由我在应用界面完成，不要代操作、执行 Desktop 安装命令或修改 profile。
 
-更新后验证同一宿主的 dsh-skin-market 依赖和 bundle，告诉我更新前后版本及需要重启哪个宿主。不要替我更新或卸载其他皮肤。
+Web 更新后验证同一宿主的 dsh-skin-market 依赖和 bundle；Desktop 根据插件页状态和我的实际反馈核对结果，没有核实就不要声称成功。告诉我更新前后版本及需要重启哪个宿主。不要替我更新或卸载其他皮肤。
 ```
 
 </details>

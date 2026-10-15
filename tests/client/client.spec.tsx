@@ -1146,9 +1146,9 @@ describe('client market', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
-    expect(dialog.textContent).toContain('方式一：复制提示词')
-    expect(dialog.textContent).toContain('方式二：在插件页手动安装')
-    expect(dialog.textContent).toContain('插件 → 添加插件，输入：')
+    expect(dialog.textContent).toContain('让 Agent 检查并指导安装')
+    expect(dialog.textContent).toContain('插件页安装目标')
+    expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
     expect(dialog.textContent).not.toContain('该皮肤需要 Agent 协助安装')
     expect(screen.queryByRole('button', { name: '复制命令' })).toBeNull()
     expect(screen.getAllByRole('button', { name: '复制提示词' })).toHaveLength(1)
@@ -1160,7 +1160,7 @@ describe('client market', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallSearchKeyword(manual)))
     const copyPrompt = screen.getAllByRole('button', { name: '复制提示词' }).at(-1)!
     fireEvent.click(copyPrompt)
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(manual)))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(manual, 'dsh')))
   })
 
   it('explains the Desktop manual-only reason before offering the plugin keyword', async () => {
@@ -1175,14 +1175,21 @@ describe('client market', () => {
         ? { skins: [manual] }
         : { hostKind: 'desktop', skins: [] },
     }))
+    const writeText = vi.fn(async () => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} />)
 
     fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     await waitFor(() => expect(dialog.textContent).toContain('无法自动安装：未找到可供 Desktop 安装的 npm 包'))
-    expect(dialog.textContent).toContain('方式二：在插件页手动安装')
-    expect(dialog.textContent).toContain('插件 → 添加插件，输入：')
+    expect(dialog.textContent).toContain('插件页安装目标')
+    expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
+    expect(dialog.textContent).toContain('桌面端由你在插件页操作')
+    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(manual, 'desktop')])
+    expect(dialog.textContent).not.toContain('dsh plugin --profile web')
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(manual, 'desktop')))
     expect(dialog.textContent).not.toContain('手动安装路径')
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(false)
   })
@@ -2195,7 +2202,7 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     expect(dialog.textContent).toContain('任选一种，不用都执行。')
-    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin), createSkinInstallCommand(skin)])
+    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), createSkinInstallCommand(skin)])
     fireEvent.click(screen.getByRole('button', { name: '复制命令' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallCommand(skin)))
   })
