@@ -6,7 +6,7 @@ import type { CommandResult, PluginRunner } from './commands.ts'
 import { PnpmCommandError, classifyPnpmFailure, failureDiagnostic, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { logEvent } from './log.ts'
-import { compareInstalledArtifact, manifestFile, pnpmLockfile, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
+import { compareInstalledArtifact, manifestFile, packageManifest, pnpmLockfile, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
 import { compareVersions, parseVersion } from './semver.ts'
 import type { OperationFailure } from './types.ts'
 import type { OfficialApplication } from './official-desktop.ts'
@@ -18,6 +18,8 @@ const RECOVERY_TIMEOUT_MS = 60_000
 
 export interface MarketUpdateStatus {
   currentVersion: string
+  /** Version of the Host module serving this updater, independent of the installed package. */
+  loadedVersion?: string
   latestVersion: string
   updateAvailable: boolean
 }
@@ -120,14 +122,22 @@ export interface MarketUpdater {
   /** Stop a route mount cleanly, joining any host package-manager request. */
   dispose?(): Promise<void>
   readonly restartRequired: boolean
+  readonly restartNoticeId?: string
 }
 
-export function packageVersion(): string {
+function readPackageVersion(): string {
   const packageFile = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json')
   const value = JSON.parse(readFileSync(packageFile, 'utf8')) as { version?: unknown }
   if (typeof value.version !== 'string') throw new Error('皮肤市场 package.json 缺少版本号')
   return value.version
 }
+
+// A package manager may replace this package on disk while this module is
+// still serving requests. Capture once so a route remount cannot claim the
+// replacement is the code currently running in the Host.
+const LOADED_MARKET_VERSION = readPackageVersion()
+
+export function packageVersion(): string { return LOADED_MARKET_VERSION }
 
 export { compareVersions } from './semver.ts'
 
@@ -137,7 +147,8 @@ export function createMarketUpdater(
   options: { currentVersion?: string; fetch?: typeof fetch; cacheMs?: number; profileDir?: string } = {},
 ): MarketUpdater {
   const fetchLatest = options.fetch ?? fetch
-  let installedVersion = options.currentVersion ?? packageVersion()
+  const loadedVersion = options.currentVersion ?? packageVersion()
+  let installedVersion = loadedVersion
   const cacheMs = options.cacheMs ?? 5 * 60 * 1000
   let cached: { checkedAt: number; status: MarketUpdateStatus; release: MarketRelease } | null = null
   let latestRelease: MarketRelease | null = null
@@ -150,6 +161,26 @@ export function createMarketUpdater(
   const updatePromises = new Map<string, Promise<void>>()
   const profileDir = options.profileDir ?? resolveProfileDir(profile)
   const cancellationAvailable = (): boolean => runner.management === undefined || runner.management.capabilities().cancel.available
+
+  const reconcileInstalledVersion = (): void => {
+    // Do not inspect a package while its own transaction may be swapping it.
+    // The transaction's stricter release validation remains authoritative.
+    if (updating) return
+    const version = packageManifest(profileDir, MARKET_NPM_PACKAGE)?.version
+    if (typeof version !== 'string' || parseVersion(version) === null) return
+    const source = latestRelease?.version === version
+      ? { name: MARKET_NPM_PACKAGE, ...latestRelease }
+      : { name: MARKET_NPM_PACKAGE, version }
+    if (!validateNpmArtifact(profileDir, source).ok) return
+    installedVersion = version
+    restartRequired = installedVersion !== loadedVersion
+    if (cached !== null) {
+      cached.status = {
+        ...cached.status, currentVersion: installedVersion, loadedVersion,
+        updateAvailable: compareVersions(cached.status.latestVersion, installedVersion) > 0,
+      }
+    }
+  }
 
   const setOperation = (operation: MarketUpdateOperation, patch: Partial<MarketUpdateOperation>): void => {
     Object.assign(operation, patch)
@@ -266,7 +297,7 @@ export function createMarketUpdater(
       if (controller.signal.aborted && !managerOwned) throw new Error('更新已取消')
       installedVersion = materialized.version
       restartRequired = true
-      const next = { currentVersion: installedVersion, latestVersion: installedVersion, updateAvailable: false }
+      const next = { currentVersion: installedVersion, loadedVersion, latestVersion: installedVersion, updateAvailable: false }
       cached = { checkedAt: Date.now(), status: next, release: targetRelease }
       setOperation(operation, {
         phase: 'done',
@@ -313,6 +344,7 @@ export function createMarketUpdater(
   }
 
   const status = async (force = false): Promise<MarketUpdateStatus> => {
+    reconcileInstalledVersion()
     if (!force && cached !== null && Date.now() - cached.checkedAt < cacheMs) return cached.status
     const requestOptions = {
       headers: { accept: 'application/json', 'user-agent': `dsh-skin-market/${installedVersion}` },
@@ -344,7 +376,7 @@ export function createMarketUpdater(
       throw new Error('npm 市场构件的包名、版本或完整性元数据不一致')
     }
     const release: MarketRelease = { version: latestVersion, gitHead: gitHead.toLowerCase(), tarball, ...(typeof integrity === 'string' ? { integrity } : {}) }
-    const next = { currentVersion: installedVersion, latestVersion: release.version, updateAvailable: compareVersions(release.version, installedVersion) > 0 }
+    const next = { currentVersion: installedVersion, loadedVersion, latestVersion: release.version, updateAvailable: compareVersions(release.version, installedVersion) > 0 }
     latestRelease = release
     cached = { checkedAt: Date.now(), status: next, release }
     return next
@@ -353,6 +385,7 @@ export function createMarketUpdater(
   const startUpdate = (): MarketUpdateOperation => {
     if (disposed) throw new Error('皮肤市场更新器已停止')
     if (activeOperation !== null) return operations.get(activeOperation)!
+    reconcileInstalledVersion()
     const operation: MarketUpdateOperation = { id: randomUUID(), phase: 'queued', cancelable: cancellationAvailable(), startedAt: new Date().toISOString() }
     operations.set(operation.id, operation)
     activeOperation = operation.id
@@ -372,7 +405,8 @@ export function createMarketUpdater(
 
   return {
     status,
-    get restartRequired() { return restartRequired },
+    get restartRequired() { reconcileInstalledVersion(); return restartRequired },
+    get restartNoticeId() { reconcileInstalledVersion(); return restartRequired ? `market-${loadedVersion}-${installedVersion}` : undefined },
     async update() {
       if (updating) throw new Error('皮肤市场正在更新')
       const operation = startUpdate()

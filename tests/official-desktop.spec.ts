@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
@@ -116,12 +116,23 @@ describe('official Desktop runner', () => {
     expect(installBundle).toHaveBeenCalledWith('dsh-theme-endfield@1.0.1', { enabled: false, requestId: 'receipt-no-cancel' })
   })
 
-  it('routes the market self-update through the official manager and leaves it disabled until restart', async () => {
+  it('routes the market self-update through the official manager without changing existing bundle selection', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'dsh-official-self-update-'))
     temporaryDirectories.push(directory)
     materializeMarket(directory, '0.1.57')
+    const selected = [MARKET_NPM_PACKAGE, 'unrelated-bundle']
+    const manifestFile = join(directory, 'package.json')
+    const initialManifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
+    initialManifest.dsh.profile.bundles = selected
+    writeFileSync(manifestFile, JSON.stringify(initialManifest))
     const installBundle = vi.fn(async () => {
+      // Official enabled:false skips selecting; it does not deselect an
+      // already selected package. Model that persistent choice independently.
+      const before = JSON.parse(readFileSync(manifestFile, 'utf8'))
       materializeMarket(directory, '0.1.58')
+      const after = JSON.parse(readFileSync(manifestFile, 'utf8'))
+      after.dsh = before.dsh
+      writeFileSync(manifestFile, JSON.stringify(after))
       return { application: 'restart-required' }
     })
     const manager: OfficialPluginManagerLike = {
@@ -148,9 +159,10 @@ describe('official Desktop runner', () => {
       })) as unknown as typeof fetch,
     })
 
-    await expect(updater.update()).resolves.toEqual({ currentVersion: '0.1.58', latestVersion: '0.1.58', updateAvailable: false })
+    await expect(updater.update()).resolves.toEqual({ currentVersion: '0.1.58', loadedVersion: '0.1.57', latestVersion: '0.1.58', updateAvailable: false })
     expect(updater.restartRequired).toBe(true)
     expect(installBundle).toHaveBeenCalledWith('dsh-skin-market@0.1.58', { enabled: false, requestId: expect.any(String) })
+    expect(JSON.parse(readFileSync(manifestFile, 'utf8')).dsh.profile.bundles).toEqual(selected)
   })
 
   it.each(['applied', 'restart-required', 'overridden'] as const)('accepts application=%s even with a package warning', async application => {

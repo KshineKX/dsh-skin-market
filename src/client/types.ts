@@ -89,7 +89,7 @@ export interface CatalogMedia {
 export interface RuntimeSkin {
   skinId: string
   installation: 'missing' | 'installed' | 'updating' | 'broken'
-  activation: 'inactive' | 'active' | 'switching' | 'restart-required'
+  activation: 'inactive' | 'active' | 'switching' | 'restart-required' | 'unavailable'
   primary?: boolean
   pinned?: boolean
   installedVersion: string | null

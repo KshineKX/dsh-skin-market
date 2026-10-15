@@ -57,6 +57,8 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 
 官方 Desktop 点击「安装」即默认一键使用：市场安装并验证目标皮肤，自动停用目录中原先的普通皮肤、启用目标，保留常驻皮肤与无关插件。需要重启时，在切换选择保存后弹出「请手动重启 Desktop App」，完全退出并重新打开即可加载目标皮肤，无需再手动关闭旧皮肤或开启新皮肤；关闭弹窗后仍可通过横幅查看提示。macOS 使用 `⌘Q`，仅关闭窗口不算退出。更新已安装皮肤保留原有启用和常驻选择；真正的启用失败会显示原因并恢复旧选择。
 
+启用同时核对组合包选择与目标主组件的有效开关。组件仍关闭或尚未运行时，市场显示「未生效」及具体原因；只有明确等待重启的修改才显示「待重启」。完整退出重开后重新核对实际运行状态，已生效的提示会清除，加载错误不会变成无限重复的重启要求。
+
 表中的离线维护仅由 Desktop 自带命令提供，须先初始化 Desktop profile 并完全退出应用；npm 安装的 dsh 不能修改 Desktop profile。
 
 <details>
@@ -129,6 +131,8 @@ Agent 每次只指导一项操作，等你反馈后继续：打开「插件 → 
 > ```
 >
 > 如果报错含 `ERR_PNPM_UNEXPECTED_STORE`，是 profile 的 `node_modules` 与当前 pnpm store 代际不一致（常见于本机同时装了 pnpm 10 / store v10 和 pnpm 11 / store v11）。在 **profile 目录内** 查看 `node_modules/.modules.yaml` 的 `packageManager` 和 `storeDir`，再对比同一目录下的 `pnpm --version` 与 `pnpm store path`；不要用 DSH 源码仓库目录里的结果来判断。用 `.modules.yaml` 记录的同一版 pnpm 重试，或用当前 pnpm 重建该 profile 的 `node_modules`。Windows 上 `dsh plugin add` 走 PATH 上的 pnpm，不会因为源码仓库写了 `"packageManager": "pnpm@11"` 就自动切换。
+
+如果官方 Desktop 的「包含的组件」也提示“被更高优先级配置覆盖”，重复重启不会解除覆盖。请由该配置的所有者确认并移除针对目标组件的停用覆盖，再通过官方插件页或市场重新启用。市场只管理目录中已确认身份的主组件，不会擅自修改更高层配置。
 
 把完整原始报错填入后复制给你的 DSH Agent。它会先判断当前是 Web 还是官方 Desktop；无法判断时先询问你：
 

@@ -53,6 +53,8 @@ export declare class SkinLifecycle {
     private disposed;
     private readonly pendingLifecycle;
     private unresolvedManager;
+    private readonly unverifiedRestartSkinIds;
+    private readonly componentUndo;
     get waitingReason(): string | undefined;
     constructor(host: LifecycleHost, options: LifecycleOptions, catalog?: SkinEntry[]);
     get catalog(): SkinEntry[];
@@ -61,6 +63,9 @@ export declare class SkinLifecycle {
     private acceptManagement;
     private awaitLifecycle;
     private recordRestart;
+    get restartNoticeId(): string | undefined;
+    /** Resolve only the curated main component, using both official inventories. */
+    private officialComponent;
     private registerSkin;
     private get runtime();
     private assertCompatibilityContext;
@@ -83,8 +88,12 @@ export declare class SkinLifecycle {
     private syncManagedLoaders;
     private reconcileDisabledSkinIds;
     private requiresRestartForTransition;
-    replay(): Promise<void>;
+    replay(repairComponents?: boolean): Promise<void>;
+    private replayLocked;
     states(): SkinRuntimeState[];
+    /** Official inventory separates a saved toggle from actual fiber health. */
+    runtimeStates(): Promise<SkinRuntimeState[]>;
+    private describeRestartVerification;
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;

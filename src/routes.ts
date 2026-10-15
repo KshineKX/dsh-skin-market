@@ -189,7 +189,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         dshVersion: options.runtime?.version ?? 'unknown',
       }, operationId))
     } }),
-    register({ kind: 'exact', path: '/dsh-skin-market/state', handler: (request, response) => {
+    register({ kind: 'exact', path: '/dsh-skin-market/state', handler: async (request, response) => {
       if (!method(request, response, 'GET')) return
       try {
         sendJson(response, 200, {
@@ -197,7 +197,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
           management: options.runner.management === undefined ? undefined : { official: true, installRequiresRestart: options.runner.management.installRequiresRestart, capabilities: options.runner.management.capabilities() },
           profileBusy: lifecycle.waitingReason ?? updaterBusy(),
           runtime: options.runtime,
-          skins: lifecycle.states(),
+          skins: await lifecycle.runtimeStates(),
           installedClientPlugins: installedClientPlugins(profileDir, lifecycle.catalog),
           operation: lifecycle.currentOperation(),
           operations: lifecycle.currentOperations(),
@@ -205,6 +205,8 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
           instanceId,
           restartAvailable: options.restart?.available === true,
           marketUpdateRestartRequired: marketUpdater.restartRequired,
+          restartNoticeId: lifecycle.restartNoticeId,
+          marketUpdateNoticeId: marketUpdater.restartNoticeId,
           runningAgentCount: runningAgentCount(routeHost),
         })
       } catch (error) {

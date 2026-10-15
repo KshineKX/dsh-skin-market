@@ -132,7 +132,7 @@ export interface CatalogSkin extends SkinEntry {
     recommendations: string[];
 }
 export type InstallationState = 'missing' | 'installed' | 'updating' | 'broken';
-export type ActivationState = 'inactive' | 'active' | 'switching' | 'restart-required';
+export type ActivationState = 'inactive' | 'active' | 'switching' | 'restart-required' | 'unavailable';
 export interface SkinRuntimeState {
     skinId: string;
     installation: InstallationState;
@@ -204,6 +204,7 @@ export interface PersistedMarketState {
     pendingRestart?: {
         pid: number;
         skinIds: string[];
+        id?: string;
     };
     activity?: Record<string, SkinActivity>;
     /** Companion packages linked to installed owner skins. */

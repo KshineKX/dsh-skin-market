@@ -192,6 +192,48 @@ describe('profile state', () => {
     expect(runtimeState(dir, skin, null, false, true)).toMatchObject({ installation: 'installed', activation: 'inactive' })
   })
 
+  it.each([
+    { primary: true, pinned: false, loaderFound: false },
+    { primary: true, pinned: false, loaderFound: true },
+    { primary: false, pinned: true, loaderFound: false },
+    { primary: false, pinned: true, loaderFound: true },
+    { primary: true, pinned: true, loaderFound: false },
+    { primary: true, pinned: true, loaderFound: true },
+  ])('does not infer a pending restart from an unstarted selected component: %j', ({ primary, pinned, loaderFound }) => {
+    const dir = fixture()
+    const skin = loadCatalog().skins[0]
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.target } })
+    atomicWriteJson(join(dir, 'node_modules', skin.package, 'package.json'), {
+      name: skin.package, version: skin.install.version, dsh: { client: { platform: 'web' } },
+    })
+
+    expect(runtimeState(dir, skin, primary ? skin.id : null, false, loaderFound, pinned ? [skin.id] : [])).toMatchObject({
+      installation: 'installed', activation: 'unavailable', primary, pinned,
+      error: expect.stringContaining(loaderFound ? '组件尚未运行' : '未找到组件'),
+    })
+  })
+
+  it('keeps unselected, missing, and broken installations separate from unavailable components', () => {
+    const dir = fixture()
+    const skin = loadCatalog().skins[0]
+    expect(runtimeState(dir, skin, skin.id, false, false, [skin.id])).toMatchObject({
+      installation: 'missing', activation: 'inactive', primary: false, pinned: false,
+    })
+
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.target } })
+    expect(runtimeState(dir, skin, skin.id, false, false, [skin.id])).toMatchObject({
+      installation: 'broken', activation: 'inactive', primary: true, pinned: true, error: expect.any(String),
+    })
+
+    atomicWriteJson(join(dir, 'node_modules', skin.package, 'package.json'), {
+      name: skin.package, version: skin.install.version, dsh: { client: { platform: 'web' } },
+    })
+    const inactive = runtimeState(dir, skin, null, false, false)
+    expect(inactive).toMatchObject({ installation: 'installed', activation: 'inactive', primary: false, pinned: false })
+    expect(inactive.error).toBeUndefined()
+    expect(runtimeState(dir, skin, null, true, true).activation).toBe('inactive')
+  })
+
   it('marks an installed skin as updatable when a companion is missing', () => {
     const dir = fixture()
     const commit = 'a'.repeat(40)

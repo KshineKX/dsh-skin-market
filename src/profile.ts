@@ -59,7 +59,10 @@ export function readMarketState(profileDir: string): PersistedMarketState {
     if (!isRecord(pending) || !Number.isInteger(pending.pid) || (pending.pid as number) <= 0
       || !Array.isArray(pending.skinIds) || pending.skinIds.some(id => typeof id !== 'string' || id.length === 0)) {
       delete value.pendingRestart
-    } else value.pendingRestart = { pid: pending.pid as number, skinIds: [...new Set(pending.skinIds as string[])] }
+    } else value.pendingRestart = {
+      pid: pending.pid as number, skinIds: [...new Set(pending.skinIds as string[])],
+      ...(typeof pending.id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(pending.id) ? { id: pending.id } : {}),
+    }
   }
   return value
 }
@@ -1034,8 +1037,8 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
   if (!validation.ok) {
     return { skinId: skin.id, installation: 'broken', activation: 'inactive', primary, pinned, installedVersion: null, installedSpec: spec, installedAt, lastOperatedAt, updateAvailable: false, error: validation.reason }
   }
-  const active = primary || pinned
-  const activation = active ? (loaderFound ? (loaderLive ? 'active' : 'restart-required') : 'restart-required') : 'inactive'
+  const selected = primary || pinned
+  const activation = selected ? (loaderFound && loaderLive ? 'active' : 'unavailable') : 'inactive'
   const pinnedSpecMatches = reviewedInstalledSpecMatches(profileDir, skin, spec)
   const updateAvailable = validation.version !== skin.install.version || !pinnedSpecMatches || companionsNeedInstall(profileDir, skin)
   return {
@@ -1049,5 +1052,10 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
     installedAt,
     lastOperatedAt,
     updateAvailable,
+    ...(activation === 'unavailable' ? {
+      error: loaderFound
+        ? '皮肤已选中，但组件尚未运行，尚未生效。'
+        : '皮肤已选中，但未找到组件，尚未生效。请尝试修复安装。',
+    } : {}),
   }
 }

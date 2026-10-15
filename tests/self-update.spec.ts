@@ -71,8 +71,8 @@ describe('market self update', () => {
       const updater = createMarketUpdater('web', runner, { currentVersion: '0.1.15', fetch: fetchLatest, cacheMs: 0 })
 
       expect(updater.restartRequired).toBe(false)
-      await expect(updater.status()).resolves.toEqual({ currentVersion: '0.1.15', latestVersion: '0.1.16', updateAvailable: true })
-      await expect(updater.update()).resolves.toEqual({ currentVersion: '0.1.16', latestVersion: '0.1.16', updateAvailable: false })
+      await expect(updater.status()).resolves.toEqual({ currentVersion: '0.1.15', loadedVersion: '0.1.15', latestVersion: '0.1.16', updateAvailable: true })
+      await expect(updater.update()).resolves.toEqual({ currentVersion: '0.1.16', loadedVersion: '0.1.15', latestVersion: '0.1.16', updateAvailable: false })
       expect(updater.restartRequired).toBe(true)
       expect(fetchLatest).toHaveBeenCalledWith(MARKET_NPM_METADATA_URL, expect.objectContaining({ headers: expect.objectContaining({ accept: 'application/json' }) }))
       expect(runner).toHaveBeenCalledTimes(1)
@@ -80,11 +80,68 @@ describe('market self update', () => {
         signal: expect.any(AbortSignal),
         env: { pnpm_config_fetch_timeout: '600000' },
       }))
-      await expect(updater.status()).resolves.toEqual({ currentVersion: '0.1.16', latestVersion: '0.1.16', updateAvailable: false })
+      await expect(updater.status()).resolves.toEqual({ currentVersion: '0.1.16', loadedVersion: '0.1.15', latestVersion: '0.1.16', updateAvailable: false })
     } finally {
       if (previousDshHome === undefined) delete process.env.DSH_HOME
       else process.env.DSH_HOME = previousDshHome
     }
+  })
+
+  it('recovers a verified pending market version after the updater is remounted in the same Host', async () => {
+    const profileDir = installedProfile('0.1.15')
+    const runner = vi.fn(async () => {
+      materialize(profileDir, '0.1.16')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.15', profileDir, fetch: latest('0.1.16') })
+    await updater.update()
+    expect(updater.restartRequired).toBe(true)
+
+    const remounted = createMarketUpdater('desktop', runner, { currentVersion: '0.1.15', profileDir, fetch: latest('0.1.16') })
+    expect(remounted.restartRequired).toBe(true)
+    expect(remounted.restartNoticeId).toBe(updater.restartNoticeId)
+    await expect(remounted.status()).resolves.toMatchObject({ currentVersion: '0.1.16', loadedVersion: '0.1.15', updateAvailable: false })
+    expect(runner).toHaveBeenCalledTimes(1)
+
+    // A new Host loading the installed release has no old update pending.
+    const restarted = createMarketUpdater('desktop', runner, { currentVersion: '0.1.16', profileDir, fetch: latest('0.1.16') })
+    expect(restarted.restartRequired).toBe(false)
+    expect(restarted.restartNoticeId).toBeUndefined()
+    await expect(restarted.status()).resolves.toMatchObject({ currentVersion: '0.1.16', loadedVersion: '0.1.16', updateAvailable: false })
+  })
+
+  it('detects an official plugin-page update without relying on a self-update operation or cached npm status', async () => {
+    const profileDir = installedProfile('0.1.15')
+    const runner = vi.fn(async () => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }))
+    const fetchLatest = latest('0.1.16')
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.15', profileDir, fetch: fetchLatest })
+    await expect(updater.status()).resolves.toMatchObject({ currentVersion: '0.1.15', loadedVersion: '0.1.15', updateAvailable: true })
+
+    materialize(profileDir, '0.1.16')
+    expect(updater.currentOperation()).toBeNull()
+    expect(updater.restartRequired).toBe(true)
+    await expect(updater.status()).resolves.toMatchObject({ currentVersion: '0.1.16', loadedVersion: '0.1.15', updateAvailable: false })
+    expect(fetchLatest).toHaveBeenCalledTimes(1)
+    expect(runner).not.toHaveBeenCalled()
+
+    // Restoring the already-loaded release also resolves the version mismatch.
+    materialize(profileDir, '0.1.15')
+    expect(updater.restartRequired).toBe(false)
+  })
+
+  it('does not turn an unreadable or inconsistent external market artifact into a restart instruction', async () => {
+    const profileDir = installedProfile('0.1.16')
+    rmSync(join(profileDir, 'node_modules', MARKET_NPM_PACKAGE, 'client.js'))
+    const runner = vi.fn(async () => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }))
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.15', profileDir, fetch: latest('0.1.16') })
+    expect(updater.restartRequired).toBe(false)
+    await expect(updater.status()).resolves.toMatchObject({ currentVersion: '0.1.15', loadedVersion: '0.1.15', updateAvailable: true })
+
+    materialize(profileDir, '0.1.16')
+    const lockFile = join(profileDir, 'pnpm-lock.yaml')
+    writeFileSync(lockFile, readFileSync(lockFile, 'utf8').replace("specifier: '0.1.16'", "specifier: '^0.1.16'"))
+    expect(updater.restartRequired).toBe(false)
   })
 
   it('does not reinstall the same version', async () => {

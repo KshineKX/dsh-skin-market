@@ -5,6 +5,8 @@ export declare const MARKET_NPM_PACKAGE = "dsh-skin-market";
 export declare const MARKET_NPM_METADATA_URL = "https://registry.npmjs.org/dsh-skin-market";
 export interface MarketUpdateStatus {
     currentVersion: string;
+    /** Version of the Host module serving this updater, independent of the installed package. */
+    loadedVersion?: string;
     latestVersion: string;
     updateAvailable: boolean;
 }
@@ -36,6 +38,7 @@ export interface MarketUpdater {
     /** Stop a route mount cleanly, joining any host package-manager request. */
     dispose?(): Promise<void>;
     readonly restartRequired: boolean;
+    readonly restartNoticeId?: string;
 }
 export declare function packageVersion(): string;
 export { compareVersions } from './semver.ts';
