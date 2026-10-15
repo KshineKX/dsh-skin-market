@@ -385,9 +385,19 @@ function CompatibilityWarningNote({ assessment }: { assessment: CompatibilityAss
   return <p className={css.notice} role="note">{assessment.reason}。仍可继续使用；若页面异常，请查看 <ResetHelpLink />。</p>
 }
 export const CATALOG_BATCH_SIZE = 20
+export const HOME_CATALOG_BATCH_SIZE = 24
 const GALLERY_INTERVAL_MS = 5600
 const HOME_COMPACT_ENTER_SCROLL = 72
 const HOME_COMPACT_EXIT_SCROLL = 16
+
+function findScrollRoot(element: HTMLElement): HTMLElement | null {
+  let ancestor = element.parentElement
+  while (ancestor !== null && ancestor !== document.body && ancestor !== document.documentElement) {
+    if (/auto|scroll|overlay|hidden/.test(window.getComputedStyle(ancestor).overflowY)) return ancestor
+    ancestor = ancestor.parentElement
+  }
+  return null
+}
 
 export const RESTART_POLL_MS = 500
 export const RESTART_WAIT_MS = 90_000
@@ -649,7 +659,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [filter, setFilter] = useState<'all' | 'installed'>('all')
   const [sortBy, setSortBy] = useState<'stars' | 'latest'>('stars')
   const [visibleCount, setVisibleCount] = useState(CATALOG_BATCH_SIZE)
-  const [homeVisibleCount, setHomeVisibleCount] = useState(CATALOG_BATCH_SIZE)
+  const [homeVisibleCount, setHomeVisibleCount] = useState(HOME_CATALOG_BATCH_SIZE)
   const [installedSlots, setInstalledSlots] = useState(5)
   const [shotIndex, setShotIndex] = useState(0)
   const [galleryPaused, setGalleryPaused] = useState(false)
@@ -1082,12 +1092,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   useLayoutEffect(() => {
     const home = homeHeaderRef.current?.parentElement
     if (layout !== 'embedded' || browserOpen || home == null) return
-    let scrollHost = home.parentElement
-    while (scrollHost !== null && scrollHost !== document.body && scrollHost !== document.documentElement) {
-      if (/auto|scroll|overlay|hidden/.test(window.getComputedStyle(scrollHost).overflowY)) break
-      scrollHost = scrollHost.parentElement
-    }
-    const viewportScroll = scrollHost === null || scrollHost === document.body || scrollHost === document.documentElement
+    const scrollHost = findScrollRoot(home)
+    const viewportScroll = scrollHost === null
     const scrollTarget = viewportScroll ? window : scrollHost!
     const updateCompact = () => {
       // Measure the home in normal flow; a pinned header always reports top: 0.
@@ -1172,14 +1178,14 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setHomeVisibleCount(discoverySkins.length)
       return
     }
-    // The viewport intersection includes clipping by the host's scroll area,
-    // so embedded loading does not depend on our feed receiving scroll events.
+    // Expand the host scrollport itself; a viewport margin cannot expand the
+    // clipping imposed by an intermediate scroll container.
     let requested = false
     const observer = new IntersectionObserver(entries => {
       if (requested || !entries.some(entry => entry.isIntersecting)) return
       requested = true
-      setHomeVisibleCount(value => Math.min(discoverySkins.length, value + CATALOG_BATCH_SIZE))
-    }, { rootMargin: '560px 0px' })
+      setHomeVisibleCount(value => Math.min(discoverySkins.length, value + HOME_CATALOG_BATCH_SIZE))
+    }, { root: findScrollRoot(sentinel), rootMargin: '560px 0px' })
     observer.observe(sentinel)
     return () => { requested = true; observer.disconnect() }
   }, [layout, browserOpen, catalogLoading, homeVisibleCount, discoverySkins.length])
@@ -1248,7 +1254,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }
 
   useEffect(() => { setVisibleCount(CATALOG_BATCH_SIZE) }, [filter, query, sortBy])
-  useEffect(() => { setHomeVisibleCount(CATALOG_BATCH_SIZE) }, [homeQuery, sortBy])
+  useEffect(() => { setHomeVisibleCount(HOME_CATALOG_BATCH_SIZE) }, [homeQuery, sortBy])
 
   const copyOperationLog = useCallback(async (operationId: string) => {
     setCopyingLogId(operationId)
@@ -1865,7 +1871,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             ? home.scrollTop > HOME_COMPACT_EXIT_SCROLL
             : home.scrollTop > HOME_COMPACT_ENTER_SCROLL)
           if (discoverySkins.length > homeVisibleCount && home.scrollHeight - home.scrollTop - home.clientHeight < 560) {
-            setHomeVisibleCount(value => Math.min(discoverySkins.length, value + CATALOG_BATCH_SIZE))
+            setHomeVisibleCount(value => Math.min(discoverySkins.length, value + HOME_CATALOG_BATCH_SIZE))
           }
         }}>
           {homeQuery.trim() === '' && (loading || installedSkins.length > 0) && <section className={css.homeSection} aria-labelledby="installed-skins-title">

@@ -46,7 +46,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
   }
 })
 
-import { CATALOG_BATCH_SIZE, captureListScroll, compareInstalledSkinOrder, compareSkinOrder, interceptNotice, isInterceptFailure, resolvePrimitiveIcon, restartDocumentProbeUrl, restartReloadUrl, restoreListScroll, restoreMarketStyleOrder, SkinMarketSection, waitForRestartDocument } from '../../src/client/SkinMarketSection.tsx'
+import { HOME_CATALOG_BATCH_SIZE, captureListScroll, compareInstalledSkinOrder, compareSkinOrder, interceptNotice, isInterceptFailure, resolvePrimitiveIcon, restartDocumentProbeUrl, restartReloadUrl, restoreListScroll, restoreMarketStyleOrder, SkinMarketSection, waitForRestartDocument } from '../../src/client/SkinMarketSection.tsx'
 import { MARKET_INSTALL_TROUBLESHOOT_URL, MARKET_MANUAL_UPDATE_URL } from '../../src/client/failure-help.ts'
 import { apply as applyClient, createClientSkinRuntime, missingPrimitives, switchClientSkin } from '../../src/client/index.ts'
 import { createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
@@ -1471,33 +1471,33 @@ describe('client market', () => {
     await waitFor(() => expect(catalogCache.write).toHaveBeenCalledWith([skin]))
   })
 
-  it('renders the catalog in 20-item batches as the settings list scrolls', async () => {
-    const skins = Array.from({ length: CATALOG_BATCH_SIZE * 2 + 5 }, (_, index) => ({
+  it('renders complete discovery rows in 24-item batches as the settings feed scrolls', async () => {
+    const skins = Array.from({ length: HOME_CATALOG_BATCH_SIZE * 2 + 5 }, (_, index) => ({
       ...skin,
       id: `test.skin-${index}`,
       package: `skin-${index}`,
       name: { zh: `测试皮肤 ${index}`, en: `Test Skin ${index}` },
-      githubStars: CATALOG_BATCH_SIZE * 2 + 5 - index,
+      githubStars: HOME_CATALOG_BATCH_SIZE * 2 + 5 - index,
     }))
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins } : { skins: [] } })))
     const view = render(<SkinMarketSection t={key => key} />)
 
     await screen.findByRole('button', { name: /测试皮肤 0 界面预览/ })
     expect(view.container.querySelector('[data-dsh-skin-market]')?.getAttribute('data-layout')).toBe('fill')
-    expect(screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ })).toHaveLength(CATALOG_BATCH_SIZE)
+    expect(screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ })).toHaveLength(HOME_CATALOG_BATCH_SIZE)
     const feed = document.querySelector<HTMLElement>('[class*="homeContent"]')
     if (feed === null) throw new Error('home content scroll area not found')
     Object.defineProperties(feed, { scrollHeight: { configurable: true, value: 2000 }, clientHeight: { configurable: true, value: 500 } })
     feed.scrollTop = 1300
     fireEvent.scroll(feed)
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ })).toHaveLength(CATALOG_BATCH_SIZE * 2))
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ })).toHaveLength(HOME_CATALOG_BATCH_SIZE * 2))
     feed.scrollTop = 1500
     fireEvent.scroll(feed)
     await waitFor(() => expect(screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ })).toHaveLength(skins.length))
   })
 
-  it('loads embedded catalog batches as their end reaches the host viewport and ignores stale observations', async () => {
-    const skins = Array.from({ length: CATALOG_BATCH_SIZE * 2 + 5 }, (_, index) => ({
+  it.each(['element', 'window'] as const)('preloads embedded catalog batches against the %s scroll root and ignores stale observations', async hostKind => {
+    const skins = Array.from({ length: HOME_CATALOG_BATCH_SIZE * 2 + 5 }, (_, index) => ({
       ...skin, id: `test.skin-${index}`, package: `skin-${index}`,
       name: { zh: `测试皮肤 ${index}`, en: `Test Skin ${index}` }, githubStars: 50 - index,
     }))
@@ -1506,33 +1506,37 @@ describe('client market', () => {
       target?: Element
       observe = vi.fn((target: Element) => { this.target = target })
       disconnect = vi.fn()
-      constructor(private callback: IntersectionObserverCallback) { observers.push(this) }
+      constructor(private callback: IntersectionObserverCallback, readonly options: IntersectionObserverInit) { observers.push(this) }
       emit(isIntersecting: boolean) {
         this.callback([{ isIntersecting, target: this.target } as IntersectionObserverEntry], this as unknown as IntersectionObserver)
       }
     }
     vi.stubGlobal('IntersectionObserver', TestObserver)
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins } : { skins: [] } })))
-    const view = render(<SkinMarketSection t={key => key} layout="embedded" />)
+    const view = render(<div style={{ overflowY: hostKind === 'element' ? 'auto' : 'visible' }}><SkinMarketSection t={key => key} layout="embedded" /></div>)
     await screen.findByRole('button', { name: /测试皮肤 0 界面预览/ })
     const count = () => screen.getAllByRole('button', { name: /测试皮肤 \d+ 界面预览/ }).length
     const loadObserver = () => observers.filter(observer => String(observer.target?.className).includes('homeLoadMore')).at(-1)!
-    expect(count()).toBe(CATALOG_BATCH_SIZE)
+    expect(count()).toBe(HOME_CATALOG_BATCH_SIZE)
     const first = loadObserver()
+    expect(first.options.root).toBe(hostKind === 'element' ? view.container.firstElementChild : null)
+    expect(first.options.rootMargin).toBe('560px 0px')
+    expect(count() % 3).toBe(0)
+    expect(count() % 2).toBe(0)
     act(() => first.emit(false))
-    expect(count()).toBe(CATALOG_BATCH_SIZE)
+    expect(count()).toBe(HOME_CATALOG_BATCH_SIZE)
     act(() => { first.emit(true); first.emit(true) })
-    await waitFor(() => expect(count()).toBe(CATALOG_BATCH_SIZE * 2))
+    await waitFor(() => expect(count()).toBe(HOME_CATALOG_BATCH_SIZE * 2))
     expect(first.disconnect).toHaveBeenCalledOnce()
     act(() => first.emit(true))
-    expect(count()).toBe(CATALOG_BATCH_SIZE * 2)
+    expect(count()).toBe(HOME_CATALOG_BATCH_SIZE * 2)
     const second = loadObserver()
     fireEvent.click(screen.getByRole('button', { name: /测试皮肤 0 界面预览/ }))
     expect(second.disconnect).toHaveBeenCalledOnce()
     expect(view.container.querySelector('main')?.hidden).toBe(false)
     act(() => second.emit(true))
     const home = view.container.querySelector('main')!
-    expect(home.querySelectorAll('[class*="discoveryGrid"] article')).toHaveLength(CATALOG_BATCH_SIZE * 2)
+    expect(home.querySelectorAll('[class*="discoveryGrid"] article')).toHaveLength(HOME_CATALOG_BATCH_SIZE * 2)
     fireEvent.click(within(screen.getByRole('dialog', { name: '皮肤详情' })).getByRole('button', { name: '关闭' }))
     const resumed = loadObserver()
     expect(resumed).not.toBe(second)
@@ -1580,7 +1584,7 @@ describe('client market', () => {
   })
 
   it('shows all embedded results when viewport observation is unavailable', async () => {
-    const skins = Array.from({ length: CATALOG_BATCH_SIZE + 5 }, (_, index) => ({
+    const skins = Array.from({ length: HOME_CATALOG_BATCH_SIZE + 5 }, (_, index) => ({
       ...skin, id: `test.skin-${index}`, package: `skin-${index}`,
       name: { zh: `测试皮肤 ${index}`, en: `Test Skin ${index}` },
     }))
