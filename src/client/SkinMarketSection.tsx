@@ -147,7 +147,11 @@ const phases: Record<Operation['phase'], string> = {
   queued: '正在排队', resolving: '正在解析版本', downloading: '正在下载', installing: '正在安装', validating: '正在验证', activating: '正在切换', waiting: '等待宿主确认', cancelling: '正在取消', cancelled: '已取消', done: '完成', failed: '操作失败',
 }
 
-const DESKTOP_INSTALL_RESTART_GUIDANCE = '安装后请完全退出官方 Desktop 并重新打开，再使用此皮肤。'
+const DESKTOP_INSTALL_RESTART_GUIDANCE = '安装后请手动重启 Desktop App，再使用此皮肤。'
+
+function pendingRestartTitle(title: string, restartAvailable: boolean): string {
+  return `${title}，${restartAvailable ? '待重启生效' : '请手动重启 Desktop App 后生效'}`
+}
 
 function skinOperationTitle(operation: Operation, name: string): string {
   if (operation.phase === 'installing') {
@@ -678,6 +682,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const marketUpdatePolls = useRef(new Set<string>())
   const dismissedMarketOperationIds = useRef(new Set<string>())
   const pendingInstallActivation = useRef(new Map<string, string | undefined>())
+  const continuingInstallActivation = useRef(new Set<string>())
   const inflightSkinIds = useRef(new Set<string>())
   const skinsRef = useRef<CatalogSkin[]>([])
   const statesRef = useRef<RuntimeSkin[]>([])
@@ -753,7 +758,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setRestartCheckFinished(true)
       setCompatibilityWarning(null)
       if (state.restartAvailable === false) {
-        setPendingRestart({ target, title: '皮肤市场已更新，请从官方 Desktop 重启应用后生效', startedAt: new Date().toISOString() })
+        setPendingRestart({ target, title: pendingRestartTitle('皮肤市场已更新', false), startedAt: new Date().toISOString() })
         setConfirmRestart(false)
       } else setConfirmRestart(true)
     }
@@ -808,7 +813,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
   const openRestartConfirm = useCallback(async (skinId?: string, kind: RestartTarget['kind'] = 'skin', advisory: CompatibilityAssessment | null = null) => {
     if (hostKind === 'desktop' && !restartAvailable) {
-      setError('请从官方 Desktop 重启应用后生效')
+      setError('请手动重启 Desktop App 后生效')
       return
     }
     setError(null)
@@ -843,8 +848,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           setMarketUpdating(false)
           if (operation.status !== undefined) setMarketUpdate(operation.status)
           setMarketOperation(null)
-          setPendingRestart({ target: { kind: 'market-update' }, title: '皮肤市场已更新，待重启生效', startedAt: operation.finishedAt ?? new Date().toISOString() })
-          await openRestartConfirm(undefined, 'market-update')
+          setPendingRestart({ target: { kind: 'market-update' }, title: pendingRestartTitle('皮肤市场已更新', restartAvailable), startedAt: operation.finishedAt ?? new Date().toISOString() })
+          if (restartAvailable) await openRestartConfirm(undefined, 'market-update')
           return
         }
         if (operation.phase === 'failed' || operation.phase === 'cancelled') {
@@ -866,7 +871,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     } finally {
       marketUpdatePolls.current.delete(operationId)
     }
-  }, [applyMarketState, openRestartConfirm])
+  }, [applyMarketState, openRestartConfirm, restartAvailable])
 
   const checkMarketUpdate = useCallback(async () => {
     try {
@@ -896,8 +901,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         const status = result as MarketUpdateStatus
         setMarketUpdate(status)
         setMarketUpdating(false)
-        setPendingRestart({ target: { kind: 'market-update' }, title: '皮肤市场已更新，待重启生效', startedAt: new Date().toISOString() })
-        await openRestartConfirm(undefined, 'market-update')
+        setPendingRestart({ target: { kind: 'market-update' }, title: pendingRestartTitle('皮肤市场已更新', restartAvailable), startedAt: new Date().toISOString() })
+        if (restartAvailable) await openRestartConfirm(undefined, 'market-update')
       } else throw new Error('皮肤市场服务未返回有效的更新任务')
     } catch (reason) {
       setMarketUpdating(false)
@@ -907,7 +912,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         : { ...current, phase: 'failed', cancelable: false, message })
       setError(null)
     }
-  }, [marketWriteReason, openRestartConfirm, waitForMarketUpdate])
+  }, [marketWriteReason, openRestartConfirm, restartAvailable, waitForMarketUpdate])
 
   useEffect(() => {
     let disposed = false
@@ -1315,10 +1320,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           inflightSkinIds.current.delete(target.id)
         }
         if (operation.phase === 'done') {
-          // Updating a skin that is already in use replaces its package on
-          // disk, but the loaded client module still belongs to the old
-          // package. Reuse the existing restart confirmation flow so the
-          // reviewed version is loaded by a fresh DSH process.
+          // Official management results decide whether code is live. Hosts
+          // with refreshed package resolution can save the full selection
+          // before asking for one restart at the end of install-and-use.
+          const continueInstallAndUse = kind === 'install'
+            && pendingInstallActivation.current.has(target.id)
+            && management?.official === true && management.installRequiresRestart === false
           let needsRestart = operation.restartRequired === true || kind === 'install' && installRequiresRestart || management?.official !== true && (kind === 'update' || kind === 'migrate')
             && (targetState.activation === 'active' || targetState.activation === 'restart-required')
           if (management?.official === true) {
@@ -1341,21 +1348,24 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             restoreMarketStyleOrder()
           }
           const advisory = kind === 'activate' && acceptedContext === undefined ? advisoryCompatibility(target, hostKind, runtime) : null
+          if (continueInstallAndUse) continuingInstallActivation.current.add(target.id)
           await refresh()
+          if (continueInstallAndUse) return true
           if (needsRestart) {
             setStates(value => value.map(item => item.skinId === target.id
               ? { ...item, activation: 'restart-required' }
               : item))
             const installBeforeUse = kind === 'install' && hostKind === 'desktop'
             setPendingRestart({ target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
-              ? `${target.name.zh} 已安装，请完全退出官方 Desktop 并重新打开后再使用`
-              : `${target.name.zh} ${kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}，待重启生效`, startedAt: new Date().toISOString() })
+              ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
+              : pendingRestartTitle(`${target.name.zh} ${kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable), startedAt: new Date().toISOString() })
             if (installBeforeUse) {
               setConfirmRestart(false)
               setCompatibilityWarning(null)
-            } else await openRestartConfirm(target.id, 'skin', advisory)
-          } else if (advisory !== null) {
-            setCompatibilityWarning(advisory)
+            } else if (restartAvailable) await openRestartConfirm(target.id, 'skin', advisory)
+          } else {
+            if (kind === 'activate' || kind === 'uninstall') setPendingRestart(current => current?.target.kind === 'skin' && current.target.skinId === target.id ? null : current)
+            if (advisory !== null) setCompatibilityWarning(advisory)
           }
           // Installation may succeed before the old Desktop can load its new
           // modules. A caller must wait for a fresh host before following with Use.
@@ -1374,6 +1384,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         await new Promise(resolve => setTimeout(resolve, operation.phase === 'waiting' ? 5000 : 600))
       }
     } catch (reason) {
+      continuingInstallActivation.current.delete(target.id)
       inflightSkinIds.current.delete(target.id)
       await refresh().catch(() => undefined)
       const message = reason instanceof Error ? reason.message : String(reason)
@@ -1383,10 +1394,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setError(null)
       return false
     }
-  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, openRestartConfirm, refresh, requestCompatibilityConsent, runtime, skins, states])
+  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, openRestartConfirm, refresh, requestCompatibilityConsent, restartAvailable, runtime, skins, states])
 
   const activateSkin = useCallback((skinId: string, compatibilityContext?: string) => {
     if (!mounted.current) return
+    continuingInstallActivation.current.delete(skinId)
     pendingInstallActivation.current.delete(skinId)
     try { window.localStorage.setItem(ACTIVATION_WARNING_KEY, 'true') } catch { /* storage may be unavailable */ }
     setActivationWarningAccepted(true)
@@ -1442,7 +1454,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
   const restartNow = useCallback(async () => {
     if (hostKind === 'desktop' && !restartAvailable) {
-      setError('请从官方 Desktop 重启应用后生效')
+      setError('请手动重启 Desktop App 后生效')
       return
     }
     const target = restartTarget ?? { kind: 'skin' as const, skinId: selectedIdRef.current }
@@ -1573,6 +1585,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       : null
   const interceptLogId = interceptOperation?.id ?? marketInterceptOperation?.id
   const selectedBusy = selected === undefined ? undefined : liveOperationFor(operations, selected.id)
+  const selectedInstallAndUsePending = selected !== undefined && continuingInstallActivation.current.has(selected.id)
   const managementNotice = management === undefined ? '' : [...new Set([
     ...(['install', 'update', 'enable', 'disable', 'remove'] as const).map(key => management.capabilities[key]).filter(value => !value.available).map(value => value.reason).filter(Boolean),
   ])].join('；')
@@ -1658,7 +1671,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     terminal
     action={restartAvailable
       ? <Button variant="outline" size="sm" onClick={() => void openRestartConfirm(pendingRestart.target.kind === 'skin' ? pendingRestart.target.skinId : undefined, pendingRestart.target.kind)}>重启</Button>
-      : <span className={css.repoMeta}>请从官方 Desktop 重启应用</span>}
+      : undefined}
     onDismiss={() => setPendingRestart(null)}
   />
   const marketUpdateActive = marketOperation !== null && !['done', 'failed', 'cancelled'].includes(marketOperation.phase)
@@ -1800,9 +1813,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               </>}
               {state.installation === 'installed' && state.activation === 'inactive' && <Button variant="primary" size="sm" disabled={selectedBusy !== undefined || actionReason('activate') !== null} onClick={activateSelected}>使用</Button>}
               {state.installation === 'installed' && state.activation === 'inactive' && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed="false" title="在不替换当前主皮肤的情况下启用并常驻，适合宠物、音效等可叠加插件；多个皮肤可能发生冲突" disabled={selectedBusy !== undefined || actionReason('pin') !== null} onClick={() => setConfirmPin(true)}>常驻使用</Button>}
-              {state.activation === 'restart-required' && (restartAvailable
+              {state.activation === 'restart-required' && selectedBusy === undefined && !selectedInstallAndUsePending && (restartAvailable
                 ? <Button variant="primary" size="sm" disabled={selectedBusy !== undefined} title={restartInstallBlock ?? undefined} onClick={() => void openRestartConfirm()}>重启以应用</Button>
-                : <span className={css.repoMeta}>请从官方 Desktop 重启应用后生效</span>)}
+                : pendingRestart?.target.kind === 'skin' && pendingRestart.target.skinId === selected.id ? null
+                : <span className={css.repoMeta}>请手动重启 Desktop App 后生效</span>)}
               {state.activation === 'active' && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined || actionReason('deactivate') !== null} onClick={() => void run('deactivate')}>停用</Button>}
               {state.activation === 'active' && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed={state.pinned === true} title={state.pinned ? '取消后，如果它不是当前主皮肤，将立即停用；以后切换皮肤时也不会再保留' : '切换其他皮肤时仍保持启用，适合宠物、音效等可叠加插件；多个皮肤可能发生冲突'} disabled={selectedBusy !== undefined || actionReason(state.pinned ? 'unpin' : 'pin') !== null} onClick={() => state.pinned ? void run('unpin') : setConfirmPin(true)}>{state.pinned ? '取消常驻' : '常驻使用'}</Button>}
               {state.activation === 'restart-required' && state.pinned && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed="true" title="取消常驻并撤销待重启的启用状态" disabled={selectedBusy !== undefined || actionReason('unpin') !== null} onClick={() => void run('unpin')}>取消常驻</Button>}
@@ -1816,7 +1830,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               </span>
           </div>
 
-          {state.installation === 'installed' && state.activation === 'inactive' && !activationWarningAccepted && <p className={css.notice} role="note">首次启用提示：请先在设置 → 插件中停用其他皮肤、主题和外观插件，避免全局样式冲突。点击“使用”即表示已确认。</p>}
+          {state.installation === 'installed' && state.activation === 'inactive' && !activationWarningAccepted && <p className={css.notice} role="note">首次启用提示：使用后会自动停用市场内的其他普通皮肤，保留常驻项。市场外安装的皮肤、主题请先在设置 → 插件中停用，避免样式冲突。</p>}
           {(selected.install.companions?.length ?? 0) > 0 && <p className={css.notice} role="note">使用该皮肤时会加载细节定制面板；停用或换到其他皮肤后会从设置页撤掉，不会当成一张独立皮肤。</p>}
 
           {profileBusy !== undefined && <p className={css.notice} role="status">{profileBusy}</p>}

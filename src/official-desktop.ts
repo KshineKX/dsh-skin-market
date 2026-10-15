@@ -25,8 +25,11 @@ export interface OfficialManagementError {
 }
 
 export type OfficialApplication = 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled'
+export type OfficialRestartReason = 'no-hmr' | 'package-moved' | 'host-module' | 'unmanaged-plugin' | 'module-comparison'
 interface OfficialManagementFields {
   changed?: boolean
+  /** The change is saved but waits for restart; this does not prohibit later enablement changes. */
+  restartReason?: OfficialRestartReason
   stage?: string
   target?: string
   enabled?: boolean
@@ -90,7 +93,7 @@ const EXACT_VERSION = '0.2.1-alpha.2'
 // Published snapshots, not a promise that future or untagged releases share the contract.
 const AUDITED_VERSIONS = new Set([
   CORE_VERSION, '0.1.7-alpha.1', '0.1.7-alpha.2', '0.1.7-rc.1', '0.1.7-rc.2',
-  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION,
+  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION, '0.2.1-alpha.3',
 ])
 type RecordLike = Record<string, unknown>
 

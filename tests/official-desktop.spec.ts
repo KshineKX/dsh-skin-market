@@ -242,6 +242,7 @@ describe('official management release contracts', () => {
     ['0.2.0-rc.2', true, false, true],
     ['0.2.1-alpha.1', true, false, false],
     ['0.2.1-alpha.2', true, true, false],
+    ['0.2.1-alpha.3', true, true, false],
   ] as const)('gates %s options and post-install resolution by the audited snapshot', async (version, recovered, exact, requiresRestart) => {
     const manager = fullManager()
     const runner = officialDesktopRunner(() => manager, runtime(version))
@@ -257,7 +258,7 @@ describe('official management release contracts', () => {
     expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', { enabled: false, requestId: 'request', ...(exact ? { saveExact: true } : {}) })
   })
 
-  it.each(['0.1.6-alpha.1', '0.1.5-rc.3', '0.3.0', '0.1.7-alpha.3', null])('does not mutate an unaudited runtime %s', async version => {
+  it.each(['0.1.6-alpha.1', '0.1.5-rc.3', '0.3.0', '0.1.7-alpha.3', '0.2.1-alpha.4', null])('does not mutate an unaudited runtime %s', async version => {
     const manager = fullManager()
     const runner = officialDesktopRunner(() => manager, runtime(version))
     const caps = runner.management!.capabilities()
@@ -276,6 +277,39 @@ describe('official management release contracts', () => {
     const runner = officialDesktopRunner(() => fullManager())
     expect(runner.management!.installRequiresRestart).toBe(false)
   })
+
+  it.each(['no-hmr', 'package-moved', 'host-module', 'unmanaged-plugin', 'module-comparison'] as const)(
+    'preserves alpha.3 restart reason %s and allows later selection changes', async restartReason => {
+      const manager = fullManager()
+      manager.installBundle = vi.fn(async () => ({ ok: true, value: {
+        changed: true, application: 'restart-required', restartReason,
+        stage: 'enable', target: 'skin', bundle: 'skin', version: '1.0.0', enabled: false,
+      } }))
+      manager.setBundleEnabled = vi.fn(async (target: string, enabled: boolean) => ({ ok: true, value: {
+        changed: true, application: 'restart-required', restartReason, stage: 'enable', target, enabled,
+      } }))
+      const runner = officialDesktopRunner(() => manager, runtime('0.2.1-alpha.3'))
+
+      const installed = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'alpha-3-install' })
+      expect(installed).toMatchObject({ exitCode: 0, management: {
+        application: 'restart-required', restartReason, enabled: false, requestId: 'alpha-3-install',
+      } })
+      expect(manager.installBundle).toHaveBeenCalledExactlyOnceWith('skin@1.0.0', {
+        enabled: false, requestId: 'alpha-3-install', saveExact: true,
+      })
+      expect(runner.management!.installRequiresRestart).toBe(false)
+
+      expect(await runner.management!.setBundleEnabled('previous-skin', false)).toMatchObject({
+        exitCode: 0, management: { application: 'restart-required', restartReason, target: 'previous-skin', enabled: false },
+      })
+      expect(await runner.management!.setBundleEnabled('skin', true)).toMatchObject({
+        exitCode: 0, management: { application: 'restart-required', restartReason, target: 'skin', enabled: true },
+      })
+      expect(manager.setBundleEnabled).toHaveBeenNthCalledWith(1, 'previous-skin', false)
+      expect(manager.setBundleEnabled).toHaveBeenNthCalledWith(2, 'skin', true)
+      expect(manager.installBundle).toHaveBeenCalledTimes(1)
+    },
+  )
 
   it('does not infer optional argument support from callable proxy methods', () => {
     const runner = officialDesktopRunner(() => fullManager(), runtime('0.1.6-alpha.2'))

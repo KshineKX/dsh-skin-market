@@ -297,6 +297,148 @@ describe('official plugin manager lifecycle', () => {
     expect(readProfileBundles(host.directory)).toEqual([b.package])
   })
 
+  it('installs then switches an alpha.3 skin by disabling the old primary before enabling the target, while keeping pinned skins', async () => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current'), pinned = skin('alpha3-pinned')
+    // Put the target before the current skin to ensure catalog order cannot
+    // accidentally make both ordinary skins active during the switch.
+    const host = fixture([next, current, pinned], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [next.id], pinnedSkinIds: [pinned.id] })
+    expect(host.runner.management?.installRequiresRestart).toBe(false)
+    expect(await finished(host.lifecycle.begin('install', next.id))).toMatchObject({ phase: 'done', application: 'applied' })
+    host.manager.setBundleEnabled.mockClear()
+
+    const activation = await finished(host.lifecycle.begin('activate', next.id))
+    expect(activation).toMatchObject({ phase: 'done', application: 'applied' })
+    expect(activation.restartRequired).not.toBe(true)
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [next.package, true], [pinned.package, true]])
+    expect(readProfileBundles(host.directory).sort()).toEqual([next.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: next.id, pinnedSkinIds: [pinned.id], disabledSkinIds: [current.id] })
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(host.lifecycle.states().find(state => state.skinId === pinned.id)).toMatchObject({ activation: 'active', pinned: true, primary: false })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'active', primary: true })
+  })
+
+  it('allows an alpha.3 activation after install requires restart and carries that requirement through applied toggles', async () => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current')
+    const host = fixture([next, current], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(current)
+    host.select(current.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [next.id] })
+    host.manager.installBundle.mockImplementationOnce(async spec => ({ ...host.applyInstall(spec), application: 'restart-required', restartReason: 'no-hmr' }))
+
+    expect(await finished(host.lifecycle.begin('install', next.id))).toMatchObject({ phase: 'done', application: 'restart-required', restartRequired: true })
+    const activation = await finished(host.lifecycle.begin('activate', next.id))
+    expect(activation).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [next.package, true]])
+    expect(readProfileBundles(host.directory)).toEqual([next.package])
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: next.id, disabledSkinIds: [current.id], pendingRestart: { pid: process.pid, skinIds: [next.id] } })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: true })
+  })
+
+  it('keeps an existing primary skin restart requirement visible after an alpha.3 switch reports applied', async () => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current')
+    const host = fixture([next, current], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(next); host.materialize(current)
+    host.select(current.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [next.id], pendingRestart: { pid: process.pid, skinIds: [current.id] } })
+
+    expect(await finished(host.lifecycle.begin('activate', next.id))).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
+    expect(readProfileBundles(host.directory)).toEqual([next.package])
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: next.id, disabledSkinIds: [current.id], pendingRestart: { pid: process.pid, skinIds: [current.id, next.id] } })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: true })
+  })
+
+  it.each(['disable', 'enable'] as const)('finishes the alpha.3 selection and preserves a native %s restart requirement through later applied results', async step => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current'), pinned = skin('alpha3-pinned')
+    const host = fixture([next, current, pinned], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(next); host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [next.id], pinnedSkinIds: [pinned.id] })
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => ({
+      ...host.applyEnable(name, enabled),
+      application: step === 'disable' && name === current.package && !enabled || step === 'enable' && name === next.package && enabled ? 'restart-required' : 'applied',
+    }))
+
+    expect(await finished(host.lifecycle.begin('activate', next.id))).toMatchObject({ phase: 'done', application: 'restart-required', restartRequired: true })
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [next.package, true], [pinned.package, true]])
+    expect(readProfileBundles(host.directory).sort()).toEqual([next.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: next.id, disabledSkinIds: [current.id], pinnedSkinIds: [pinned.id], pendingRestart: { pid: process.pid, skinIds: [next.id] } })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: true })
+  })
+
+  it.each(['failed', 'overridden'] as const)('restores the original alpha.3 selection when the target enable is %s after the old skin was disabled', async application => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current'), pinned = skin('alpha3-pinned')
+    const host = fixture([next, current, pinned], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(next); host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    const previous = { version: 1 as const, activeSkinId: current.id, disabledSkinIds: [next.id], pinnedSkinIds: [pinned.id] }
+    writeMarketState(host.directory, previous)
+    host.manager.setBundleEnabled.mockImplementationOnce(async (name, enabled) => ({ ...host.applyEnable(name, enabled), application: 'restart-required' }))
+    host.manager.setBundleEnabled.mockImplementationOnce(async (name, enabled) => ({
+      ...host.applyEnable(name, enabled), application,
+      ...(application === 'failed' ? { error: { code: 'reload-failed', message: 'target enable failed' } } : {}),
+    }))
+
+    expect(await finished(host.lifecycle.begin('activate', next.id))).toMatchObject({ phase: 'failed', application })
+    expect(host.manager.setBundleEnabled.mock.calls.slice(0, 2)).toEqual([[current.package, false], [next.package, true]])
+    expect(readProfileBundles(host.directory).sort()).toEqual([current.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject(previous)
+    expect(readMarketState(host.directory).pendingRestart).toEqual({ pid: process.pid, skinIds: [current.id, pinned.id, next.id] })
+    expect(host.lifecycle.states().find(state => state.skinId === current.id)).toMatchObject({ activation: 'restart-required', primary: true })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: false })
+  })
+
+  it('keeps a failed alpha.3 switch failed when rollback restores the saved selection but itself requires restart', async () => {
+    const next = skin('alpha3-next'), current = skin('alpha3-current'), pinned = skin('alpha3-pinned')
+    const host = fixture([next, current, pinned], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(next); host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    const previous = { version: 1 as const, activeSkinId: current.id, disabledSkinIds: [next.id], pinnedSkinIds: [pinned.id] }
+    writeMarketState(host.directory, previous)
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => ({
+      ...host.applyEnable(name, enabled),
+      ...(name === next.package && enabled
+        ? { application: 'failed', error: { code: 'reload-failed', message: 'target enable failed' } }
+        : name === current.package && enabled ? { application: 'restart-required', restartReason: 'no-hmr' } : {}),
+    }))
+
+    const operation = await finished(host.lifecycle.begin('activate', next.id))
+    expect(operation).toMatchObject({ phase: 'failed', application: 'failed', restartRequired: true, message: expect.stringContaining('target enable failed') })
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [next.package, true], [next.package, false], [current.package, true], [pinned.package, true]])
+    expect(readProfileBundles(host.directory).sort()).toEqual([current.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject(previous)
+    expect(readMarketState(host.directory).pendingRestart).toEqual({ pid: process.pid, skinIds: [current.id, pinned.id, next.id] })
+    expect(host.lifecycle.states().find(state => state.skinId === current.id)).toMatchObject({ activation: 'restart-required', primary: true })
+    expect(host.lifecycle.states().find(state => state.skinId === pinned.id)).toMatchObject({ activation: 'restart-required', pinned: true })
+    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: false })
+  })
+
+  it.each(['failed', 'overridden'] as const)('disables the rejected target before restoring an earlier catalog skin after alpha.3 enable is %s', async application => {
+    const current = skin('alpha3-current'), next = skin('alpha3-next')
+    const host = fixture([current, next], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(current); host.materialize(next)
+    host.select(current.package, true)
+    const previous = { version: 1 as const, activeSkinId: current.id, disabledSkinIds: [next.id] }
+    writeMarketState(host.directory, previous)
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => {
+      if (name === current.package && enabled && readProfileBundles(host.directory).includes(next.package)) {
+        throw new Error('restoring the old skin while the rejected target is still enabled would overlap skins')
+      }
+      const result = host.applyEnable(name, enabled)
+      return name === next.package && enabled
+        ? { ...result, application, ...(application === 'failed' ? { error: { code: 'reload-failed', message: 'target enable failed' } } : {}) }
+        : result
+    })
+
+    expect(await finished(host.lifecycle.begin('activate', next.id))).toMatchObject({ phase: 'failed', application })
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [next.package, true], [next.package, false], [current.package, true]])
+    expect(readProfileBundles(host.directory)).toEqual([current.package])
+    expect(readMarketState(host.directory)).toMatchObject(previous)
+    expect(host.lifecycle.waitingReason).toBeUndefined()
+  })
+
   it('preserves a native update restart requirement through later successful toggles until removal', async () => {
     const next = skin('native-a', '1.1.0')
     const host = fixture([next])
@@ -373,7 +515,7 @@ describe('official plugin manager lifecycle', () => {
     const host = fixture([a, b])
     host.materialize(a); host.materialize(b)
     const result = deferred()
-    host.manager.setBundleEnabled.mockImplementationOnce(() => result.promise)
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => name === a.package && enabled ? result.promise : host.applyEnable(name, enabled))
     const operation = host.lifecycle.begin('activate', a.id)
     await until(() => operation.phase === 'waiting')
     expect(host.lifecycle.waitingReason).toContain('插件仍在完成启停')

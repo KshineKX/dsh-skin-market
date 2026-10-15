@@ -247,7 +247,9 @@ export class SkinLifecycle {
       throw new Error(this.waitingReason)
     }
     if (managed?.application !== undefined && operation !== undefined) {
-      operation.application = managed.application
+      // A selection change can involve several native calls. A later applied
+      // toggle does not make an earlier restart requirement disappear.
+      if (managed.application !== 'applied' || operation.application !== 'restart-required') operation.application = managed.application
       if (managed.application === 'restart-required') operation.restartRequired = true
       if (managed.pendingBuilds !== undefined) this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
     }
@@ -562,7 +564,10 @@ export class SkinLifecycle {
       writeMarketState(this.options.profileDir, state)
     }
     const enabled = enabledSkinIds(state)
-    for (const skin of installed) await this.registerSkin(skin, !enabled.has(skin.id))
+    // Replay also restores failed transitions. Remove the rejected selection
+    // before re-enabling the original one so two ordinary skins never overlap.
+    for (const skin of installed) if (!enabled.has(skin.id)) await this.registerSkin(skin, true)
+    for (const skin of installed) if (enabled.has(skin.id)) await this.registerSkin(skin, false)
     // On startup, preserve the active entry's initial loader state. Toggling
     // it off and back on here races the client-module registry, which builds
     // the browser boot graph while loader entries are becoming live. Only
@@ -1298,7 +1303,11 @@ export class SkinLifecycle {
         this.reconcileDisabledSkinIds(state)
         this.recordRestart(state, skin.id, operation.restartRequired === true)
         writeMarketState(this.options.profileDir, state)
-        operation.message = operation.restartRequired ? '安装构件已修复；此版本官方 Desktop 需要完全退出并重开应用后再使用' : 'skin was already installed; market state reconciled'
+        operation.message = operation.restartRequired
+          ? this.management?.installRequiresRestart
+            ? '安装构件已修复；此版本官方 Desktop 需要完全退出并重开应用后再使用'
+            : '安装构件已修复；请手动重启 Desktop App 完成应用'
+          : 'skin was already installed; market state reconciled'
         return
       } catch (error) {
         await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
@@ -1330,7 +1339,11 @@ export class SkinLifecycle {
       this.recordRestart(state, skin.id, operation.restartRequired === true)
       writeMarketState(this.options.profileDir, state)
       cleanupCompatibilityPatchFiles(detachedPatchFiles.filter(file => file !== compatibilityPatchFile(this.options.profileDir, skin.package, skin.install.version)))
-      operation.message = operation.restartRequired ? '安装构件已验证；此版本官方 Desktop 需要完全退出并重开应用后再使用' : 'installed; choose Use to activate'
+      operation.message = operation.restartRequired
+        ? this.management?.installRequiresRestart
+          ? '安装构件已验证；此版本官方 Desktop 需要完全退出并重开应用后再使用'
+          : '安装构件已验证；请手动重启 Desktop App 完成应用'
+        : 'installed; choose Use to activate'
     } catch (error) {
       await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
       throw error
@@ -1349,6 +1362,14 @@ export class SkinLifecycle {
     }
     writeMarketState(this.options.profileDir, previous)
     await this.replay()
+    const operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)
+    if (this.management !== undefined && operation?.restartRequired === true) {
+      // Rollback restores the saved selection, but a native no-HMR result
+      // cannot confirm that the currently loaded appearance was restored.
+      const restored = readMarketState(this.options.profileDir)
+      for (const skinId of new Set([...enabledSkinIds(restored), operation.skinId])) this.recordRestart(restored, skinId, true)
+      writeMarketState(this.options.profileDir, restored)
+    }
   }
 
   private async activate(operation: Operation): Promise<void> {
@@ -1361,6 +1382,9 @@ export class SkinLifecycle {
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before using it')
     this.update(operation, 'activating')
     const previous = readMarketState(this.options.profileDir)
+    if (this.management !== undefined && previous.pendingRestart?.pid === process.pid && previous.pendingRestart.skinIds.length > 0) {
+      operation.restartRequired = true
+    }
     const selection = this.selectionSnapshot()
     const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: pinnedSkinIds(previous) }
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)
@@ -1368,12 +1392,13 @@ export class SkinLifecycle {
     const requiresRestart = this.requiresRestartForTransition(previous, next)
     const enabled = enabledSkinIds(next)
     try {
+      // Disable the previous ordinary skin before enabling the target. Pinned
+      // skins remain part of the enabled union throughout this transition.
       for (const item of this.catalog) {
-        const installed = readDependencies(this.options.profileDir)[item.package] !== undefined
-        if (installed && enabled.has(item.id)) {
-          await this.registerSkin( item, false)
-        }
-        if (installed && !enabled.has(item.id)) await this.registerSkin( item, true)
+        if (!enabled.has(item.id) && readDependencies(this.options.profileDir)[item.package] !== undefined) await this.registerSkin(item, true)
+      }
+      for (const item of this.catalog) {
+        if (enabled.has(item.id) && readDependencies(this.options.profileDir)[item.package] !== undefined) await this.registerSkin(item, false)
       }
       await this.syncInstalledCompanions(next, !requiresRestart)
       let active: { found: boolean; live: boolean } | undefined

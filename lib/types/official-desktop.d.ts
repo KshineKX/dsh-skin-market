@@ -20,8 +20,11 @@ export interface OfficialManagementError {
     [key: string]: unknown;
 }
 export type OfficialApplication = 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled';
+export type OfficialRestartReason = 'no-hmr' | 'package-moved' | 'host-module' | 'unmanaged-plugin' | 'module-comparison';
 interface OfficialManagementFields {
     changed?: boolean;
+    /** The change is saved but waits for restart; this does not prohibit later enablement changes. */
+    restartReason?: OfficialRestartReason;
     stage?: string;
     target?: string;
     enabled?: boolean;

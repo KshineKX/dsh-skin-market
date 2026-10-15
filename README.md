@@ -37,7 +37,7 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 
 ### 宿主与管理接口兼容性
 
-以下按 **2026-10-14 已核验的官方源码 tag**说明功能边界；自动化检查与 Web、原生 Desktop 的实机验收分别记录，源码支持不等于所有平台已完成实测。
+以下按 **2026-10-15 已核验的官方源码 tag**说明功能边界；自动化检查与 Web、原生 Desktop 的实机验收分别记录，源码支持不等于所有平台已完成实测。
 
 | 官方 DSH 版本 | 市场可用的管理能力 | 额外接口边界 |
 | --- | --- | --- |
@@ -47,10 +47,15 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 | `0.2.0-rc.1`、`0.2.0-rc.2` | 延续共享插件管理能力 | 新装/重装后先完全退出并重新打开，再使用；`0.2.0-rc.2` 起 Desktop 自带命令支持应用退出后的离线插件维护 |
 | `0.2.1-alpha.1` | 上述能力，官方管理器增加安装后的运行时包解析刷新 | 按实际管理结果判断是否仍需重启；`saveExact` 尚不可用 |
 | `0.2.1-alpha.2` | 上述能力，并支持 `saveExact` | 市场可请求精确保存依赖版本 |
+| `0.2.1-alpha.3` | 延续上述能力；官方修复更新/重装后的旧代码加载，并返回 `restartReason` | 可热重载的修改直接应用；其他修改保存选择后提示手动重启 |
 
 市场同时检查实际服务的方法是否存在。官方版本无法识别、尚未核验或缺少方法时，相应按钮会说明原因；不会猜测接口可用，也不会改走另一个 profile。
 
+`0.2.1-alpha.3` 当前已完成官方源码核对和自动化测试；原生 Desktop 实测待官方桌面安装包发布后补验。
+
 在已核验的 `0.2.1-alpha.1` 之前的官方 Desktop 上，市场新装/重装先完成安装并显示待重启，完全退出应用再重新打开后才可「使用」或设为常驻。`0.2.0-rc.2` 安装后启用失败可能涉及导入缓存；失败后仅更换包或再次安装不能可靠清除它，应先完成一次应用退出与重新打开。macOS 使用 `⌘Q`，仅关闭窗口不算退出。
+
+对已核验且允许安装后继续启用的官方 Desktop，默认操作为「安装并使用」：安装验证成功后，市场自动停用目录中原先的普通皮肤、启用目标皮肤，保留常驻皮肤与无关插件。也可选择「仅安装」。安装或切换结果需要重启时，先保存选择，再提示「请手动重启 Desktop App」；更新已安装皮肤保留原有启用和常驻选择。
 
 表中的离线维护仅由 Desktop 自带命令提供，须先初始化 Desktop profile 并完全退出应用；npm 安装的 dsh 不能修改 Desktop profile。
 
@@ -59,15 +64,15 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 
 官方 Desktop 使用 Host 的 `ctx.pluginManager`：安装和更新调用 `installBundle(spec, options)`，组合包启停调用 `setBundleEnabled(name, enabled)`，单个条目启停调用 `setPluginEnabled(entryId, enabled)`，卸载调用 `removeBundle(name)`。安装有独立 `requestId`，取消走 `cancelInstall(requestId)`；支持结果恢复的版本可通过 `waitForInstall(requestId)`核对已有操作，不重新发起安装。安装日志和状态由 `plugin-manager/install-log`、`plugin-manager/install-state` 事件提供。
 
-结果中的 `application` 决定管理事务状态：`applied` 表示本次管理修改已应用，安装事务的这个结果不证明插件代码已加载；市场保留管理器结果并另行显示待重启。`restart-required` 表示仍需重启，`overridden` 表示修改保留但启用状态被其他配置覆盖，`failed`/`cancelled` 分别表示失败/已确认取消。取消请求到达太晚时，以管理器最终结果为准。结果无法确认时，市场保留“等待宿主确认”，阻止重复写入并提示重新启动应用后核验。
+结果中的 `application` 决定管理事务状态：`applied` 表示本次管理修改已应用，安装事务的这个结果不证明插件代码已加载；市场继续核对启用结果和实际状态。`restart-required` 表示修改已保存、仍需重启，`overridden` 表示修改保留但启用状态被其他配置覆盖，`failed`/`cancelled` 分别表示失败/已确认取消。`0.2.1-alpha.3` 的 `restartReason` 区分未开启热重载、包位置变化、宿主模块、非 Loader 管理的插件或无法比较模块；这些结果不等于启用接口不可用。允许继续启用的宿主可先完成停旧、启目标，安装或切换任一步要求的重启会一直保留到应用重启。取消请求到达太晚时，以管理器最终结果为准。结果无法确认时，市场保留“等待宿主确认”，阻止重复写入并提示重新启动应用后核验。
 
 较旧服务可能把 `1.2.3` 保存成 `^1.2.3`。市场会核对实际包版本、锁文件 importer 的 specifier/解析版本以及目录记录的 SRI；可验证的范围写法不会绕过完整性检查，也不会被直接声称为精确固定版本。缺少 SRI 的旧 Desktop 元数据只提供包名、版本与入口检查，不代表通过了哈希校验。
 
-所有上述已核验官方 Desktop 版本都由应用拥有重启：市场提示用户手动完全退出并重新打开。`dshDesktop.updates.open()`打开桌面更新确认流程，不是通用重启 App API。市场不调用 Electron 私有 IPC 或从运行中的 Desktop 执行 `dsh plugin --profile desktop`。
+所有上述已核验官方 Desktop 版本都未提供供第三方调用的通用 App 退出或重启接口。只有确实需要重启时，市场提示「请手动重启 Desktop App」，用户完全退出并重新打开。`dshDesktop.updates.open()`打开桌面更新确认流程，不是通用重启 App API。市场不调用 Electron 私有 IPC 或从运行中的 Desktop 执行 `dsh plugin --profile desktop`。
 
 第三方桌面壳提供的 `desktopProfiles`/`desktopPnpm` 与官方 `pluginManager` 分开适配。市场使用各自宿主提供的当前 profile 和安装服务；不会自动迁移第三方壳的配置、依赖、启用状态或 profile。
 
-依据：[官方 `0.1.6-alpha.2` 发布说明](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.6-alpha.2)、[官方 `0.2.0-rc.2` Desktop 命令说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/desktop/README.md#bundled-command-runtime)、[`0.2.1-alpha.2` 管理接口](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.2/packages/boot/plugin-manager/src/types.ts)、[Desktop 产品接口](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.2/apps/desktop/src/ipc.ts)。
+依据：[官方 `0.1.6-alpha.2` 发布说明](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.6-alpha.2)、[官方 `0.2.0-rc.2` Desktop 命令说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/desktop/README.md#bundled-command-runtime)、[`0.2.1-alpha.3` 管理结果](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.3/packages/boot/plugin-manager/src/types.ts)、[`0.2.1-alpha.3` 启停与安装实现](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.3/packages/boot/plugin-manager/src/index.ts#L492)、[Desktop 产品接口](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-alpha.3/apps/desktop/src/ipc.ts#L72)。
 
 </details>
 
@@ -90,7 +95,7 @@ APP 左上角「插件 → 添加插件」中输入 `dsh-skin-market@latest` 安
 
 #### 官方 Desktop 安装具体皮肤
 
-支持一键安装的 npm 皮肤，继续使用市场中的「安装」按钮。标为「需手动安装」的 GitHub 或子目录皮肤，可以复制安装面板中的提示词，让 Agent 检查冲突、核对目标并指导你在插件页安装。
+支持一键安装的 npm 皮肤，可在市场中点击「安装并使用」，详情页也可选择「仅安装」；安装后能继续启用的官方宿主会自动完成切换。已核验旧版会显示「安装后需重启」。标为「需手动安装」的 GitHub 或子目录皮肤，可以复制安装面板中的提示词，让 Agent 检查冲突、核对目标并指导你在插件页安装。
 
 <details>
 <summary><strong>点击展开手动皮肤安装流程</strong></summary>
