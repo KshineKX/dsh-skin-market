@@ -666,8 +666,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const compatibilityConsentResolver = useRef<((context: string | null) => void) | null>(null)
   const compatibilityConfirmationRef = useRef<CompatibilityConfirmation | null>(null)
   const [homeCompact, setHomeCompact] = useState(false)
+  const [homeHeaderSticky, setHomeHeaderSticky] = useState(true)
   const skinListRef = useRef<HTMLDivElement | null>(null)
   const homeRef = useRef<HTMLDivElement | null>(null)
+  const homeHeaderRef = useRef<HTMLElement | null>(null)
   const homeLoadMoreRef = useRef<HTMLDivElement | null>(null)
   const thumbnailStripRef = useRef<HTMLDivElement | null>(null)
   const detailRef = useRef<HTMLElement | null>(null)
@@ -974,6 +976,42 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     observer.observe(home)
     return () => observer.disconnect()
   }, [])
+  useLayoutEffect(() => {
+    const home = homeHeaderRef.current?.parentElement
+    if (layout !== 'embedded' || browserOpen || home == null) return
+    let scrollHost = home.parentElement
+    while (scrollHost !== null && scrollHost !== document.body && scrollHost !== document.documentElement) {
+      if (/auto|scroll|overlay|hidden/.test(window.getComputedStyle(scrollHost).overflowY)) break
+      scrollHost = scrollHost.parentElement
+    }
+    const viewportScroll = scrollHost === null || scrollHost === document.body || scrollHost === document.documentElement
+    const scrollTarget = viewportScroll ? window : scrollHost!
+    const updateCompact = () => {
+      // Measure the home in normal flow; a pinned header always reports top: 0.
+      const viewportTop = viewportScroll ? 0 : scrollHost!.getBoundingClientRect().top + scrollHost!.clientTop
+      const scrollOffset = viewportTop - home.getBoundingClientRect().top
+      setHomeCompact(current => scrollOffset > (current ? HOME_COMPACT_EXIT_SCROLL : HOME_COMPACT_ENTER_SCROLL))
+    }
+    updateCompact()
+    scrollTarget.addEventListener('scroll', updateCompact, { passive: true })
+    window.addEventListener('resize', updateCompact)
+    return () => {
+      scrollTarget.removeEventListener('scroll', updateCompact)
+      window.removeEventListener('resize', updateCompact)
+    }
+  }, [layout, browserOpen])
+  useLayoutEffect(() => {
+    const header = homeHeaderRef.current
+    if (layout !== 'embedded' || header === null) return
+    // Expanded operation details must leave room to browse the page, without
+    // introducing a second scroll area inside the sticky header.
+    const updateSticky = () => setHomeHeaderSticky(header.getBoundingClientRect().height <= window.innerHeight / 2)
+    updateSticky()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateSticky)
+    observer?.observe(header)
+    window.addEventListener('resize', updateSticky)
+    return () => { observer?.disconnect(); window.removeEventListener('resize', updateSticky) }
+  }, [layout])
   useEffect(() => {
     const style = document.createElement('style')
     style.dataset.dshSkinMarketWide = 'true'
@@ -1536,7 +1574,6 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const interceptLogId = interceptOperation?.id ?? marketInterceptOperation?.id
   const selectedBusy = selected === undefined ? undefined : liveOperationFor(operations, selected.id)
   const managementNotice = management === undefined ? '' : [...new Set([
-    ...(installRequiresRestart ? [DESKTOP_INSTALL_RESTART_GUIDANCE] : []),
     ...(['install', 'update', 'enable', 'disable', 'remove'] as const).map(key => management.capabilities[key]).filter(value => !value.available).map(value => value.reason).filter(Boolean),
   ])].join('；')
   const pnpmBusy = operations.some(operation => isLiveOperation(operation) && PROFILE_PNPM_KINDS.has(operation.kind))
@@ -1629,8 +1666,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   return (
     <section className={css.root} data-dsh-skin-market data-layout={layout} data-detail={showDetail ? 'open' : 'closed'} data-browser-open={browserOpen ? 'true' : 'false'}>
       {browserOpen && selected !== undefined && <GalleryPreloads skin={selected} screenshots={selectedScreenshots} />}
-      <main className={css.home} hidden={browserOpen}>
-        <header className={css.homeHeader} data-compact={layout === 'fill' && homeCompact ? 'true' : undefined}>
+      <main className={css.home} hidden={browserOpen && layout === 'fill'}>
+        <header className={css.homeHeader} ref={homeHeaderRef} data-sticky={homeHeaderSticky ? 'true' : 'false'} data-compact={homeCompact ? 'true' : undefined}>
           <div className={css.homeTitleRow}>
             <div><h2>{t('title')}</h2><p>{skins.length} 款社区皮肤</p></div>
             <div className={css.homeActions}>

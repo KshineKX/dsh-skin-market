@@ -745,7 +745,7 @@ describe('client market', () => {
     const install = await screen.findByRole('button', { name: entry === 'detail' ? '安装后需重启' : '安装' })
     expect(install.getAttribute('title')).toBe('安装后请完全退出官方 Desktop 并重新打开，再使用此皮肤。')
     expect(screen.queryByRole('button', { name: '安装并使用' })).toBeNull()
-    expect(screen.getAllByText('安装后请完全退出官方 Desktop 并重新打开，再使用此皮肤。')).toHaveLength(entry === 'detail' ? 2 : 1)
+    expect(screen.queryByText('安装后请完全退出官方 Desktop 并重新打开，再使用此皮肤。')).toBeNull()
     fireEvent.click(install)
     expect(await screen.findAllByText('测试皮肤 已安装，请完全退出官方 Desktop 并重新打开后再使用')).toHaveLength(entry === 'detail' ? 2 : 1)
     expect(screen.queryByRole('button', { name: '使用' })).toBeNull()
@@ -1369,10 +1369,56 @@ describe('client market', () => {
     act(() => first.emit(true))
     expect(count()).toBe(CATALOG_BATCH_SIZE * 2)
     const second = loadObserver()
-    act(() => second.emit(true))
-    await waitFor(() => expect(count()).toBe(skins.length))
+    fireEvent.click(screen.getByRole('button', { name: /测试皮肤 0 界面预览/ }))
     expect(second.disconnect).toHaveBeenCalledOnce()
+    expect(view.container.querySelector('main')?.hidden).toBe(false)
+    act(() => second.emit(true))
+    const home = view.container.querySelector('main')!
+    expect(home.querySelectorAll('[class*="discoveryGrid"] article')).toHaveLength(CATALOG_BATCH_SIZE * 2)
+    fireEvent.click(within(screen.getByRole('dialog', { name: '皮肤详情' })).getByRole('button', { name: '关闭' }))
+    const resumed = loadObserver()
+    expect(resumed).not.toBe(second)
+    act(() => resumed.emit(true))
+    await waitFor(() => expect(count()).toBe(skins.length))
+    expect(resumed.disconnect).toHaveBeenCalledOnce()
     view.unmount()
+  })
+
+  it.each(['element', 'window'] as const)('compacts the embedded header from the %s host scroll position and restores it on return', async hostKind => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : { skins: [] } })))
+    const view = render(<div style={{ overflowY: hostKind === 'element' ? 'auto' : 'visible' }}><SkinMarketSection t={key => key} layout="embedded" /></div>)
+    await screen.findByRole('button', { name: /测试皮肤 界面预览/ })
+    const host = view.container.firstElementChild as HTMLElement
+    const home = host.querySelector('main')!
+    const header = home.querySelector('header')!
+    const feed = home.querySelector('div[class*="homeContent"]')!
+    const viewportTop = hostKind === 'element' ? 82 : 0
+    let scrollTop = 0
+    vi.spyOn(host, 'getBoundingClientRect').mockImplementation(() => ({ top: 80 } as DOMRect))
+    Object.defineProperty(host, 'clientTop', { configurable: true, value: 2 })
+    vi.spyOn(home, 'getBoundingClientRect').mockImplementation(() => ({ top: viewportTop + 330 - scrollTop } as DOMRect))
+    const scroll = (value: number) => {
+      scrollTop = value
+      fireEvent.scroll(hostKind === 'element' ? host : window)
+    }
+    scroll(402)
+    expect(header.dataset.compact).toBeUndefined()
+    scroll(403)
+    expect(header.dataset.compact).toBe('true')
+    scroll(380)
+    expect(header.dataset.compact).toBe('true')
+    scrollTop = 0
+    fireEvent.scroll(feed)
+    expect(header.dataset.compact).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: /测试皮肤 界面预览/ }))
+    scroll(0)
+    expect(header.dataset.compact).toBe('true')
+    fireEvent.click(within(screen.getByRole('dialog', { name: '皮肤详情' })).getByRole('button', { name: '关闭' }))
+    expect(header.dataset.compact).toBeUndefined()
+    scroll(403)
+    expect(header.dataset.compact).toBe('true')
+    scroll(346)
+    expect(header.dataset.compact).toBeUndefined()
   })
 
   it('shows all embedded results when viewport observation is unavailable', async () => {
