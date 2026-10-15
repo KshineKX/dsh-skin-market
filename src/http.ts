@@ -82,8 +82,9 @@ export function directLoopbackRequest(request: IncomingMessage): boolean {
     && !Object.keys(request.headers).some(key => key === 'forwarded' || key === 'x-real-ip' || key.startsWith('x-forwarded-'))
 }
 
-async function readJsonBody(request: IncomingMessage, limit: number): Promise<Record<string, unknown>> {
-  if (!String(request.headers['content-type'] ?? '').toLowerCase().startsWith('application/json')) throw new Error('content-type must be application/json')
+async function readJsonBody(request: IncomingMessage, limit: number, allowEmpty = false): Promise<Record<string, unknown>> {
+  const isJson = String(request.headers['content-type'] ?? '').toLowerCase().startsWith('application/json')
+  if (!allowEmpty && !isJson) throw new Error('content-type must be application/json')
   const chunks: Buffer[] = []
   let size = 0
   for await (const chunk of request) {
@@ -92,6 +93,8 @@ async function readJsonBody(request: IncomingMessage, limit: number): Promise<Re
     if (size > limit) throw new Error('request body too large')
     chunks.push(buffer)
   }
+  if (allowEmpty && size === 0) return {}
+  if (!isJson) throw new Error('content-type must be application/json')
   const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
   if (body === null || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid request body')
   return body as Record<string, unknown>
@@ -114,14 +117,20 @@ export async function readSkinId(request: IncomingMessage, limit = 8192): Promis
   return (await readSkinMutation(request, limit)).skinId
 }
 
-export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: 'retry' | 'approve-build'; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
+export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: 'retry' | 'approve-build' | 'approve-release-age'; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
   const body = await readJsonBody(request, limit)
-  if (body.action !== 'retry' && body.action !== 'approve-build') throw new Error('invalid operation retry action')
+  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age') throw new Error('invalid operation retry action')
   return { action: body.action, ...compatibilityAcknowledgement(body) }
 }
 
-export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<'retry' | 'approve-build'> {
+export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<'retry' | 'approve-build' | 'approve-release-age'> {
   return (await readOperationRetry(request, limit)).action
+}
+
+export async function readMarketUpdateRetryAction(request: IncomingMessage, limit = 8192): Promise<'retry' | 'approve-release-age'> {
+  const body = await readJsonBody(request, limit, true)
+  if (Object.keys(body).some(key => key !== 'action') || body.action !== undefined && body.action !== 'retry' && body.action !== 'approve-release-age') throw new Error('invalid market update retry action')
+  return body.action === 'approve-release-age' ? body.action : 'retry'
 }
 
 export type RestartTarget = { kind: 'skin'; skinId: string } | { kind: 'market-update' }

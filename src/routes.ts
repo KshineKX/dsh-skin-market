@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { CatalogStore, catalogWithStars } from './catalog.ts'
-import { directLoopbackRequest, readOperationRetry, readRestartTarget, readSkinMutation, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
+import { directLoopbackRequest, readMarketUpdateRetryAction, readOperationRetry, readRestartTarget, readSkinMutation, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
 import { SkinLifecycle, type LifecycleHost } from './lifecycle.ts'
 import { installedClientPlugins, resolveProfileDir } from './profile.ts'
 import type { PluginRunner } from './commands.ts'
@@ -233,7 +233,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) })
       }
     } }),
-    register({ kind: 'prefix', path: '/dsh-skin-market/market-update/operations', handler: (request, response) => {
+    register({ kind: 'prefix', path: '/dsh-skin-market/market-update/operations', handler: async (request, response) => {
       const parts = new URL(request.url ?? '/', 'http://localhost').pathname.split('/').filter(Boolean)
       const cancelling = parts.at(-1) === 'cancel'
       const retrying = parts.at(-1) === 'retry'
@@ -243,7 +243,10 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
         try {
           if (retrying && skinWritesBusy() !== undefined) return sendJson(response, 409, { error: skinWritesBusy() })
-          return sendJson(response, 202, cancelling ? marketUpdater.cancel(id) : { operationId: marketUpdater.retry(id).id })
+          if (cancelling) return sendJson(response, 202, marketUpdater.cancel(id))
+          const action = await readMarketUpdateRetryAction(request)
+          if (skinWritesBusy() !== undefined) return sendJson(response, 409, { error: skinWritesBusy() })
+          return sendJson(response, 202, { operationId: marketUpdater.retry(id, action).id })
         } catch (error) { return sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) }) }
       }
       if (!method(request, response, 'GET')) return
@@ -267,6 +270,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
           if (cancelling) return sendJson(response, 202, lifecycle.cancel(id))
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
           const { action, acknowledgeCompatibility, compatibilityContext } = await readOperationRetry(request)
+          if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
           return sendJson(response, 202, { operationId: lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext).id })
         } catch (error) {
           return sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })

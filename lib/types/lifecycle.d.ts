@@ -1,4 +1,5 @@
 import type { PluginRunner } from './commands.ts';
+import { type ReleaseAgeTarget } from './release-age.ts';
 import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, SkinEntry, SkinRuntimeState } from './types.ts';
 export interface LifecycleHost {
     loader: {
@@ -27,6 +28,11 @@ export interface LifecycleOptions {
 /** Isolated temp-dir prefetches may overlap; live profile pnpm stays serial. */
 export declare function maxParallelDownloads(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv, memoryBytes?: number): number;
 export declare function desktopInstallError(capability: DesktopInstallCapability | undefined): string;
+interface ReleaseAgeApproval {
+    target: ReleaseAgeTarget;
+    context: string;
+    failedId?: string;
+}
 export declare class SkinLifecycle {
     private readonly host;
     private readonly options;
@@ -37,6 +43,8 @@ export declare class SkinLifecycle {
     private readonly downloadWaiters;
     private readonly abortControllers;
     private readonly pendingBuildKeys;
+    private readonly failedReleaseAgeApprovals;
+    private readonly pendingReleaseAgeApprovals;
     private readonly compatibilityContexts;
     private readonly deadlines;
     private readonly deadlineTimers;
@@ -44,6 +52,7 @@ export declare class SkinLifecycle {
     private readonly expired;
     private readonly profileMutations;
     private readonly recoveryErrors;
+    private readonly partialManagedArtifacts;
     private readonly desktopManagedAttempts;
     private readonly desktopRecoveryBaselines;
     private readonly executions;
@@ -60,6 +69,11 @@ export declare class SkinLifecycle {
     get catalog(): SkinEntry[];
     private get hostKind();
     private get management();
+    private releaseAgeContext;
+    private repairReleaseAgePolicy;
+    private applyReleaseAgeApproval;
+    /** Called only for package transactions while holding the profile queue. */
+    private managedPackageCall;
     private acceptManagement;
     private awaitLifecycle;
     private recordRestart;
@@ -97,8 +111,8 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
-    retry(id: string, action: 'retry' | 'approve-build', acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval): Operation;
+    retry(id: string, action: 'retry' | 'approve-build' | 'approve-release-age', acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
     private withProfileLock;
@@ -138,3 +152,4 @@ export declare class SkinLifecycle {
     private uninstall;
     private uninstallLocked;
 }
+export {};

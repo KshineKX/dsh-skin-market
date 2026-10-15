@@ -2,9 +2,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
+import { parse } from 'yaml'
 import { compareVersions, createMarketUpdater, MARKET_NPM_METADATA_URL, MARKET_NPM_PACKAGE } from '../src/self-update.ts'
 import type { CommandOptions, CommandResult, PluginRunner } from '../src/commands.ts'
 import { compareInstalledArtifact, snapshotInstalledArtifact } from '../src/profile.ts'
+import { officialDesktopRunner } from '../src/official-desktop.ts'
+import { exportLogs } from '../src/log.ts'
 
 const REVIEWED_INTEGRITY = 'sha512-market-reviewed'
 
@@ -31,11 +34,391 @@ function installedProfile(version: string): string {
   return directory
 }
 
-function latest(version: string, includeIntegrity = true): typeof fetch {
-  return vi.fn(async () => ({ ok: true, json: async () => ({ 'dist-tags': { latest: version }, versions: { [version]: { version, gitHead: 'c'.repeat(40), dist: { tarball: `https://registry.npmjs.org/dsh-skin-market/-/dsh-skin-market-${version}.tgz`, ...(includeIntegrity ? { integrity: REVIEWED_INTEGRITY } : {}) } } } }) })) as unknown as typeof fetch
+function latest(version: string, includeIntegrity = true, time: unknown = { [version]: '2000-01-01T00:00:00.000Z' }): typeof fetch {
+  return vi.fn(async () => ({ ok: true, json: async () => ({ 'dist-tags': { latest: version }, time, versions: { [version]: { version, gitHead: 'c'.repeat(40), dist: { tarball: `https://registry.npmjs.org/dsh-skin-market/-/dsh-skin-market-${version}.tgz`, ...(includeIntegrity ? { integrity: REVIEWED_INTEGRITY } : {}) } } } }) })) as unknown as typeof fetch
+}
+
+function releaseAgeFailure(packageName = 'dsh-skin-market', version = '0.1.60'): CommandResult {
+  const output = `[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification:\n ${packageName}@${version} was published at 2026-10-15T07:47:31.608Z, within the minimumReleaseAge cutoff (2026-10-14T08:04:41.370Z)`
+  return { exitCode: 1, stdout: '', stderr: output, timedOut: false, management: {
+    application: 'failed', error: { code: 'operation-error', diagnostic: output },
+    packageResult: { exitCode: 1, kind: 'network', output },
+  } }
 }
 
 describe('market self update', () => {
+  it.each([{}, { '0.1.60': new Date().toISOString() }, { '0.1.60': 'not-a-time' }])('does not infer a Desktop block or warning from publication metadata %j', async time => {
+    const profileDir = installedProfile('0.1.59')
+    const runner = vi.fn(async () => {
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60', true, time) })
+    await expect(updater.status()).resolves.toEqual({ currentVersion: '0.1.59', loadedVersion: '0.1.59', latestVersion: '0.1.60', updateAvailable: true })
+    await expect(updater.update()).resolves.toMatchObject({ currentVersion: '0.1.60', updateAvailable: false })
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(updater.restartRequired).toBe(true)
+    expect((await updater.status()).packageOperationsWarning).toBeUndefined()
+  })
+
+  it.each([true, false])('freezes the verified source across concurrent metadata checks changed=%s', async changed => {
+    const profileDir = installedProfile('0.1.59')
+    const manifest = readFileSync(join(profileDir, 'package.json'), 'utf8')
+    const lock = readFileSync(join(profileDir, 'pnpm-lock.yaml'), 'utf8')
+    const replacementVersion = changed ? '0.1.61' : '0.1.60'
+    const runner = vi.fn(async () => {
+      materialize(profileDir, replacementVersion)
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    runner.ensurePnpm = vi.fn()
+    const responses: Array<(response: Response) => void> = []
+    const fetchLatest = vi.fn(() => new Promise<Response>(resolve => { responses.push(resolve) })) as unknown as typeof fetch
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: fetchLatest })
+    const operation = updater.startUpdate()
+    const concurrentStatus = updater.status(true)
+    expect(responses).toHaveLength(2)
+    const originalResponse = await latest('0.1.60')('https://fixture.test')
+    const replacementResponse = await latest(replacementVersion)('https://fixture.test')
+    responses[0](originalResponse)
+    responses[1](replacementResponse)
+    await concurrentStatus
+    await vi.waitFor(() => expect(operation.phase).toBe(changed ? 'failed' : 'done'))
+    if (changed) {
+      expect(operation.message).toBe('版本检查结果已变化，请重新检查后再更新。')
+      expect(runner).not.toHaveBeenCalled()
+      expect(readFileSync(join(profileDir, 'package.json'), 'utf8')).toBe(manifest)
+      expect(readFileSync(join(profileDir, 'pnpm-lock.yaml'), 'utf8')).toBe(lock)
+    } else {
+      expect(runner).toHaveBeenCalledExactlyOnceWith('desktop', ['add', 'dsh-skin-market@0.1.60', '--reporter=ndjson'], expect.any(Object))
+      expect(updater.restartRequired).toBe(true)
+    }
+  })
+
+  it('merges already allowed duplicate versions before requesting an official update', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAge: 2880\nminimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - unrelated@2.0.0\n  - dsh-skin-market@0.1.60\n')
+    const runner = vi.fn(async () => {
+      const config = parse(readFileSync(workspace, 'utf8'))
+      expect(config.minimumReleaseAge).toBe(2880)
+      expect(config.minimumReleaseAgeExclude).toHaveLength(2)
+      expect(config.minimumReleaseAgeExclude.join(' ')).toContain('0.1.59')
+      expect(config.minimumReleaseAgeExclude.join(' ')).toContain('0.1.60')
+      expect(config.minimumReleaseAgeExclude).toContain('unrelated@2.0.0')
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    await expect(updater.update()).resolves.toMatchObject({ currentVersion: '0.1.60' })
+    expect(runner).toHaveBeenCalledTimes(1)
+  })
+
+  it('repairs a duplicate rule appended during a confirmed failure and retries the same update once', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    const runner = vi.fn(async () => {
+      if (runner.mock.calls.length === 1) {
+        writeFileSync(workspace, readFileSync(workspace, 'utf8') + '  - dsh-skin-market@0.1.60\n')
+        return releaseAgeFailure()
+      }
+      expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toHaveLength(1)
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    await expect(updater.update()).resolves.toMatchObject({ currentVersion: '0.1.60' })
+    expect(runner).toHaveBeenCalledTimes(2)
+    expect((runner as ReturnType<typeof vi.fn>).mock.calls[0][1]).toEqual((runner as ReturnType<typeof vi.fn>).mock.calls[1][1])
+  })
+
+  it.each([true, false])('repairs a confirmed age refusal after materialization and partial metadata rollback, second request succeeds=%s', async succeeds => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    const manifestFile = join(profileDir, 'package.json')
+    const lockFile = join(profileDir, 'pnpm-lock.yaml')
+    const oldManifest = readFileSync(manifestFile, 'utf8')
+    const oldLock = readFileSync(lockFile, 'utf8')
+    writeFileSync(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    const runner = vi.fn(async () => {
+      if (runner.mock.calls.length === 1) {
+        // pnpm writes the new package before the whole-lockfile policy check;
+        // Desktop restores metadata but leaves the newly materialized package.
+        materialize(profileDir, '0.1.60')
+        writeFileSync(manifestFile, oldManifest)
+        writeFileSync(lockFile, oldLock)
+        writeFileSync(workspace, readFileSync(workspace, 'utf8') + '  - dsh-skin-market@0.1.60\n')
+        return releaseAgeFailure()
+      }
+      expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toHaveLength(1)
+      if (!succeeds) return releaseAgeFailure()
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe(succeeds ? 'done' : 'failed'))
+    expect(runner).toHaveBeenCalledTimes(2)
+    const calls = (runner as ReturnType<typeof vi.fn>).mock.calls
+    expect(calls[0][1]).toEqual(['add', 'dsh-skin-market@0.1.60', '--reporter=ndjson'])
+    expect(calls[1][1]).toEqual(calls[0][1])
+    if (succeeds) {
+      expect(operation.integrityVerified).toBe(true)
+      expect(operation.status?.currentVersion).toBe('0.1.60')
+    } else {
+      expect(operation.failure?.kind).toBe('release-age')
+      expect(operation.failure?.action).toBe('approve-release-age')
+      expect(operation.message).toContain('安装文件已部分写入')
+    }
+  })
+
+  it('does not use an unrelated repaired rule to repeat an age failure with altered artifacts', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAgeExclude:\n  - unrelated@1.0.0\n')
+    const runner = vi.fn(async () => {
+      rmSync(join(profileDir, 'node_modules', MARKET_NPM_PACKAGE, 'client.js'))
+      writeFileSync(workspace, readFileSync(workspace, 'utf8') + '  - unrelated@2.0.0\n')
+      return releaseAgeFailure()
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe('failed'))
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(operation.failure?.action).toBe('approve-release-age')
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toHaveLength(1)
+  })
+
+  it.each(['unknown', 'cancelled', 'aborted', 'timeout'] as const)('does not repair or retry a duplicate appended with an %s result', async outcome => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    const runner = vi.fn(async () => {
+      writeFileSync(workspace, readFileSync(workspace, 'utf8') + '  - dsh-skin-market@0.1.60\n')
+      const failure = releaseAgeFailure()
+      return { ...failure, ...(outcome === 'aborted' ? { aborted: true } : {}), timedOut: outcome === 'timeout',
+        management: outcome === 'unknown' ? { application: 'unknown' as const, indeterminate: true }
+          : outcome === 'cancelled' ? { application: 'cancelled' as const } : failure.management }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe(outcome === 'unknown' ? 'waiting' : outcome === 'cancelled' ? 'cancelled' : 'failed'))
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toHaveLength(2)
+    expect(operation.failure?.action).toBeUndefined()
+    expect(() => updater.retry(operation.id, 'approve-release-age')).toThrow('不可重试')
+  })
+
+  it('approves only the reported exact dependency after an explicit action, preserving global policy', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAge: 2880\nminimumReleaseAgeExclude:\n  - unrelated@2.0.0\n')
+    const runner = vi.fn(async () => {
+      if (runner.mock.calls.length === 1) return releaseAgeFailure('@scope/blocked', '2.3.4')
+      const config = parse(readFileSync(workspace, 'utf8'))
+      expect(config.minimumReleaseAge).toBe(2880)
+      expect(config.minimumReleaseAgeExclude).toEqual(['unrelated@2.0.0', '@scope/blocked@2.3.4'])
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const failed = updater.startUpdate()
+    await vi.waitFor(() => expect(failed.phase).toBe('failed'))
+    expect(failed.failure).toMatchObject({ action: 'approve-release-age', releaseAgeTarget: { packageName: '@scope/blocked', version: '2.3.4' } })
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['unrelated@2.0.0'])
+    expect(() => updater.retry(failed.id)).toThrow('不可重试')
+    const approved = updater.retry(failed.id, 'approve-release-age')
+    await vi.waitFor(() => expect(approved.phase).toBe('done'))
+    expect(runner).toHaveBeenCalledTimes(2)
+  })
+
+  it.each(['version', 'integrity', 'failed-target', 'mutated-target'] as const)('rejects a stale approval when %s changes before configuration writes', async changed => {
+    const profileDir = installedProfile('0.1.59')
+    const runner = vi.fn(async () => releaseAgeFailure()) as unknown as PluginRunner
+    managedRunner(runner)
+    const fetchLatest = vi.fn().mockImplementation(latest('0.1.60')) as unknown as typeof fetch
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: fetchLatest })
+    const failed = updater.startUpdate()
+    await vi.waitFor(() => expect(failed.phase).toBe('failed'))
+    if (changed === 'version') vi.mocked(fetchLatest).mockImplementation(latest('0.1.61'))
+    if (changed === 'integrity') {
+      const response = await latest('0.1.60')('https://fixture.test')
+      const value = await response.json()
+      value.versions['0.1.60'].dist.integrity = 'sha512-replaced'
+      vi.mocked(fetchLatest).mockResolvedValue({ ok: true, json: async () => value } as Response)
+    }
+    if (changed === 'failed-target') failed.failure!.releaseAgeTarget = { packageName: 'other', version: '9.0.0' }
+    if (changed === 'mutated-target') failed.failure!.releaseAgeTarget!.version = '9.0.0'
+    const approved = updater.retry(failed.id, 'approve-release-age')
+    await vi.waitFor(() => expect(approved.phase).toBe('failed'))
+    expect(approved.message).toContain('已变化')
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(existsSync(join(profileDir, 'pnpm-workspace.yaml'))).toBe(false)
+  })
+
+  it('rechecks approval after preparing pnpm and before writing the exemption or sending another request', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAge: 1440\n')
+    const original = readFileSync(workspace, 'utf8')
+    const runner = vi.fn(async () => releaseAgeFailure()) as unknown as PluginRunner
+    managedRunner(runner)
+    let resume!: () => void
+    runner.ensurePnpm = vi.fn().mockResolvedValueOnce(undefined).mockImplementation(() => new Promise<void>(resolve => { resume = resolve }))
+    const fetchLatest = vi.fn().mockImplementation(latest('0.1.60')) as unknown as typeof fetch
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: fetchLatest })
+    const failed = updater.startUpdate()
+    await vi.waitFor(() => expect(failed.phase).toBe('failed'))
+    const approved = updater.retry(failed.id, 'approve-release-age')
+    await vi.waitFor(() => expect(runner.ensurePnpm).toHaveBeenCalledTimes(2))
+    vi.mocked(fetchLatest).mockImplementation(latest('0.1.61'))
+    await updater.status(true)
+    resume()
+    await vi.waitFor(() => expect(approved.phase).toBe('failed'))
+    expect(approved.message).toContain('已变化')
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(readFileSync(workspace, 'utf8')).toBe(original)
+  })
+
+  it('keeps exact approval available after a known age failure partially materializes a new release without adding an exemption', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    const manifestFile = join(profileDir, 'package.json')
+    const lockFile = join(profileDir, 'pnpm-lock.yaml')
+    const oldManifest = readFileSync(manifestFile, 'utf8')
+    const oldLock = readFileSync(lockFile, 'utf8')
+    writeFileSync(workspace, 'minimumReleaseAge: 1440\nminimumReleaseAgeExclude:\n  - unrelated@2.0.0\n')
+    const runner = vi.fn(async () => {
+      if (runner.mock.calls.length === 1) {
+        materialize(profileDir, '0.1.60')
+        writeFileSync(manifestFile, oldManifest)
+        writeFileSync(lockFile, oldLock)
+        return releaseAgeFailure()
+      }
+      const config = parse(readFileSync(workspace, 'utf8'))
+      expect(config.minimumReleaseAge).toBe(1440)
+      expect(config.minimumReleaseAgeExclude).toEqual(['unrelated@2.0.0', 'dsh-skin-market@0.1.60'])
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const failed = updater.startUpdate()
+    await vi.waitFor(() => expect(failed.phase).toBe('failed'))
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(failed.failure).toMatchObject({ kind: 'release-age', action: 'approve-release-age', releaseAgeTarget: { packageName: 'dsh-skin-market', version: '0.1.60' } })
+    expect(failed.message).toContain('安装文件已部分写入')
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['unrelated@2.0.0'])
+    const approved = updater.retry(failed.id, 'approve-release-age')
+    await vi.waitFor(() => expect(approved.phase).toBe('done'))
+    expect(approved.integrityVerified).toBe(true)
+    const calls = (runner as ReturnType<typeof vi.fn>).mock.calls
+    expect(calls[0][1]).toEqual(['add', 'dsh-skin-market@0.1.60', '--reporter=ndjson'])
+    expect(calls[1][1]).toEqual(calls[0][1])
+    expect(updater.restartRequired).toBe(true)
+  })
+
+  it('does not approve or retry a non-age failure whose rollback cannot be verified', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const workspace = join(profileDir, 'pnpm-workspace.yaml')
+    writeFileSync(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    const runner = vi.fn(async () => {
+      rmSync(join(profileDir, 'node_modules', MARKET_NPM_PACKAGE, 'client.js'))
+      return { exitCode: 1, stdout: '', stderr: 'ECONNRESET', timedOut: false, management: { application: 'failed' as const, packageResult: { exitCode: 1, kind: 'network' as const, output: 'ECONNRESET' } } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const failed = updater.startUpdate()
+    await vi.waitFor(() => expect(failed.phase).toBe('failed'))
+    expect(failed.failure?.kind).toBe('network')
+    expect(failed.failure?.action).toBeUndefined()
+    expect(failed.message).toContain('不能确认取消或失败已恢复')
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toHaveLength(1)
+    expect(() => updater.retry(failed.id, 'approve-release-age')).toThrow('不可重试')
+    expect(runner).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves a real official whole-lockfile release-age refusal and its copied diagnostic without bypassing it', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const output = 'WARN GET https://registry.npmmirror.com/fixture error (ECONNRESET). Will retry in 10 seconds.\n'
+      + '[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification: dsh-skin-market@0.1.60 was published at 2026-10-15T07:47:31.608Z, within the minimumReleaseAge cutoff (2026-10-14T08:04:41.370Z)'
+    const installBundle = vi.fn(async () => ({
+      changed: false, application: 'failed', stage: 'install', target: 'dsh-skin-market@0.1.60',
+      error: { code: 'operation-error', diagnostic: output },
+      packageResult: { exitCode: 1, kind: 'network', output, logPath: '/tmp/fixture-pnpm.log' },
+      pendingBuilds: ['unrelated-addon'],
+    }))
+    const runner = officialDesktopRunner(() => ({ installBundle, removeBundle: vi.fn() }), { version: '0.2.0-rc.2', source: 'injected', capabilities: [] })
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe('failed'))
+    expect(operation).toMatchObject({ application: 'failed', failure: { kind: 'release-age', packageName: 'dsh-skin-market' } })
+    expect(operation.message).toContain('dsh-skin-market@0.1.60')
+    expect(operation.message).toContain('新包保护期')
+    expect(operation.failure).toMatchObject({ action: 'approve-release-age', releaseAgeTarget: { packageName: 'dsh-skin-market', version: '0.1.60' } })
+    expect(operation.failure?.buildKeys).toBeUndefined()
+    expect(() => updater.retry(operation.id)).toThrow('不可重试')
+    expect(installBundle).toHaveBeenCalledExactlyOnceWith('dsh-skin-market@0.1.60', { enabled: false, requestId: expect.any(String) })
+    const logs = exportLogs({}, operation.id)
+    expect(logs).toContain('kind=release-age')
+    expect(logs).toContain('application=failed')
+    expect(logs).toContain('packageKind=network')
+    expect(logs).toContain('ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION')
+    expect(logs).toContain('within the minimumReleaseAge cutoff')
+    expect(updater.restartRequired).toBe(false)
+  })
+
+  it.each([
+    ['network', 'network'], ['timeout', 'fetch-timeout'], ['not-found', 'fetch-404'],
+    ['no-matching-version', 'no-matching-version'], ['disk-full', 'disk-full'],
+    ['permission', 'permission'], ['integrity', 'integrity'], ['build-blocked', 'build-approval'],
+  ])('keeps official self-update package kind %s as %s', async (nativeKind, expectedKind) => {
+    const profileDir = installedProfile('0.1.59')
+    const installBundle = vi.fn(async () => ({
+      changed: false, application: 'failed', stage: 'install', error: { code: 'operation-error', diagnostic: 'The package operation did not complete' },
+      packageResult: { exitCode: 1, kind: nativeKind, output: 'The package operation did not complete' }, pendingBuilds: ['unrelated-addon'],
+    }))
+    const runner = officialDesktopRunner(() => ({ installBundle, removeBundle: vi.fn() }), { version: '0.2.0-rc.2', source: 'injected', capabilities: [] })
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe('failed'))
+    expect(operation).toMatchObject({ application: 'failed', failure: { kind: expectedKind } })
+    expect(installBundle).toHaveBeenCalledTimes(1)
+    expect(exportLogs({}, operation.id)).toContain(`packageKind=${nativeKind}`)
+    expect(operation.failure?.action).toBe(nativeKind === 'network' || nativeKind === 'timeout' ? 'retry' : undefined)
+  })
+
+  it('retains the official cause and blocks retry when changed native artifacts cannot be verified restored', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const installBundle = vi.fn(async () => {
+      rmSync(join(profileDir, 'node_modules', MARKET_NPM_PACKAGE, 'client.js'))
+      return {
+        changed: false, application: 'failed', stage: 'install', error: { code: 'operation-error', diagnostic: 'ECONNRESET' },
+        packageResult: { exitCode: 1, kind: 'network', output: 'ECONNRESET' },
+      }
+    })
+    const runner = officialDesktopRunner(() => ({ installBundle, removeBundle: vi.fn() }), { version: '0.2.0-rc.2', source: 'injected', capabilities: [] })
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: latest('0.1.60') })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe('failed'))
+    expect(operation).toMatchObject({ application: 'failed', failure: { kind: 'network' } })
+    expect(operation.failure?.message).toContain('无法连接安装源')
+    expect(operation.failure?.message).toContain('不能确认取消或失败已恢复')
+    expect(operation.failure?.action).toBeUndefined()
+    expect(() => updater.retry(operation.id)).toThrow('不可重试')
+    expect(exportLogs({}, operation.id)).toContain('market-update-recovery')
+    expect(installBundle).toHaveBeenCalledTimes(1)
+    expect(existsSync(join(profileDir, 'node_modules', MARKET_NPM_PACKAGE, 'client.js'))).toBe(false)
+  })
+
   it('compares stable and prerelease semantic versions', () => {
     expect(compareVersions('0.1.16', '0.1.15')).toBeGreaterThan(0)
     expect(compareVersions('1.0.0', '1.0.0-rc.6')).toBeGreaterThan(0)
@@ -58,6 +441,7 @@ describe('market self update', () => {
         ok: true,
         json: async () => ({
           'dist-tags': { latest: '0.1.16' },
+          time: { '0.1.16': '2000-01-01T00:00:00.000Z' },
           versions: {
             '0.1.16': {
               version: '0.1.16',
@@ -179,6 +563,7 @@ describe('market self update', () => {
         ok: true,
         json: async () => ({
           'dist-tags': { latest: '0.1.16' },
+          time: { '0.1.16': '2000-01-01T00:00:00.000Z' },
           versions: {
             '0.1.16': {
               version: '0.1.16',

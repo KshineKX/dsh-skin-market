@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-import { directLoopbackRequest, loopbackAuthority, readOperationRetry, readSkinId, readSkinMutation, refuseUnadmitted, sameOrigin, trustedAuthority } from '../src/http.ts'
+import { directLoopbackRequest, loopbackAuthority, readMarketUpdateRetryAction, readOperationRetry, readSkinId, readSkinMutation, refuseUnadmitted, sameOrigin, trustedAuthority } from '../src/http.ts'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
 function jsonRequest(body: Record<string, unknown>): IncomingMessage {
@@ -93,11 +93,23 @@ describe('HTTP guards', () => {
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({
       skinId: 'fixture-skin', acknowledgeCompatibility: acknowledgement === true, ...context,
     })
-    for (const action of ['retry', 'approve-build'] as const) {
+    for (const action of ['retry', 'approve-build', 'approve-release-age'] as const) {
       await expect(readOperationRetry(jsonRequest({ action, ...body }))).resolves.toEqual({
         action, acknowledgeCompatibility: acknowledgement === true, ...context,
       })
     }
+  })
+
+  it('allows only an explicit supported market retry action and keeps bodyless retries ordinary', async () => {
+    for (const action of ['retry', 'approve-release-age'] as const) await expect(readMarketUpdateRetryAction(jsonRequest({ action }))).resolves.toBe(action)
+    const empty = Readable.from([]) as IncomingMessage
+    empty.headers = {}
+    await expect(readMarketUpdateRetryAction(empty)).resolves.toBe('retry')
+    for (const body of [{ action: 'approve-build' }, { action: null }, { action: 1 }, { action: 'approve-release-age', version: '2.0.0' }]) await expect(readMarketUpdateRetryAction(jsonRequest(body))).rejects.toThrow('invalid market update retry action')
+    const untyped = Readable.from([JSON.stringify({ action: 'approve-release-age' })]) as IncomingMessage
+    untyped.headers = {}
+    await expect(readMarketUpdateRetryAction(untyped)).rejects.toThrow('content-type must be application/json')
+    await expect(readMarketUpdateRetryAction(jsonRequest({ action: 'x'.repeat(9000) }))).rejects.toThrow('too large')
   })
 
   it.each(['true', 'false', 1, 0, null, {}, []])('rejects a non-boolean compatibility acknowledgement (%j)', async acknowledgeCompatibility => {

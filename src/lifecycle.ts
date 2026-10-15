@@ -12,6 +12,8 @@ import { sharedLoaderIdentifiers } from './loader-ownership.ts'
 import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
+import { officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
+import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
 import { cleanOrphanedStore } from './store.ts'
 import { logEvent } from './log.ts'
 import { compareVersions, isVersionRange, satisfiesVersionRange } from './semver.ts'
@@ -171,6 +173,20 @@ interface PrefetchedPackage {
   hasBundle: boolean
 }
 
+interface ReleaseAgeApproval {
+  target: ReleaseAgeTarget
+  context: string
+  failedId?: string
+}
+
+function managedArtifactUnchanged(profileDir: string, baseline: InstalledArtifactSnapshot): boolean {
+  if (baseline.ok) return compareInstalledArtifact(profileDir, baseline).ok
+  // A first installation has no previous build to restore. It is safe to
+  // repeat only while it still has neither a dependency nor an artifact.
+  return baseline.spec === null && baseline.name === null && baseline.version === null
+    && JSON.stringify(snapshotInstalledArtifact(profileDir, baseline.packageName)) === JSON.stringify(baseline)
+}
+
 function pinnedSkinIds(state: PersistedMarketState): string[] {
   return [...new Set((state.pinnedSkinIds ?? []).filter(id => typeof id === 'string'))]
 }
@@ -206,6 +222,8 @@ export class SkinLifecycle {
   private readonly downloadWaiters: Array<() => void> = []
   private readonly abortControllers = new Map<string, AbortController>()
   private readonly pendingBuildKeys = new Map<string, string[]>()
+  private readonly failedReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
+  private readonly pendingReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
   private readonly compatibilityContexts = new Map<string, string>()
   private readonly deadlines = new Map<string, number>()
   private readonly deadlineTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -213,6 +231,7 @@ export class SkinLifecycle {
   private readonly expired = new Set<string>()
   private readonly profileMutations = new Map<string, number>()
   private readonly recoveryErrors = new Map<string, string>()
+  private readonly partialManagedArtifacts = new Set<string>()
   private readonly desktopManagedAttempts = new Set<string>()
   private readonly desktopRecoveryBaselines = new Map<string, { snapshot: ProfileInstallSnapshot; mutationsBefore: number }>()
   private readonly executions = new Map<string, Promise<void>>()
@@ -241,6 +260,59 @@ export class SkinLifecycle {
   private get hostKind(): MarketHostKind { return this.options.hostKind ?? this.options.runner.hostKind ?? 'dsh' }
   private get management() { return this.options.runner.management }
 
+  private releaseAgeContext(operation: Pick<Operation, 'kind' | 'skinId'>): string {
+    const skin = this.skin(operation.skinId)
+    return JSON.stringify({ kind: operation.kind, package: skin.package, rowId: skin.rowId, install: skin.install, runtime: this.runtime.version })
+  }
+
+  private repairReleaseAgePolicy(operation?: Operation): string[] {
+    const repaired = repairReleaseAgeExcludes(this.options.profileDir)
+    if (repaired.length > 0) logEvent('info', 'release-age-repair', `已合并已有精确版本例外：${repaired.join(', ')}`, operation?.id)
+    return repaired
+  }
+
+  private applyReleaseAgeApproval(operation: Operation): void {
+    const approval = this.pendingReleaseAgeApprovals.get(operation.id)
+    if (approval !== undefined) {
+      const failed = approval.failedId === undefined ? undefined : this.operations.get(approval.failedId)
+      if (approval.context !== this.releaseAgeContext(operation) || failed?.phase !== 'failed'
+        || failed.failure?.action !== 'approve-release-age'
+        || failed.failure.releaseAgeTarget?.packageName !== approval.target.packageName
+        || failed.failure.releaseAgeTarget.version !== approval.target.version) throw new Error('皮肤安装目标或需要放行的版本已变化，请重新操作后确认')
+      allowReleaseAgeVersion(this.options.profileDir, approval.target)
+      this.pendingReleaseAgeApprovals.delete(operation.id)
+      logEvent('info', 'release-age-approved', `已允许 ${approval.target.packageName}@${approval.target.version}`, operation.id)
+    }
+  }
+
+  /** Called only for package transactions while holding the profile queue. */
+  private async managedPackageCall(attempt: () => Promise<CommandResult>, operation?: Operation, packageName?: string, completePartialInstall = false): Promise<CommandResult> {
+    this.checkDeadline(operation)
+    this.repairReleaseAgePolicy(operation)
+    const baselineName = packageName ?? (operation === undefined ? undefined : this.skin(operation.skinId).package)
+    const baseline = baselineName === undefined ? undefined : snapshotInstalledArtifact(this.options.profileDir, baselineName)
+    const result = await attempt()
+    // A confirmed failed request can have appended a new, shadowed rule.
+    // Never repeat a request whose outcome is unknown or was cancelled.
+    if (result.management?.application === 'failed'
+      && !result.aborted && !result.timedOut && !this.disposed
+      && (operation === undefined || this.abortControllers.get(operation.id)?.signal.aborted !== true)) {
+      const repaired = this.repairReleaseAgePolicy(operation)
+      const failure = officialOperationFailure(result)
+      const repairedRefusal = completePartialInstall && failure?.kind === 'release-age' && failure.releaseAgeTarget !== undefined
+        && repaired.includes(failure.releaseAgeTarget.packageName)
+      // pnpm can materialize the new build before its final policy check
+      // fails. Completing that same exact install fixes the known split
+      // state; it does not require pretending the old build was restored.
+      if (repaired.length > 0 && (repairedRefusal || baseline !== undefined && managedArtifactUnchanged(this.options.profileDir, baseline))) {
+        this.checkDeadline(operation)
+        if (operation !== undefined) operation.message = '已修复版本放行规则，正在重试'
+        return await attempt()
+      }
+    }
+    return result
+  }
+
   private acceptManagement(result: CommandResult, operation?: Operation): void {
     const managed = result.management
     if (managed?.indeterminate === true) {
@@ -256,7 +328,7 @@ export class SkinLifecycle {
       if (managed.pendingBuilds !== undefined) this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
     }
     if (result.exitCode !== 0 || managed?.application === 'overridden') {
-      throw new ManagedOperationError(result, managed?.application === 'overridden' ? '启停设置已保存，但被其他配置覆盖，尚未生效' : result.stderr || result.stdout || '官方插件管理操作未完成')
+      throw new ManagedOperationError(result, officialOperationFailure(result)?.message || result.stderr || result.stdout || '官方插件管理操作未完成')
     }
   }
 
@@ -463,11 +535,14 @@ export class SkinLifecycle {
     this.operationCleanupTimers.clear()
     this.operations.clear()
     this.pendingBuildKeys.clear()
+    this.failedReleaseAgeApprovals.clear()
+    this.pendingReleaseAgeApprovals.clear()
     this.compatibilityContexts.clear()
     this.deadlines.clear()
     this.expired.clear()
     this.profileMutations.clear()
     this.recoveryErrors.clear()
+    this.partialManagedArtifacts.clear()
     this.desktopManagedAttempts.clear()
     this.desktopRecoveryBaselines.clear()
     this.abortControllers.clear()
@@ -594,6 +669,10 @@ export class SkinLifecycle {
 
   private async replayLocked(repairComponents = true): Promise<void> {
     if (this.disposed || this.waitingReason !== undefined) return
+    if (this.management !== undefined) {
+      try { this.repairReleaseAgePolicy() }
+      catch (error) { logEvent('warn', 'release-age-repair', errorMessage(error)) }
+    }
     const state = readMarketState(this.options.profileDir)
     const previousRestart = state.pendingRestart?.pid !== process.pid ? state.pendingRestart : undefined
     const dependencies = readDependencies(this.options.profileDir)
@@ -726,7 +805,7 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
     const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
@@ -755,6 +834,7 @@ export class SkinLifecycle {
       cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
+    if (releaseAgeApproval !== undefined) this.pendingReleaseAgeApprovals.set(operation.id, releaseAgeApproval)
     if (acknowledgeCompatibility === true && acknowledgedContext !== undefined) this.compatibilityContexts.set(operation.id, acknowledgedContext)
     this.abortControllers.set(operation.id, new AbortController())
     if (kind === 'install' || kind === 'update' || kind === 'migrate') {
@@ -781,13 +861,22 @@ export class SkinLifecycle {
     return operation
   }
 
-  retry(id: string, action: 'retry' | 'approve-build', acknowledgeCompatibility = false, acknowledgedContext?: string): Operation {
+  retry(id: string, action: 'retry' | 'approve-build' | 'approve-release-age', acknowledgeCompatibility = false, acknowledgedContext?: string): Operation {
     const failed = this.operations.get(id)
     if (failed === undefined || failed.phase !== 'failed') throw new Error('operation is not retryable')
     if (failed.failure?.action !== action) throw new Error('该操作不支持此恢复动作')
+    let releaseAgeApproval: ReleaseAgeApproval | undefined
+    if (action === 'approve-release-age') {
+      const approved = this.failedReleaseAgeApprovals.get(id)
+      const target = failed.failure.releaseAgeTarget
+      if (approved === undefined || target === undefined
+        || target.packageName !== approved.target.packageName || target.version !== approved.target.version
+        || approved.context !== this.releaseAgeContext(failed)) throw new Error('需要放行的版本或安装目标已变化，请重新操作后确认')
+      releaseAgeApproval = { target: { ...approved.target }, context: approved.context, failedId: id }
+    }
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -825,6 +914,7 @@ export class SkinLifecycle {
         operation.message = operation.phase === 'queued' ? '正在等待其他皮肤操作完成' : '下载完成，正在等待写入'
       }
       this.profileLockOwner = operation.id
+      this.applyReleaseAgeApproval(operation)
       return await fn()
     } finally {
       if (this.profileLockOwner === operation.id) this.profileLockOwner = null
@@ -886,10 +976,8 @@ export class SkinLifecycle {
       if (error instanceof ManagedOperationError) {
         const managed = error.result.management
         if (managed?.indeterminate !== true && managed?.application !== undefined) operation.application = managed.application
-        if (managed?.pendingBuilds?.length) {
-          this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
-          operation.failure = { kind: 'build-approval', message: error.message, buildKeys: managed.pendingBuilds, ...(this.management?.capabilities().buildApprovals.available ? { action: 'approve-build' as const } : {}) }
-        } else if (managed?.error?.code === 'incompatible-version') operation.failure = { kind: 'compatibility', message: error.message }
+        operation.failure = officialOperationFailure(error.result, this.management?.capabilities().buildApprovals.available)
+        if (operation.failure?.buildKeys?.length) this.pendingBuildKeys.set(operation.id, operation.failure.buildKeys)
       }
       if (this.expired.has(operation.id)) {
         const message = `安装已达到总时限，已停止继续重试${this.recoveryErrors.has(operation.id) ? `；${this.recoveryErrors.get(operation.id)}` : ''}`
@@ -924,11 +1012,29 @@ export class SkinLifecycle {
           error instanceof PnpmCommandError ? 'pnpm' : 'operation',
           error instanceof PnpmCommandError
             ? `kind=${error.failure.kind}${error.failure.packageName === undefined ? '' : ` package=${error.failure.packageName}`} ${failureDiagnostic(error.result)}`
-            : errorMessage(error),
+            : error instanceof ManagedOperationError ? officialFailureDiagnostic(error.result) : errorMessage(error),
           operation.id,
         )
         const recoveryError = this.recoveryErrors.get(operation.id)
-        if (recoveryError !== undefined && operation.failure !== undefined) delete operation.failure.action
+        const ageTarget = operation.failure?.releaseAgeTarget
+        const exactAgeTarget = ageTarget === undefined ? undefined : parseReleaseAgeTarget(ageTarget.packageName, ageTarget.version)
+        const canCompletePartial = this.partialManagedArtifacts.has(operation.id) && ['install', 'update', 'migrate'].includes(operation.kind)
+        const canApproveAge = (recoveryError === undefined || canCompletePartial) && this.management !== undefined && operation.application === 'failed'
+          && operation.failure?.kind === 'release-age' && exactAgeTarget !== undefined
+          && error instanceof ManagedOperationError && !error.result.aborted && !error.result.timedOut
+          && this.abortControllers.get(operation.id)?.signal.aborted !== true
+          && ['install', 'update', 'migrate', 'uninstall'].includes(operation.kind)
+        if (canApproveAge && operation.failure !== undefined && exactAgeTarget !== undefined) {
+          operation.failure.action = 'approve-release-age'
+          this.failedReleaseAgeApprovals.set(operation.id, { target: { ...exactAgeTarget }, context: this.releaseAgeContext(operation) })
+        }
+        if (recoveryError !== undefined && operation.failure !== undefined) {
+          logEvent('warn', 'operation-recovery', recoveryError, operation.id)
+          if (!canApproveAge) {
+            delete operation.failure.action
+            operation.failure.message += `；${recoveryError}`
+          }
+        }
         this.update(operation, 'failed', `${errorMessage(error)}${recoveryError === undefined ? '' : `；${recoveryError}`}`)
       }
     } finally {
@@ -938,8 +1044,10 @@ export class SkinLifecycle {
       this.expired.delete(operation.id)
       this.profileMutations.delete(operation.id)
       this.recoveryErrors.delete(operation.id)
+      this.partialManagedArtifacts.delete(operation.id)
       this.desktopManagedAttempts.delete(operation.id)
       this.desktopRecoveryBaselines.delete(operation.id)
+      this.pendingReleaseAgeApprovals.delete(operation.id)
       this.abortControllers.delete(operation.id)
       this.compatibilityContexts.delete(operation.id)
       if (this.disposed || operation.phase === 'waiting') return
@@ -947,6 +1055,7 @@ export class SkinLifecycle {
         this.operationCleanupTimers.delete(operation.id)
         this.operations.delete(operation.id)
         this.pendingBuildKeys.delete(operation.id)
+        this.failedReleaseAgeApprovals.delete(operation.id)
       }, 30 * 60 * 1000)
       timer.unref?.()
       this.operationCleanupTimers.set(operation.id, timer)
@@ -956,11 +1065,14 @@ export class SkinLifecycle {
   private async run(args: readonly string[], operation?: Operation): Promise<void> {
     if (this.management !== undefined) {
       this.checkDeadline(operation)
-      const pending = this.options.runner(this.options.profile, args, {
-        signal: operation === undefined ? undefined : this.abortControllers.get(operation.id)?.signal,
-        timeoutMs: this.remainingTime(operation),
-      })
-      this.acceptManagement(await (args[0] === 'remove' ? this.awaitLifecycle(pending, operation) : pending), operation)
+      const result = await this.managedPackageCall(async () => {
+        const pending = this.options.runner(this.options.profile, args, {
+          signal: operation === undefined ? undefined : this.abortControllers.get(operation.id)?.signal,
+          timeoutMs: this.remainingTime(operation),
+        })
+        return await (args[0] === 'remove' ? this.awaitLifecycle(pending, operation) : pending)
+      }, operation, args[0] === 'remove' ? args[1] : undefined, args[0] === 'add')
+      this.acceptManagement(result, operation)
       return
     }
     this.checkDeadline(operation)
@@ -1036,8 +1148,9 @@ export class SkinLifecycle {
     if (this.disposed || this.waitingReason !== undefined) return
     if (this.management !== undefined) {
       restoreFile(marketStateFile(this.options.profileDir), snapshot.marketState)
-      if (snapshot.artifact.spec !== null && !compareInstalledArtifact(this.options.profileDir, snapshot.artifact).ok) {
+      if (!managedArtifactUnchanged(this.options.profileDir, snapshot.artifact)) {
         this.recoveryErrors.set(operation.id, '官方管理操作后构件与原有版本不一致，请在官方插件页核对实际状态')
+        this.partialManagedArtifacts.add(operation.id)
       }
       return
     }
@@ -1134,7 +1247,7 @@ export class SkinLifecycle {
       }
       if (this.management !== undefined) {
         operation.cancelable = this.management.capabilities().cancel.available
-        const result = await installPlugin(this.options.profile, request, {
+        const result = await this.managedPackageCall(() => installPlugin(this.options.profile, { ...request, receiptId: randomUUID() }, {
           signal: controller?.signal,
           timeoutMs: this.remainingTime(operation),
           onStdout: chunk => tracker.push(chunk, operation),
@@ -1144,7 +1257,7 @@ export class SkinLifecycle {
               this.update(operation, 'validating', '下载已完成，正在由宿主应用插件')
             } else if (progress.phase === 'installing') operation.cancelable = this.management?.capabilities().cancel.available === true
           },
-        })
+        }), operation, skin.package, true)
         this.acceptManagement(result, operation)
         if (result.management?.version !== undefined && result.management.version !== capability.packageVersion) throw new Error('官方宿主安装的版本与已核验目标不一致')
         const artifact = validateDesktopArtifact(this.options.profileDir, skin)
@@ -1601,7 +1714,7 @@ export class SkinLifecycle {
       if (requiresRestart || operation.restartRequired === true) {
         operation.message = 'activation saved; restart DSH to load this skin'
       } else {
-        operation.message = active?.found && active.live ? 'skin is active' : '启用选择已保存，但皮肤组件尚未运行；请在官方插件页检查加载状态'
+        operation.message = active?.found && active.live ? 'skin is active' : '启用设置已保存，但皮肤组件尚未运行；请在官方插件页检查加载状态'
       }
     } catch (error) {
       if (await this.retainSavedOfficialSelection(error, operation, previous, next, skin)) return

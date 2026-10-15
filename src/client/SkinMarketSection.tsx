@@ -259,7 +259,7 @@ function operationMeta(operation: ProgressMetadata, now: number): string[] {
   return details
 }
 
-function recoveryActionLabel(action: 'retry' | 'approve-build' | undefined): string | undefined {
+function recoveryActionLabel(action: NonNullable<Operation['failure']>['action']): string | undefined {
   if (action === 'approve-build') return '批准构建并重试'
   if (action === 'retry') return '重试'
   return undefined
@@ -689,10 +689,14 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [copyingLogId, setCopyingLogId] = useState<string | null>(null)
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null)
   const [copyLogError, setCopyLogError] = useState<string | null>(null)
+  const [releaseAgeApprovalPending, setReleaseAgeApprovalPending] = useState<string | null>(null)
+  const releaseAgeApprovalPendingRef = useRef<string | null>(null)
+  const [releaseAgeApprovalError, setReleaseAgeApprovalError] = useState<string | null>(null)
   const [dismissedBuildApprovalId, setDismissedBuildApprovalId] = useState<string | null>(null)
   const [marketUpdating, setMarketUpdating] = useState(false)
   const [restartTarget, setRestartTarget] = useState<RestartTarget | null>(null)
   const [pendingRestart, setPendingRestart] = useState<PendingRestartNotice | null>(null)
+  const [completedUninstall, setCompletedUninstall] = useState<{ skinId: string; title: string; startedAt: string } | null>(null)
   const [compatibilityWarning, setCompatibilityWarning] = useState<CompatibilityAssessment | null>(null)
   const [compatibilityConfirmation, setCompatibilityConfirmation] = useState<CompatibilityConfirmation | null>(null)
   const compatibilityConsentResolver = useRef<((context: string | null) => void) | null>(null)
@@ -717,6 +721,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   restartTargetRef.current = restartTarget
   const dismissedMarketOperationIds = useRef(new Set<string>())
   const pendingInstallActivation = useRef(new Map<string, string | undefined>())
+  const operationCompatibilityContexts = useRef(new Map<string, { skinId: string; kind: MutationKind; context: string }>())
   const installRestartNotices = useRef(new Map<string, PendingRestartNotice>())
   const continuingInstallActivation = useRef(new Set<string>())
   const inflightSkinIds = useRef(new Set<string>())
@@ -783,6 +788,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     runtimeRef.current = state.runtime ?? null
     runtimeReadyRef.current = true
     setStates(state.skins)
+    setCompletedUninstall(current => {
+      if (current === null) return null
+      const skinState = runtimeFor(state.skins, current.skinId)
+      return skinState.installation === 'missing' && skinState.activation !== 'restart-required' ? current : null
+    })
     setHostKind(state.hostKind ?? 'dsh')
     setRuntime(state.runtime ?? null)
     setManagement(state.management)
@@ -864,8 +874,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         : preserved?.target.kind === target.kind && (target.kind === 'market-update' || preserved.target.kind === 'skin' && preserved.target.skinId === target.skinId)
           ? preserved
           : clientNotice?.target.kind === 'skin' && target.kind === 'skin' && clientNotice.target.skinId === target.skinId ? clientNotice
-          : { target, title: pendingRestartTitle(target.kind === 'market-update' ? '皮肤市场已更新' : `${skin?.name.zh ?? '皮肤'} 设置已保存`, state.restartAvailable !== false),
-            description: target.kind === 'market-update' ? '皮肤市场已更新，重启后生效。' : undefined,
+          : { target, title: pendingRestartTitle(target.kind === 'market-update' ? '皮肤市场已更新' : `${skin?.name.zh ?? '皮肤'} ${skinState?.installation === 'missing' ? '已卸载' : '设置已保存'}`, state.restartAvailable !== false),
+            description: target.kind === 'market-update' ? '皮肤市场已更新，重启后生效。'
+              : skinState?.installation === 'missing' ? `“${skin?.name.zh ?? '皮肤'}”已卸载，重启后生效。` : undefined,
             startedAt: skinState?.lastOperatedAt ?? new Date().toISOString() }
       presentRestartNotice(notice, state, null, autoRestartPrompt)
     }
@@ -1309,18 +1320,21 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
   }, [marketOperation])
 
-  const retryMarketUpdate = useCallback(async () => {
+  const retryMarketUpdate = useCallback(async (action: 'retry' | 'approve-release-age' = 'retry') => {
     const operation = marketOperation
-    if (operation === null || operation.failure?.action !== 'retry') return
+    if (operation === null || operation.failure?.action !== action) return
     setMarketUpdating(true)
     try {
-      const result = await json<{ operationId: string }>(`/dsh-skin-market/market-update/operations/${operation.id}/retry`, { method: 'POST' })
+      const result = await json<{ operationId: string }>(`/dsh-skin-market/market-update/operations/${operation.id}/retry`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action }),
+      })
       setMarketOperation({ id: result.operationId, phase: 'queued', cancelable: true, startedAt: new Date().toISOString() })
       void waitForMarketUpdate(result.operationId)
     } catch (reason) {
       setMarketUpdating(false)
       const message = reason instanceof Error ? reason.message : String(reason)
       setMarketOperation(current => current?.id === operation.id ? { ...current, phase: 'failed', cancelable: false, message } : current)
+      if (action === 'approve-release-age') setReleaseAgeApprovalError(message)
       setError(null)
     }
   }, [marketOperation, waitForMarketUpdate])
@@ -1377,7 +1391,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const restoreInstallRestartNotice = useCallback(async (skinId: string, autoPrompt = true, activationUncertain = false) => {
     const notice = installRestartNotices.current.get(skinId)
     const state = latestMarketState.current
-    if (notice === undefined || !mounted.current || state === null || runtimeFor(state.skins, skinId).activation !== 'restart-required') return
+    if (notice === undefined || !mounted.current || state === null) return
+    const skinState = runtimeFor(state.skins, skinId)
+    if (skinState.installation !== 'installed' || skinState.activation !== 'restart-required') return
     const name = skinsRef.current.find(skin => skin.id === skinId)?.name.zh ?? '此皮肤'
     const restored = { ...notice, title: activationUncertain ? `${name} 已安装，自动切换结果待确认` : `${name} 已安装，但未启用`,
       description: activationUncertain
@@ -1423,6 +1439,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
     const targetState = runtimeFor(statesRef.current, target.id)
     setError(null)
+    setCompletedUninstall(current => current?.skinId === skinId ? null : current)
     inflightSkinIds.current.add(target.id)
     if (existingOperationId === undefined) {
       setOperations(list => upsertOperation(list, {
@@ -1433,6 +1450,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }) }),
       })).operationId
+      if (acceptedContext !== undefined) operationCompatibilityContexts.current.set(operationId, { skinId: target.id, kind, context: acceptedContext })
       for (;;) {
         if (!mounted.current) return false
         const operation = await json<Operation>(`/dsh-skin-market/operations/${operationId}`)
@@ -1449,6 +1467,24 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           inflightSkinIds.current.delete(target.id)
         }
         if (operation.phase === 'done') {
+          operationCompatibilityContexts.current.delete(operationId)
+          if (kind === 'uninstall') {
+            // Removal is confirmed even if refreshing the catalog fails.
+            // An earlier install reminder must never be restored afterward.
+            installRestartNotices.current.delete(target.id)
+            pendingInstallActivation.current.delete(target.id)
+            clientRestartNotices.current.delete(target.id)
+            if (pendingRestartRef.current?.target.kind === 'skin' && pendingRestartRef.current.target.skinId === target.id) {
+              pendingRestartRef.current = null
+              setPendingRestart(null)
+            }
+            if (restartTargetRef.current?.kind === 'skin' && restartTargetRef.current.skinId === target.id) {
+              restartTargetRef.current = null
+              setRestartTarget(null)
+              setConfirmRestart(false)
+              setCompatibilityWarning(null)
+            }
+          }
           // Official hosts can save their enabled selection before restart,
           // even when newly installed modules are not live in this process.
           // Finish both steps before showing one restart prompt.
@@ -1482,9 +1518,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           const installBeforeUse = kind === 'install' && hostKind === 'desktop'
           const restartNotice: PendingRestartNotice = { target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
             ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
-            : pendingRestartTitle(`${target.name.zh} ${kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
+            : pendingRestartTitle(`${target.name.zh} ${kind === 'uninstall' ? '已卸载' : kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
             description: installBeforeUse ? `“${target.name.zh}”已安装，重启后可使用。`
-              : kind === 'activate' ? `已保存“${target.name.zh}”的启用选择，重启后生效。`
+              : kind === 'activate' ? `已启用“${target.name.zh}”，重启后生效。`
                 : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
             startedAt: new Date().toISOString() }
           if (kind === 'install' && operation.restartRequired === true) installRestartNotices.current.set(target.id, restartNotice)
@@ -1500,6 +1536,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             presentRestartNotice(notice, refreshed, advisory)
           }
           const needsRestart = clientNeedsRestart || runtimeFor(refreshed.skins, target.id).activation === 'restart-required'
+          if (kind === 'uninstall' && !needsRestart) {
+            setCompletedUninstall({ skinId: target.id, title: `${target.name.zh} 已卸载`, startedAt: restartNotice.startedAt })
+          }
           if (!needsRestart) {
             if (advisory !== null) setCompatibilityWarning(advisory)
           }
@@ -1509,6 +1548,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           return kind !== 'install' || !needsRestart
         }
         if (operation.phase === 'cancelled') {
+          operationCompatibilityContexts.current.delete(operationId)
           continuingInstallActivation.current.delete(target.id)
           await refresh()
           await restoreInstallRestartNotice(target.id)
@@ -1546,27 +1586,38 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     void runForSkin(skinId, 'activate', undefined, { compatibilityContext })
   }, [runForSkin])
 
-  const retrySkinOperation = useCallback(async (operation: Operation) => {
-    const action = operation.failure?.action
-    if (action === undefined) return
+  const retrySkinOperation = useCallback(async (operation: Operation, requestedAction?: NonNullable<Operation['failure']>['action']) => {
+    const action = requestedAction ?? (operation.failure?.action === 'approve-release-age' ? undefined : operation.failure?.action)
+    if (action === undefined || action !== operation.failure?.action) return
     try {
-      const skin = skinsRef.current.find(item => item.id === operation.skinId)
+      let skin = skinsRef.current.find(item => item.id === operation.skinId)
       if (skin === undefined) return
       const installAndUse = operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)
-      const consent = await requestCompatibilityConsent(skin, operation.kind, installAndUse)
-      if (consent.decision === 'cancelled' || !mounted.current) return
+      const previous = operationCompatibilityContexts.current.get(operation.id)
+      const boundContext = previous?.skinId === operation.skinId && previous.kind === operation.kind ? previous.context : undefined
+      let acceptedContext = boundContext === skinCompatibilityContext(skin, runtimeRef.current) ? boundContext : undefined
+      while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(skin, runtimeRef.current)) {
+        const consent = await requestCompatibilityConsent(skin, operation.kind, installAndUse, boundContext !== undefined || acceptedContext !== undefined)
+        if (consent.decision === 'cancelled' || !mounted.current) return
+        acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
+        skin = skinsRef.current.find(item => item.id === operation.skinId)
+        if (skin === undefined) return
+        if (consent.decision === 'not-required') break
+      }
       const reason = currentActionReason.current(operation.kind)
       if (reason !== null) { setError(reason); return }
-      const acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
       if (installAndUse) pendingInstallActivation.current.set(operation.skinId, acceptedContext)
       const result = await json<{ operationId: string }>(`/dsh-skin-market/operations/${operation.id}/retry`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }) }),
       })
+      operationCompatibilityContexts.current.delete(operation.id)
+      setOperations(list => list.filter(item => item.id !== operation.id))
       const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext })
       if (retried && operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason)
       setOperations(list => list.map(item => item.id === operation.id ? { ...item, message } : item))
+      if (action === 'approve-release-age') setReleaseAgeApprovalError(message)
       setError(null)
     }
   }, [activateSkin, requestCompatibilityConsent, runForSkin])
@@ -1743,6 +1794,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       ? marketUpdateNotice(marketInterceptOperation)
       : null
   const interceptLogId = interceptOperation?.id ?? marketInterceptOperation?.id
+  const interceptFailure = interceptOperation?.failure ?? marketInterceptOperation?.failure
+  const releaseAgeTarget = interceptFailure?.kind === 'release-age' && interceptFailure.action === 'approve-release-age' ? interceptFailure.releaseAgeTarget : undefined
   const selectedBusy = selected === undefined ? undefined : liveOperationFor(operations, selected.id)
   const selectedInstallAndUsePending = selected !== undefined && continuingInstallActivation.current.has(selected.id)
   const managementNotice = management === undefined ? '' : [...new Set([
@@ -1750,11 +1803,29 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   ])].join('；')
   const pnpmBusy = operations.some(operation => isLiveOperation(operation) && PROFILE_PNPM_KINDS.has(operation.kind))
   const dismissIntercept = () => {
+    if (releaseAgeApprovalPendingRef.current !== null) return
     setCopyLogError(null)
-    if (interceptOperation !== null) setOperations(list => list.filter(operation => operation.id !== interceptOperation.id))
+    setReleaseAgeApprovalError(null)
+    if (interceptOperation !== null) {
+      operationCompatibilityContexts.current.delete(interceptOperation.id)
+      setOperations(list => list.filter(operation => operation.id !== interceptOperation.id))
+    }
     if (marketInterceptOperation !== null) {
       dismissedMarketOperationIds.current.add(marketInterceptOperation.id)
       setMarketOperation(null)
+    }
+  }
+  const approveInterceptReleaseAge = async () => {
+    if (releaseAgeTarget === undefined || interceptLogId === undefined || releaseAgeApprovalPendingRef.current !== null) return
+    releaseAgeApprovalPendingRef.current = interceptLogId
+    setReleaseAgeApprovalPending(interceptLogId)
+    setReleaseAgeApprovalError(null)
+    try {
+      if (interceptOperation !== null) await retrySkinOperation(interceptOperation, 'approve-release-age')
+      else if (marketInterceptOperation !== null) await retryMarketUpdate('approve-release-age')
+    } finally {
+      releaseAgeApprovalPendingRef.current = null
+      if (mounted.current) setReleaseAgeApprovalPending(null)
     }
   }
 
@@ -1789,7 +1860,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           : recoveryActionLabel(operation.failure?.action) === undefined
             ? undefined
             : <Button variant="outline" size="sm" onClick={() => { void retrySkinOperation(operation) }}>{recoveryActionLabel(operation.failure?.action)}</Button>}
-        onDismiss={terminal ? () => setOperations(list => list.filter(item => item.id !== operation.id)) : undefined}
+        onDismiss={terminal ? () => { operationCompatibilityContexts.current.delete(operation.id); setOperations(list => list.filter(item => item.id !== operation.id)) } : undefined}
       />
     })
     return className === css.homeOperation
@@ -1822,7 +1893,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   />
   }
 
-  const renderPendingRestartBanner = (className?: string) => pendingRestart === null ? null : <OperationBanner
+  const renderCompletedUninstallBanner = (className?: string, skinId?: string) => completedUninstall === null
+    || skinId !== undefined && completedUninstall.skinId !== skinId ? null : <OperationBanner
+    className={className}
+    title={completedUninstall.title}
+    startedAt={completedUninstall.startedAt}
+    terminal
+    onDismiss={() => setCompletedUninstall(null)}
+  />
+
+  const renderPendingRestartBanner = (className?: string, skinId?: string) => pendingRestart === null
+    || skinId !== undefined && pendingRestart.target.kind === 'skin' && pendingRestart.target.skinId !== skinId ? null : <OperationBanner
     className={className}
     title={pendingRestart.title}
     startedAt={pendingRestart.startedAt}
@@ -1860,6 +1941,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           <div className={css.homeSearchPlaceholder} aria-hidden="true" />
           {renderSkinOperationBanner(css.homeOperation)}
           {renderMarketOperationBanner(css.homeOperation)}
+          {renderCompletedUninstallBanner(css.homeOperation)}
           {renderPendingRestartBanner(css.homeOperation)}
           {(profileBusy !== undefined || managementNotice !== '') && <p className={css.notice} role="status">{profileBusy ?? managementNotice}</p>}
         </header>
@@ -1995,7 +2077,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           {managementNotice !== '' && <p className={css.notice} role="note">{managementNotice}</p>}
           {renderSkinOperationBanner()}
           {renderMarketOperationBanner()}
-          {renderPendingRestartBanner()}
+          {renderCompletedUninstallBanner(undefined, selected.id)}
+          {renderPendingRestartBanner(undefined, selected.id)}
           {error !== null && <div className={css.error} role="alert">{error}</div>}
           {state.activation === 'unavailable' && state.error !== undefined && <div className={css.error} role="status">{state.error}</div>}
 
@@ -2065,7 +2148,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         onClose={dismissIntercept}
         title={intercept?.title ?? '已拦截安装'}
         closeLabel="关闭"
-        description={intercept?.what ?? ''}
+        description={intercept?.what.trim() || undefined}
         footer={<>
           <Button
             variant="outline"
@@ -2074,11 +2157,18 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             disabled={interceptLogId === undefined || copyingLogId === interceptLogId}
             onClick={() => { if (interceptLogId !== undefined) void copyOperationLog(interceptLogId) }}
           >{copiedLogId === interceptLogId ? '日志已复制' : copyingLogId === interceptLogId ? '复制中…' : '复制日志'}</Button>
-          <Button variant="primary" size="sm" onClick={dismissIntercept}>确认</Button>
+          {releaseAgeTarget === undefined
+            ? <Button variant="primary" size="sm" onClick={dismissIntercept}>确认</Button>
+            : <>
+              <Button variant="outline" size="sm" disabled={releaseAgeApprovalPending !== null} onClick={dismissIntercept}>暂不允许</Button>
+              <Button variant="primary" size="sm" disabled={releaseAgeApprovalPending !== null} onClick={() => { void approveInterceptReleaseAge() }}>{releaseAgeApprovalPending === interceptLogId ? '处理中…' : '允许此版本并继续'}</Button>
+            </>}
         </>}
       >
         {intercept !== null && <div className={css.interceptNotice}>
-          <p><strong>为什么会这样</strong>{intercept.why}</p>
+          {intercept.why.trim() !== '' && <p>{intercept.why}</p>}
+          {releaseAgeTarget !== undefined && <p>允许版本：<code>{releaseAgeTarget.packageName}@{releaseAgeTarget.version}</code></p>}
+          {releaseAgeApprovalError !== null && <p className={css.notice} role="alert">{releaseAgeApprovalError}</p>}
           {intercept.links.length > 0 && <div className={css.interceptHelp}>
             {intercept.links.map(link => (
               <a key={link.href} className={css.repoLink} href={link.href} target="_blank" rel="noreferrer">

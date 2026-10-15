@@ -3,9 +3,10 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { stringify } from 'yaml'
+import { parse, stringify } from 'yaml'
 import { SkinLifecycle } from '../src/lifecycle.ts'
 import { compatibilityContext } from '../src/compatibility.ts'
+import { exportLogs, sanitizeLogText } from '../src/log.ts'
 import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
 import { atomicWriteJson, atomicWriteText, packageDir, profilePatchFile, readDependencies, readMarketState, readProfileBundles, writeMarketState } from '../src/profile.ts'
 import type { DshRuntime, LoaderEntry, Operation, SkinEntry } from '../src/types.ts'
@@ -166,6 +167,327 @@ function fixture(catalog: SkinEntry[], options: { lifecycleWaitMs?: number; host
 }
 
 describe('official plugin manager lifecycle', () => {
+  const ageRefusal = (name = 'dsh-skin-market', version = '0.1.60') => {
+    const output = `[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification: ${name}@${version} was published at 2026-10-15T07:47:31.608Z, within the minimumReleaseAge cutoff (2026-10-14T08:04:41.370Z)`
+    return { changed: false, application: 'failed', stage: 'install', error: { code: 'operation-error', diagnostic: output }, packageResult: { exitCode: 1, kind: 'unknown', output } }
+  }
+
+  it('merges already permitted exact versions before the first native installation', async () => {
+    const item = skin('age-before-install')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - dsh-skin-market@0.1.60\notherSetting: preserve\n')
+    host.manager.installBundle.mockImplementationOnce(async spec => {
+      expect(parse(readFileSync(workspace, 'utf8'))).toEqual({ minimumReleaseAgeExclude: ['dsh-skin-market@0.1.59 || 0.1.60'], otherSetting: 'preserve' })
+      return host.applyInstall(spec)
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.phase).toBe('done')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('repairs a rule appended during a confirmed failed request and retries exactly once with a fresh request id', async () => {
+    const item = skin('age-appended-during-install')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockImplementationOnce(async () => {
+      atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - dsh-skin-market@0.1.60\n')
+      return ageRefusal()
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.phase).toBe('done')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+    expect(host.manager.installBundle.mock.calls[0]![1]?.requestId).not.toEqual(host.manager.installBundle.mock.calls[1]![1]?.requestId)
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['dsh-skin-market@0.1.59 || 0.1.60'])
+  })
+
+  it('allows only the version named by the failed request when the user explicitly continues', async () => {
+    const item = skin('age-exact-approval')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAge: 1440\nminimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\notherSetting: preserve\n')
+    host.manager.installBundle.mockResolvedValueOnce(ageRefusal())
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    expect(failed.failure).toMatchObject({ kind: 'release-age', action: 'approve-release-age', releaseAgeTarget: { packageName: 'dsh-skin-market', version: '0.1.60' } })
+    expect(() => host.lifecycle.retry(failed.id, 'retry')).toThrow('不支持')
+    expect(readFileSync(workspace, 'utf8')).not.toContain('0.1.60')
+    const continued = await finished(host.lifecycle.retry(failed.id, 'approve-release-age'))
+    expect(continued.phase).toBe('done')
+    expect(parse(readFileSync(workspace, 'utf8'))).toEqual({ minimumReleaseAge: 1440, minimumReleaseAgeExclude: ['dsh-skin-market@0.1.59 || 0.1.60'], otherSetting: 'preserve' })
+  })
+
+  it('rejects an approval when the skin target changed after the failure', async () => {
+    const item = skin('age-stale-approval')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockResolvedValueOnce(ageRefusal())
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    await host.lifecycle.replaceCatalog([skin(item.id, '1.0.1')])
+    expect(() => host.lifecycle.retry(failed.id, 'approve-release-age')).toThrow('已变化')
+    expect(readFileSync(workspace, 'utf8')).not.toContain('0.1.60')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('also merges existing rules during startup after an update from another entry point', async () => {
+    const host = fixture([skin('age-external-update')])
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - dsh-skin-market@0.1.60\n')
+    await host.lifecycle.replay()
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['dsh-skin-market@0.1.59 || 0.1.60'])
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it.each(['aborted', 'timedOut'] as const)('does not offer approval after a failed age request was %s', async flag => {
+    const item = skin(`age-no-approval-${flag}`)
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    atomicWriteText(join(host.directory, 'pnpm-workspace.yaml'), 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockResolvedValueOnce(ageRefusal())
+    const nativeInstall = host.runner.installPlugin!
+    host.runner.installPlugin = async (...args) => ({ ...await nativeInstall(...args), [flag]: true })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.failure?.kind).toBe('release-age')
+    expect(operation.failure?.action).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('completes a partially materialized exact install when the named new age exception was shadowed', async () => {
+    const item = skin('age-partial-artifact')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockImplementationOnce(async spec => {
+      host.applyInstall(spec)
+      atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - dsh-skin-market@0.1.60\n')
+      return ageRefusal()
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.phase).toBe('done')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['dsh-skin-market@0.1.59 || 0.1.60'])
+  })
+
+  it('does not repeat a partial failed install when its terminal failure is unrelated to the repaired rules', async () => {
+    const item = skin('age-unrelated-partial-artifact')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockImplementationOnce(async spec => {
+      host.applyInstall(spec)
+      atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n  - dsh-skin-market@0.1.60\n')
+      return { application: 'failed', error: { message: '磁盘空间不足' }, packageResult: { exitCode: 1, kind: 'disk-full', output: 'ENOSPC' } }
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.phase).toBe('failed')
+    expect(operation.message).toContain('构件与原有版本不一致')
+    expect(operation.failure?.action).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('revalidates the failed approval after entering the profile queue and before writing', async () => {
+    const item = skin('age-approval-queue-race')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockResolvedValueOnce(ageRefusal())
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    const continued = host.lifecycle.retry(failed.id, 'approve-release-age')
+    failed.failure!.releaseAgeTarget!.version = '0.1.61'
+    await finished(continued)
+    expect(continued.phase).toBe('failed')
+    expect(continued.message).toContain('已变化')
+    expect(readFileSync(workspace, 'utf8')).not.toContain('0.1.60')
+    expect(readFileSync(workspace, 'utf8')).not.toContain('0.1.61')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers exact approval after the native age check leaves new files behind a rolled-back manifest', async () => {
+    const item = skin('age-partial-needs-approval')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAge: 1440\nminimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    const beforeManifest = readFileSync(join(host.directory, 'package.json'), 'utf8')
+    host.manager.installBundle.mockImplementationOnce(async spec => {
+      host.applyInstall(spec)
+      atomicWriteText(join(host.directory, 'package.json'), beforeManifest)
+      rmSync(join(host.directory, 'pnpm-lock.yaml'), { force: true })
+      return ageRefusal()
+    })
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    expect(failed.failure).toMatchObject({ action: 'approve-release-age', releaseAgeTarget: { packageName: 'dsh-skin-market', version: '0.1.60' } })
+    expect(readFileSync(workspace, 'utf8')).not.toContain('0.1.60')
+    const retried = await finished(host.lifecycle.retry(failed.id, 'approve-release-age'))
+    expect(retried.phase).toBe('done')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+    expect(parse(readFileSync(workspace, 'utf8'))).toEqual({ minimumReleaseAge: 1440, minimumReleaseAgeExclude: ['dsh-skin-market@0.1.59 || 0.1.60'] })
+  })
+
+  it('saves the exact approval even if the failed install already left a fully verified target on disk', async () => {
+    const item = skin('age-verified-target-needs-approval')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const workspace = join(host.directory, 'pnpm-workspace.yaml')
+    atomicWriteText(workspace, 'minimumReleaseAgeExclude:\n  - dsh-skin-market@0.1.59\n')
+    host.manager.installBundle.mockImplementationOnce(async spec => { host.applyInstall(spec); return ageRefusal() })
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    expect(failed.failure?.action).toBe('approve-release-age')
+    const retried = await finished(host.lifecycle.retry(failed.id, 'approve-release-age'))
+    expect(retried.phase).toBe('done')
+    expect(parse(readFileSync(workspace, 'utf8')).minimumReleaseAgeExclude).toEqual(['dsh-skin-market@0.1.59 || 0.1.60'])
+  })
+
+  it.each([
+    ['pnpm-missing', 'pnpm-missing', 'spawn pnpm ENOENT'],
+    ['timeout', 'fetch-timeout', 'download did not finish'],
+    ['not-found', 'fetch-404', 'No package found'],
+    ['no-matching-version', 'no-matching-version', 'No matching version found'],
+    ['network', 'network', 'ECONNRESET'],
+    ['disk-full', 'disk-full', 'ENOSPC'],
+    ['permission', 'permission', 'EACCES'],
+    ['build-blocked', 'build-approval', 'Ignored build scripts: native-addon@1.0.0'],
+    ['integrity', 'integrity', 'Package integrity mismatch'],
+    ['unknown', 'lockfile-outdated', 'ERR_PNPM_OUTDATED_LOCKFILE Cannot install with frozen-lockfile'],
+    ['unknown', 'lockfile-broken', 'ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY Missing record'],
+    ['unknown', 'unexpected-store', 'ERR_PNPM_UNEXPECTED_STORE Unexpected store location'],
+    ['network', 'lockfile-broken', 'WARN ECONNRESET will retry\nERR_PNPM_LOCKFILE_MISSING_DEPENDENCY Missing record'],
+    ['unknown', 'command', 'An unrecognized package failure'],
+  ])('preserves the official %s failure as %s without repeating the installation', async (nativeKind, expectedKind, diagnostic) => {
+    const item = skin(`failure-${nativeKind}-${expectedKind}`)
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const output = `Progress: resolved 24, reused 18, downloaded 6\n${diagnostic}\nOperation stopped`
+    host.manager.installBundle.mockResolvedValueOnce({
+      changed: false, application: 'failed', stage: 'install', target: `${item.package}@1.0.0`,
+      error: { code: 'operation-error', diagnostic: output },
+      packageResult: { exitCode: 1, output, kind: nativeKind, truncated: false, logPath: '/tmp/fixture.log' },
+      // The official manager can report unrelated pending scripts after any failure.
+      pendingBuilds: ['native-addon'], registries: [null],
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation).toMatchObject({ phase: 'failed', application: 'failed', failure: { kind: expectedKind } })
+    expect(operation.message).not.toContain('Progress: resolved')
+    expect(operation.message).not.toContain('已自动重试')
+    expect(exportLogs({}, operation.id)).toContain(sanitizeLogText(diagnostic))
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(readDependencies(host.directory)).toEqual({})
+    if (expectedKind === 'build-approval') expect(operation.failure).toMatchObject({ buildKeys: ['native-addon'], action: 'approve-build' })
+    else expect(operation.failure?.buildKeys).toBeUndefined()
+    if (expectedKind === 'network' || expectedKind === 'fetch-timeout') expect(operation.failure?.action).toBe('retry')
+    else if (expectedKind !== 'build-approval') expect(operation.failure?.action).toBeUndefined()
+  })
+
+  it('uses the supplied short error message and retains the full official diagnostic only in logs', async () => {
+    const item = skin('official-short-message')
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValueOnce({
+      changed: false, application: 'failed', stage: 'install',
+      error: { code: 'operation-error', message: '连接安装源失败', diagnostic: 'Progress: resolved 24\nECONNRESET registry.example.test' },
+      packageResult: { exitCode: 1, kind: 'network', output: 'GET registry.example.test failed' },
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation).toMatchObject({ message: '连接安装源失败', failure: { kind: 'network', message: '连接安装源失败' } })
+    expect(exportLogs({}, operation.id)).toContain('ECONNRESET registry.example.test')
+  })
+
+  it('sanitizes a supplied short error message before exposing it to the client', async () => {
+    const item = skin('official-message-redaction')
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValueOnce({
+      application: 'failed', stage: 'install',
+      error: { code: 'operation-error', message: '连接失败：https://fixture:fixture-password@registry.example.test/package?token=fixture-token', diagnostic: 'ECONNRESET' },
+      packageResult: { exitCode: 1, kind: 'network', output: 'ECONNRESET' },
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.failure?.message).toContain('连接失败')
+    expect(operation.failure?.message).not.toContain('fixture-password')
+    expect(operation.failure?.message).not.toContain('fixture-token')
+    expect(operation.message).toBe(operation.failure?.message)
+  })
+
+  it('uses the terminal unclassified Error context instead of a recovered earlier network warning', async () => {
+    const item = skin('official-unknown-terminal-error')
+    const host = fixture([item])
+    const output = '[WARN] GET registry.example.test error (ECONNRESET). Will retry in 10 seconds.\n'
+      + 'Progress: resolved 24\nError: Unsupported manifest extension .skin\n    at install (/tmp/fixture.js:1:1)'
+    host.manager.installBundle.mockResolvedValueOnce({
+      application: 'failed', stage: 'install', error: { code: 'operation-error', diagnostic: output },
+      packageResult: { exitCode: 1, kind: 'unknown', output }, pendingBuilds: ['unrelated-addon'],
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation).toMatchObject({ application: 'failed', failure: { kind: 'command', message: 'Error: Unsupported manifest extension .skin' } })
+    expect(operation.failure?.action).toBeUndefined()
+    expect(operation.failure?.buildKeys).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('explains that a higher-priority disable override must be removed instead of asking for another restart', async () => {
+    const item = skin('official-disable-override')
+    const host = fixture([item])
+    host.materialize(item)
+    host.componentEnabled.set(item.package, false)
+    host.manager.setPluginEnabled.mockResolvedValueOnce({ application: 'overridden', enabled: true })
+    const operation = await finished(host.lifecycle.begin('activate', item.id))
+    expect(operation).toMatchObject({ phase: 'failed', application: 'overridden', failure: { kind: 'command' } })
+    expect(operation.message).toContain('目标皮肤被其他设置禁用')
+    expect(operation.message).toContain('请解除禁用后重新使用')
+    expect(operation.message).not.toContain('重启')
+  })
+
+  it.each(['within minimumReleaseAge cutoff', 'within the minimumReleaseAge cutoff'])('reports the terminal whole-lockfile policy refusal with the actual wording: %s', async cutoffPhrase => {
+    const item = skin('whole-lockfile-policy')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const output = 'WARN GET https://registry.npmmirror.com/fixture error (ECONNRESET). Will retry in 10 seconds.\n'
+      + 'Progress: resolved 24, reused 18, downloaded 6\n'
+      + `[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification: dsh-skin-market@0.1.60 was published at 2026-10-15T07:47:31.608Z, ${cutoffPhrase} (2026-10-14T08:04:41.370Z)`
+    host.manager.installBundle.mockResolvedValueOnce({
+      changed: false, application: 'failed', stage: 'install', target: `${item.package}@1.0.0`,
+      error: { code: 'operation-error', diagnostic: output }, packageResult: { exitCode: 1, kind: 'network', output },
+      pendingBuilds: ['native-addon'],
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation).toMatchObject({ phase: 'failed', application: 'failed', failure: { kind: 'release-age', packageName: 'dsh-skin-market' } })
+    expect(operation.message).toContain('dsh-skin-market@0.1.60')
+    expect(operation.message).toContain('新包保护期')
+    expect(operation.message).not.toContain('网络')
+    expect(operation.failure?.action).toBe('approve-release-age')
+    expect(operation.failure?.buildKeys).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps an unclassified terminal error useful, sanitized and bounded instead of replacing it with a generic message', async () => {
+    const item = skin('unclassified-summary')
+    const host = fixture([item])
+    const detail = `Unsupported manifest extension at https://fixture:fixture-password@registry.example.test/package?token=fixture-token ${'detail '.repeat(60)}`
+    host.manager.installBundle.mockResolvedValueOnce({
+      changed: false, application: 'failed', stage: 'install',
+      error: { code: 'operation-error', diagnostic: `Progress: resolved 24\nError: ${detail}\n    at install (/tmp/fixture.js:1:1)` },
+      packageResult: { exitCode: 1, kind: 'unknown', output: '' },
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation.failure?.kind).toBe('command')
+    expect(operation.message).toContain('Unsupported manifest extension')
+    expect(operation.message).not.toContain('fixture-password')
+    expect(operation.message).not.toContain('fixture-token')
+    expect(operation.message!.length).toBeLessThanOrEqual(240)
+    expect(operation.message).not.toContain('Progress:')
+    expect(operation.message).not.toContain('at install')
+    expect(operation.failure?.action).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('recognizes a manager-terminated script without treating a trapped exit code of zero as success', async () => {
+    const item = skin('official-script-timeout')
+    const host = fixture([item])
+    host.manager.installBundle.mockResolvedValueOnce({
+      changed: false, application: 'failed', stage: 'install', error: { code: 'operation-error' },
+      packageResult: { exitCode: 0, timedOut: true, kind: 'timeout', output: 'node_modules/native-addon postinstall: downloading\nprinted nothing for 600000ms and was terminated' },
+    })
+    const operation = await finished(host.lifecycle.begin('install', item.id))
+    expect(operation).toMatchObject({ phase: 'failed', application: 'failed', failure: { kind: 'script-timeout', packageName: 'native-addon' } })
+    expect(operation.failure?.action).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
   it('repairs the selected bundle main component without enabling other components or touching pinned selections', async () => {
     const target = skin('component-target'), current = skin('component-old'), pinned = skin('component-pinned')
     const host = fixture([target, current, pinned], { hostVersion: '0.2.0-rc.2' })

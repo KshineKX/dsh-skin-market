@@ -3,10 +3,12 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { CommandResult, PluginRunner } from './commands.ts'
-import { PnpmCommandError, classifyPnpmFailure, failureDiagnostic, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
+import { PnpmCommandError, failureDiagnostic, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { logEvent } from './log.ts'
-import { compareInstalledArtifact, manifestFile, packageManifest, pnpmLockfile, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
+import { officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
+import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
+import { compareInstalledArtifact, manifestFile, packageManifest, pnpmLockfile, readDependencies, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
 import { compareVersions, parseVersion } from './semver.ts'
 import type { OperationFailure } from './types.ts'
 import type { OfficialApplication } from './official-desktop.ts'
@@ -22,6 +24,12 @@ export interface MarketUpdateStatus {
   loadedVersion?: string
   latestVersion: string
   updateAvailable: boolean
+  updateBlockedReason?: string
+  /** Optional legacy status field; release age is handled from actual Desktop failures. */
+  updateAvailableAt?: string
+  packageOperationsWarning?: string
+  /** Optional legacy status field, retained for older clients. */
+  packageOperationsAvailableAt?: string
 }
 
 export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
@@ -50,6 +58,17 @@ interface MarketRelease {
   gitHead: string
   tarball: string
   integrity?: string
+}
+
+interface MarketReleaseApproval {
+  failedId: string
+  failure: OperationFailure
+  release: MarketRelease
+  target: ReleaseAgeTarget
+}
+
+function sameRelease(left: MarketRelease, right: MarketRelease): boolean {
+  return (['version', 'gitHead', 'tarball', 'integrity'] as const).every(key => left[key] === right[key])
 }
 
 class MarketProgressTracker {
@@ -118,7 +137,7 @@ export interface MarketUpdater {
   operation(id: string): MarketUpdateOperation | null
   currentOperation(): MarketUpdateOperation | null
   cancel(id: string): MarketUpdateOperation
-  retry(id: string): MarketUpdateOperation
+  retry(id: string, action?: 'retry' | 'approve-release-age'): MarketUpdateOperation
   /** Stop a route mount cleanly, joining any host package-manager request. */
   dispose?(): Promise<void>
   readonly restartRequired: boolean
@@ -156,16 +175,31 @@ export function createMarketUpdater(
   let restartRequired = false
   let activeOperation: string | null = null
   let disposed = false
+  const checkedReleases = new WeakMap<MarketUpdateStatus, MarketRelease>()
   const operations = new Map<string, MarketUpdateOperation>()
   const abortControllers = new Map<string, AbortController>()
   const updatePromises = new Map<string, Promise<void>>()
+  const releaseAgeApprovals = new Map<string, MarketReleaseApproval>()
+  const pendingApprovals = new Map<string, MarketReleaseApproval>()
   const profileDir = options.profileDir ?? resolveProfileDir(profile)
   const cancellationAvailable = (): boolean => runner.management === undefined || runner.management.capabilities().cancel.available
+
+  const releaseStatus = (release: MarketRelease): MarketUpdateStatus => {
+    const next: MarketUpdateStatus = {
+      currentVersion: installedVersion, loadedVersion, latestVersion: release.version,
+      updateAvailable: compareVersions(release.version, installedVersion) > 0,
+    }
+    checkedReleases.set(next, release)
+    return next
+  }
 
   const reconcileInstalledVersion = (): void => {
     // Do not inspect a package while its own transaction may be swapping it.
     // The transaction's stricter release validation remains authoritative.
     if (updating) return
+    // Read only the public dependency manifest; verify the installed npm artifact.
+    const dependency = readDependencies(profileDir)[MARKET_NPM_PACKAGE]
+    if (typeof dependency !== 'string' || dependency.trim() === '') return
     const version = packageManifest(profileDir, MARKET_NPM_PACKAGE)?.version
     if (typeof version !== 'string' || parseVersion(version) === null) return
     const source = latestRelease?.version === version
@@ -174,12 +208,7 @@ export function createMarketUpdater(
     if (!validateNpmArtifact(profileDir, source).ok) return
     installedVersion = version
     restartRequired = installedVersion !== loadedVersion
-    if (cached !== null) {
-      cached.status = {
-        ...cached.status, currentVersion: installedVersion, loadedVersion,
-        updateAvailable: compareVersions(cached.status.latestVersion, installedVersion) > 0,
-      }
-    }
+    if (cached !== null) cached.status = releaseStatus(cached.release)
   }
 
   const setOperation = (operation: MarketUpdateOperation, patch: Partial<MarketUpdateOperation>): void => {
@@ -196,12 +225,16 @@ export function createMarketUpdater(
     let metadata: { manifest: FileSnapshot; lockfile: FileSnapshot } | undefined
     let mutationStarted = false
     let lastResult: CommandResult | undefined
+    let targetRelease: MarketRelease | undefined
+    let managedArtifactMismatch = false
+    const approval = pendingApprovals.get(operation.id)
     const managerOwned = runner.management !== undefined
     const recover = async (): Promise<string | undefined> => {
       if (!mutationStarted || baseline === undefined) return undefined
       if (managerOwned) {
-        return compareInstalledArtifact(profileDir, baseline).ok ? undefined
-          : '官方 Desktop 的实际市场构件或锁文件解析与更新前状态不一致，不能确认取消或失败已恢复；请在应用插件管理器核验'
+        if (compareInstalledArtifact(profileDir, baseline).ok) return undefined
+        managedArtifactMismatch = true
+        return '官方 Desktop 的实际市场构件或锁文件解析与更新前状态不一致，不能确认取消或失败已恢复；请在应用插件管理器核验'
       }
       if (metadata === undefined) return undefined
       const restore = (): void => {
@@ -230,10 +263,36 @@ export function createMarketUpdater(
       setOperation(operation, { phase: 'checking', message: '正在检查皮肤市场版本' })
       const before = await status(true)
       operation.status = before
+      if (approval !== undefined && (!sameRelease(approval.release, checkedReleases.get(before) ?? { version: '', gitHead: '', tarball: '' }))) {
+        throw new Error('待批准的更新版本已变化，请重新更新并核对提示。')
+      }
       if (!before.updateAvailable) {
         setOperation(operation, { phase: 'done', message: '已经是最新版本', status: before })
         return
       }
+      const checkedRelease = checkedReleases.get(before)
+      const currentRelease = latestRelease
+      if (checkedRelease === undefined || checkedRelease.version !== before.latestVersion || currentRelease === null
+        || !sameRelease(currentRelease, checkedRelease)) {
+        const message = '版本检查结果已变化，请重新检查后再更新。'
+        operation.failure = { kind: 'command', message }
+        setOperation(operation, { phase: 'failed', message, status: before })
+        return
+      }
+      // Freeze the checked source and integrity across concurrent metadata requests.
+      targetRelease = Object.freeze({ ...checkedRelease })
+      const assertApprovalCurrent = (): void => {
+        if (approval === undefined) return
+        const failed = operations.get(approval.failedId)
+        const target = failed?.failure?.releaseAgeTarget
+        if (failed?.phase !== 'failed' || failed.failure !== approval.failure || failed.failure.action !== 'approve-release-age'
+          || target?.packageName !== approval.target.packageName || target.version !== approval.target.version
+          || latestRelease === null || targetRelease === undefined || !sameRelease(approval.release, targetRelease) || !sameRelease(latestRelease, targetRelease)) {
+          throw new Error('待批准的更新或精确版本已变化，请重新更新并核对提示。')
+        }
+        if (controller.signal.aborted) throw new Error('更新已取消')
+      }
+      assertApprovalCurrent()
       baseline = snapshotInstalledArtifact(profileDir, MARKET_NPM_PACKAGE)
       if (!baseline.ok && !managerOwned) throw new Error('更新前的皮肤市场构件无法验证，请先修复安装后再更新')
       if (!managerOwned) metadata = { manifest: snapshotFile(manifestFile(profileDir)), lockfile: snapshotFile(pnpmLockfile(profileDir)) }
@@ -248,10 +307,36 @@ export function createMarketUpdater(
         await runner.ensurePnpm?.({ signal: controller.signal })
         const effectiveArgs = pluginArgsFor(profileDir, args)
         if (managerOwned) {
+          if (controller.signal.aborted) throw new Error('更新已取消')
+          assertApprovalCurrent()
+          repairReleaseAgeExcludes(profileDir)
+          if (approval !== undefined) {
+            allowReleaseAgeVersion(profileDir, approval.target)
+            releaseAgeApprovals.delete(approval.failedId)
+            logEvent('info', 'market-update-release-age-approved', `${approval.target.packageName}@${approval.target.version}`, operation.id)
+          }
+          assertApprovalCurrent()
           lastResult = await runner(profile, args, { signal: controller.signal, onStdout: report, onStderr: report })
+          // A failed pnpm policy check can leave the new package materialized
+          // while Desktop restores the old manifest. Repairing the rule named
+          // by that settled refusal allows the same exact install to converge.
+          if (!controller.signal.aborted && !lastResult.aborted && !lastResult.timedOut
+            && lastResult.management?.application === 'failed') {
+            const repaired = repairReleaseAgeExcludes(profileDir)
+            const failure = officialOperationFailure(lastResult)
+            const blocked = failure?.releaseAgeTarget
+            const exactBlocked = blocked === undefined ? undefined : parseReleaseAgeTarget(blocked.packageName, blocked.version)
+            const knownAgeRepair = failure?.kind === 'release-age' && exactBlocked !== undefined && repaired.includes(exactBlocked.packageName)
+            const restored = baseline !== undefined && compareInstalledArtifact(profileDir, baseline).ok
+            if (repaired.length > 0 && (restored || knownAgeRepair)) {
+              assertApprovalCurrent()
+              logEvent('info', 'market-update-release-age-repair', '已合并重复的精确版本规则，正在重试市场更新', operation.id)
+              lastResult = await runner(profile, args, { signal: controller.signal, onStdout: report, onStderr: report })
+            }
+          }
           const managed = lastResult.management
           if (managed?.indeterminate === true || managed?.application === 'failed' || managed?.application === 'cancelled') {
-            throw new PnpmCommandError(classifyPnpmFailure(lastResult), lastResult)
+            throw new Error(officialOperationFailure(lastResult)?.message ?? '官方 Desktop 未完成市场更新')
           }
           if (managed?.application === 'applied' || managed?.application === 'restart-required' || managed?.application === 'overridden') return
           throw new Error('官方 Desktop 未返回可确认的市场更新结果')
@@ -283,10 +368,8 @@ export function createMarketUpdater(
       // Resolve this version online. `--prefer-offline` would reuse a stale
       // packument that still lacks the latest we just read from npm.
       setOperation(operation, { phase: 'downloading', message: '正在下载皮肤市场更新包' })
-      if (latestRelease === null) throw new Error('npm 未返回可验证的市场构件')
-      const targetRelease = latestRelease
       mutationStarted = true
-      await run(['add', `${MARKET_NPM_PACKAGE}@${latestRelease.version}`, '--reporter=ndjson'])
+      await run(['add', `${MARKET_NPM_PACKAGE}@${targetRelease.version}`, '--reporter=ndjson'])
       const materialized = validateNpmArtifact(profileDir, { name: MARKET_NPM_PACKAGE, ...targetRelease })
       if (!materialized.ok || materialized.version === undefined) {
         throw new Error(`市场更新未通过构件校验，不能确认更新成功：${materialized.reason ?? '未物化预期版本或可加载入口'}`)
@@ -297,7 +380,7 @@ export function createMarketUpdater(
       if (controller.signal.aborted && !managerOwned) throw new Error('更新已取消')
       installedVersion = materialized.version
       restartRequired = true
-      const next = { currentVersion: installedVersion, loadedVersion, latestVersion: installedVersion, updateAvailable: false }
+      const next = releaseStatus(targetRelease)
       cached = { checkedAt: Date.now(), status: next, release: targetRelease }
       setOperation(operation, {
         phase: 'done',
@@ -319,7 +402,15 @@ export function createMarketUpdater(
       const cancelled = managerOwned ? lastResult?.management?.application === 'cancelled' : controller.signal.aborted
       if (cancelled && recoveryError === undefined) setOperation(operation, { phase: 'cancelled', message: '更新已取消' })
       else {
-        if (error instanceof PnpmCommandError) {
+        const officialFailure = managerOwned && lastResult?.management?.application === 'failed' ? officialOperationFailure(lastResult) : undefined
+        if (officialFailure !== undefined) {
+          const blocked = officialFailure.releaseAgeTarget
+          const target = blocked === undefined ? undefined : parseReleaseAgeTarget(blocked.packageName, blocked.version)
+          operation.failure = officialFailure.kind === 'release-age' && target !== undefined && targetRelease !== undefined
+            && !controller.signal.aborted && !lastResult?.aborted && !lastResult?.timedOut
+            ? { ...officialFailure, releaseAgeTarget: target, action: 'approve-release-age' } : officialFailure
+          logEvent('error', 'market-update-official', `kind=${officialFailure.kind} ${officialFailureDiagnostic(lastResult!)}`, operation.id)
+        } else if (error instanceof PnpmCommandError) {
           const failure = error.failure
           const action = failure.kind === 'network' || failure.kind === 'fetch-timeout' ? 'retry' : undefined
           operation.failure = {
@@ -329,23 +420,48 @@ export function createMarketUpdater(
             ...(action === undefined ? {} : { action }),
           }
         }
-        if (!(error instanceof PnpmCommandError)) logEvent('error', 'market-update', error instanceof Error ? error.message : String(error), operation.id)
-        if (recoveryError !== undefined) operation.failure = { kind: 'command', message: recoveryError }
+        if (officialFailure === undefined && !(error instanceof PnpmCommandError)) logEvent('error', 'market-update', error instanceof Error ? error.message : String(error), operation.id)
+        let recoveryMessage = recoveryError
+        if (recoveryError !== undefined) {
+          // A settled, exact age refusal can occur after materialization and
+          // partial rollback. Explicit approval may finish this same release;
+          // it never grants permission to continue an unknown transaction.
+          const canFinishKnownAge = managedArtifactMismatch && operation.failure?.kind === 'release-age'
+            && operation.failure.action === 'approve-release-age'
+          if (canFinishKnownAge) {
+            recoveryMessage = '安装文件已部分写入，可允许此精确版本后继续完成更新。'
+            operation.failure = { ...operation.failure!, message: `${operation.failure!.message}；${recoveryMessage}` }
+          } else {
+            operation.failure = officialFailure === undefined ? { kind: 'command', message: recoveryError }
+              : { ...officialFailure, message: `${officialFailure.message}；${recoveryError}` }
+            delete operation.failure.action
+          }
+          logEvent('error', 'market-update-recovery', recoveryError, operation.id)
+        }
+        const blocked = operation.failure?.releaseAgeTarget
+        const target = blocked === undefined ? undefined : parseReleaseAgeTarget(blocked.packageName, blocked.version)
+        if (operation.failure?.action === 'approve-release-age' && target !== undefined && targetRelease !== undefined) {
+          releaseAgeApprovals.set(operation.id, { failedId: operation.id, failure: operation.failure, release: targetRelease, target: Object.freeze({ ...target }) })
+        }
         const managedFailure = lastResult?.management?.application === 'failed' && controller.signal.aborted
           ? '官方 Desktop 返回市场更新失败；取消请求没有替代管理器的最终结果，请查看插件管理器诊断'
           : undefined
         const cause = managedFailure ?? (error instanceof Error ? error.message : String(error))
-        setOperation(operation, { phase: 'failed', message: recoveryError === undefined ? cause : managerOwned ? `${cause}；${recoveryError}` : recoveryError })
+        setOperation(operation, { phase: 'failed', message: recoveryMessage === undefined ? cause : managerOwned ? `${cause}；${recoveryMessage}` : recoveryMessage })
       }
     } finally {
       abortControllers.delete(operation.id)
+      pendingApprovals.delete(operation.id)
       updating = operation.phase === 'waiting'
     }
   }
 
   const status = async (force = false): Promise<MarketUpdateStatus> => {
     reconcileInstalledVersion()
-    if (!force && cached !== null && Date.now() - cached.checkedAt < cacheMs) return cached.status
+    if (!force && cached !== null && Date.now() - cached.checkedAt < cacheMs) {
+      cached.status = releaseStatus(cached.release)
+      return cached.status
+    }
     const requestOptions = {
       headers: { accept: 'application/json', 'user-agent': `dsh-skin-market/${installedVersion}` },
       signal: AbortSignal.timeout(10_000),
@@ -376,13 +492,13 @@ export function createMarketUpdater(
       throw new Error('npm 市场构件的包名、版本或完整性元数据不一致')
     }
     const release: MarketRelease = { version: latestVersion, gitHead: gitHead.toLowerCase(), tarball, ...(typeof integrity === 'string' ? { integrity } : {}) }
-    const next = { currentVersion: installedVersion, loadedVersion, latestVersion: release.version, updateAvailable: compareVersions(release.version, installedVersion) > 0 }
+    const next = releaseStatus(release)
     latestRelease = release
     cached = { checkedAt: Date.now(), status: next, release }
     return next
   }
 
-  const startUpdate = (): MarketUpdateOperation => {
+  const startUpdate = (approval?: MarketReleaseApproval): MarketUpdateOperation => {
     if (disposed) throw new Error('皮肤市场更新器已停止')
     if (activeOperation !== null) return operations.get(activeOperation)!
     reconcileInstalledVersion()
@@ -392,13 +508,16 @@ export function createMarketUpdater(
     updating = true
     const controller = new AbortController()
     abortControllers.set(operation.id, controller)
+    if (approval !== undefined) pendingApprovals.set(operation.id, approval)
     const updatePromise = updateTarget(operation, controller)
     updatePromises.set(operation.id, updatePromise)
     void updatePromise.then(
       () => { updatePromises.delete(operation.id) },
       () => { updatePromises.delete(operation.id) },
     )
-    const timer = setTimeout(() => { if (activeOperation !== operation.id) operations.delete(operation.id) }, 30 * 60 * 1000)
+    const timer = setTimeout(() => {
+      if (activeOperation !== operation.id) { operations.delete(operation.id); releaseAgeApprovals.delete(operation.id) }
+    }, 30 * 60 * 1000)
     timer.unref?.()
     return operation
   }
@@ -416,7 +535,7 @@ export function createMarketUpdater(
       if (operation.phase !== 'done' || operation.status === undefined) throw new Error(operation.message ?? '皮肤市场更新失败')
       return operation.status
     },
-    startUpdate,
+    startUpdate: () => startUpdate(),
     operation(id) { return operations.get(id) ?? null },
     currentOperation() { return activeOperation === null ? null : operations.get(activeOperation) ?? null },
     cancel(id) {
@@ -428,9 +547,15 @@ export function createMarketUpdater(
       abortControllers.get(id)?.abort()
       return operation
     },
-    retry(id) {
+    retry(id, action = 'retry') {
       const failed = operations.get(id)
-      if (failed === undefined || failed.phase !== 'failed' || failed.failure?.action !== 'retry') throw new Error('更新任务不可重试')
+      if (failed === undefined || failed.phase !== 'failed' || failed.failure?.action !== action) throw new Error('更新任务不可重试')
+      if (action === 'approve-release-age') {
+        const approval = releaseAgeApprovals.get(id)
+        if (approval === undefined || failed.failure !== approval.failure) throw new Error('更新任务不可重试')
+        if (activeOperation !== null) throw new Error('皮肤市场正在更新')
+        return startUpdate(approval)
+      }
       return startUpdate()
     },
     async dispose() {

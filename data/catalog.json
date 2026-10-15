@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-15T04:49:29.022Z",
+  "generatedAt": "2026-10-15T08:12:49.714Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -16970,7 +16970,7 @@
         }
       },
       "compatibility": {
-        "dsh": "0.1.0-rc.6",
+        "dsh": ">=0.2.0-rc.2",
         "platform": [
           "web"
         ]
@@ -16992,22 +16992,20 @@
         "installation": "verified"
       },
       "health": {
-        "status": "improvements",
+        "status": "healthy",
         "checks": {
           "readmeScreenshots": "pass",
-          "compatibility": "improve",
+          "compatibility": "pass",
           "installation": "pass",
           "installCommand": "pass",
           "topic": "pass"
         },
-        "suggestions": [
-          "建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。"
-        ],
+        "suggestions": [],
         "scan": {
           "commit": "994656f936c0d946472e5eac9e9389bb13bd7735",
           "packageVersion": "0.4.1",
           "scannerVersion": "static-v2",
-          "dshVersion": "0.1.0-rc.6",
+          "dshVersion": ">=0.2.0-rc.2",
           "mode": "static",
           "result": "pass",
           "checkedAt": "2026-10-08T23:45:00.426Z",
@@ -17021,9 +17019,9 @@
       "featuredRank": 969,
       "starsSnapshot": 42,
       "releaseUpdatedAt": "2026-10-08T23:45:02.252Z",
-      "metadataUpdatedAt": "2026-10-08T23:45:02.252Z",
+      "metadataUpdatedAt": "2026-10-15T08:12:18.000Z",
       "starsUpdatedAt": "2026-10-13T23:17:02.032Z",
-      "updatedAt": "2026-10-13T23:17:02.032Z",
+      "updatedAt": "2026-10-15T08:12:18.000Z",
       "media": {
         "list": {
           "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/70bf31ec6e8116c8f6367870b28e7d4e.preview.webp",

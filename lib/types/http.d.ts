@@ -26,11 +26,12 @@ export declare function readSkinMutation(request: IncomingMessage, limit?: numbe
 }>;
 export declare function readSkinId(request: IncomingMessage, limit?: number): Promise<string>;
 export declare function readOperationRetry(request: IncomingMessage, limit?: number): Promise<{
-    action: 'retry' | 'approve-build';
+    action: 'retry' | 'approve-build' | 'approve-release-age';
     acknowledgeCompatibility: boolean;
     compatibilityContext?: string;
 }>;
-export declare function readOperationRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-build'>;
+export declare function readOperationRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-build' | 'approve-release-age'>;
+export declare function readMarketUpdateRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-release-age'>;
 export type RestartTarget = {
     kind: 'skin';
     skinId: string;

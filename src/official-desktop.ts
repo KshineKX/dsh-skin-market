@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { compareVersions } from './semver.ts'
+import { officialOperationFailure } from './official-failure.ts'
 import type { DshRuntime } from './types.ts'
 
 /** Structural Host service contract; no Electron or generated Client proxy dependency. */
@@ -113,7 +114,8 @@ function resultText(value: unknown): string {
   const error = record?.error
   if (typeof error === 'string' && error.trim() !== '') return error
   const errorRecord = asRecord(error)
-  const details = [errorRecord?.message, errorRecord?.diagnostic, errorRecord?.code]
+  if (typeof errorRecord?.message === 'string' && errorRecord.message.trim() !== '') return errorRecord.message
+  const details = [errorRecord?.diagnostic, errorRecord?.code]
     .filter((part): part is string => typeof part === 'string' && part.trim() !== '')
   if (details.length > 0) return details.join(': ')
   const packageResult = asRecord(record?.packageResult)
@@ -142,10 +144,13 @@ function managerResult(value: unknown, requestId?: string, strict = false): Comm
     : record?.ok === false || record?.success === false || record?.changed === 'failed'
       || asRecord(record?.packageResult)?.exitCode !== undefined && asRecord(record?.packageResult)?.exitCode !== 0
   const output = resultText(value)
-  return {
+  const result: CommandResult = {
     exitCode: failed ? 1 : 0, stdout: failed ? '' : output, stderr: failed ? output : '',
     timedOut: false, aborted: application === 'cancelled', management,
   }
+  const failure = officialOperationFailure(result)
+  if (failed && failure !== undefined) result.stderr = failure.message
+  return result
 }
 function managerError(error: unknown, _options?: CommandOptions): CommandResult {
   return {

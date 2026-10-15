@@ -32,7 +32,7 @@ install:
     repository: https://github.com/CAPTAIN1275/dsh-ui-web
     gitHead: 994656f936c0d946472e5eac9e9389bb13bd7735
 compatibility:
-  dsh: 0.1.0-rc.6
+  dsh: ">=0.2.0-rc.2"
   platform:
     - web
 screenshots:
@@ -50,20 +50,20 @@ review:
   preview: verified
   installation: verified
 health:
-  status: improvements
+  status: healthy
   checks:
     readmeScreenshots: pass
-    compatibility: improve
+    compatibility: pass
     installation: pass
     installCommand: pass
     topic: pass
-  suggestions:
-    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  suggestions: []
   scan:
     commit: 994656f936c0d946472e5eac9e9389bb13bd7735
     packageVersion: 0.4.1
     scannerVersion: static-v2
-    dshVersion: 0.1.0-rc.6
+    # 校正该固定版本已发布包的声明提取结果；保留原静态扫描时间与结果，不代表重新扫描或运行实测。
+    dshVersion: ">=0.2.0-rc.2"
     mode: static
     result: pass
     checkedAt: 2026-10-08T23:45:00.426Z
@@ -74,6 +74,6 @@ license:
 featuredRank: 969
 starsSnapshot: 42
 releaseUpdatedAt: 2026-10-08T23:45:02.252Z
-metadataUpdatedAt: 2026-10-08T23:45:02.252Z
+metadataUpdatedAt: 2026-10-15T08:12:18.000Z
 starsUpdatedAt: 2026-10-13T23:17:02.032Z
-updatedAt: 2026-10-13T23:17:02.032Z
+updatedAt: 2026-10-15T08:12:18.000Z

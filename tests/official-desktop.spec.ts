@@ -148,6 +148,7 @@ describe('official Desktop runner', () => {
         ok: true,
         json: async () => ({
           'dist-tags': { latest: '0.1.58' },
+          time: { '0.1.58': '2000-01-01T00:00:00.000Z' },
           versions: {
             '0.1.58': {
               version: '0.1.58',
@@ -381,6 +382,32 @@ describe('official management release contracts', () => {
     expect(result.exitCode).toBe(1)
     expect(result.management).toEqual({ ...resultValue, requestId: 'request' })
     expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', { enabled: false, requestId: 'request' })
+  })
+
+  it('keeps the official error message concise while preserving structured package diagnostics', async () => {
+    const value = {
+      changed: false, application: 'failed', stage: 'install', target: 'skin@1.0.0',
+      error: { code: 'operation-error', message: '无法连接安装源', diagnostic: 'Progress: resolved 24\nECONNRESET' },
+      packageResult: { exitCode: 1, kind: 'network', output: 'GET registry.example.test failed' },
+    }
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => value)
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    expect(result.stderr).toBe('无法连接安装源')
+    expect(result.management).toEqual({ ...value, requestId: 'request' })
+    expect(manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('redacts credentials from the official short failure message as well as from copied diagnostics', async () => {
+    const manager = fullManager()
+    manager.installBundle = vi.fn(async () => ({
+      application: 'failed', error: { code: 'operation-error', message: '连接失败：https://fixture:fixture-password@registry.example.test/package?token=fixture-token' },
+      packageResult: { exitCode: 1, kind: 'network', output: 'ECONNRESET' },
+    }))
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
+    expect(result.stderr).toContain('连接失败')
+    expect(result.stderr).not.toContain('fixture-password')
+    expect(result.stderr).not.toContain('fixture-token')
   })
 
   it('passes explicitly approved exact package names and a supported registry', async () => {

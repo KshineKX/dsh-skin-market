@@ -9,6 +9,12 @@ export interface MarketUpdateStatus {
     loadedVersion?: string;
     latestVersion: string;
     updateAvailable: boolean;
+    updateBlockedReason?: string;
+    /** Optional legacy status field; release age is handled from actual Desktop failures. */
+    updateAvailableAt?: string;
+    packageOperationsWarning?: string;
+    /** Optional legacy status field, retained for older clients. */
+    packageOperationsAvailableAt?: string;
 }
 export type MarketUpdatePhase = 'queued' | 'checking' | 'downloading' | 'installing' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed';
 export interface MarketUpdateOperation {
@@ -34,7 +40,7 @@ export interface MarketUpdater {
     operation(id: string): MarketUpdateOperation | null;
     currentOperation(): MarketUpdateOperation | null;
     cancel(id: string): MarketUpdateOperation;
-    retry(id: string): MarketUpdateOperation;
+    retry(id: string, action?: 'retry' | 'approve-release-age'): MarketUpdateOperation;
     /** Stop a route mount cleanly, joining any host package-manager request. */
     dispose?(): Promise<void>;
     readonly restartRequired: boolean;

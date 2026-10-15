@@ -161,12 +161,13 @@ export interface InstallConflict {
 
 export type OperationKind = 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
 export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
-export type OperationRetryAction = 'retry' | 'approve-build'
+export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age'
 
 export interface OperationFailure {
-  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout'
+  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity'
   message: string
   packageName?: string
+  releaseAgeTarget?: { packageName: string; version: string }
   buildKeys?: string[]
   action?: OperationRetryAction
   conflicts?: InstallConflict[]

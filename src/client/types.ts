@@ -126,11 +126,12 @@ export interface Operation {
   lastOutputAt?: string
   pnpmStage?: 'resolving' | 'downloading' | 'linking' | 'building'
   failure?: {
-    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout'
+    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity'
     message: string
     packageName?: string
-  buildKeys?: string[]
-    action?: 'retry' | 'approve-build'
+    buildKeys?: string[]
+    releaseAgeTarget?: { packageName: string; version: string }
+    action?: 'retry' | 'approve-build' | 'approve-release-age'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }
   startedAt: string
