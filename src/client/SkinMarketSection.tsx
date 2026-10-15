@@ -92,6 +92,7 @@ interface PendingRestartNotice {
   target: RestartTarget
   startedAt: string
   title: string
+  description?: string
 }
 
 export function captureListScroll(list: HTMLElement | null): ListScrollAnchor | null {
@@ -147,7 +148,7 @@ const phases: Record<Operation['phase'], string> = {
   queued: '正在排队', resolving: '正在解析版本', downloading: '正在下载', installing: '正在安装', validating: '正在验证', activating: '正在切换', waiting: '等待宿主确认', cancelling: '正在取消', cancelled: '已取消', done: '完成', failed: '操作失败',
 }
 
-const DESKTOP_INSTALL_RESTART_GUIDANCE = '安装后请手动重启 Desktop App，再使用此皮肤。'
+const DESKTOP_INSTALL_RESTART_GUIDANCE = '安装并切换完成后，请手动重启 Desktop App。'
 
 function pendingRestartTitle(title: string, restartAvailable: boolean): string {
   return `${title}，${restartAvailable ? '待重启生效' : '请手动重启 Desktop App 后生效'}`
@@ -618,6 +619,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [hostKind, setHostKind] = useState<MarketHostKind>('dsh')
   const [runtime, setRuntime] = useState<DshRuntime | null>(null)
   const [management, setManagement] = useState<MarketStateResponse['management']>()
+  const officialDesktop = hostKind === 'desktop' && management?.official === true
   const installRequiresRestart = hostKind === 'desktop' && management?.official === true && management.installRequiresRestart === true
   const [profileBusy, setProfileBusy] = useState<string>()
   const marketWriteReason = profileBusy ?? (management?.capabilities.update.available === false ? management.capabilities.update.reason ?? '当前宿主不支持更新' : undefined)
@@ -680,8 +682,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const pendingScrollAnchor = useRef<ListScrollAnchor | null>(null)
   const thumbnailScrollRequest = useRef(false)
   const marketUpdatePolls = useRef(new Set<string>())
+  const marketRestartPrompted = useRef(false)
   const dismissedMarketOperationIds = useRef(new Set<string>())
   const pendingInstallActivation = useRef(new Map<string, string | undefined>())
+  const installRestartNotices = useRef(new Map<string, PendingRestartNotice>())
   const continuingInstallActivation = useRef(new Set<string>())
   const inflightSkinIds = useRef(new Set<string>())
   const skinsRef = useRef<CatalogSkin[]>([])
@@ -749,18 +753,19 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
     setInstalledClientPlugins(state.installedClientPlugins ?? [])
     setRunningAgents(typeof state.runningAgentCount === 'number' && Number.isInteger(state.runningAgentCount) ? state.runningAgentCount : null)
-    if (state.marketUpdateRestartRequired === true) {
+    if (state.marketUpdateRestartRequired === true && !marketRestartPrompted.current) {
       // Updating the market package can cause DSH to remount this client
       // entry. Keep the restart prompt recoverable from Host state instead
       // of relying on the previous React tree's local state.
       const target = { kind: 'market-update' as const }
+      marketRestartPrompted.current = true
       setRestartTarget(target)
       setRestartCheckFinished(true)
       setCompatibilityWarning(null)
-      if (state.restartAvailable === false) {
-        setPendingRestart({ target, title: pendingRestartTitle('皮肤市场已更新', false), startedAt: new Date().toISOString() })
-        setConfirmRestart(false)
-      } else setConfirmRestart(true)
+      setPendingRestart({ target, title: pendingRestartTitle('皮肤市场已更新', state.restartAvailable !== false), startedAt: new Date().toISOString() })
+      setConfirmRestart(true)
+    } else if (state.marketUpdateRestartRequired === false) {
+      marketRestartPrompted.current = false
     }
     if (skinsRef.current.length > 0) {
       setSelectedId(value => {
@@ -812,16 +817,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }, [acceptCatalog, applyMarketState, catalogCache, finishInstalledLoading])
 
   const openRestartConfirm = useCallback(async (skinId?: string, kind: RestartTarget['kind'] = 'skin', advisory: CompatibilityAssessment | null = null) => {
-    if (hostKind === 'desktop' && !restartAvailable) {
-      setError('请手动重启 Desktop App 后生效')
-      return
-    }
     setError(null)
     setRunningAgents(null)
     setRestartCheckFinished(false)
     setRestartTarget(kind === 'market-update' ? { kind } : { kind, skinId: skinId ?? selectedIdRef.current })
     setCompatibilityWarning(advisory)
     setConfirmRestart(true)
+    if (kind === 'market-update') marketRestartPrompted.current = true
+    if (hostKind === 'desktop' && !restartAvailable) {
+      setRestartCheckFinished(true)
+      return
+    }
     try {
       const state = await json<MarketStateResponse>('/dsh-skin-market/state', { cache: 'no-store' })
       setRunningAgents(typeof state.runningAgentCount === 'number' && Number.isInteger(state.runningAgentCount) ? state.runningAgentCount : null)
@@ -849,7 +855,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           if (operation.status !== undefined) setMarketUpdate(operation.status)
           setMarketOperation(null)
           setPendingRestart({ target: { kind: 'market-update' }, title: pendingRestartTitle('皮肤市场已更新', restartAvailable), startedAt: operation.finishedAt ?? new Date().toISOString() })
-          if (restartAvailable) await openRestartConfirm(undefined, 'market-update')
+          await openRestartConfirm(undefined, 'market-update')
           return
         }
         if (operation.phase === 'failed' || operation.phase === 'cancelled') {
@@ -902,7 +908,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         setMarketUpdate(status)
         setMarketUpdating(false)
         setPendingRestart({ target: { kind: 'market-update' }, title: pendingRestartTitle('皮肤市场已更新', restartAvailable), startedAt: new Date().toISOString() })
-        if (restartAvailable) await openRestartConfirm(undefined, 'market-update')
+        await openRestartConfirm(undefined, 'market-update')
       } else throw new Error('皮肤市场服务未返回有效的更新任务')
     } catch (reason) {
       setMarketUpdating(false)
@@ -1237,7 +1243,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     if (target === undefined) return { decision: 'cancelled' }
     const assessment = installCompatibility(target, 'dsh', runtimeRef.current)!
     if (!changed && assessment.decision !== 'incompatible') return { decision: 'not-required' }
-    const actionLabel = kind === 'install' ? installAndUse ? '安装并使用' : '安装'
+    const actionLabel = kind === 'install' ? installAndUse && !officialDesktop ? '安装并使用' : '安装'
       : kind === 'update' ? '更新' : kind === 'migrate' ? '换用 npm' : kind === 'pin' ? '常驻使用' : '使用'
     compatibilityConsentResolver.current?.(null)
     const context = await new Promise<string | null>(resolve => {
@@ -1247,7 +1253,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setCompatibilityConfirmation(confirmation)
     })
     return context === null ? { decision: 'cancelled' } : { decision: 'accepted', context }
-  }, [])
+  }, [officialDesktop])
 
   const finishCompatibilityConfirmation = useCallback((accepted: boolean) => {
     const resolve = compatibilityConsentResolver.current
@@ -1270,12 +1276,19 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     resolve?.(accepted ? confirmation?.context ?? null : null)
   }, [])
 
+  const restoreInstallRestartNotice = useCallback(async (skinId: string) => {
+    const notice = installRestartNotices.current.get(skinId)
+    if (notice === undefined || !mounted.current) return
+    setPendingRestart({ ...notice, description: `${notice.description ?? ''}自动切换尚未完成，请根据操作提示处理后重试。` })
+    await openRestartConfirm(skinId)
+  }, [openRestartConfirm])
+
   const runForSkin = useCallback(async (skinId: string, kind: MutationKind, existingOperationId?: string, options: SkinOperationOptions = {}) => {
     let target = skinsRef.current.find(skin => skin.id === skinId)
     if (target === undefined) return false
     let acceptedContext = options.compatibilityContext
     if (existingOperationId === undefined) {
-      const reason = actionReason(kind)
+      const reason = actionReason(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? actionReason('activate') : null)
       if (reason !== null) { setError(reason); return false }
       while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)) {
         const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, acceptedContext !== undefined)
@@ -1285,9 +1298,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         if (target === undefined) return false
         if (consent.decision === 'not-required') break
       }
-      const currentReason = currentActionReason.current(kind)
+      const currentReason = currentActionReason.current(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? currentActionReason.current('activate') : null)
       if (currentReason !== null) { setError(currentReason); return false }
       if (kind === 'install') {
+        installRestartNotices.current.delete(target.id)
         if (options.installAndUse === true) pendingInstallActivation.current.set(target.id, acceptedContext)
         else pendingInstallActivation.current.delete(target.id)
       }
@@ -1320,13 +1334,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           inflightSkinIds.current.delete(target.id)
         }
         if (operation.phase === 'done') {
-          // Official management results decide whether code is live. Hosts
-          // with refreshed package resolution can save the full selection
-          // before asking for one restart at the end of install-and-use.
+          // Official hosts can save their enabled selection before restart,
+          // even when newly installed modules are not live in this process.
+          // Finish both steps before showing one restart prompt.
           const continueInstallAndUse = kind === 'install'
             && pendingInstallActivation.current.has(target.id)
-            && management?.official === true && management.installRequiresRestart === false
-          let needsRestart = operation.restartRequired === true || kind === 'install' && installRequiresRestart || management?.official !== true && (kind === 'update' || kind === 'migrate')
+            && management?.official === true
+          let needsRestart = operation.restartRequired === true || kind === 'install' && installRequiresRestart || kind === 'activate' && installRestartNotices.current.has(target.id) || management?.official !== true && (kind === 'update' || kind === 'migrate')
             && (targetState.activation === 'active' || targetState.activation === 'restart-required')
           if (management?.official === true) {
             // The host applies both halves of an official bundle. Do not
@@ -1348,6 +1362,15 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             restoreMarketStyleOrder()
           }
           const advisory = kind === 'activate' && acceptedContext === undefined ? advisoryCompatibility(target, hostKind, runtime) : null
+          const installBeforeUse = kind === 'install' && hostKind === 'desktop'
+          const restartNotice: PendingRestartNotice = { target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
+            ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
+            : pendingRestartTitle(`${target.name.zh} ${kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
+            description: installBeforeUse ? `“${target.name.zh}”已安装，重启后可使用。`
+              : kind === 'activate' ? `已保存“${target.name.zh}”的启用选择，重启后生效。`
+                : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
+            startedAt: new Date().toISOString() }
+          if (kind === 'install' && needsRestart) installRestartNotices.current.set(target.id, restartNotice)
           if (continueInstallAndUse) continuingInstallActivation.current.add(target.id)
           await refresh()
           if (continueInstallAndUse) return true
@@ -1355,30 +1378,27 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             setStates(value => value.map(item => item.skinId === target.id
               ? { ...item, activation: 'restart-required' }
               : item))
-            const installBeforeUse = kind === 'install' && hostKind === 'desktop'
-            setPendingRestart({ target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
-              ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
-              : pendingRestartTitle(`${target.name.zh} ${kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable), startedAt: new Date().toISOString() })
-            if (installBeforeUse) {
-              setConfirmRestart(false)
-              setCompatibilityWarning(null)
-            } else if (restartAvailable) await openRestartConfirm(target.id, 'skin', advisory)
+            setPendingRestart(restartNotice)
+            await openRestartConfirm(target.id, 'skin', advisory)
           } else {
             if (kind === 'activate' || kind === 'uninstall') setPendingRestart(current => current?.target.kind === 'skin' && current.target.skinId === target.id ? null : current)
             if (advisory !== null) setCompatibilityWarning(advisory)
           }
-          // Installation may succeed before the old Desktop can load its new
-          // modules. A caller must wait for a fresh host before following with Use.
+          if (kind === 'activate' || kind === 'uninstall') installRestartNotices.current.delete(target.id)
+          // Install-only stops here; official install-and-use returns above
+          // so the caller can save the target selection before restart.
           return kind !== 'install' || !needsRestart
         }
         if (operation.phase === 'cancelled') {
           await refresh()
+          await restoreInstallRestartNotice(target.id)
           return false
         }
         if (operation.phase === 'failed') {
           await refresh().catch(() => undefined)
           setOperations(list => upsertOperation(list, operation))
           setError(null)
+          await restoreInstallRestartNotice(target.id)
           return false
         }
         await new Promise(resolve => setTimeout(resolve, operation.phase === 'waiting' ? 5000 : 600))
@@ -1392,9 +1412,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         id: `skin-operation-failed-${target.id}`, kind, skinId: target.id, phase: 'failed', startedAt: new Date().toISOString(), message,
       }))
       setError(null)
+      await restoreInstallRestartNotice(target.id)
       return false
     }
-  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, openRestartConfirm, refresh, requestCompatibilityConsent, restartAvailable, runtime, skins, states])
+  }, [actionReason, clientRuntime, hostKind, installRequiresRestart, management, officialDesktop, openRestartConfirm, refresh, requestCompatibilityConsent, restartAvailable, restoreInstallRestartNotice, runtime, skins, states])
 
   const activateSkin = useCallback((skinId: string, compatibilityContext?: string) => {
     if (!mounted.current) return
@@ -1500,6 +1521,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const closeBrowser = () => { setLightboxOpen(false); setBrowserOpen(false); setShowDetail(false) }
   const deferInstallAndUse = livePnpmOperations(operations).length > 0
   const restartInstallBlock = restartBlockedByInstalls(operations, skins)
+  const manualDesktopRestart = hostKind === 'desktop' && !restartAvailable
+  const installAndUseReason = actionReason('install') ?? (officialDesktop ? actionReason('activate') : null)
+  const restartNoticeMatchesTarget = pendingRestart !== null && restartTarget !== null
+    && pendingRestart.target.kind === restartTarget.kind
+    && (restartTarget.kind === 'market-update' || pendingRestart.target.kind === 'skin' && pendingRestart.target.skinId === restartTarget.skinId)
+  const restartTargetDescription = restartTarget?.kind === 'market-update'
+    ? '皮肤市场已更新，重启后生效。'
+    : `“${skins.find(skin => restartTarget?.kind === 'skin' && skin.id === restartTarget.skinId)?.name.zh ?? '此皮肤'}”的设置将在重启后生效。`
+  const manualRestartDescription = restartInstallBlock !== null
+    ? `${restartInstallBlock}请等待操作完成后再手动重启 Desktop App。`
+    : `${restartNoticeMatchesTarget ? pendingRestart.description ?? restartTargetDescription : restartTargetDescription}请先保存当前工作，再完全退出 Desktop App 并重新打开。`
   const openCardInstall = (skin: CatalogSkin) => {
     if (isManualOnly(skin)) {
       chooseSkin(skin.id)
@@ -1507,7 +1539,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setShowInstallOptions(true)
       return
     }
-    if (deferInstallAndUse || installRequiresRestart) void runForSkin(skin.id, 'install')
+    if (officialDesktop && deferInstallAndUse) return
+    if (deferInstallAndUse) void runForSkin(skin.id, 'install')
     else void installAndActivateSkin(skin.id)
   }
   const activateCard = (skinId: string) => {
@@ -1564,7 +1597,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         {stateText !== null && <StatusLabel active={itemState.activation === 'active'}>{stateText}</StatusLabel>}
         {actionCount > 0 && <div className={css.cardInlineActions} role="group" aria-label={`${skin.name.zh} 操作`}>
           {cardMutation !== undefined ? <span className={css.cardActionProgress}><IconLoadingOutline />{mutationLabels[cardMutation.kind]}</span> : <>
-            {needsInstall && <Button className={css.cardAction} variant="outline" size="sm" disabled={!isManualOnly(skin) && actionReason('install') !== null} title={isManualOnly(skin) ? '复制安装提示词' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : '安装并使用当前皮肤'} onClick={() => openCardInstall(skin)}>{isManualOnly(skin) ? '需手动安装' : deferInstallAndUse || installRequiresRestart ? '安装' : '安装并使用'}</Button>}
+            {needsInstall && <Button className={css.cardAction} variant="outline" size="sm" disabled={!isManualOnly(skin) && (installAndUseReason !== null || officialDesktop && deferInstallAndUse)} title={isManualOnly(skin) ? '复制安装提示词' : installAndUseReason ?? (officialDesktop && deferInstallAndUse ? '请等待当前安装完成，再安装其他皮肤' : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : '安装并使用当前皮肤')} onClick={() => openCardInstall(skin)}>{isManualOnly(skin) ? '需手动安装' : officialDesktop || deferInstallAndUse ? '安装' : '安装并使用'}</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'inactive' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('activate') !== null} onClick={() => activateCard(skin.id)}>使用</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'active' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('deactivate') !== null} onClick={() => { void runForSkin(skin.id, 'deactivate') }}>停用</Button>}
             {itemState.installation === 'installed' && itemState.updateAvailable && !isManualOnly(skin) && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('update') !== null} onClick={() => { void runForSkin(skin.id, 'update') }}>更新</Button>}
@@ -1669,9 +1702,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     startedAt={pendingRestart.startedAt}
     metadata={[]}
     terminal
-    action={restartAvailable
-      ? <Button variant="outline" size="sm" onClick={() => void openRestartConfirm(pendingRestart.target.kind === 'skin' ? pendingRestart.target.skinId : undefined, pendingRestart.target.kind)}>重启</Button>
-      : undefined}
+    action={<Button variant="outline" size="sm" onClick={() => void openRestartConfirm(pendingRestart.target.kind === 'skin' ? pendingRestart.target.skinId : undefined, pendingRestart.target.kind)}>{restartAvailable ? '重启' : '查看重启提示'}</Button>}
     onDismiss={() => setPendingRestart(null)}
   />
   const marketUpdateActive = marketOperation !== null && !['done', 'failed', 'cancelled'].includes(marketOperation.phase)
@@ -1806,8 +1837,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
           <div className={css.actionRow}>
               {state.installation === 'missing' && <>
-                {autoInstallable && !deferInstallAndUse && !installRequiresRestart && <Button variant="primary" size="sm" icon={<IconDownloadOutline />} disabled={selectedBusy !== undefined || actionReason('install') !== null} onClick={() => void installAndActivate()}>安装并使用</Button>}
-                {autoInstallable && <Button variant={deferInstallAndUse || installRequiresRestart ? 'primary' : 'outline'} size="sm" icon={deferInstallAndUse || installRequiresRestart ? <IconDownloadOutline /> : undefined} disabled={selectedBusy !== undefined || actionReason('install') !== null} title={installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : undefined} onClick={() => void run('install')}>{installRequiresRestart ? '安装后需重启' : deferInstallAndUse ? '安装' : '仅安装'}</Button>}
+                {autoInstallable && (officialDesktop || !deferInstallAndUse) && <Button variant="primary" size="sm" icon={<IconDownloadOutline />} disabled={selectedBusy !== undefined || installAndUseReason !== null || officialDesktop && deferInstallAndUse} title={installAndUseReason ?? (officialDesktop && deferInstallAndUse ? '请等待当前安装完成，再安装其他皮肤' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : undefined)} onClick={() => void installAndActivate()}>{officialDesktop ? '安装' : '安装并使用'}</Button>}
+                {autoInstallable && !officialDesktop && <Button variant={deferInstallAndUse ? 'primary' : 'outline'} size="sm" icon={deferInstallAndUse ? <IconDownloadOutline /> : undefined} disabled={selectedBusy !== undefined || actionReason('install') !== null} title={deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : undefined} onClick={() => void run('install')}>{deferInstallAndUse ? '安装' : '仅安装'}</Button>}
                 {autoInstallable && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined} onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>其他安装方式</Button>}
                 {manualOnly && <Button variant="outline" size="sm" icon={<MarkGithubIcon size={16} />} disabled={selectedBusy !== undefined} title="打开手动安装面板" onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>检查并指导安装</Button>}
               </>}
@@ -1816,7 +1847,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               {state.activation === 'restart-required' && selectedBusy === undefined && !selectedInstallAndUsePending && (restartAvailable
                 ? <Button variant="primary" size="sm" disabled={selectedBusy !== undefined} title={restartInstallBlock ?? undefined} onClick={() => void openRestartConfirm()}>重启以应用</Button>
                 : pendingRestart?.target.kind === 'skin' && pendingRestart.target.skinId === selected.id ? null
-                : <span className={css.repoMeta}>请手动重启 Desktop App 后生效</span>)}
+                : <Button variant="outline" size="sm" onClick={() => void openRestartConfirm()}>查看重启提示</Button>)}
               {state.activation === 'active' && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined || actionReason('deactivate') !== null} onClick={() => void run('deactivate')}>停用</Button>}
               {state.activation === 'active' && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed={state.pinned === true} title={state.pinned ? '取消后，如果它不是当前主皮肤，将立即停用；以后切换皮肤时也不会再保留' : '切换其他皮肤时仍保持启用，适合宠物、音效等可叠加插件；多个皮肤可能发生冲突'} disabled={selectedBusy !== undefined || actionReason(state.pinned ? 'unpin' : 'pin') !== null} onClick={() => state.pinned ? void run('unpin') : setConfirmPin(true)}>{state.pinned ? '取消常驻' : '常驻使用'}</Button>}
               {state.activation === 'restart-required' && state.pinned && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed="true" title="取消常驻并撤销待重启的启用状态" disabled={selectedBusy !== undefined || actionReason('unpin') !== null} onClick={() => void run('unpin')}>取消常驻</Button>}
@@ -1965,13 +1996,15 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       <Modal
         open={confirmRestart || compatibilityWarning !== null}
         onClose={() => { if (!restarting) { setConfirmRestart(false); setCompatibilityWarning(null) } }}
-        title={confirmRestart ? (restartTarget?.kind === 'market-update' ? '需要重启 DSH 应用皮肤市场更新' : '需要重启 DSH 应用此皮肤') : '兼容性提示'}
+        title={confirmRestart ? (manualDesktopRestart ? '请手动重启 Desktop App' : restartTarget?.kind === 'market-update' ? '需要重启 DSH 应用皮肤市场更新' : '需要重启 DSH 应用此皮肤') : '兼容性提示'}
         closeLabel="关闭"
         description={confirmRestart
-          ? (restarting ? '正在重新启动 DSH，请稍候…' : restartInstallBlock !== null ? restartInstallBlock : runningAgents === null && !restartCheckFinished ? '正在检查是否有 Agent 运行。状态确认前不能重启。' : runningAgents === null ? '当前 Host 尚未加载安全检查。请确认没有 Agent 正在运行、重要内容已保存；你可以继续完成这一次升级重启。新版本加载后会自动检测 Agent 状态。' : runningAgents > 0 ? `检测到 ${runningAgents} 个 Agent 正在运行，现在不能重启。请等待任务完全结束后再试，否则可能中断任务并导致会话历史无法加载。` : restartTarget?.kind === 'market-update' ? `Agent 状态检查已通过。但重启仍会关闭所有会话连接；即使回复已经停止显示，也请确认重要内容已保存，且没有即将开始的新任务。皮肤市场新版本 ${marketUpdate?.latestVersion ?? ''} 将在重启后生效。` : 'Agent 状态检查已通过。但重启仍会关闭所有会话连接；即使回复已经停止显示，也请确认重要内容已保存，且没有即将开始的新任务。')
+          ? (manualDesktopRestart
+            ? manualRestartDescription
+            : restarting ? '正在重新启动 DSH，请稍候…' : restartInstallBlock !== null ? restartInstallBlock : runningAgents === null && !restartCheckFinished ? '正在检查是否有 Agent 运行。状态确认前不能重启。' : runningAgents === null ? '当前 Host 尚未加载安全检查。请确认没有 Agent 正在运行、重要内容已保存；你可以继续完成这一次升级重启。新版本加载后会自动检测 Agent 状态。' : runningAgents > 0 ? `检测到 ${runningAgents} 个 Agent 正在运行，现在不能重启。请等待任务完全结束后再试，否则可能中断任务并导致会话历史无法加载。` : restartTarget?.kind === 'market-update' ? `Agent 状态检查已通过。但重启仍会关闭所有会话连接；即使回复已经停止显示，也请确认重要内容已保存，且没有即将开始的新任务。皮肤市场新版本 ${marketUpdate?.latestVersion ?? ''} 将在重启后生效。` : 'Agent 状态检查已通过。但重启仍会关闭所有会话连接；即使回复已经停止显示，也请确认重要内容已保存，且没有即将开始的新任务。')
           : undefined}
         footer={confirmRestart
-          ? <><Button variant="outline" size="sm" disabled={restarting} onClick={() => { setConfirmRestart(false); setCompatibilityWarning(null) }}>稍后</Button><Button variant="primary" size="sm" disabled={restarting || restartInstallBlock !== null || (runningAgents === null && !restartCheckFinished) || (runningAgents ?? 0) > 0} onClick={() => void restartNow()}>{restarting ? '正在重启…' : restartInstallBlock !== null ? '有皮肤正在安装' : runningAgents === null && !restartCheckFinished ? '正在检查…' : runningAgents === null ? '我已确认无任务，仍然重启' : runningAgents > 0 ? '有任务运行中' : '确认无任务，立即重启'}</Button></>
+          ? <><Button variant="outline" size="sm" disabled={restarting} onClick={() => { setConfirmRestart(false); setCompatibilityWarning(null) }}>稍后</Button>{!manualDesktopRestart && <Button variant="primary" size="sm" disabled={restarting || restartInstallBlock !== null || (runningAgents === null && !restartCheckFinished) || (runningAgents ?? 0) > 0} onClick={() => void restartNow()}>{restarting ? '正在重启…' : restartInstallBlock !== null ? '有皮肤正在安装' : runningAgents === null && !restartCheckFinished ? '正在检查…' : runningAgents === null ? '我已确认无任务，仍然重启' : runningAgents > 0 ? '有任务运行中' : '确认无任务，立即重启'}</Button>}</>
           : <Button variant="primary" size="sm" onClick={() => setCompatibilityWarning(null)}>知道了</Button>}
       >
         {compatibilityWarning !== null && <CompatibilityWarningNote assessment={compatibilityWarning} />}

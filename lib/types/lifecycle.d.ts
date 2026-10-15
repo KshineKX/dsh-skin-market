@@ -116,6 +116,7 @@ export declare class SkinLifecycle {
     private installIntoProfile;
     private selectionSnapshot;
     private rollbackSelection;
+    private retainSavedOfficialSelection;
     private activate;
     private activateLocked;
     private deactivate;

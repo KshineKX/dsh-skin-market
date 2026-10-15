@@ -88,7 +88,7 @@ export interface OfficialInspectionOptions {
     signal?: AbortSignal;
 }
 export interface OfficialManagementAdapter {
-    /** These audited Hosts cannot reliably resolve a newly installed bundle before restarting. */
+    /** Newly installed code on these Hosts may need restart; saving enablement is still supported. */
     readonly installRequiresRestart: boolean;
     capabilities(): OfficialManagementCapabilities;
     setBundleEnabled(name: string, enabled: boolean, options?: CommandOptions): Promise<CommandResult>;

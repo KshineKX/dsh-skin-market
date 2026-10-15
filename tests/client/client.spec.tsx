@@ -721,68 +721,6 @@ describe('client market', () => {
     await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(true))
   })
 
-  it.each(['discovery', 'detail'])('uses install-only guidance in an old official Desktop %s view and waits for a full app restart before Use', async entry => {
-    let installed = false
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
-      if (url.endsWith('/state')) return { ok: true, json: async () => ({
-        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.1' },
-        management: { ...officialManagement, installRequiresRestart: true },
-        skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'restart-required', installedVersion: '1.0.0', updateAvailable: false }] : [],
-      }) }
-      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ currentVersion: '0.1.58', latestVersion: '0.1.58', updateAvailable: false }) }
-      if (url.endsWith('/install') && init?.method === 'POST') {
-        installed = true
-        return { ok: true, json: async () => ({ operationId: 'native-restart-install' }) }
-      }
-      if (url.endsWith('/operations/native-restart-install')) return { ok: true, json: async () => ({ id: 'native-restart-install', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true }) }
-      throw new Error(`Unexpected request: ${url}`)
-    })
-    vi.stubGlobal('fetch', fetchMock)
-    const clientRuntime = { setActive: vi.fn(async () => true) }
-    render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
-    if (entry === 'detail') await openSkinCard()
-    const install = await screen.findByRole('button', { name: entry === 'detail' ? '安装后需重启' : '安装' })
-    expect(install.getAttribute('title')).toBe('安装后请手动重启 Desktop App，再使用此皮肤。')
-    expect(screen.queryByRole('button', { name: '安装并使用' })).toBeNull()
-    expect(screen.queryByText('安装后请手动重启 Desktop App，再使用此皮肤。')).toBeNull()
-    fireEvent.click(install)
-    expect(await screen.findAllByText('测试皮肤 已安装，请手动重启 Desktop App 后再使用')).toHaveLength(entry === 'detail' ? 2 : 1)
-    expect(screen.queryByRole('button', { name: '使用' })).toBeNull()
-    expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
-    expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && init?.method === 'POST')).toHaveLength(1)
-    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
-    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
-    expect(clientRuntime.setActive).not.toHaveBeenCalled()
-  })
-
-  it.each(['discovery', 'detail'])('obeys a server install restart result even when its official Desktop %s state omits the hint', async entry => {
-    let installed = false
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
-      if (url.endsWith('/state')) return { ok: true, json: async () => ({
-        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.1' }, management: officialManagement,
-        skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'restart-required', installedVersion: '1.0.0', updateAvailable: false }] : [],
-      }) }
-      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ currentVersion: '0.1.58', latestVersion: '0.1.58', updateAvailable: false }) }
-      if (url.endsWith('/install') && init?.method === 'POST') {
-        installed = true
-        return { ok: true, json: async () => ({ operationId: 'authoritative-restart-install' }) }
-      }
-      if (url.endsWith('/operations/authoritative-restart-install')) return { ok: true, json: async () => ({ id: 'authoritative-restart-install', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true }) }
-      throw new Error(`Unexpected request: ${url}`)
-    })
-    vi.stubGlobal('fetch', fetchMock)
-    const clientRuntime = { setActive: vi.fn(async () => true) }
-    render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
-    if (entry === 'detail') await openSkinCard()
-    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
-    expect(await screen.findAllByText('测试皮肤 已安装，请手动重启 Desktop App 后再使用')).toHaveLength(entry === 'detail' ? 2 : 1)
-    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
-    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
-    expect(clientRuntime.setActive).not.toHaveBeenCalled()
-  })
-
   it.each(['desktop', 'dsh'] as const)('keeps install-and-use for a %s host whose completed install does not require restart', async hostKind => {
     let installed = false
     let active = false
@@ -809,7 +747,7 @@ describe('client market', () => {
     vi.stubGlobal('fetch', fetchMock)
     const clientRuntime = { setActive: vi.fn(async () => true) }
     render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
-    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
+    fireEvent.click(await screen.findByRole('button', { name: hostKind === 'desktop' ? '安装' : '安装并使用' }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(true))
     expect(await screen.findAllByRole('button', { name: '停用' })).not.toHaveLength(0)
     if (hostKind === 'desktop') expect(clientRuntime.setActive).not.toHaveBeenCalled()
@@ -818,10 +756,12 @@ describe('client market', () => {
   })
 
   it.each([
-    ['discovery', false, false], ['detail', false, false],
-    ['discovery', true, false], ['detail', true, false],
-    ['discovery', false, true], ['detail', false, true],
-  ] as const)('finishes alpha.3 install-and-use from %s before presenting restart guidance (install=%s, switch=%s)', async (entry, installRestart, switchRestart) => {
+    ['discovery', false, false, '0.2.1-alpha.3', false], ['detail', false, false, '0.2.1-alpha.3', false],
+    ['discovery', true, false, '0.2.1-alpha.3', false], ['detail', true, false, '0.2.1-alpha.3', false],
+    ['discovery', false, true, '0.2.1-alpha.3', false], ['detail', false, true, '0.2.1-alpha.3', false],
+    ['discovery', true, true, '0.2.0-rc.2', true], ['detail', true, true, '0.2.0-rc.2', true],
+    ['discovery', true, true, '0.2.0-rc.2', undefined], ['detail', true, true, '0.2.0-rc.2', undefined],
+  ] as const)('finishes official Desktop install-and-use from %s before presenting one restart dialog (install=%s, switch=%s, version=%s, hint=%s)', async (entry, installRestart, switchRestart, version, installHint) => {
     const oldSkin = { ...managedDesktopSkin, id: 'old.skin', package: 'old-skin', name: { zh: '原皮肤', en: 'Old Skin' } }
     let installed = false
     let switched = false
@@ -830,8 +770,8 @@ describe('client market', () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin, oldSkin] }) }
       if (url.endsWith('/state')) return { ok: true, json: async () => ({
-        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.1-alpha.3' },
-        management: { ...officialManagement, installRequiresRestart: false },
+        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version },
+        management: { ...officialManagement, ...(installHint !== undefined && { installRequiresRestart: installHint }) },
         skins: [
           { skinId: oldSkin.id, installation: 'installed', activation: switched ? 'inactive' : 'active', primary: !switched, installedVersion: '1.0.0', updateAvailable: false },
           ...(installed ? [{ skinId: skin.id, installation: 'installed', activation: switched ? installRestart || switchRestart ? 'restart-required' : 'active' : installRestart ? 'restart-required' : 'inactive', primary: switched, installedVersion: '1.0.0', updateAvailable: false }] : []),
@@ -856,9 +796,10 @@ describe('client market', () => {
     const clientRuntime = { setActive: vi.fn(async () => true) }
     render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
     if (entry === 'detail') await openSkinCard()
-    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/operations/alpha3-switch'))).toBe(true))
     expect(screen.queryByText(/请手动重启 Desktop App/)).toBeNull()
+    expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
     switched = true
     await act(async () => {
       finishActivation({ id: 'alpha3-switch', kind: 'activate', skinId: skin.id, phase: 'done', restartRequired: installRestart || switchRestart })
@@ -867,6 +808,13 @@ describe('client market', () => {
     if (installRestart || switchRestart) {
       expect(await screen.findAllByText('测试皮肤 已切换，请手动重启 Desktop App 后生效')).toHaveLength(entry === 'detail' ? 2 : 1)
       expect(screen.queryByText('请手动重启 Desktop App 后生效')).toBeNull()
+      const restartDialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+      expect(restartDialog.textContent).toContain('已保存“测试皮肤”的启用选择')
+      fireEvent.click(within(restartDialog).getByRole('button', { name: '稍后' }))
+      expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+      fireEvent.click(screen.getAllByRole('button', { name: '查看重启提示' })[0]!)
+      expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+      fireEvent.click(within(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).getByRole('button', { name: '关闭' }))
     } else {
       expect(await screen.findAllByRole('button', { name: '停用' })).not.toHaveLength(0)
       expect(screen.queryByText(/请手动重启 Desktop App/)).toBeNull()
@@ -906,8 +854,10 @@ describe('client market', () => {
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} />)
     await openSkinCard()
-    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
-    expect(await screen.findByText('请手动重启 Desktop App 后生效')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '安装' }))
+    const dialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(dialog.textContent).toContain('自动切换尚未完成')
+    expect(dialog.textContent).not.toContain('已保存')
     expect(screen.queryByText('测试皮肤 已切换，请手动重启 Desktop App 后生效')).toBeNull()
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
   })
@@ -996,6 +946,66 @@ describe('client market', () => {
     fireEvent.click(queued)
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && (init as RequestInit | undefined)?.method === 'POST')).toHaveLength(2))
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && (init as RequestInit | undefined)?.method === 'POST')).toBe(false)
+  })
+
+  it.each(['discovery', 'detail'] as const)('keeps the official Desktop %s install as one automatic action and waits for another installation', async entry => {
+    const other = { ...managedDesktopSkin, id: 'other.skin', name: { zh: '正在安装的皮肤', en: 'Installing Skin' } }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin, other] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({
+        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, management: { ...officialManagement, installRequiresRestart: true }, skins: [],
+        operations: [{ id: 'other-install', skinId: other.id, kind: 'install', phase: 'downloading', startedAt: new Date().toISOString() }],
+      }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    if (entry === 'detail') await openSkinCard()
+    const region = entry === 'detail' ? screen.getByRole('main', { name: '皮肤详情内容' }) : await screen.findByRole('group', { name: '测试皮肤 操作' })
+    const install = within(region).getByRole('button', { name: '安装' })
+    expect(install.hasAttribute('disabled')).toBe(true)
+    expect(install.getAttribute('title')).toBe('请等待当前安装完成，再安装其他皮肤')
+    expect(within(region).queryByRole('button', { name: '仅安装' })).toBeNull()
+    expect(within(region).queryByRole('button', { name: '安装并使用' })).toBeNull()
+    fireEvent.click(install)
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(false)
+  })
+
+  it.each(['discovery', 'detail'] as const)('blocks the official Desktop %s install when the host cannot enable its target', async entry => {
+    const reason = '当前宿主无法保存插件启用状态'
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [managedDesktopSkin] } : {
+      hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, skins: [],
+      management: { ...officialManagement, capabilities: { ...officialManagement.capabilities, enable: { available: false, reason } } },
+    } })))
+    render(<SkinMarketSection t={key => key} />)
+    if (entry === 'detail') await openSkinCard()
+    const region = entry === 'detail' ? screen.getByRole('main', { name: '皮肤详情内容' }) : await screen.findByRole('group', { name: '测试皮肤 操作' })
+    const install = within(region).getByRole('button', { name: '安装' })
+    expect(install.hasAttribute('disabled')).toBe(true)
+    expect(install.getAttribute('title')).toBe(reason)
+    expect(screen.getAllByText(reason).length).toBeGreaterThan(0)
+    expect(within(region).queryByRole('button', { name: '仅安装' })).toBeNull()
+  })
+
+  it('keeps an honest restart reminder when installation succeeds but the automatic switch fails', async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, management: { ...officialManagement, installRequiresRestart: true }, skins: [] }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'installed-before-failure' }) }
+      if (url.endsWith('/operations/installed-before-failure')) return { ok: true, json: async () => ({ id: 'installed-before-failure', skinId: skin.id, kind: 'install', phase: 'done', restartRequired: true }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'switch-failed' }) }
+      if (url.endsWith('/operations/switch-failed')) return { ok: true, json: async () => ({ id: 'switch-failed', skinId: skin.id, kind: 'activate', phase: 'failed', message: '启用保存失败，已恢复原皮肤' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
+    const dialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(dialog.textContent).toContain('自动切换尚未完成')
+    expect(dialog.textContent).not.toContain('已保存“测试皮肤”的启用选择')
+    fireEvent.click(within(dialog).getByRole('button', { name: '稍后' }))
+    expect(screen.getByText('启用保存失败，已恢复原皮肤')).toBeTruthy()
+    expect(screen.queryByText('测试皮肤 已切换，请手动重启 Desktop App 后生效')).toBeNull()
   })
 
   it('asks before installing an incompatible skin and carries consent through this install-and-use action', async () => {
@@ -1087,13 +1097,15 @@ describe('client market', () => {
     expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, dshRuntime) })
   })
 
-  it('warns before installing an incompatible skin on official Desktop and respects install-only restart guidance', async () => {
+  it('warns before installing an incompatible skin on official Desktop and carries its consent through automatic activation', async () => {
     const incompatible = { ...managedDesktopSkin, compatibility: { dsh: '0.1.0-rc.6', platform: ['web', 'desktop'] } }
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [incompatible] }) }
-      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, management: { ...officialManagement, installRequiresRestart: true }, skins: [] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.0-rc.2' }, management: { ...officialManagement, installRequiresRestart: true }, skins: [] }) }
       if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-desktop' }) }
       if (url.endsWith('/operations/incompatible-desktop')) return { ok: true, json: async () => ({ id: 'incompatible-desktop', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'incompatible-desktop-activate' }) }
+      if (url.endsWith('/operations/incompatible-desktop-activate')) return { ok: true, json: async () => ({ id: 'incompatible-desktop-activate', kind: 'activate', skinId: skin.id, phase: 'done', restartRequired: true }) }
       return { ok: true, json: async () => ({}) }
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -1103,9 +1115,10 @@ describe('client market', () => {
     expect(dialog.textContent).toContain('当前 DSH 0.2.0-rc.2')
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
     fireEvent.click(within(dialog).getByRole('button', { name: '仍然安装' }))
-    expect(await screen.findByText('测试皮肤 已安装，请手动重启 Desktop App 后再使用')).toBeTruthy()
+    expect(await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    expect(screen.getByText('测试皮肤 已切换，请手动重启 Desktop App 后生效')).toBeTruthy()
     expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/install') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, { ...dshRuntime, version: '0.2.0-rc.2' }) })
-    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(false)
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(incompatible, { ...dshRuntime, version: '0.2.0-rc.2' }) })
   })
 
   it.each(['unmount', 'profile-busy'])('does not start an incompatible install if %s interrupts its confirmation', async interruption => {
@@ -1642,9 +1655,36 @@ describe('client market', () => {
     render(<SkinMarketSection t={key => key} />)
     await openSkinCard()
 
-    expect(await screen.findByText('请手动重启 Desktop App 后生效')).toBeTruthy()
+    fireEvent.click(await screen.findByRole('button', { name: '查看重启提示' }))
+    expect(await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
+  })
+
+  it('waits for ongoing installations before manual restart and describes the chosen restart target', async () => {
+    let installing = true
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [managedDesktopSkin] } : url.endsWith('/state') ? {
+      hostKind: 'desktop', restartAvailable: false, marketUpdateRestartRequired: true,
+      skins: [{ skinId: skin.id, installation: 'installed', activation: 'restart-required', installedVersion: '1.0.0', updateAvailable: false }],
+      operations: installing ? [{ id: 'other-install', skinId: 'other.skin', kind: 'install', phase: 'downloading', startedAt: new Date().toISOString() }] : [],
+    } : {} }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const marketDialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(marketDialog.textContent).toContain('还有 1 款皮肤正在安装或更新')
+    expect(marketDialog.textContent).toContain('请等待操作完成后再手动重启 Desktop App')
+    expect(marketDialog.textContent).not.toContain('完全退出 Desktop App')
+    fireEvent.click(within(marketDialog).getByRole('button', { name: '稍后' }))
+    installing = false
+    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent(window, new Event('focus'))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+    await openSkinCard()
+    const details = screen.getByRole('main', { name: '皮肤详情内容' })
+    fireEvent.click(within(details).getAllByRole('button', { name: '查看重启提示' })[0]!)
+    const skinDialog = screen.getByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(skinDialog.textContent).toContain('“测试皮肤”的设置将在重启后生效。')
+    expect(skinDialog.textContent).not.toContain('皮肤市场已更新')
   })
 
   it('keeps the official Desktop self-update flow host-managed after the package is written', async () => {
@@ -1665,9 +1705,91 @@ describe('client market', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '更新皮肤市场到 0.1.57' }))
     expect(await screen.findByText('皮肤市场已更新，请手动重启 Desktop App 后生效')).toBeTruthy()
+    const restartDialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(restartDialog.textContent).toContain('皮肤市场已更新，重启后生效。')
+    expect(restartDialog.textContent).toContain('完全退出 Desktop App 并重新打开')
+    expect(within(restartDialog).getAllByRole('button')).toHaveLength(2)
     expect(screen.queryByText('请手动重启 Desktop App 后生效')).toBeNull()
     expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用皮肤市场更新' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url, request]) => url.endsWith('/restart') && request?.method === 'POST')).toBe(false)
+  })
+
+  it.each([
+    ['activate', '使用', true], ['activate', '使用', false],
+    ['deactivate', '停用', true], ['deactivate', '停用', false],
+    ['update', '更新', true], ['update', '更新', false],
+    ['uninstall', '卸载', true], ['uninstall', '卸载', false],
+  ] as const)('opens the manual Desktop restart dialog for %s only when its result requires restart (%s, %s)', async (kind, actionLabel, restartRequired) => {
+    let completed = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({
+        hostKind: 'desktop', restartAvailable: false, runtime: { ...dshRuntime, version: '0.2.1-alpha.3' },
+        management: { ...officialManagement, installRequiresRestart: false },
+        skins: completed && kind === 'uninstall' ? [] : [{ skinId: skin.id, installation: 'installed', activation: kind === 'activate' ? 'inactive' : 'active', installedVersion: '1.0.0', updateAvailable: kind === 'update' && !completed }],
+      }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ currentVersion: '0.1.58', latestVersion: '0.1.58', updateAvailable: false }) }
+      if (url.endsWith(`/${kind}`) && init?.method === 'POST') {
+        completed = true
+        return { ok: true, json: async () => ({ operationId: 'desktop-result' }) }
+      }
+      if (url.endsWith('/operations/desktop-result')) return { ok: true, json: async () => ({ id: 'desktop-result', kind, skinId: skin.id, phase: 'done', restartRequired }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: actionLabel }))
+    if (kind === 'uninstall') fireEvent.click(within(await screen.findByRole('dialog', { name: '卸载皮肤' })).getByRole('button', { name: '确认卸载' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(1))
+    if (restartRequired) {
+      const dialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+      expect(dialog.textContent).toContain('完全退出 Desktop App 并重新打开')
+      expect(within(dialog).queryByRole('button', { name: /立即重启|确认无任务/ })).toBeNull()
+      fireEvent.click(within(dialog).getByRole('button', { name: '稍后' }))
+      const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+      fireEvent(window, new Event('focus'))
+      await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+      expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+      fireEvent.click(screen.getAllByRole('button', { name: '查看重启提示' })[0]!)
+      expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    } else {
+      await act(async () => {})
+      expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+      expect(screen.queryByRole('button', { name: '查看重启提示' })).toBeNull()
+    }
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
+  })
+
+  it.each(['completed-task', 'restored'] as const)('shows the manual market-update restart dialog once for a %s and restores it after remount', async mode => {
+    let updated = mode === 'restored'
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', restartAvailable: false, skins: [], marketUpdateRestartRequired: updated }) }
+      if (url.endsWith('/market-update') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'desktop-market-update' }) }
+      if (url.endsWith('/market-update/operations/desktop-market-update')) {
+        updated = true
+        return { ok: true, json: async () => ({ id: 'desktop-market-update', phase: 'done', startedAt: new Date().toISOString() }) }
+      }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ currentVersion: updated ? '0.1.58' : '0.1.57', latestVersion: '0.1.58', updateAvailable: !updated }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const view = render(<SkinMarketSection t={key => key} />)
+    if (mode === 'completed-task') fireEvent.click(await screen.findByRole('button', { name: '更新皮肤市场到 0.1.58' }))
+    const dialog = await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })
+    expect(dialog.textContent).toContain('皮肤市场已更新，重启后生效。')
+    fireEvent.click(within(dialog).getByRole('button', { name: '稍后' }))
+    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent(window, new Event('focus'))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+    expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '查看重启提示' }))
+    expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    view.unmount()
+    render(<SkinMarketSection t={key => key} />)
+    expect(await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
   })
 
   it('asks for restart after updating the active skin', async () => {

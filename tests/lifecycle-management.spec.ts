@@ -460,19 +460,23 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
   })
 
-  it('preserves an old Host applied install result while requiring a fresh generation before Use or Pin', async () => {
-    const item = skin('native-a')
-    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+  it('saves an old Host install-and-use selection before restart and replays it without another user action', async () => {
+    const item = skin('native-a'), current = skin('native-current'), pinned = skin('native-pinned')
+    const host = fixture([item, current, pinned], { hostVersion: '0.2.0-rc.2' })
+    host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [item.id], pinnedSkinIds: [pinned.id] })
     const operation = await finished(host.lifecycle.begin('install', item.id))
     expect(operation).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
-    expect(operation.message).toContain('完全退出并重开')
-    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: null, pendingRestart: { pid: process.pid, skinIds: [item.id] } })
+    expect(operation.message).toContain('手动重启 Desktop App')
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: current.id, pendingRestart: { pid: process.pid, skinIds: [item.id] } })
     expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
-    expect(readProfileBundles(host.directory)).toEqual([])
-    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('需要先完全退出并重开')
-    expect(() => host.lifecycle.begin('pin', item.id)).toThrow('需要先完全退出并重开')
+    expect(await finished(host.lifecycle.begin('activate', item.id))).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
+    expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [item.package, true], [pinned.package, true]])
+    // This is already the official on-disk startup selection, before quitting.
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: item.id, disabledSkinIds: [current.id], pinnedSkinIds: [pinned.id] })
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
-    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
 
     await host.lifecycle.dispose()
     const persisted = readMarketState(host.directory)
@@ -482,18 +486,19 @@ describe('official plugin manager lifecycle', () => {
     const fresh = new SkinLifecycle({ loader: { entries: () => host.entries.values() } }, {
       profile: 'desktop', profileDir: host.directory, hostKind: 'desktop', runtime: freshRuntime,
       runner: officialDesktopRunner(() => host.manager, freshRuntime), lifecycleWaitMs: 10,
-    }, [item])
+    }, [item, current, pinned])
     lifecycles.push(fresh)
-    fresh.start()
-    await until(() => readMarketState(host.directory).pendingRestart === undefined)
-    expect(await finished(fresh.begin('activate', item.id))).toMatchObject({ phase: 'done', application: 'applied' })
+    host.manager.setBundleEnabled.mockClear()
+    await fresh.replay()
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
     expect(readMarketState(host.directory).activeSkinId).toBe(item.id)
-    expect(readProfileBundles(host.directory)).toEqual([item.package])
-    expect(host.manager.setBundleEnabled).toHaveBeenCalledExactlyOnceWith(item.package, true)
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(fresh.states().find(state => state.skinId === item.id)).toMatchObject({ activation: 'active', primary: true })
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
   })
 
-  it('persists the old Host restart guard after repairing an already recorded package', async () => {
+  it('keeps an old Host repair restart requirement while saving a pin before restart', async () => {
     const item = skin('native-a')
     const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
     host.materialize(item)
@@ -503,11 +508,89 @@ describe('official plugin manager lifecycle', () => {
     expect(operation).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
     expect(operation.message).toContain('构件已修复')
     expect(readMarketState(host.directory).pendingRestart).toEqual({ pid: process.pid, skinIds: [item.id] })
-    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('需要先完全退出并重开')
-    expect(() => host.lifecycle.begin('pin', item.id)).toThrow('需要先完全退出并重开')
+    expect(await finished(host.lifecycle.begin('pin', item.id))).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
-    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(host.manager.setBundleEnabled).toHaveBeenCalledExactlyOnceWith(item.package, true)
+    expect(readProfileBundles(host.directory)).toEqual([item.package])
+    expect(readMarketState(host.directory).pinnedSkinIds).toEqual([item.id])
     expect(readFileSync(profilePatchFile(host.directory), 'utf8')).toBe(host.originalPatch)
+  })
+
+  it('retains a fully saved old Host selection when only the newly installed target cannot import yet', async () => {
+    const item = skin('native-new'), current = skin('native-current'), pinned = skin('native-pinned')
+    const host = fixture([item, current, pinned], { hostVersion: '0.2.0-rc.2' })
+    host.materialize(current); host.materialize(pinned)
+    host.select(current.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [item.id], pinnedSkinIds: [pinned.id] })
+    await finished(host.lifecycle.begin('install', item.id))
+    const diagnostic = `dsh: warning: 1 entry did not activate\n${item.rowId} (${item.package}): failed to import`
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => {
+      const result = host.applyEnable(name, enabled)
+      if (name !== item.package || !enabled) return result
+      host.entries.get(name)!.fiber = undefined
+      return { ...result, application: 'failed', error: { code: 'operation-error', diagnostic } }
+    })
+    const operation = await finished(host.lifecycle.begin('activate', item.id))
+    expect(operation).toMatchObject({ phase: 'done', application: 'restart-required', restartRequired: true })
+    expect(operation.message).toContain('启停选择已保存，目标当前未加载；请手动重启 Desktop App')
+    expect(operation.message).toContain(diagnostic)
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: item.id, pinnedSkinIds: [pinned.id], disabledSkinIds: [current.id] })
+    expect(host.lifecycle.states().find(state => state.skinId === item.id)).toMatchObject({ activation: 'restart-required', primary: true })
+    // Refresh/replay in the current process must not repeat the failed import.
+    host.manager.setBundleEnabled.mockClear()
+    await host.lifecycle.replay()
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+
+    await host.lifecycle.dispose()
+    const state = readMarketState(host.directory)
+    state.pendingRestart!.pid = process.pid + 1
+    writeMarketState(host.directory, state)
+    // A fresh Host starts the already selected target from its on-disk bundle.
+    host.materialize(item)
+    const fresh = new SkinLifecycle({ loader: { entries: () => host.entries.values() } }, {
+      profile: 'desktop', profileDir: host.directory, hostKind: 'desktop', runtime: host.runtime,
+      runner: host.runner, lifecycleWaitMs: 10,
+    }, [item, current, pinned])
+    lifecycles.push(fresh)
+    await fresh.replay()
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(readMarketState(host.directory).activeSkinId).toBe(item.id)
+    expect(fresh.states().find(state => state.skinId === item.id)).toMatchObject({ activation: 'active', primary: true })
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    'initialization failure', 'missing service', 'another row', 'multiple rows',
+    'selection not saved', 'old skin still selected', 'unreviewed source', 'missing entry file',
+  ])('rolls back an old Host import failure rather than accepting %s as a saved restart transition', async reason => {
+    const item = skin('native-new'), current = skin('native-current')
+    const host = fixture([item, current], { hostVersion: '0.2.0-rc.2' })
+    host.materialize(current); host.select(current.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [item.id] })
+    await finished(host.lifecycle.begin('install', item.id))
+    let diagnostic = `dsh: warning: 1 entry did not activate\n${item.rowId} (${item.package}): failed to import`
+    if (reason === 'initialization failure') diagnostic = diagnostic.replace('failed to import', 'Error: plugin initialization failed')
+    if (reason === 'missing service') diagnostic = diagnostic.replace('failed to import', 'pending (waiting for service: requiredService)')
+    if (reason === 'another row') diagnostic = diagnostic.replace(item.rowId, 'unrelated-row')
+    if (reason === 'multiple rows') diagnostic = diagnostic.replace('1 entry', '2 entries') + '\nunrelated-row (unrelated-package): failed to import'
+    if (reason === 'unreviewed source') {
+      const manifest = JSON.parse(readFileSync(join(host.directory, 'package.json'), 'utf8'))
+      manifest.dependencies[item.package] = 'github:unreviewed/other#' + 'b'.repeat(40)
+      atomicWriteJson(join(host.directory, 'package.json'), manifest)
+    }
+    if (reason === 'missing entry file') rmSync(join(packageDir(host.directory, item.package), 'lib/index.js'))
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => {
+      if (reason === 'old skin still selected' && name === current.package && !enabled) return { application: 'applied', changed: false }
+      if (reason !== 'selection not saved' || name !== item.package || !enabled) host.applyEnable(name, enabled)
+      return name === item.package && enabled
+        ? { application: 'failed', changed: true, stage: 'enable', target: name, enabled, error: { code: 'operation-error', diagnostic } }
+        : { application: 'applied', changed: true, stage: 'enable', target: name, enabled }
+    })
+    expect(await finished(host.lifecycle.begin('activate', item.id))).toMatchObject({ phase: 'failed', application: 'failed' })
+    expect(readMarketState(host.directory).activeSkinId).toBe(current.id)
+    expect(readProfileBundles(host.directory)).toEqual([current.package])
   })
 
   it.each(['applied', 'failed'] as const)('holds further writes while a delayed native enable is pending, then accepts its late %s result once', async application => {
