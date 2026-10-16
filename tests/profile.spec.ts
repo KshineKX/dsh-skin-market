@@ -19,6 +19,17 @@ describe('profile state', () => {
     expect(readMarketState(dir).pendingRestart).toBeUndefined()
   })
 
+  it('preserves first-install restart provenance and treats malformed provenance conservatively', () => {
+    const dir = fixture()
+    const pendingRestart = { pid: 1234, id: 'first-install', skinIds: ['one', 'two'], inferredInstalls: { one: 'a'.repeat(64) } }
+    writeMarketState(dir, { version: 1, activeSkinId: null, disabledSkinIds: [], pendingRestart })
+    expect(readMarketState(dir).pendingRestart).toEqual(pendingRestart)
+    for (const inferredInstalls of [{ unknown: 'a'.repeat(64) }, { one: 1 }, { one: 'invalid-hash' }, ['one']]) {
+      atomicWriteJson(join(dir, '.dsh-skin-market', 'state.json'), { version: 1, activeSkinId: null, disabledSkinIds: [], pendingRestart: { ...pendingRestart, inferredInstalls } })
+      expect(readMarketState(dir).pendingRestart).toEqual({ pid: 1234, id: 'first-install', skinIds: ['one', 'two'] })
+    }
+  })
+
   it('uses every declared bundle patch in order for validation and skin registration', () => {
     const dir = fixture()
     const skin = loadCatalog().skins[0]

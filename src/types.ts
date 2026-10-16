@@ -200,7 +200,13 @@ export interface PersistedMarketState {
   activeSkinId: string | null
   disabledSkinIds: string[]
   pinnedSkinIds?: string[]
-  pendingRestart?: { pid: number; skinIds: string[]; id?: string }
+  pendingRestart?: {
+    pid: number
+    skinIds: string[]
+    id?: string
+    /** First-install artifact hashes; only the same confirmed live build can discharge them. */
+    inferredInstalls?: Record<string, string>
+  }
   activity?: Record<string, SkinActivity>
   /** Companion packages linked to installed owner skins. */
   managedCompanions?: Record<string, ManagedCompanionState>

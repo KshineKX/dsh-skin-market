@@ -209,6 +209,8 @@ export interface PersistedMarketState {
         pid: number;
         skinIds: string[];
         id?: string;
+        /** First-install artifact hashes; only the same confirmed live build can discharge them. */
+        inferredInstalls?: Record<string, string>;
     };
     activity?: Record<string, SkinActivity>;
     /** Companion packages linked to installed owner skins. */

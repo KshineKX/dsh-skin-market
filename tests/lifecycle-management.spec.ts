@@ -1025,17 +1025,20 @@ describe('official plugin manager lifecycle', () => {
     expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: true })
   })
 
-  it('keeps an existing primary skin restart requirement visible after an alpha.3 switch reports applied', async () => {
+  it.each(['activate', 'pin'] as const)('keeps another skin restart requirement on its original skin after an applied %s', async kind => {
     const next = skin('alpha3-next'), current = skin('alpha3-current')
     const host = fixture([next, current], { hostVersion: '0.2.1-alpha.3' })
     host.materialize(next); host.materialize(current)
     host.select(current.package, true)
     writeMarketState(host.directory, { version: 1, activeSkinId: current.id, disabledSkinIds: [next.id], pendingRestart: { pid: process.pid, skinIds: [current.id] } })
 
-    expect(await finished(host.lifecycle.begin('activate', next.id))).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
-    expect(readProfileBundles(host.directory)).toEqual([next.package])
-    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: next.id, disabledSkinIds: [current.id], pendingRestart: { pid: process.pid, skinIds: [current.id, next.id] } })
-    expect(host.lifecycle.states().find(state => state.skinId === next.id)).toMatchObject({ activation: 'restart-required', primary: true })
+    const operation = await finished(host.lifecycle.begin(kind, next.id))
+    expect(operation).toMatchObject({ phase: 'done', application: 'applied' })
+    expect(operation.restartRequired).not.toBe(true)
+    expect(readProfileBundles(host.directory).sort()).toEqual((kind === 'activate' ? [next.package] : [current.package, next.package]).sort())
+    expect(readMarketState(host.directory).pendingRestart).toMatchObject({ pid: process.pid, skinIds: [current.id] })
+    expect((await host.lifecycle.runtimeStates()).find(state => state.skinId === next.id)).toMatchObject({ activation: 'active' })
+    expect(host.lifecycle.states().find(state => state.skinId === current.id)).toMatchObject({ activation: 'restart-required' })
   })
 
   it.each(['disable', 'enable'] as const)('finishes the alpha.3 selection and preserves a native %s restart requirement through later applied results', async step => {
@@ -1159,6 +1162,11 @@ describe('official plugin manager lifecycle', () => {
     expect(operation.message).toContain('手动重启 Desktop App')
     expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: current.id, pendingRestart: { pid: process.pid, skinIds: [item.id] } })
     expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    host.manager.setBundleEnabled.mockImplementation(async (name, enabled) => {
+      const result = host.applyEnable(name, enabled)
+      if (name === item.package && enabled) host.entries.get(name)!.fiber = undefined
+      return result
+    })
     expect(await finished(host.lifecycle.begin('activate', item.id))).toMatchObject({ phase: 'done', application: 'applied', restartRequired: true })
     expect(host.manager.setBundleEnabled.mock.calls).toEqual([[current.package, false], [item.package, true]])
     // This is already the official on-disk startup selection, before quitting.
@@ -1170,6 +1178,7 @@ describe('official plugin manager lifecycle', () => {
     const persisted = readMarketState(host.directory)
     persisted.pendingRestart!.pid = process.pid + 1
     writeMarketState(host.directory, persisted)
+    host.materialize(item)
     const freshRuntime: DshRuntime = { ...runtime, version: '0.2.0-rc.2' }
     const fresh = new SkinLifecycle({ loader: { entries: () => host.entries.values() } }, {
       profile: 'desktop', profileDir: host.directory, hostKind: 'desktop', runtime: freshRuntime,
@@ -1184,6 +1193,119 @@ describe('official plugin manager lifecycle', () => {
     expect(fresh.states().find(state => state.skinId === item.id)).toMatchObject({ activation: 'active', primary: true })
     expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['0.1.6-alpha.2', 'activate'], ['0.1.6-alpha.2', 'pin'],
+    ['0.2.0-rc.2', 'activate'], ['0.2.0-rc.2', 'pin'],
+  ] as const)('clears only the inferred first-install restart when %s confirms a live %s', async (hostVersion, kind) => {
+    const target = skin('first-install-live')
+    const host = fixture([target], { hostVersion })
+    await finished(host.lifecycle.begin('install', target.id))
+    expect(readMarketState(host.directory).pendingRestart).toMatchObject({ skinIds: [target.id], inferredInstalls: { [target.id]: expect.stringMatching(/^[a-f0-9]{64}$/) } })
+    const operation = await finished(host.lifecycle.begin(kind, target.id))
+    expect(operation).toMatchObject({ phase: 'done', application: 'applied', restartRequired: false })
+    expect(operation.message).not.toMatch(/restart|重启/)
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(host.lifecycle.restartNoticeId).toBeUndefined()
+    expect((await host.lifecycle.runtimeStates())[0]).toMatchObject({ activation: 'active' })
+  })
+
+  it.each(['disabled', 'loading', 'pending', 'failed', 'ambiguous', 'inventory-error'] as const)(
+    'retains an inferred restart while inventory is %s, then clears it after the same process confirms activation', async outcome => {
+      const target = skin('first-install-delayed')
+      const host = fixture([target], { hostVersion: '0.2.0-rc.2' })
+      await finished(host.lifecycle.begin('install', target.id))
+      host.manager.setBundleEnabled.mockImplementationOnce(async (name, enabled) => {
+        const result = host.applyEnable(name, enabled)
+        host.entries.get(name)!.fiber = undefined
+        return result
+      })
+      expect(await finished(host.lifecycle.begin('activate', target.id))).toMatchObject({ phase: 'done', restartRequired: true })
+      const pending = readMarketState(host.directory).pendingRestart
+      const normalInventory = host.manager.listPlugins.getMockImplementation()!
+      host.manager.listPlugins.mockImplementation(async () => {
+        if (outcome === 'inventory-error') throw new Error('inventory unavailable')
+        const row = { entryId: host.entryId(target.package), patchId: target.rowId, moduleName: target.package, enabled: outcome !== 'disabled', fiberPhase: outcome === 'disabled' ? 'active' : outcome }
+        return outcome === 'ambiguous' ? [row, { ...row, entryId: 'another-entry' }] : [row]
+      })
+      // A market plugin reload in the same app process retains provenance.
+      const reloaded = new SkinLifecycle({ loader: { entries: () => host.entries.values() } }, {
+        profile: 'desktop', profileDir: host.directory, runner: host.runner, hostKind: 'desktop', runtime: host.runtime,
+      }, [target])
+      lifecycles.push(reloaded)
+      expect((await reloaded.runtimeStates())[0]).toMatchObject({ activation: 'restart-required' })
+      expect(readMarketState(host.directory).pendingRestart).toEqual(pending)
+      host.manager.listPlugins.mockImplementation(normalInventory)
+      host.entries.get(target.package)!.fiber = {}
+      expect((await reloaded.runtimeStates())[0]).toMatchObject({ activation: 'active' })
+      expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+      expect(reloaded.restartNoticeId).toBeUndefined()
+    },
+  )
+
+  it('upgrades an inferred restart to a native requirement even when its target fiber is active', async () => {
+    const target = skin('first-install-native-restart')
+    const host = fixture([target], { hostVersion: '0.2.0-rc.2' })
+    await finished(host.lifecycle.begin('install', target.id))
+    host.manager.setBundleEnabled.mockImplementationOnce(async (name, enabled) => ({ ...host.applyEnable(name, enabled), application: 'restart-required' }))
+    expect(await finished(host.lifecycle.begin('activate', target.id))).toMatchObject({ phase: 'done', application: 'restart-required', restartRequired: true })
+    expect(readMarketState(host.directory).pendingRestart?.inferredInstalls).toBeUndefined()
+    expect((await host.lifecycle.runtimeStates())[0]).toMatchObject({ activation: 'restart-required' })
+  })
+
+  it.each(['plugins', 'bundles'] as const)('releases the selection queue after a stalled %s read and discards its late restart verification', async inventory => {
+    const target = skin('first-install-stalled')
+    const host = fixture([target], { hostVersion: '0.2.0-rc.2' })
+    await finished(host.lifecycle.begin('install', target.id))
+    host.manager.setBundleEnabled.mockImplementationOnce(async (name, enabled) => {
+      const result = host.applyEnable(name, enabled)
+      host.entries.get(name)!.fiber = undefined
+      return result
+    })
+    await finished(host.lifecycle.begin('activate', target.id))
+    const late = deferred<unknown>()
+    const reader = inventory === 'plugins' ? host.manager.listPlugins : host.manager.listBundles
+    const readsBefore = reader.mock.calls.length
+    if (inventory === 'plugins') host.manager.listPlugins.mockReturnValueOnce(late.promise)
+    else {
+      host.manager.listPlugins.mockResolvedValueOnce([])
+      host.manager.listBundles.mockReturnValueOnce(late.promise)
+    }
+    const refresh = host.lifecycle.runtimeStates()
+    await until(() => reader.mock.calls.length > readsBefore)
+    host.manager.removeBundle.mockImplementationOnce(async name => ({ ...host.applyRemove(name), application: 'restart-required' }))
+    const removal = host.lifecycle.begin('uninstall', target.id)
+    expect((await refresh)[0]).toMatchObject({ activation: 'restart-required' })
+    expect(await finished(removal)).toMatchObject({ phase: 'done', restartRequired: true })
+    const pending = readMarketState(host.directory).pendingRestart
+    expect(pending).toMatchObject({ skinIds: [target.id] })
+    expect(pending?.inferredInstalls).toBeUndefined()
+    late.resolve(inventory === 'plugins'
+      ? [{ entryId: host.entryId(target.package), patchId: target.rowId, moduleName: target.package, enabled: true, fiberPhase: 'active' }]
+      : [{ name: target.package, rows: [{ rowId: target.rowId, moduleName: target.package, entryId: host.entryId(target.package) }] }])
+    await new Promise(resolve => setImmediate(resolve))
+    expect(readMarketState(host.directory).pendingRestart).toEqual(pending)
+  })
+
+  it.each(['version', 'code', 'source'] as const)('does not verify a first installation against an external replacement of its %s', async change => {
+    const target = skin('first-install-replaced')
+    const host = fixture([target], { hostVersion: '0.2.0-rc.2' })
+    await finished(host.lifecycle.begin('install', target.id))
+    const pending = readMarketState(host.directory).pendingRestart
+    // Another official-plugin-page operation can select a replacement while
+    // the old fiber still reports active under the same component identity.
+    if (change === 'version') host.materialize(skin(target.id, '2.0.0'))
+    if (change === 'code') atomicWriteText(join(packageDir(host.directory, target.package), 'lib/index.js'), 'export const replaced = true\n')
+    if (change === 'source') {
+      const manifest = JSON.parse(readFileSync(join(host.directory, 'package.json'), 'utf8'))
+      manifest.dependencies[target.package] = `file:../${target.package}`
+      atomicWriteJson(join(host.directory, 'package.json'), manifest)
+    }
+    host.select(target.package, true)
+    writeMarketState(host.directory, { ...readMarketState(host.directory), activeSkinId: target.id, disabledSkinIds: [] })
+    expect((await host.lifecycle.runtimeStates())[0]).toMatchObject({ activation: 'restart-required' })
+    expect(readMarketState(host.directory).pendingRestart).toEqual(pending)
   })
 
   it('keeps an old Host repair restart requirement while saving a pin before restart', async () => {

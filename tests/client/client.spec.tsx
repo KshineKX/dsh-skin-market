@@ -1839,6 +1839,48 @@ describe('client market', () => {
     if (outcome === 'unavailable') expect(screen.getByText('皮肤组件已关闭，尚未生效。')).toBeTruthy()
   })
 
+  it('clears every restart reminder when the same Desktop process confirms the skin became active', async () => {
+    let active = false
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [managedDesktopSkin] } : url.endsWith('/state') ? {
+      instanceId: 'same-desktop-process', restartNoticeId: 'hot-applied-selection', hostKind: 'desktop', restartAvailable: false, management: officialManagement,
+      skins: [{ skinId: skin.id, installation: 'installed', activation: active ? 'active' : 'restart-required', primary: true, installedVersion: '1.0.0', updateAvailable: false }],
+    } : {} }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    expect(await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+
+    active = true
+    fireEvent(window, new Event('focus'))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull())
+    expect(screen.queryByText(/设置已保存，请手动重启/)).toBeNull()
+    expect(screen.queryByRole('button', { name: '查看重启提示' })).toBeNull()
+    await openSkinCard()
+    expect(screen.getAllByText('正在使用').length).toBeGreaterThan(0)
+    expect(screen.queryByText('待重启')).toBeNull()
+    expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/restart'))).toBe(false)
+  })
+
+  it('uses confirmed active Desktop state to clear an activation operation restart hint', async () => {
+    let active = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ instanceId: 'hot-activation', hostKind: 'desktop', restartAvailable: false, management: officialManagement,
+        skins: [{ skinId: skin.id, installation: 'installed', activation: active ? 'active' : 'inactive', primary: active, installedVersion: '1.0.0', updateAvailable: false }] }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') { active = true; return { ok: true, json: async () => ({ operationId: 'hinted-restart' }) } }
+      if (url.endsWith('/operations/hinted-restart')) return { ok: true, json: async () => ({ id: 'hinted-restart', kind: 'activate', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '使用' }))
+    await waitFor(() => expect(screen.getAllByText('正在使用').length).toBeGreaterThan(0))
+    expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '查看重启提示' })).toBeNull()
+    expect(screen.queryByText('待重启')).toBeNull()
+  })
+
   it('opens the restart dialog when an applied operation still leaves an explicit pending restart in refreshed state', async () => {
     let used = false
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {

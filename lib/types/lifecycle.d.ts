@@ -107,6 +107,7 @@ export declare class SkinLifecycle {
     states(): SkinRuntimeState[];
     /** Official inventory separates a saved toggle from actual fiber health. */
     runtimeStates(): Promise<SkinRuntimeState[]>;
+    private inspectRuntimeStates;
     private describeRestartVerification;
     private liveOperations;
     currentOperations(): Operation[];

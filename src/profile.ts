@@ -62,6 +62,8 @@ export function readMarketState(profileDir: string): PersistedMarketState {
     } else value.pendingRestart = {
       pid: pending.pid as number, skinIds: [...new Set(pending.skinIds as string[])],
       ...(typeof pending.id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(pending.id) ? { id: pending.id } : {}),
+      ...(isRecord(pending.inferredInstalls) && Object.entries(pending.inferredInstalls).every(([id, hash]) => pending.skinIds.includes(id) && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash))
+        ? { inferredInstalls: { ...pending.inferredInstalls } as Record<string, string> } : {}),
     }
   }
   return value
