@@ -49,7 +49,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
 })
 
 import { HOME_CATALOG_BATCH_SIZE, captureListScroll, compareInstalledSkinOrder, compareSkinOrder, interceptNotice, isInterceptFailure, resolvePrimitiveIcon, restartDocumentProbeUrl, restartReloadUrl, restoreListScroll, restoreMarketStyleOrder, SkinMarketSection, waitForRestartDocument } from '../../src/client/SkinMarketSection.tsx'
-import { MARKET_INSTALL_TROUBLESHOOT_URL, MARKET_MANUAL_UPDATE_URL } from '../../src/client/failure-help.ts'
+import { MARKET_INSTALL_TROUBLESHOOT_URL } from '../../src/client/failure-help.ts'
 import { apply as applyClient, createClientSkinRuntime, missingPrimitives, switchClientSkin } from '../../src/client/index.ts'
 import { createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
 import { setGeneratedMediaSources } from '../../src/media-preview.ts'
@@ -97,6 +97,122 @@ function visibleWarningDialogs(): HTMLElement[] {
 }
 
 describe('client market', () => {
+  it.each(['desktop', 'dsh'] as const)('copies a read-only repair handoff with the %s host, original action and sanitized operation log', async hostKind => {
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, writable: true, value: { writeText } })
+    const operation: Operation = { id: 'repair-handoff', skinId: skin.id, kind: 'uninstall', phase: 'failed', startedAt: new Date().toISOString(), failure: { kind: 'unexpected-store', message: 'store mismatch' } }
+    const diagnosticLog = '# dsh-skin-market diagnostic log\nversion: 0.1.62\n[error] sanitized-store-mismatch\n'
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind, runtime: { ...dshRuntime, version: '0.2.1-alpha.3' }, skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/uninstall') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: operation.id }) }
+      if (url.endsWith(`/operations/${operation.id}`)) return { ok: true, json: async () => operation }
+      if (url.endsWith('/logs?operationId=repair-handoff')) return { ok: true, text: async () => diagnosticLog }
+      throw new Error(`Unexpected request: ${url} ${init?.method ?? 'GET'}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard(/测试皮肤 已安装卡片/)
+    fireEvent.click(screen.getByRole('button', { name: '卸载' }))
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '卸载皮肤' })).getByRole('button', { name: '确认卸载' }))
+    const dialog = await screen.findByRole('dialog', { name: '卸载未完成' })
+    expect(within(dialog).queryByRole('link', { name: '查看安装排查' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('/logs?'))).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制排查提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
+    const text = writeText.mock.calls[0]![0]
+    expect(text).toContain(hostKind === 'desktop' ? '官方 Desktop' : 'DSH Web')
+    expect(text).toContain('0.2.1-alpha.3')
+    expect(text).toContain('原操作：卸载（uninstall）')
+    for (const identity of [skin.id, skin.package, skin.rowId, skin.repo]) expect(text).toContain(identity)
+    expect(text).toContain('不要改写自己的活动组合配置')
+    expect(text.endsWith(diagnosticLog)).toBe(true)
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1)
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('/logs?'))).toHaveLength(1)
+  })
+
+  it.each(['clipboard', 'logs'] as const)('retains selectable repair text with a visible warning when %s export fails', async failure => {
+    const writeText = vi.fn(async () => { throw new Error('clipboard blocked') })
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, writable: true, value: { writeText } })
+    const operation: Operation = { id: 'repair-copy-failed', skinId: skin.id, kind: 'deactivate', phase: 'failed', application: 'overridden', startedAt: new Date().toISOString(), failure: {
+      kind: 'configuration-override', message: 'covered', desiredEnabled: false,
+      configurationOverride: { status: 'blocked', rowId: skin.rowId, desiredEnabled: false, sharedAcrossProfiles: true, reason: '需要原管理工具处理。' },
+    } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: 'active', installedVersion: '1.0.0', updateAvailable: false }] }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/deactivate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: operation.id }) }
+      if (url.endsWith(`/operations/${operation.id}`)) return { ok: true, json: async () => operation }
+      if (url.endsWith('/logs?operationId=repair-copy-failed')) return failure === 'logs'
+        ? { ok: false, status: 500 }
+        : { ok: true, text: async () => '# dsh-skin-market diagnostic log\nredacted' }
+      throw new Error(`Unexpected request: ${url} ${init?.method ?? 'GET'}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const card = await screen.findByRole('button', { name: /测试皮肤 已安装卡片/ })
+    fireEvent.click(within(card.closest('article')!).getByRole('button', { name: '停用' }))
+    const dialog = await screen.findByRole('dialog', { name: '停用未完成' })
+    expect(dialog.textContent).toContain('强制启用')
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制排查提示词' }))
+    const text = await within(dialog).findByRole('textbox', { name: '排查提示词' }) as HTMLTextAreaElement
+    expect(text.readOnly).toBe(true)
+    expect(text.value).toContain('原操作：停用（deactivate）')
+    expect(text.value).toContain('目标组件应停用（disabled: true）')
+    expect(within(dialog).getByRole('alert').textContent).toContain(failure === 'logs' ? '日志未能导出' : '手动复制')
+    if (failure === 'logs') {
+      expect(writeText).not.toHaveBeenCalled()
+      expect(text.value).not.toContain('以下是已脱敏诊断日志')
+    } else expect(text.value).toContain('# dsh-skin-market diagnostic log\nredacted')
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1)
+  })
+
+  it('previews the affected old skin and sends only its bound repair context after explicit native approval', async () => {
+    const oldSkin = { ...managedDesktopSkin, id: 'old.skin', package: 'old-skin', rowId: 'old-row', name: { zh: '原皮肤', en: 'Old Skin' } }
+    const context = 'b'.repeat(64)
+    const file = '/Users/example/.dsh/cordis.patch.yml'
+    const operation: Operation = { id: 'repair-native', skinId: skin.id, kind: 'activate', phase: 'failed', application: 'overridden', startedAt: new Date().toISOString(), failure: {
+      kind: 'configuration-override', message: 'old skin forced enabled', action: 'repair-configuration', desiredEnabled: false, targetSkinId: oldSkin.id,
+      configurationOverride: { status: 'repairable', context, source: 'home', file, rowId: oldSkin.rowId, previousDisabled: false, desiredEnabled: false, sharedAcrossProfiles: true, reason: '静态覆盖可移除。' },
+    } }
+    let repaired = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin, oldSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime: dshRuntime, management: officialManagement, skins: [
+        { skinId: skin.id, installation: 'installed', activation: repaired ? 'active' : 'inactive', installedVersion: '1.0.0', updateAvailable: false },
+        { skinId: oldSkin.id, installation: 'installed', activation: repaired ? 'inactive' : 'active', primary: true, installedVersion: '1.0.0', updateAvailable: false },
+      ] }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: operation.id }) }
+      if (url.endsWith(`/operations/${operation.id}`)) return { ok: true, json: async () => operation }
+      if (url.endsWith('/operations/repair-native/retry') && init?.method === 'POST') {
+        expect(JSON.parse(String(init.body))).toEqual({ action: 'repair-configuration', configurationContext: context,
+          acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(managedDesktopSkin, dshRuntime) })
+        repaired = true
+        return { ok: true, json: async () => ({ operationId: 'repair-native-running' }) }
+      }
+      if (url.endsWith('/operations/repair-native-running')) return { ok: true, json: async () => ({ ...operation, id: 'repair-native-running', phase: 'done', application: 'applied', failure: undefined }) }
+      throw new Error(`Unexpected request: ${url} ${init?.method ?? 'GET'}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const card = await screen.findByRole('button', { name: /测试皮肤 已安装卡片/ })
+    fireEvent.click(within(card.closest('article')!).getByRole('button', { name: '使用' }))
+    const dialog = await screen.findByRole('dialog', { name: '启用未完成' })
+    expect(dialog.textContent).toContain('「原皮肤」被其他设置强制启用。')
+    expect(dialog.textContent).not.toContain('「测试皮肤」被其他设置禁用')
+    for (const text of [file, oldSkin.rowId, 'disabled: false', '所有 profile', '备份']) expect(dialog.textContent).toContain(text)
+    expect(within(dialog).queryByRole('button', { name: '复制排查提示词' })).toBeNull()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1)
+    fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并继续' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/operations/repair-native/retry'))).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '启用未完成' })).toBeNull())
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(2)
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('/configuration-override'))).toBe(false)
+  })
+
   it.each(['skin', 'market'] as const)('shows a %s retry failure once, retains its banner, and reports a rejected banner retry visibly', async source => {
     const id = `${source}-retry-visible`
     const operation = { id, phase: 'failed', startedAt: new Date().toISOString(), message: 'ECONNRESET /Users/private/raw-error', failure: { kind: 'network', message: 'ECONNRESET /Users/private/raw-error', action: 'retry' } }
@@ -271,7 +387,7 @@ describe('client market', () => {
     const notice = interceptNotice(operation, '液态玻璃', skin)
     expect(notice.title).toBe('已拦截安装')
     expect(notice.what).toBe('「液态玻璃」的安装包缺少必要文件。')
-    expect(notice.why).toBe('请等待作者修复后再安装。')
+    expect(notice.why).toContain('先核对安装目标与包文件')
     expect(notice.links).toEqual([{ href: `https://github.com/a/b/tree/${'a'.repeat(40)}`, label: '打开皮肤仓库' }])
   })
 
@@ -289,7 +405,7 @@ describe('client market', () => {
     const blocked = interceptNotice({ ...operation, failure: { kind: 'integrity', message: 'npm 未物化预期包版本或声明的可加载入口' } }, '测试皮肤', skin)
     expect(blocked.title).toBe('安装未完成')
     expect(blocked.what).toBe('「测试皮肤」：安装包无法通过校验。')
-    expect(blocked.why).toBe('请重新下载后再试。')
+    expect(blocked.why).toContain('核对安装源与缓存，不要跳过校验')
   })
 
   it('asks before migrating the chosen skin and preserves the active-skin restart flow', async () => {
@@ -616,7 +732,7 @@ describe('client market', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '更新皮肤市场到 0.1.16' }))
     const dialog = await screen.findByRole('dialog', { name: '皮肤市场更新失败' })
-    expect(dialog.textContent).toContain('安装记录与现有依赖不一致。')
+    expect(dialog.textContent).toContain('安装目录与当前包管理器的存储位置不一致。')
     expect(dialog.textContent).not.toContain('pnpm store')
     expect(within(dialog).getByRole('link', { name: '查看安装排查' }).getAttribute('href')).toBe(MARKET_INSTALL_TROUBLESHOOT_URL)
     expect(within(dialog).queryByRole('link', { name: '查看手动更新' })).toBeNull()
@@ -626,7 +742,7 @@ describe('client market', () => {
     await waitFor(() => expect(clipboard).toHaveBeenCalledWith(expect.stringContaining('kind=unexpected-store')))
   })
 
-  it('sends a generic market self-update failure to the manual update README', async () => {
+  it('keeps a generic market self-update failure on the diagnostic path', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
       if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], runningAgentCount: 0 }) }
@@ -640,8 +756,8 @@ describe('client market', () => {
     render(<SkinMarketSection t={key => key} />)
     fireEvent.click(await screen.findByRole('button', { name: '更新皮肤市场到 0.1.16' }))
     const dialog = await screen.findByRole('dialog', { name: '皮肤市场更新失败' })
-    expect(within(dialog).getByRole('link', { name: '查看手动更新' }).getAttribute('href')).toBe(MARKET_MANUAL_UPDATE_URL)
-    expect(within(dialog).queryByRole('link', { name: '查看安装排查' })).toBeNull()
+    expect(within(dialog).getByRole('link', { name: '查看安装排查' }).getAttribute('href')).toBe(MARKET_INSTALL_TROUBLESHOOT_URL)
+    expect(within(dialog).queryByRole('link', { name: '查看手动更新' })).toBeNull()
   })
 
   it('turns an empty successful response into a useful Host update error', async () => {
@@ -1304,7 +1420,7 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '安装' }))
     const failure = await screen.findByRole('dialog', { name: '启用未完成' })
     if (application === 'overridden') {
-      expect(failure.textContent).toContain('请解除禁用后重新使用。')
+      expect(failure.textContent).toContain('检查覆盖来源')
       expect(failure.textContent).not.toContain('重启无法')
     } else {
       expect(failure.textContent).toContain('未能完成本次操作。请复制日志反馈。')
@@ -1556,16 +1672,16 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     expect(dialog.textContent).toContain('让 Agent 检查并指导安装')
-    expect(dialog.textContent).toContain('插件页安装目标')
+    expect(dialog.textContent).toContain('插件包名')
     expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
     expect(dialog.textContent).not.toContain('该皮肤需要 Agent 协助安装')
     expect(screen.queryByRole('button', { name: '复制命令' })).toBeNull()
     expect(screen.getAllByRole('button', { name: '复制提示词' })).toHaveLength(1)
     expect(screen.queryByRole('button', { name: '取消' })).toBeNull()
-    expect(screen.getByRole('textbox', { name: '插件页安装目标' })).toHaveProperty('value', createSkinInstallSearchKeyword(manual))
+    expect(screen.getByRole('textbox', { name: '插件包名' })).toHaveProperty('value', createSkinInstallSearchKeyword(manual))
     expect(screen.queryByRole('button', { name: '打开安装页面' })).toBeNull()
     expect(open).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: '复制插件页安装目标' }))
+    fireEvent.click(screen.getByRole('button', { name: '复制插件包名' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallSearchKeyword(manual)))
     const copyPrompt = screen.getAllByRole('button', { name: '复制提示词' }).at(-1)!
     fireEvent.click(copyPrompt)
@@ -1592,7 +1708,7 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     await waitFor(() => expect(dialog.textContent).toContain('无法自动安装：未找到可供 Desktop 安装的 npm 包'))
-    expect(dialog.textContent).toContain('插件页安装目标')
+    expect(dialog.textContent).toContain('插件包名')
     expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
     expect(dialog.textContent).toContain('桌面端由你在插件页操作')
     expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(manual, 'desktop')])
@@ -2855,7 +2971,7 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '仅安装' }))
 
     const dialog = await screen.findByRole('dialog', { name: '已拦截安装' })
-    expect(dialog.textContent).toContain('「测试皮肤」的安装包缺少必要文件。请等待作者修复后再安装。')
+    expect(dialog.textContent).toContain('「测试皮肤」的安装包缺少必要文件。请先核对安装目标与包文件，确认缺包后反馈作者。')
     expect(dialog.textContent).not.toContain('cordis.patch.yml')
     expect(dialog.querySelector('details, code, ul, ol')).toBeNull()
     expect(dialog.className).toContain('warningModal')

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { CatalogStore, catalogWithStars } from './catalog.ts'
-import { directLoopbackRequest, readMarketUpdateRetryAction, readOperationRetry, readRestartTarget, readSkinMutation, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
+import { directLoopbackRequest, readMarketUpdateRetryAction, readOperationRetry, readRestartTarget, readSelectionPlan, readSkinMutation, refuseUnadmitted, sameOrigin, sendJson, sendText, type HostConnectionLike } from './http.ts'
 import { SkinLifecycle, type LifecycleHost } from './lifecycle.ts'
 import { installedClientPlugins, resolveProfileDir } from './profile.ts'
 import type { PluginRunner } from './commands.ts'
@@ -30,7 +30,7 @@ export interface SkinMarketHost extends LifecycleHost {
   agents?: AgentRegistryLike
 }
 
-export interface RouteOptions { profile: string; profileDir?: string; runner: PluginRunner; hostKind?: MarketHostKind; runtime?: DshRuntime; restart?: RestartScheduler; agents?: AgentRegistryLike; catalogStore?: CatalogStore; marketUpdater?: MarketUpdater; connection?: () => HostConnectionLike | undefined }
+export interface RouteOptions { profile: string; profileDir?: string; runner: PluginRunner; hostKind?: MarketHostKind; runtime?: DshRuntime; restart?: RestartScheduler; agents?: AgentRegistryLike; catalogStore?: CatalogStore; marketUpdater?: MarketUpdater; connection?: () => HostConnectionLike | undefined; configurationOverride?: import('./configuration-override.ts').ConfigurationOverrideOptions }
 
 export function canRestartSkin(state: ReturnType<SkinLifecycle['states']>[number] | undefined): boolean {
   return state?.installation === 'installed'
@@ -157,11 +157,14 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     if (!method(request, response, 'POST')) return
     if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
     try {
-      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext } = await readSkinMutation(request)
+      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext } = await readSkinMutation(request)
       if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-      const operation = artifactContext === undefined
-        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
-        : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext)
+      if (configurationContext !== undefined && !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) throw new Error('invalid configuration context')
+      const operation = configurationContext !== undefined
+        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, configurationContext)
+        : artifactContext === undefined
+          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
+          : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext)
       sendJson(response, 202, { operationId: operation.id })
     } catch (error) {
       sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
@@ -169,6 +172,17 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
   }
 
   const disposers = [
+    register({ kind: 'exact', path: '/dsh-skin-market/selection-plan', handler: async (request, response) => {
+      if (!method(request, response, 'POST')) return
+      if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
+      try {
+        const { skinId, kind } = await readSelectionPlan(request)
+        if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
+        sendJson(response, 200, await lifecycle.selectionPlan(kind, skinId))
+      } catch (error) {
+        sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
+      }
+    } }),
     register({ kind: 'exact', path: '/dsh-skin-market/catalog', handler: async (request, response) => {
       if (!method(request, response, 'GET')) return
       try {
@@ -196,6 +210,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
       try {
         sendJson(response, 200, {
           hostKind,
+          selectionPlanAvailable: options.runner.management !== undefined,
           management: options.runner.management === undefined ? undefined : { official: true, installRequiresRestart: options.runner.management.installRequiresRestart, capabilities: options.runner.management.capabilities() },
           profileBusy: lifecycle.waitingReason ?? updaterBusy(),
           runtime: options.runtime,
@@ -271,11 +286,13 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         try {
           if (cancelling) return sendJson(response, 202, lifecycle.cancel(id))
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-          const { action, acknowledgeCompatibility, compatibilityContext, artifactContext } = await readOperationRetry(request)
+          const { action, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext } = await readOperationRetry(request)
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-          const retried = artifactContext === undefined
-            ? lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext)
-            : lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext, artifactContext)
+          const retried = configurationContext !== undefined
+            ? lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext)
+            : artifactContext !== undefined
+              ? lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext, artifactContext)
+              : lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext)
           return sendJson(response, 202, { operationId: retried.id })
         } catch (error) {
           return sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })

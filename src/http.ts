@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { OperationRetryAction } from './types.ts'
+import type { OperationRetryAction, SelectionOperationKind } from './types.ts'
 
 export function sendJson(response: ServerResponse, status: number, value: unknown): void {
   const body = JSON.stringify(value)
@@ -114,20 +114,35 @@ function artifactAcknowledgement(body: Record<string, unknown>): { artifactConte
   return { artifactContext: body.artifactContext }
 }
 
-export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string }> {
+export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string }> {
   const body = await readJsonBody(request, limit)
   if (typeof body.skinId !== 'string' || body.skinId.length > 128) throw new Error('invalid skinId')
-  return { skinId: body.skinId, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body) }
+  if (body.configurationContext !== undefined && (typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
+  if (body.configurationContext !== undefined && Object.keys(body).some(key => !['skinId', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext'].includes(key))) throw new Error('invalid configuration repair request')
+  return { skinId: body.skinId, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body),
+    ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}) }
+}
+
+export async function readSelectionPlan(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; kind: SelectionOperationKind }> {
+  const body = await readJsonBody(request, limit)
+  if (Object.keys(body).some(key => key !== 'skinId' && key !== 'kind')) throw new Error('invalid selection plan request')
+  if (typeof body.skinId !== 'string' || body.skinId.length === 0 || body.skinId.length > 128) throw new Error('invalid skinId')
+  if (body.kind !== 'activate' && body.kind !== 'deactivate' && body.kind !== 'pin' && body.kind !== 'unpin') throw new Error('invalid selection operation')
+  return { skinId: body.skinId, kind: body.kind }
 }
 
 export async function readSkinId(request: IncomingMessage, limit = 8192): Promise<string> {
   return (await readSkinMutation(request, limit)).skinId
 }
 
-export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: OperationRetryAction; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string }> {
+export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: OperationRetryAction; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string }> {
   const body = await readJsonBody(request, limit)
-  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age' && body.action !== 'approve-artifact') throw new Error('invalid operation retry action')
-  return { action: body.action, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body) }
+  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age' && body.action !== 'approve-artifact' && body.action !== 'repair-configuration') throw new Error('invalid operation retry action')
+  if (body.configurationContext !== undefined && (body.action !== 'repair-configuration' || typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
+  if (body.action === 'repair-configuration' && body.configurationContext === undefined) throw new Error('configuration context required')
+  if (body.action === 'repair-configuration' && Object.keys(body).some(key => !['action', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext'].includes(key))) throw new Error('invalid configuration repair request')
+  return { action: body.action, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body),
+    ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}) }
 }
 
 export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<OperationRetryAction> {

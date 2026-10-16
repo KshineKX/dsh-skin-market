@@ -446,7 +446,7 @@ describe('official plugin manager lifecycle', () => {
     host.componentEnabled.set(item.package, false)
     host.manager.setPluginEnabled.mockResolvedValueOnce({ application: 'overridden', enabled: true })
     const operation = await finished(host.lifecycle.begin('activate', item.id))
-    expect(operation).toMatchObject({ phase: 'failed', application: 'overridden', failure: { kind: 'command' } })
+    expect(operation).toMatchObject({ phase: 'failed', application: 'overridden', failure: { kind: 'configuration-override', desiredEnabled: true, targetSkinId: item.id } })
     expect(operation.message).toContain('目标皮肤被其他设置禁用')
     expect(operation.message).toContain('请解除禁用后重新使用')
     expect(operation.message).not.toContain('重启')

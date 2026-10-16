@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { OperationRetryAction } from './types.ts';
+import type { OperationRetryAction, SelectionOperationKind } from './types.ts';
 export declare function sendJson(response: ServerResponse, status: number, value: unknown): void;
 export declare function sendText(response: ServerResponse, status: number, value: string): void;
 /**
@@ -25,6 +25,11 @@ export declare function readSkinMutation(request: IncomingMessage, limit?: numbe
     acknowledgeCompatibility: boolean;
     compatibilityContext?: string;
     artifactContext?: string;
+    configurationContext?: string;
+}>;
+export declare function readSelectionPlan(request: IncomingMessage, limit?: number): Promise<{
+    skinId: string;
+    kind: SelectionOperationKind;
 }>;
 export declare function readSkinId(request: IncomingMessage, limit?: number): Promise<string>;
 export declare function readOperationRetry(request: IncomingMessage, limit?: number): Promise<{
@@ -32,6 +37,7 @@ export declare function readOperationRetry(request: IncomingMessage, limit?: num
     acknowledgeCompatibility: boolean;
     compatibilityContext?: string;
     artifactContext?: string;
+    configurationContext?: string;
 }>;
 export declare function readOperationRetryAction(request: IncomingMessage, limit?: number): Promise<OperationRetryAction>;
 export declare function readMarketUpdateRetryAction(request: IncomingMessage, limit?: number): Promise<'retry' | 'approve-release-age'>;

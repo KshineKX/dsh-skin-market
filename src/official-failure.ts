@@ -51,14 +51,17 @@ export function officialOperationFailure(result: CommandResult, canApproveBuilds
   const managed = result.management
   if (managed === undefined || managed.indeterminate === true || !['failed', 'overridden'].includes(managed.application ?? '')) return undefined
   const message = typeof managed.error?.message === 'string' ? sanitizeLogText(managed.error.message).trim() : undefined
+  const code = typeof managed.error?.code === 'string' && /^[a-z0-9-]{1,80}$/.test(managed.error.code) ? managed.error.code : undefined
   if (managed.application === 'overridden') return {
-    kind: 'command',
+    kind: 'configuration-override',
+    ...(code === undefined ? {} : { code }),
+    ...(typeof managed.enabled === 'boolean' ? { desiredEnabled: managed.enabled } : {}),
     message: message || (managed.enabled === true
       ? '目标皮肤被其他设置禁用，请解除禁用后重新使用。'
       : '启停设置被其他配置覆盖，请移除对应强制设置后重试。'),
   }
   if (managed.error?.code === 'incompatible-version' || managed.packageResult?.incompatible instanceof Array && managed.packageResult.incompatible.length > 0) {
-    return { kind: 'compatibility', message: message || MANAGEMENT_MESSAGES['incompatible-version']! }
+    return { kind: 'compatibility', message: message || MANAGEMENT_MESSAGES['incompatible-version']!, ...(code === undefined ? {} : { code }) }
   }
 
   const diagnostic = [managed.error?.diagnostic, managed.packageResult?.output].filter((value): value is string => typeof value === 'string').join('\n')
@@ -73,6 +76,7 @@ export function officialOperationFailure(result: CommandResult, canApproveBuilds
     const releaseAgeTarget = packageName === undefined || version === undefined ? undefined : parseReleaseAgeTarget(packageName, version)
     return {
       kind: 'release-age',
+      ...(code === undefined ? {} : { code }),
       message: message || `${packageName === undefined ? '锁文件中的依赖' : `${packageName}@${version}`}仍处于 Desktop 的新包保护期，导致本次安装被阻止；请等待保护期结束后重试。`,
       ...(packageName === undefined ? {} : { packageName }),
       ...(releaseAgeTarget === undefined ? {} : { releaseAgeTarget }),
@@ -100,6 +104,7 @@ export function officialOperationFailure(result: CommandResult, canApproveBuilds
     : []
   return {
     kind: failure.kind,
+    ...(code === undefined ? {} : { code }),
     message: message || failureMessage,
     ...('packageName' in failure && typeof failure.packageName === 'string' ? { packageName: failure.packageName } : {}),
     ...(buildKeys.length === 0 ? {} : { buildKeys }),

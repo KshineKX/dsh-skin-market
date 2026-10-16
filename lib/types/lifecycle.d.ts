@@ -1,6 +1,8 @@
 import type { PluginRunner } from './commands.ts';
+import { type ConfigurationOverrideOptions } from './configuration-override.ts';
+import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts';
 import { type ReleaseAgeTarget } from './release-age.ts';
-import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, OperationRetryAction, SkinEntry, SkinRuntimeState } from './types.ts';
+import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, OperationRetryAction, SelectionOperationKind, SkinEntry, SkinRuntimeState } from './types.ts';
 export interface LifecycleHost {
     loader: {
         entries(): Iterable<LoaderEntry>;
@@ -24,9 +26,15 @@ export interface LifecycleOptions {
     operationTimeoutMs?: number;
     recoveryTimeoutMs?: number;
     lifecycleWaitMs?: number;
+    configurationOverride?: ConfigurationOverrideOptions;
 }
 /** Isolated temp-dir prefetches may overlap; live profile pnpm stays serial. */
 export declare function maxParallelDownloads(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv, memoryBytes?: number): number;
+interface ConfigurationRepairApproval {
+    failedId: string;
+    context: string;
+    binding: string;
+}
 export declare function desktopInstallError(capability: DesktopInstallCapability | undefined): string;
 interface ReleaseAgeApproval {
     target: ReleaseAgeTarget;
@@ -66,11 +74,23 @@ export declare class SkinLifecycle {
     private unresolvedManager;
     private readonly unverifiedRestartSkinIds;
     private readonly componentUndo;
+    private readonly pendingConfigurationRepairs;
+    private readonly failedConfigurationBindings;
+    private readonly pendingSelectionConfigurations;
     get waitingReason(): string | undefined;
     constructor(host: LifecycleHost, options: LifecycleOptions, catalog?: SkinEntry[]);
     get catalog(): SkinEntry[];
     private get hostKind();
     private get management();
+    private configurationTarget;
+    private configurationBinding;
+    private describeConfigurationOverride;
+    /** Derive the same main-component directions as the ordinary selection transition. */
+    private selectionTargets;
+    private selectionBinding;
+    private selectionPlanLocked;
+    /** Background preflight is read-only and never creates a visible Operation. */
+    selectionPlan(kind: SelectionOperationKind, skinId: string): Promise<ConfigurationOverrideBatchPlan>;
     private releaseAgeContext;
     private repairReleaseAgePolicy;
     private applyReleaseAgeApproval;
@@ -116,8 +136,8 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string): Operation;
-    retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation;
+    retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string, configurationContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
     private withProfileLock;

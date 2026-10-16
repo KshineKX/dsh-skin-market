@@ -13,9 +13,11 @@ import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFail
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
 import { officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
+import { applyConfigurationOverride, applyConfigurationOverrides, inspectConfigurationOverride, inspectConfigurationOverrides, rollbackConfigurationOverride, type ConfigurationOverrideOptions, type ConfigurationOverrideTarget } from './configuration-override.ts'
+import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts'
 import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
 import { cleanOrphanedStore } from './store.ts'
-import { logEvent } from './log.ts'
+import { logEvent, sanitizeLogText } from './log.ts'
 import { compareVersions, isVersionRange, satisfiesVersionRange } from './semver.ts'
 import {
   companionNeedsInstall,
@@ -59,7 +61,7 @@ import {
   type LoaderIdentity,
   type InstalledArtifactSnapshot,
 } from './profile.ts'
-import type { DesktopInstallCapability, DshRuntime, InstallConflict, LoaderEntry, MarketHostKind, Operation, OperationFailure, OperationKind, OperationRetryAction, PersistedMarketState, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
+import type { DesktopInstallCapability, DshRuntime, InstallConflict, LoaderEntry, MarketHostKind, Operation, OperationFailure, OperationKind, OperationRetryAction, PersistedMarketState, SelectionOperationKind, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
 
 export interface LifecycleHost {
   loader: { entries(): Iterable<LoaderEntry> }
@@ -76,6 +78,7 @@ export interface LifecycleOptions {
   operationTimeoutMs?: number
   recoveryTimeoutMs?: number
   lifecycleWaitMs?: number
+  configurationOverride?: ConfigurationOverrideOptions
 }
 
 const OPERATION_TIMEOUT_MS = 15 * 60 * 1000
@@ -120,7 +123,13 @@ function removePrefetchDirectory(directory: string): void {
 function errorMessage(error: unknown): string { return error instanceof Error ? error.message : String(error) }
 
 class ManagedOperationError extends Error {
-  constructor(readonly result: CommandResult, message: string) { super(message) }
+  constructor(readonly result: CommandResult, message: string, readonly targetSkinId?: string) { super(message) }
+}
+
+interface ConfigurationRepairApproval { failedId: string; context: string; binding: string }
+
+function isSelectionOperation(kind: OperationKind): kind is SelectionOperationKind {
+  return kind === 'activate' || kind === 'deactivate' || kind === 'pin' || kind === 'unpin'
 }
 
 class ArtifactRiskError extends Error {
@@ -257,6 +266,9 @@ export class SkinLifecycle {
   private unresolvedManager = false
   private readonly unverifiedRestartSkinIds = new Set<string>()
   private readonly componentUndo = new Map<string, Map<string, { skin: SkinEntry; entryId: string; enabled: boolean }>>()
+  private readonly pendingConfigurationRepairs = new Map<string, ConfigurationRepairApproval>()
+  private readonly failedConfigurationBindings = new Map<string, string>()
+  private readonly pendingSelectionConfigurations = new Map<string, string>()
 
   get waitingReason(): string | undefined {
     if (this.unresolvedManager) return '宿主未返回可确认的操作结果，请重新打开宿主后核对插件状态'
@@ -273,6 +285,109 @@ export class SkinLifecycle {
 
   private get hostKind(): MarketHostKind { return this.options.hostKind ?? this.options.runner.hostKind ?? 'dsh' }
   private get management() { return this.options.runner.management }
+
+  private configurationTarget(operation: Operation): ConfigurationOverrideTarget | undefined {
+    if (operation.application !== 'overridden' || typeof operation.failure?.desiredEnabled !== 'boolean'
+      || !['activate', 'deactivate', 'pin', 'unpin'].includes(operation.kind)) return undefined
+    const skin = this.skin(operation.failure.targetSkinId ?? operation.skinId)
+    return { skinId: skin.id, packageName: skin.package, rowId: skin.rowId, enabled: operation.failure.desiredEnabled }
+  }
+
+  private configurationBinding(operation: Operation): string {
+    const target = this.configurationTarget(operation)
+    return JSON.stringify({ operation: this.releaseAgeContext(operation), target,
+      install: target === undefined ? undefined : this.skin(target.skinId).install,
+      artifact: target === undefined ? undefined : snapshotInstalledArtifact(this.options.profileDir, target.packageName) })
+  }
+
+  private describeConfigurationOverride(operation: Operation): void {
+    const target = this.configurationTarget(operation)
+    if (target === undefined || operation.failure === undefined) return
+    const plan = inspectConfigurationOverride(this.options.configurationOverride ?? {}, target)
+    operation.failure.configurationOverride = plan
+    if (plan.status === 'repairable') {
+      operation.failure.action = 'repair-configuration'
+      this.failedConfigurationBindings.set(operation.id, this.configurationBinding(operation))
+    }
+  }
+
+  /** Derive the same main-component directions as the ordinary selection transition. */
+  private selectionTargets(kind: SelectionOperationKind, skinId: string): ConfigurationOverrideTarget[] {
+    const skin = this.skin(skinId)
+    const dependencies = readDependencies(this.options.profileDir)
+    if (dependencies[skin.package] === undefined) return []
+    const previous = readMarketState(this.options.profileDir)
+    const pinned = pinnedSkinIds(previous)
+    let requests: Array<{ skin: SkinEntry; enabled: boolean }>
+    if (kind === 'activate') {
+      const enabled = new Set([skinId, ...pinned])
+      const installed = this.catalog.filter(item => dependencies[item.package] !== undefined)
+      requests = [...installed.filter(item => !enabled.has(item.id)), ...installed.filter(item => enabled.has(item.id))]
+        .map(item => ({ skin: item, enabled: enabled.has(item.id) }))
+    } else if (kind === 'unpin' && (previous.activeSkinId === skinId || !pinned.includes(skinId))) {
+      requests = []
+    } else {
+      requests = [{ skin, enabled: kind === 'pin' }]
+    }
+    return requests.filter(({ skin: item, enabled }) => {
+      const manifest = packageManifest(this.options.profileDir, item.package)
+      // Disabling a bundle withdraws its rows and returns before component toggling.
+      // A HOME force-enable on a withdrawn row does not need to be removed.
+      return enabled || (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle === undefined
+    }).map(({ skin: item, enabled }) => ({ skinId: item.id, packageName: item.package, rowId: item.rowId, enabled }))
+  }
+
+  private selectionBinding(kind: SelectionOperationKind, skinId: string, targets: readonly ConfigurationOverrideTarget[]): string {
+    const state = readMarketState(this.options.profileDir)
+    return JSON.stringify({
+      kind, skinId, profile: this.options.profile, profileDir: this.options.profileDir, runtime: this.runtime,
+      capabilities: this.management?.capabilities(),
+      selection: { activeSkinId: state.activeSkinId, pinnedSkinIds: pinnedSkinIds(state), disabledSkinIds: state.disabledSkinIds, bundles: readProfileBundles(this.options.profileDir) },
+      profilePatch: snapshotFile(profilePatchFile(this.options.profileDir)),
+      targets: targets.map(target => {
+        const skin = this.skin(target.skinId)
+        return { target, install: skin.install, compatibility: skin.compatibility,
+          manifest: packageManifest(this.options.profileDir, skin.package), artifact: snapshotInstalledArtifact(this.options.profileDir, skin.package) }
+      }),
+    })
+  }
+
+  private async selectionPlanLocked(kind: SelectionOperationKind, skinId: string): Promise<{ plan: ConfigurationOverrideBatchPlan; targets: ConfigurationOverrideTarget[]; editorContext?: string }> {
+    this.skin(skinId)
+    if (this.management === undefined) return { targets: [], plan: { status: 'none', changes: [], reason: '当前宿主使用原有启停流程。' } }
+    const targets = this.selectionTargets(kind, skinId)
+    const batch = inspectConfigurationOverrides(this.options.configurationOverride ?? {}, targets)
+    if (batch.status !== 'repairable' || batch.context === undefined) return { targets, plan: batch }
+    const binding = this.selectionBinding(kind, skinId, targets)
+    const identities: Array<{ skinId: string; entryId?: string; enabled?: boolean }> = []
+    try {
+      for (const target of targets) {
+        const skin = this.skin(target.skinId)
+        const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
+        if (!artifact.ok) throw new Error('目标安装文件不完整，请先修复安装后重新操作。')
+        assertNoLoaderConflicts(this.options.profileDir, skin)
+        const manifest = packageManifest(this.options.profileDir, skin.package)
+        const component = await this.officialComponent(skin, (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined)
+        identities.push({ skinId: target.skinId, ...component })
+      }
+      if (this.disposed) throw new Error('皮肤市场宿主已停止，配置未修改。')
+      if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
+      const freshTargets = this.selectionTargets(kind, skinId)
+      const freshBatch = inspectConfigurationOverrides(this.options.configurationOverride ?? {}, freshTargets)
+      if (binding !== this.selectionBinding(kind, skinId, freshTargets) || batch.context !== freshBatch.context) throw new Error('目标或配置已变化，请重新检查后确认。')
+    } catch (error) {
+      return { targets, plan: { ...batch, status: 'blocked', context: undefined, reason: sanitizeLogText(errorMessage(error)).slice(0, 280) } }
+    }
+    const context = createHash('sha256').update(JSON.stringify({ configuration: batch.context, binding, identities })).digest('hex')
+    return { targets, plan: { ...batch, context }, editorContext: batch.context }
+  }
+
+  /** Background preflight is read-only and never creates a visible Operation. */
+  async selectionPlan(kind: SelectionOperationKind, skinId: string): Promise<ConfigurationOverrideBatchPlan> {
+    if (!isSelectionOperation(kind)) throw new Error('invalid selection operation')
+    const inspection: Operation = { id: randomUUID(), kind, skinId, phase: 'validating', startedAt: new Date().toISOString() }
+    return await this.withProfileLock(inspection, async () => (await this.selectionPlanLocked(kind, skinId)).plan)
+  }
 
   private releaseAgeContext(operation: Pick<Operation, 'kind' | 'skinId'>): string {
     const skin = this.skin(operation.skinId)
@@ -327,7 +442,7 @@ export class SkinLifecycle {
     return result
   }
 
-  private acceptManagement(result: CommandResult, operation?: Operation): void {
+  private acceptManagement(result: CommandResult, operation?: Operation, subject?: SkinEntry): void {
     const managed = result.management
     if (managed?.indeterminate === true) {
       this.unresolvedManager = true
@@ -342,7 +457,7 @@ export class SkinLifecycle {
       if (managed.pendingBuilds !== undefined) this.pendingBuildKeys.set(operation.id, managed.pendingBuilds)
     }
     if (result.exitCode !== 0 || managed?.application === 'overridden') {
-      throw new ManagedOperationError(result, officialOperationFailure(result)?.message || result.stderr || result.stdout || '官方插件管理操作未完成')
+      throw new ManagedOperationError(result, officialOperationFailure(result)?.message || result.stderr || result.stdout || '官方插件管理操作未完成', subject?.id)
     }
   }
 
@@ -419,7 +534,7 @@ export class SkinLifecycle {
       const selected = readProfileBundles(this.options.profileDir).includes(skin.package)
       if (selected !== !disabled) {
         const result = await this.awaitLifecycle(this.management.setBundleEnabled(skin.package, !disabled))
-        this.acceptManagement(result, operation)
+        this.acceptManagement(result, operation, skin)
         restartRequired = result.management?.application === 'restart-required'
       }
       if (disabled || !repairComponent) return restartRequired
@@ -436,7 +551,7 @@ export class SkinLifecycle {
       this.componentUndo.set(operation.id, undo)
     }
     const result = await this.awaitLifecycle(this.management.setPluginEnabled(component.entryId, !disabled))
-    this.acceptManagement(result, operation)
+    this.acceptManagement(result, operation, skin)
     restartRequired ||= result.management?.application === 'restart-required'
     const confirmed = await this.officialComponent(skin, bundled)
     if (confirmed?.enabled !== !disabled && !restartRequired && operation?.restartRequired !== true) throw new Error('皮肤主组件启用结果未生效，请在官方插件页检查覆盖配置')
@@ -584,6 +699,9 @@ export class SkinLifecycle {
     this.pendingBuildKeys.clear()
     this.failedReleaseAgeApprovals.clear()
     this.pendingReleaseAgeApprovals.clear()
+    this.pendingConfigurationRepairs.clear()
+    this.failedConfigurationBindings.clear()
+    this.pendingSelectionConfigurations.clear()
     this.artifactContexts.clear()
     this.failedArtifactContexts.clear()
     this.compatibilityContexts.clear()
@@ -897,9 +1015,10 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
+    if (selectionConfigurationContext !== undefined && (!isSelectionOperation(kind) || !/^[a-f0-9]{64}$/.test(selectionConfigurationContext) || configurationRepair !== undefined)) throw new Error('invalid configuration context')
     const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
     const capability = this.management?.capabilities()[action]
     if (capability?.available === false) throw new Error(capability.reason ?? '当前宿主不支持此操作，请使用官方插件页')
@@ -927,6 +1046,8 @@ export class SkinLifecycle {
       cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
+    if (selectionConfigurationContext !== undefined) this.pendingSelectionConfigurations.set(operation.id, selectionConfigurationContext)
+    if (configurationRepair !== undefined) this.pendingConfigurationRepairs.set(operation.id, configurationRepair)
     if (releaseAgeApproval !== undefined) this.pendingReleaseAgeApprovals.set(operation.id, releaseAgeApproval)
     if ((kind === 'activate' || kind === 'pin') && acknowledgeCompatibility === true && acknowledgedContext !== undefined) this.compatibilityContexts.set(operation.id, acknowledgedContext)
     if (artifactContext !== undefined) this.artifactContexts.set(operation.id, artifactContext)
@@ -955,11 +1076,19 @@ export class SkinLifecycle {
     return operation
   }
 
-  retry(id: string, action: OperationRetryAction, acknowledgeCompatibility = false, acknowledgedContext?: string, acknowledgedArtifactContext?: string): Operation {
+  retry(id: string, action: OperationRetryAction, acknowledgeCompatibility = false, acknowledgedContext?: string, acknowledgedArtifactContext?: string, configurationContext?: string): Operation {
     const failed = this.operations.get(id)
     if (failed === undefined || failed.phase !== 'failed') throw new Error('operation is not retryable')
     if (failed.failure?.action !== action) throw new Error('该操作不支持此恢复动作')
     let releaseAgeApproval: ReleaseAgeApproval | undefined
+    let configurationRepair: ConfigurationRepairApproval | undefined
+    if (action === 'repair-configuration') {
+      const plan = failed.failure.configurationOverride
+      const binding = this.failedConfigurationBindings.get(id)
+      if (plan?.status !== 'repairable' || typeof configurationContext !== 'string' || configurationContext !== plan.context
+        || this.configurationTarget(failed) === undefined || binding !== this.configurationBinding(failed)) throw new Error('配置修复目标已变化，请重新检查后确认')
+      configurationRepair = { failedId: id, context: configurationContext, binding }
+    }
     let artifactContext = acknowledgedArtifactContext
     if (action === 'approve-release-age') {
       const approved = this.failedReleaseAgeApprovals.get(id)
@@ -978,7 +1107,7 @@ export class SkinLifecycle {
     }
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -1017,7 +1146,82 @@ export class SkinLifecycle {
       }
       this.profileLockOwner = operation.id
       this.applyReleaseAgeApproval(operation)
-      return await fn()
+      const approval = this.pendingConfigurationRepairs.get(operation.id)
+      this.pendingConfigurationRepairs.delete(operation.id)
+      let repair: ReturnType<typeof applyConfigurationOverride> | ReturnType<typeof applyConfigurationOverrides> | undefined
+      const selectionContext = this.pendingSelectionConfigurations.get(operation.id)
+      this.pendingSelectionConfigurations.delete(operation.id)
+      if (selectionContext !== undefined) {
+        if (!isSelectionOperation(operation.kind)) throw new Error('invalid selection operation')
+        const prepared = await this.selectionPlanLocked(operation.kind, operation.skinId)
+        if (this.disposed) throw new Error('皮肤市场宿主已停止，配置未修改')
+        if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
+        this.checkDeadline(operation)
+        if (prepared.plan.status !== 'repairable' || prepared.plan.context !== selectionContext || prepared.editorContext === undefined) throw new Error('启停目标或配置已变化，请重新检查后确认')
+        for (const change of prepared.plan.changes) {
+          const skin = this.skin(change.skinId)
+          if (change.desiredEnabled) {
+            if (skin.id === operation.skinId) {
+              this.assertCompatibilityContext(operation, skin)
+              this.assertArtifactUseApproved(operation, skin)
+            } else {
+              if (assessCompatibility(skin, this.runtime).decision === 'incompatible') throw new Error('需要先单独确认常驻皮肤的兼容性。')
+              this.assertArtifactUseApproved({ ...operation, id: `${operation.id}:configuration:${skin.id}` }, skin)
+            }
+          }
+        }
+        repair = applyConfigurationOverrides(this.options.configurationOverride ?? {}, prepared.targets, prepared.editorContext)
+        logEvent('info', 'configuration-override-repair', `已移除 ${prepared.plan.changes.length} 项共享启停覆盖；备份 ${repair.receipt.backupPath}`, operation.id)
+      }
+      if (approval !== undefined) {
+        const failed = this.operations.get(approval.failedId)
+        if (failed?.phase !== 'failed' || failed.failure?.action !== 'repair-configuration'
+          || failed.skinId !== operation.skinId || failed.kind !== operation.kind
+          || approval.binding !== this.configurationBinding(failed)) throw new Error('配置修复目标已变化，请重新检查后确认')
+        const target = this.configurationTarget(failed)!
+        const skin = this.skin(target.skinId)
+        const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
+        if (!artifact.ok) throw new Error('目标安装文件已变化，请先核对安装结果后重新操作')
+        assertNoLoaderConflicts(this.options.profileDir, skin)
+        // Removing a HOME disable can itself wake HMR before the normal retry.
+        // Validate the actual bytes and use consent before editing that layer.
+        if (target.enabled) {
+          if (skin.id !== operation.skinId) throw new Error('目标启用状态已变化，请重新操作后核对')
+          this.assertCompatibilityContext(operation, skin)
+          this.assertArtifactUseApproved(operation, skin)
+        }
+        const manifest = packageManifest(this.options.profileDir, skin.package)
+        if (this.management === undefined || manifest?.name !== skin.package) throw new Error('无法确认可修改的唯一皮肤组件，请先在官方插件页核对')
+        // A deselected bundle can have a unique declared row without a live entry yet.
+        // The ordinary retry will load it and verify its effective enabled state.
+        await this.officialComponent(skin, (manifest.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined)
+        if (this.disposed) throw new Error('皮肤市场宿主已停止，配置未修改')
+        if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
+        this.checkDeadline(operation)
+        if (approval.binding !== this.configurationBinding(failed)) throw new Error('目标安装文件已变化，请重新检查后确认')
+        repair = applyConfigurationOverride(this.options.configurationOverride ?? {}, target, approval.context)
+        // Consume the displayed approval before any Host call; replay requires a new diagnosis.
+        delete failed.failure.action
+        this.failedConfigurationBindings.delete(failed.id)
+        logEvent('info', 'configuration-override-repair', `已移除 ${target.rowId} 的共享启停覆盖；备份 ${repair.receipt.backupPath}`, operation.id)
+      }
+      try {
+        return await fn()
+      } catch (error) {
+        if (repair !== undefined) {
+          if (this.disposed || this.waitingReason !== undefined) {
+            logEvent('warn', 'configuration-override-unconfirmed', '覆盖项已修改，但宿主结果未知；保留备份，停止继续修改', operation.id)
+          } else {
+            try {
+              rollbackConfigurationOverride(repair.receipt)
+              logEvent('info', 'configuration-override-rollback', '本次操作失败，已还原共享覆盖', operation.id)
+            } catch {
+              this.recoveryErrors.set(operation.id, '共享配置恢复未完成；配置可能已被其他程序修改，请核对备份后再操作')
+            }
+          }
+        }
+        throw error
+      }
     } finally {
       if (this.profileLockOwner === operation.id) this.profileLockOwner = null
       release()
@@ -1079,6 +1283,8 @@ export class SkinLifecycle {
         const managed = error.result.management
         if (managed?.indeterminate !== true && managed?.application !== undefined) operation.application = managed.application
         operation.failure = officialOperationFailure(error.result, this.management?.capabilities().buildApprovals.available)
+        if (operation.failure !== undefined && error.targetSkinId !== undefined) operation.failure.targetSkinId = error.targetSkinId
+        this.describeConfigurationOverride(operation)
         if (operation.failure?.buildKeys?.length) this.pendingBuildKeys.set(operation.id, operation.failure.buildKeys)
       }
       if (this.expired.has(operation.id)) {
@@ -1158,6 +1364,8 @@ export class SkinLifecycle {
       this.desktopManagedAttempts.delete(operation.id)
       this.desktopRecoveryBaselines.delete(operation.id)
       this.pendingReleaseAgeApprovals.delete(operation.id)
+      this.pendingConfigurationRepairs.delete(operation.id)
+      this.pendingSelectionConfigurations.delete(operation.id)
       this.abortControllers.delete(operation.id)
       this.compatibilityContexts.delete(operation.id)
       this.artifactContexts.delete(operation.id)
@@ -1168,6 +1376,7 @@ export class SkinLifecycle {
         this.pendingBuildKeys.delete(operation.id)
         this.failedReleaseAgeApprovals.delete(operation.id)
         this.failedArtifactContexts.delete(operation.id)
+        this.failedConfigurationBindings.delete(operation.id)
       }, 30 * 60 * 1000)
       timer.unref?.()
       this.operationCleanupTimers.set(operation.id, timer)
@@ -1700,28 +1909,33 @@ export class SkinLifecycle {
 
   private async rollbackSelection(previous: PersistedMarketState, snapshot: { manifest: FileSnapshot; patch: FileSnapshot }): Promise<void> {
     if (this.disposed || this.waitingReason !== undefined) return
-    if (this.management === undefined) {
-      restoreManifest(this.options.profileDir, snapshot.manifest)
-      restoreFile(profilePatchFile(this.options.profileDir), snapshot.patch)
-    }
     const operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)
-    if (this.management !== undefined && operation !== undefined) {
-      for (const { skin, enabled } of this.componentUndo.get(operation.id)?.values() ?? []) {
-        const manifest = packageManifest(this.options.profileDir, skin.package)
-        const bundled = (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined
-        const component = await this.officialComponent(skin, bundled)
-        if (component === undefined) throw new Error('回退时皮肤主组件身份已变化，请在官方插件页核对状态')
-        if (component.enabled !== enabled) this.acceptManagement(await this.awaitLifecycle(this.management.setPluginEnabled(component.entryId, enabled)), operation)
+    try {
+      if (this.management === undefined) {
+        restoreManifest(this.options.profileDir, snapshot.manifest)
+        restoreFile(profilePatchFile(this.options.profileDir), snapshot.patch)
       }
-    }
-    writeMarketState(this.options.profileDir, previous)
-    await this.replayLocked(false)
-    if (this.management !== undefined && operation?.restartRequired === true) {
-      // Rollback restores the saved selection, but a native no-HMR result
-      // cannot confirm that the currently loaded appearance was restored.
-      const restored = readMarketState(this.options.profileDir)
-      for (const skinId of new Set([...enabledSkinIds(restored), operation.skinId])) this.recordRestart(restored, skinId, true)
-      writeMarketState(this.options.profileDir, restored)
+      if (this.management !== undefined && operation !== undefined) {
+        for (const { skin, enabled } of this.componentUndo.get(operation.id)?.values() ?? []) {
+          const manifest = packageManifest(this.options.profileDir, skin.package)
+          const bundled = (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined
+          const component = await this.officialComponent(skin, bundled)
+          if (component === undefined) throw new Error('回退时皮肤主组件身份已变化，请在官方插件页核对状态')
+          if (component.enabled !== enabled) this.acceptManagement(await this.awaitLifecycle(this.management.setPluginEnabled(component.entryId, enabled)), operation, skin)
+        }
+      }
+      writeMarketState(this.options.profileDir, previous)
+      await this.replayLocked(false)
+      if (this.management !== undefined && operation?.restartRequired === true) {
+        // Rollback restores the saved selection, but a native no-HMR result
+        // cannot confirm that the currently loaded appearance was restored.
+        const restored = readMarketState(this.options.profileDir)
+        for (const skinId of new Set([...enabledSkinIds(restored), operation.skinId])) this.recordRestart(restored, skinId, true)
+        writeMarketState(this.options.profileDir, restored)
+      }
+    } catch (error) {
+      if (operation !== undefined && this.waitingReason === undefined) this.recoveryErrors.set(operation.id, '原有启停选择恢复未完成，请先核对实际状态后再操作')
+      throw error
     }
   }
 

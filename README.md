@@ -115,56 +115,47 @@ Agent 每次只指导一项操作，等你反馈后继续：打开「插件 → 
 ---
 
 <a id="install-troubleshooting"></a>
-### 安装失败时，可以让 DSH 自己排查
+### 操作失败后的检查与修复
 
-把完整原始报错粘贴给 DSH Agent；它会先区分 Web 和官方 Desktop，再按实际 profile 排查。
+先按市场显示的具体原因处理。网络失败可以重试；构建审批和新包保护有独立的精确批准入口；结果待确认时先核对状态，不能重复发起操作。本地环境或安装状态问题可点“复制排查提示词”，把当前皮肤身份、宿主版本、原操作与脱敏日志交给能访问这台机器的 Agent。提示词用于定位问题，不代表已经确认根因或保证能修复。
+
+| 具体情况 | 优先处理方式 |
+| --- | --- |
+| 网络或下载超时 | 先重试，持续失败再核对宿主实际使用的网络、代理与安装源 |
+| 包管理器缺失、存储位置冲突、权限或磁盘空间 | 检查真实宿主环境，Agent 可先只读定位 |
+| 锁文件不一致、记录缺失、恢复未完成 | 先核对实际状态与备份，局部修复；不删除整个锁文件 |
+| 找不到包、精确版本、模块或安装文件 | 区分安装未完成、访问权限、宿主依赖、源同步及包声明，不能直接归咎皮肤作者 |
+| 启停被其他配置覆盖 | 查看市场能否提供可审核的修复方案；没有安全方案时交给本地 Agent 或原管理工具 |
+| 安装身份冲突 | 核对冲突的包、来源和组件标识；仅停用未必能解决，不能一律要求卸载 |
+| 宿主限制、无法定位组件、来源检查失败 | 按具体提示刷新、核对或使用官方管理入口，不绕过保护 |
+| 目录信息与实际安装包不一致 | 复制日志反馈市场维护者；确认发布包缺文件后再向皮肤作者反馈 |
 
 <details>
-<summary><strong>点击展开排查说明与提示词</strong></summary>
+<summary><strong>Agent 如何安全排查？</strong></summary>
 
-> 皮肤市场的安装、更新和卸载会调用 DSH 的 profile 插件管理器；当前 DSH 使用 `pnpm` 管理 profile 依赖。如果出现 `pnpm is not recognized`、`package manifest missing` 或 `allowBuilds` 相关报错，不必手动猜测 profile 状态。
->
-> 含子目录路径的 GitHub 目标（`github:…#commit&path:/…`）请优先用市场页一键安装。市场安装结束后会校验 `node_modules` 中的包名是否与目录一致，避免 `&path:` 被截断时误把仓库根包装成成功。Windows 上不要把这段 spec 交给 `dsh plugin add`：cmd.exe 会在 `&` 处截断。下面的手动命令仅适用于 Web profile；官方 Desktop 请使用桌面插件管理器：
->
-> ```powershell
-> pnpm add "github:owner/repo#<commit>&path:/subdir" --dir $env:USERPROFILE\.dsh\profiles\web
-> ```
->
-> 如果报错含 `ERR_PNPM_UNEXPECTED_STORE`，是 profile 的 `node_modules` 与当前 pnpm store 代际不一致（常见于本机同时装了 pnpm 10 / store v10 和 pnpm 11 / store v11）。在 **profile 目录内** 查看 `node_modules/.modules.yaml` 的 `packageManager` 和 `storeDir`，再对比同一目录下的 `pnpm --version` 与 `pnpm store path`；不要用 DSH 源码仓库目录里的结果来判断。用 `.modules.yaml` 记录的同一版 pnpm 重试，或用当前 pnpm 重建该 profile 的 `node_modules`。Windows 上 `dsh plugin add` 走 PATH 上的 pnpm，不会因为源码仓库写了 `"packageManager": "pnpm@11"` 就自动切换。
+Agent 应从真实进程、应用与运行时确认 DSH home 和实际 profile，不猜测默认路径。Desktop 版本以应用“关于”为准，系统终端的 npm dsh 版本不能代表桌面应用。`ERR_PNPM_UNEXPECTED_STORE` 要比较实际 profile 的 `node_modules/.modules.yaml`（`packageManager`、`storeDir`）与宿主使用的 pnpm，不能用源码仓库中的版本判断。
 
-如果提示皮肤被其他设置禁用，请查看[解除禁用的方法](#configuration-override)。
+不要读取 `.env`、凭据或其他存放秘密的配置。混合配置可能含秘密时，先取得指定文件和目标字段的限定读取授权，仅输出这些字段。全局或启动设置的修改须先展示最小差异，确认后备份，保留注释和无关字段。
 
-把完整原始报错填入后复制给你的 DSH Agent。它会先判断当前是 Web 还是官方 Desktop；无法判断时先询问你：
+运行在被修复的同一个 DSH 中的 Agent，不应改写自己的活动组合配置、安装或卸载当前宿主，也不应停止或重启自己。需要此类操作时，先准备可重复执行的 `apply` 与 `rollback` 方案，由外部终端或独立 Agent 在退出相关宿主后执行。Desktop 安装、卸载、启停和重启由用户在官方页面操作；不要执行 `dsh plugin --profile desktop`，或使用 npm/pnpm 直接写 Desktop profile。
 
-```text
-请帮我排查 DSH 皮肤市场的安装或启用失败。先判断当前宿主与实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。下面是完整原始报错：
-
-<把完整报错粘贴到这里>
-
-如果是官方 Desktop：只读检查桌面应用插件管理器中的 dsh-skin-market 状态和完整原始错误；不要执行 dsh plugin --profile desktop，也不要手动修改 profile。若错误是 same-origin request required，请报告该错误并停止，不要猜测或重写 profile。
-
-如果是 Web 版，请严格按以下 3 步处理，并报告每一步的结果：
-
-1. 确认当前使用的 profile 名称和实际目录，并检查 DSH 进程自身是否能找到 pnpm（Windows 同时检查 pnpm.cmd）。如果 pnpm 不在 PATH，先说明如何安装或修复 pnpm，并停止把问题误判为 allowBuilds 配置问题。如果报错含 ERR_PNPM_UNEXPECTED_STORE，再比较 profile 的 node_modules/.modules.yaml（packageManager、storeDir）与「在 profile 目录内」执行的 pnpm --version / pnpm store path；不要用 DSH 源码仓库目录里的 pnpm 版本来判断。用同一版 pnpm 重试，或用当前 pnpm 重建该 profile 的 node_modules。
-2. 只有确认 pnpm 可用且 store 一致后，才检查 profile 的 pnpm-workspace.yaml。若 pnpm 输出了构建审批 key，只把报错中完整、精确的 key 合并到 allowBuilds，对应值设为 true；不要启用 dangerouslyAllowAllBuilds，也不要放宽其他包。不要读取 .env、凭据或聊天记录。
-3. 重新执行原来的皮肤安装命令。完成后验证 profile package.json 依赖、node_modules 中目标包的 package.json、dsh.client/dsh.bundle 声明和 loader 注册项；如果仍失败，请指出具体失败阶段和完整错误，不要把 package manifest missing 当作根因。
-```
+修复后重试原来的操作，不把停用、取消常驻或卸载变成安装。核对实际包版本、启停选择和运行状态；“已安装”不等于“已启用”，`application: applied` 也不证明代码已加载。需要重启时按当前宿主提示操作。来源检查、完整性校验和宿主保护不能由 Agent 绕过。
 
 </details>
 
 <a id="configuration-override"></a>
-### 皮肤被其他设置禁用
+### 皮肤的启停设置被覆盖
 
-请解除该皮肤的禁用设置，再回到市场点击“使用”。
+启用失败可能是其他设置强制禁用；停用失败也可能是其他设置强制启用。切换皮肤时还可能是原皮肤无法停用，而非新皮肤无法启用。请以弹窗指出的目标组件和本次期望状态为准，不反复重装。
 
 <details>
-<summary><strong>在哪里解除禁用？</strong></summary>
+<summary><strong>市场能修复哪些覆盖？</strong></summary>
 
-如果曾使用皮肤作者提供的切换工具，请先在该工具中解除对目标皮肤的全局禁用。普通 Desktop 开关修改的是当前配置，不能覆盖优先级更高的全局或启动设置。
+官方启停接口修改当前 profile，不能直接清理更高层覆盖。市场可检查静态 home 补丁中的目标启停字段；仅在目标唯一、内容可安全局部修改时展示准确文件、字段、期望状态与修复方案。确认后先备份，再移除目标 `disabled` 覆盖，保留其他字段与注释。此修改影响使用同一 home 的其他 profile，须先审核范围。
 
-没有对应入口时，请让配置维护者或你的 DSH Agent 核对目标皮肤的主组件，只移除该组件的禁用覆盖，再通过官方插件页或市场重新启用。不要删除整份配置或改动其他皮肤；也不要改成更高层的强制启用，以免以后无法正常停用。
+市场在启停前只读检查本次切换涉及的覆盖项，将版本兼容性、构件风险和共享配置修改合并在一次确认中。点击“解除覆盖并使用”后，后台完成备份、批量移除覆盖和正常官方启停，再核对实际运行状态；移除覆盖不保证皮肤已经加载或停用。切换涉及旧皮肤和新皮肤的多项覆盖时，一次展示、一次备份写入；取消不修改配置。确认期间皮肤、安装包、选择或配置发生变化时，更新方案并重新确认。只有 id 的空覆盖行才可删除，不能删除整份配置，或改成更高层的反向强制设置。
 
-当前官方管理接口不能清理更高层配置。市场会报告冲突，不会擅自改写它。
+YAML 结构复杂、目标重复、配置变化、无权限，或覆盖来自启动参数、动态工具及远程来源时，市场应拒绝自动修改。此时可复制针对本次目标的排查提示词；Agent 先只读确认来源，能访问实际环境且找到可编辑的静态覆盖后才能提出修复。由皮肤切换工具维护的设置，优先回到原工具处理。
 
 </details>
 
@@ -185,7 +176,9 @@ pnpm 有时会给同一个包追加多条版本例外，而安装检查只读取
 ```text
 请处理这次 DSH Desktop 的新包保护错误。先确认 Desktop 实际使用的 profile 名称和目录，并从本次 ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION 诊断中确认被阻止的精确包名和版本；不要把正在安装的皮肤直接当成被阻止的包。
 
-仅处理这个 profile 的 pnpm-workspace.yaml 中 minimumReleaseAgeExclude 字段。先合并同名规则中已经允许的版本，保留其他规则、注释和配置，再重试原操作。如果报错中的精确版本确实没有例外，先向我展示包名、版本和来源，由我确认后才添加这个精确版本并继续。不要设置 minimumReleaseAge=0，不要允许整个包的未来版本，不要读取 .env、凭据或聊天记录。最后核对实际安装版本和组件状态，报告具体结果。
+仅处理这个 profile 的 pnpm-workspace.yaml 中 minimumReleaseAgeExclude 字段。先合并同名规则中已经允许的版本，保留其他规则、注释和配置。如果报错中的精确版本确实没有例外，先向我展示包名、版本和来源，由我确认后才添加这个精确版本。不要设置 minimumReleaseAge=0，不要允许整个包的未来版本，不要读取 .env、凭据或其他存放秘密的配置。混合配置可能含秘密时，先取得指定字段的限定读取授权。
+
+如果你正运行在这个 DSH 中，不要修改自己的活动组合配置、重启或安装当前宿主；先准备可重复执行的 apply 与 rollback 方案，交给外部终端或独立 Agent 执行。Desktop 包操作由我在官方页面重试。最后核对实际安装版本和组件状态，报告具体结果。
 ```
 
 也可以等待本机 pnpm 要求的保护期结束后重试。默认通常为 24 小时，用户可自行配置；等待不会修复其他安装故障，也不会自动修复之前失败留下的异常包状态。

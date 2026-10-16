@@ -35,6 +35,7 @@ export interface RouteOptions {
     catalogStore?: CatalogStore;
     marketUpdater?: MarketUpdater;
     connection?: () => HostConnectionLike | undefined;
+    configurationOverride?: import('./configuration-override.ts').ConfigurationOverrideOptions;
 }
 export declare function canRestartSkin(state: ReturnType<SkinLifecycle['states']>[number] | undefined): boolean;
 export declare function runningAgentCount(host: Pick<SkinMarketHost, 'agents'>): number;

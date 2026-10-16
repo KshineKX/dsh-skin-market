@@ -1,5 +1,8 @@
 export type MarketHostKind = 'dsh' | 'desktop'
 
+import type { ConfigurationOverridePlan } from '../configuration-override-types.ts'
+export type { ConfigurationOverridePlan } from '../configuration-override-types.ts'
+
 export interface DshRuntime {
   version: string | null
   capabilities: string[]
@@ -127,13 +130,17 @@ export interface Operation {
   lastOutputAt?: string
   pnpmStage?: 'resolving' | 'downloading' | 'linking' | 'building'
   failure?: {
-    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity'
+    kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity' | 'configuration-override'
     message: string
+    code?: string
+    desiredEnabled?: boolean
+    targetSkinId?: string
+    configurationOverride?: ConfigurationOverridePlan
     packageName?: string
     buildKeys?: string[]
     releaseAgeTarget?: { packageName: string; version: string }
     artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
-    action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact'
+    action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'repair-configuration'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }
   startedAt: string

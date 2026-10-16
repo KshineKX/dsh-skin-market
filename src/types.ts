@@ -160,9 +160,10 @@ export interface InstallConflict {
   identifiers: string[]
 }
 
-export type OperationKind = 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
+export type SelectionOperationKind = 'activate' | 'deactivate' | 'pin' | 'unpin'
+export type OperationKind = 'install' | SelectionOperationKind | 'update' | 'migrate' | 'uninstall'
 export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
-export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact'
+export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'repair-configuration'
 
 export interface SkinArtifactRisk {
   context: string
@@ -172,8 +173,12 @@ export interface SkinArtifactRisk {
 }
 
 export interface OperationFailure {
-  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity'
+  kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity' | 'configuration-override'
   message: string
+  code?: string
+  desiredEnabled?: boolean
+  targetSkinId?: string
+  configurationOverride?: import('./configuration-override-types.ts').ConfigurationOverridePlan
   packageName?: string
   releaseAgeTarget?: { packageName: string; version: string }
   artifactRisk?: SkinArtifactRisk

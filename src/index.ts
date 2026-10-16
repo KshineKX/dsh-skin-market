@@ -11,7 +11,7 @@ export const name = 'dsh-skin-market'
 export interface Config { profile?: string }
 
 interface DesktopProfilesLike { current: { name: string; dir: string } }
-interface ProfileContextLike { name?: unknown; dir?: unknown }
+interface ProfileContextLike { name?: unknown; dir?: unknown; home?: unknown; patchPath?: unknown; overlays?: unknown }
 interface EffectHost extends SkinMarketHost {
   effect(callback: () => (() => void | Promise<void>), label: string): void
 }
@@ -41,6 +41,13 @@ export function apply(ctx: Context, config?: Config): void {
     const profileContext = readService('profileContext') as ProfileContextLike | undefined
     const contextName = typeof profileContext?.name === 'string' ? profileContext.name.trim() : ''
     const contextDir = typeof profileContext?.dir === 'string' ? profileContext.dir.trim() : ''
+    const configurationOverride = {
+      home: typeof profileContext?.home === 'string' ? profileContext.home : undefined,
+      patchPath: typeof profileContext?.patchPath === 'string' ? profileContext.patchPath : undefined,
+      // Unknown overlay metadata is deliberately unsupported by automatic repair.
+      overlays: Array.isArray(profileContext?.overlays) && profileContext.overlays.every(value => typeof value === 'string')
+        ? profileContext.overlays as string[] : ['unknown-host-overlays'],
+    }
     const configuredProfile = typeof config?.profile === 'string' ? config.profile.trim() : undefined
     const launchedProfile = contextName !== '' ? contextName : argvProfile()
     const agents = readService('agents') as SkinMarketHost['agents']
@@ -59,7 +66,7 @@ export function apply(ctx: Context, config?: Config): void {
       const profileDir = contextDir !== '' ? contextDir : resolveProfileDir(profile)
       const runner = officialDesktopRunner(() => (readService('pluginManager') as OfficialPluginManagerLike | undefined), runtime, hostContext as unknown as OfficialManagementEvents)
       host.effect(
-        () => mountRoutes(host, { profile, profileDir, runner, hostKind: 'desktop', runtime, agents: undefined, connection }),
+        () => mountRoutes(host, { profile, profileDir, runner, hostKind: 'desktop', runtime, agents: undefined, connection, configurationOverride }),
         'dsh-skin-market: official Desktop routes',
       )
       return
@@ -69,7 +76,7 @@ export function apply(ctx: Context, config?: Config): void {
       const profileDir = configuredProfile === undefined && contextDir !== '' ? contextDir : resolveProfileDir(profile)
       const appExit = readService('appExit') as ((code: number) => void) | undefined
       const restart = appExit === undefined ? undefined : createCliRestartScheduler(appExit)
-      host.effect(() => mountRoutes(host, { profile, profileDir, runner: runPluginCli, hostKind: 'dsh', runtime, restart, agents, connection }), 'dsh-skin-market: routes')
+      host.effect(() => mountRoutes(host, { profile, profileDir, runner: runPluginCli, hostKind: 'dsh', runtime, restart, agents, connection, configurationOverride }), 'dsh-skin-market: routes')
       return
     }
     hostContext.inject(['desktopPnpm'], desktopContext => {

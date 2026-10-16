@@ -16,13 +16,14 @@ import { compareCatalogOrder, getCatalogListScreenshot, getCatalogScreenshotUrls
 import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, parseGeneratedMediaManifest, previewSourceCandidates, setGeneratedMediaSources } from '../media-preview.ts'
 import { useLazyMedia } from '../media-visibility.ts'
 import { browserCatalogCache, type CatalogCache } from './catalog-cache.ts'
-import { interceptNotice, isInterceptFailure, marketUpdateNotice } from './failure-help.ts'
+import { createFailureRepairPrompt, interceptNotice, isInterceptFailure, marketUpdateNotice } from './failure-help.ts'
 import { CLI_INSTALL_WARNING, createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
 import { switchClientSkin, type ClientSkinRuntime } from './index.ts'
 import { displayTitle, githubRepoLabel } from '../display-title.ts'
 import { assessCompatibility, compatibilityContext as skinCompatibilityContext, type CompatibilityAssessment } from '../compatibility.ts'
 import { matchesCatalogSearch } from '../catalog-search.ts'
 import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin } from './types.ts'
+import type { ConfigurationOverrideBatchPlan } from '../configuration-override-types.ts'
 
 export { interceptNotice, isInterceptFailure, marketUpdateNotice }
 export type { InterceptNotice } from './failure-help.ts'
@@ -66,7 +67,7 @@ export interface SkinMarketSectionProps {
 }
 
 type MutationKind = Operation['kind']
-type UseConsentContext = { context: string; artifactContext?: string }
+type UseConsentContext = { context: string; artifactContext?: string; configurationContext?: string }
 type CompatibilityConsent = { decision: 'not-required' | 'cancelled' } | ({ decision: 'accepted' } & UseConsentContext)
 
 interface CompatibilityConfirmation {
@@ -78,6 +79,8 @@ interface CompatibilityConfirmation {
   firstUse: boolean
   pin: boolean
   changed?: boolean
+  configurationPlan?: ConfigurationOverrideBatchPlan
+  kind: MutationKind
 }
 
 function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed }: {
@@ -96,9 +99,21 @@ function describeUseConfirmation({ name, version, assessment, artifactRisk, firs
   return `${name}（版本 ${version}）。${changed ? '皮肤或运行环境已变化，请重新确认。' : ''}${risks.length > 0 ? `${risks.join('，且')}，使用后可能导致页面异常。` : ''}${pin ? '常驻后会与其他皮肤同时启用，可能产生冲突。' : firstUse ? '使用后将停用其他普通皮肤，保留常驻项。' : ''}`
 }
 
+function ConfigurationChanges({ plan, skins }: { plan: ConfigurationOverrideBatchPlan; skins: readonly CatalogSkin[] }) {
+  return <div className={css.interceptNotice}>
+    <p>确认后将自动备份、解除以下共享开关覆盖，再完成本次操作。</p>
+    {plan.changes.map(change => <div key={change.skinId}>
+      <p>「{skins.find(skin => skin.id === change.skinId)?.name.zh ?? change.skinId}」：移除 <code>disabled: {String(change.previousDisabled)}</code>，保留其他设置。</p>
+      <p>共享配置：<code>{change.file}</code>；组件 <code>{change.rowId}</code>。</p>
+    </div>)}
+    <p>此配置影响同一 DSH 目录下的所有 profile；修改前会自动备份。继续后，各 profile 按自己的开关设置生效。</p>
+  </div>
+}
+
 interface SkinOperationOptions {
   compatibilityContext?: string
   artifactContext?: string
+  configurationContext?: string
   installAndUse?: boolean
 }
 
@@ -139,6 +154,7 @@ interface MarketStateResponse {
   hostKind?: MarketHostKind
   runtime?: DshRuntime
   restartAvailable?: boolean
+  selectionPlanAvailable?: boolean
   skins: RuntimeSkin[]
   operation?: Operation | null
   operations?: Operation[]
@@ -646,6 +662,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [hostKind, setHostKind] = useState<MarketHostKind>('dsh')
   const [runtime, setRuntime] = useState<DshRuntime | null>(null)
   const [management, setManagement] = useState<MarketStateResponse['management']>()
+  const [selectionPlanAvailable, setSelectionPlanAvailable] = useState(false)
   const officialDesktop = hostKind === 'desktop' && management?.official === true
   const installRequiresRestart = hostKind === 'desktop' && management?.official === true && management.installRequiresRestart === true
   const [profileBusy, setProfileBusy] = useState<string>()
@@ -688,10 +705,14 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [marketOperation, setMarketOperation] = useState<MarketUpdateOperation | null>(null)
   const [copyingLogId, setCopyingLogId] = useState<string | null>(null)
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null)
+  const [copyingPromptId, setCopyingPromptId] = useState<string | null>(null)
+  const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null)
+  const [promptFallback, setPromptFallback] = useState<{ operationId: string; text: string; error: string } | null>(null)
   const [copyLogError, setCopyLogError] = useState<string | null>(null)
   const [interceptApprovalPending, setInterceptApprovalPending] = useState<string[]>([])
   const interceptApprovalPendingRef = useRef(new Set<string>())
   const [interceptApprovalError, setInterceptApprovalError] = useState<{ operationId: string; message: string } | null>(null)
+  const [interceptConsentChangedId, setInterceptConsentChangedId] = useState<string | null>(null)
   const [dismissedNoticeIds, setDismissedNoticeIds] = useState<string[]>([])
   const [dismissedBuildApprovalId, setDismissedBuildApprovalId] = useState<string | null>(null)
   const [marketUpdating, setMarketUpdating] = useState(false)
@@ -721,10 +742,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   restartTargetRef.current = restartTarget
   const dismissedMarketOperationIds = useRef(new Set<string>())
   const pendingInstallActivation = useRef(new Map<string, string | undefined>())
-  const operationCompatibilityContexts = useRef(new Map<string, { skinId: string; kind: MutationKind; context: string }>())
+  const operationCompatibilityContexts = useRef(new Map<string, UseConsentContext & { skinId: string; kind: MutationKind }>())
   const installRestartNotices = useRef(new Map<string, PendingRestartNotice>())
   const continuingInstallActivation = useRef(new Set<string>())
   const inflightSkinIds = useRef(new Set<string>())
+  const startingSkinIds = useRef(new Map<string, symbol>())
   const skinsRef = useRef<CatalogSkin[]>([])
   const statesRef = useRef<RuntimeSkin[]>([])
   const runtimeRef = useRef<DshRuntime | null>(null)
@@ -795,6 +817,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     setHostKind(state.hostKind ?? 'dsh')
     setRuntime(state.runtime ?? null)
     setManagement(state.management)
+    setSelectionPlanAvailable(state.selectionPlanAvailable === true)
     setProfileBusy(state.profileBusy)
     setRestartAvailable(state.restartAvailable !== false)
     setOperations(current => {
@@ -1346,19 +1369,30 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const currentActionReason = useRef(actionReason)
   currentActionReason.current = actionReason
 
-  const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, _installAndUse = false, changed = false): Promise<CompatibilityConsent> => {
-    if (kind !== 'activate' && kind !== 'pin') return { decision: 'not-required' }
+  const prepareSelection = useCallback(async (skinId: string, kind: MutationKind): Promise<ConfigurationOverrideBatchPlan | undefined> => {
+    if (management?.official !== true || !selectionPlanAvailable || !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) return undefined
+    const plan = await json<ConfigurationOverrideBatchPlan>('/dsh-skin-market/selection-plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId, kind }),
+    })
+    if (!Array.isArray(plan.changes) || !['repairable', 'blocked', 'none'].includes(plan.status)
+      || plan.status === 'repairable' && (!/^[a-f0-9]{64}$/.test(plan.context ?? '') || plan.changes.length === 0)) throw new Error('启停预检未返回有效方案，请更新皮肤市场后重试。')
+    return plan.status === 'repairable' ? plan : undefined
+  }, [management, selectionPlanAvailable])
+
+  const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, _installAndUse = false, changed = false, configurationPlan?: ConfigurationOverrideBatchPlan): Promise<CompatibilityConsent> => {
+    const use = kind === 'activate' || kind === 'pin'
+    if (!use && configurationPlan === undefined) return { decision: 'not-required' }
     const target = skinsRef.current.find(item => item.id === skin.id)
     if (target === undefined) return { decision: 'cancelled' }
     const assessment = installCompatibility(target, 'dsh', runtimeRef.current)!
-    const artifactRisk = runtimeFor(statesRef.current, target.id).artifactRisk
-    const firstUse = !activationWarningAccepted
-    if (!changed && assessment.decision !== 'incompatible' && artifactRisk === undefined && !firstUse && kind !== 'pin') return { decision: 'not-required' }
-    const actionLabel = kind === 'pin' ? '常驻使用' : '使用'
+    const artifactRisk = use ? runtimeFor(statesRef.current, target.id).artifactRisk : undefined
+    const firstUse = use && !activationWarningAccepted
+    if (!changed && configurationPlan === undefined && assessment.decision !== 'incompatible' && artifactRisk === undefined && !firstUse && kind !== 'pin') return { decision: 'not-required' }
+    const actionLabel = kind === 'pin' ? '常驻使用' : kind === 'deactivate' ? '停用' : kind === 'unpin' ? '取消常驻' : '使用'
     compatibilityConsentResolver.current?.(null)
     const accepted = await new Promise<UseConsentContext | null>(resolve => {
       compatibilityConsentResolver.current = resolve
-      const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), artifactRisk, firstUse, pin: kind === 'pin', changed }
+      const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), artifactRisk, firstUse, pin: kind === 'pin', changed, configurationPlan, kind }
       compatibilityConfirmationRef.current = confirmation
       setCompatibilityConfirmation(confirmation)
     })
@@ -1372,7 +1406,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       const target = skinsRef.current.find(item => item.id === confirmation.skin.id)
       if (target !== undefined) {
         const context = skinCompatibilityContext(target, runtimeRef.current)
-        const artifactRisk = runtimeFor(statesRef.current, target.id).artifactRisk
+        const artifactRisk = confirmation.kind === 'activate' || confirmation.kind === 'pin' ? runtimeFor(statesRef.current, target.id).artifactRisk : undefined
         if (context !== confirmation.context || artifactRisk?.context !== confirmation.artifactRisk?.context) {
           const updated = { ...confirmation, skin: target, assessment: installCompatibility(target, 'dsh', runtimeRef.current)!, context, artifactRisk, changed: true }
           compatibilityConfirmationRef.current = updated
@@ -1384,11 +1418,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     compatibilityConsentResolver.current = null
     compatibilityConfirmationRef.current = null
     setCompatibilityConfirmation(null)
-    if (accepted) {
+    if (!accepted && confirmation !== null) startingSkinIds.current.delete(confirmation.skin.id)
+    if (accepted && (confirmation?.kind === 'activate' || confirmation?.kind === 'pin')) {
       try { window.localStorage.setItem(ACTIVATION_WARNING_KEY, 'true') } catch { /* storage may be unavailable */ }
       setActivationWarningAccepted(true)
     }
-    resolve?.(accepted && confirmation !== null ? { context: confirmation.context, ...(confirmation.artifactRisk === undefined ? {} : { artifactContext: confirmation.artifactRisk.context }) } : null)
+    resolve?.(accepted && confirmation !== null ? { context: confirmation.context, ...(confirmation.artifactRisk === undefined ? {} : { artifactContext: confirmation.artifactRisk.context }), ...(confirmation.configurationPlan?.context === undefined ? {} : { configurationContext: confirmation.configurationPlan.context }) } : null)
   }, [])
 
   const restoreInstallRestartNotice = useCallback(async (skinId: string, autoPrompt = true, activationUncertain = false) => {
@@ -1412,171 +1447,203 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }, [presentRestartNotice])
 
   const runForSkin = useCallback(async (skinId: string, kind: MutationKind, existingOperationId?: string, options: SkinOperationOptions = {}) => {
-    let target = skinsRef.current.find(skin => skin.id === skinId)
-    if (target === undefined) { continuingInstallActivation.current.delete(skinId); return false }
-    const stopContinuation = async () => {
-      if (!continuingInstallActivation.current.delete(skinId) || !mounted.current) return
-      await refresh().catch(() => undefined)
-      await restoreInstallRestartNotice(skinId)
-    }
-    let acceptedContext = options.compatibilityContext
-    let artifactContext = options.artifactContext
-    if (existingOperationId === undefined) {
-      const reason = actionReason(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? actionReason('activate') : null)
-      if (reason !== null) { setError(reason); await stopContinuation(); return false }
-      while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)
-        || (kind === 'activate' || kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, target.id).artifactRisk?.context) {
-        const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, acceptedContext !== undefined)
-        if (consent.decision === 'cancelled' || !mounted.current) { await stopContinuation(); return false }
-        acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
-        artifactContext = consent.decision === 'accepted' ? consent.artifactContext : undefined
+    const starting = existingOperationId === undefined
+    if (starting && startingSkinIds.current.has(skinId)) return false
+    const startingToken = Symbol()
+    if (starting) startingSkinIds.current.set(skinId, startingToken)
+    try {
+      let target = skinsRef.current.find(skin => skin.id === skinId)
+      if (target === undefined) { continuingInstallActivation.current.delete(skinId); return false }
+      const stopContinuation = async () => {
+        if (!continuingInstallActivation.current.delete(skinId) || !mounted.current) return
+        await refresh().catch(() => undefined)
+        await restoreInstallRestartNotice(skinId)
+      }
+      let acceptedContext = options.compatibilityContext
+      let artifactContext = options.artifactContext
+      let configurationContext = options.configurationContext
+      if (existingOperationId === undefined) {
+        const reason = actionReason(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? actionReason('activate') : null)
+        if (reason !== null) { setError(reason); await stopContinuation(); return false }
+        const preflight = management?.official === true && selectionPlanAvailable && ['activate', 'deactivate', 'pin', 'unpin'].includes(kind)
+        let configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
+        if (!mounted.current) return false
         target = skinsRef.current.find(skin => skin.id === skinId)
         if (target === undefined) { await stopContinuation(); return false }
-        if (consent.decision === 'not-required') break
+        let changed = acceptedContext !== undefined
+        while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)
+          || configurationContext !== configurationPlan?.context
+          || (kind === 'activate' || kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, target.id).artifactRisk?.context) {
+          const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, changed, configurationPlan)
+          if (consent.decision === 'cancelled' || !mounted.current) { await stopContinuation(); return false }
+          acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
+          artifactContext = consent.decision === 'accepted' ? consent.artifactContext : undefined
+          configurationContext = consent.decision === 'accepted' ? consent.configurationContext : undefined
+          target = skinsRef.current.find(skin => skin.id === skinId)
+          if (target === undefined) { await stopContinuation(); return false }
+          if (consent.decision === 'not-required') break
+          // Recheck the whole selection without changing it. A newly discovered
+          // shared edit needs another click on the same combined confirmation.
+          configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
+          if (!mounted.current) return false
+          target = skinsRef.current.find(skin => skin.id === skinId)
+          if (target === undefined) { await stopContinuation(); return false }
+          changed = true
+        }
+        const currentReason = currentActionReason.current(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? currentActionReason.current('activate') : null)
+        if (currentReason !== null) { setError(currentReason); await stopContinuation(); return false }
+        if (kind === 'install') {
+          installRestartNotices.current.delete(target.id)
+          if (options.installAndUse === true) pendingInstallActivation.current.set(target.id, acceptedContext)
+          else pendingInstallActivation.current.delete(target.id)
+        }
       }
-      const currentReason = currentActionReason.current(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? currentActionReason.current('activate') : null)
-      if (currentReason !== null) { setError(currentReason); await stopContinuation(); return false }
-      if (kind === 'install') {
-        installRestartNotices.current.delete(target.id)
-        if (options.installAndUse === true) pendingInstallActivation.current.set(target.id, acceptedContext)
-        else pendingInstallActivation.current.delete(target.id)
-      }
-    }
-    const targetState = runtimeFor(statesRef.current, target.id)
-    setError(null)
-    setCompletedUninstall(current => current?.skinId === skinId ? null : current)
-    inflightSkinIds.current.add(target.id)
-    if (existingOperationId === undefined) {
-      setOperations(list => upsertOperation(list, {
-        id: pendingOperationId(target.id), kind, skinId: target.id, phase: 'queued', startedAt: new Date().toISOString(),
-      }))
-    }
-    try {
-      const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }) }),
-      })).operationId
-      if (acceptedContext !== undefined) operationCompatibilityContexts.current.set(operationId, { skinId: target.id, kind, context: acceptedContext })
-      for (;;) {
-        if (!mounted.current) return false
-        const operation = await json<Operation>(`/dsh-skin-market/operations/${operationId}`)
-        if (!mounted.current) return false
-        if (operation.phase === 'waiting') setProfileBusy(operation.message ?? '插件启停结果尚未确认，暂时不能修改此 profile')
-        setOperations(list => {
-          const next = upsertOperation(list, operation)
-          if (operation.phase === 'done' || operation.phase === 'cancelled') {
-            return next.filter(item => item.id !== operation.id && item.id !== pendingOperationId(operation.skinId))
-          }
-          return next
-        })
-        if (operation.phase === 'cancelled' || operation.phase === 'failed') {
-          inflightSkinIds.current.delete(target.id)
-        }
-        if (operation.phase === 'done') {
-          operationCompatibilityContexts.current.delete(operationId)
-          if (kind === 'uninstall') {
-            // Removal is confirmed even if refreshing the catalog fails.
-            // An earlier install reminder must never be restored afterward.
-            installRestartNotices.current.delete(target.id)
-            pendingInstallActivation.current.delete(target.id)
-            clientRestartNotices.current.delete(target.id)
-            if (pendingRestartRef.current?.target.kind === 'skin' && pendingRestartRef.current.target.skinId === target.id) {
-              pendingRestartRef.current = null
-              setPendingRestart(null)
-            }
-            if (restartTargetRef.current?.kind === 'skin' && restartTargetRef.current.skinId === target.id) {
-              restartTargetRef.current = null
-              setRestartTarget(null)
-              setConfirmRestart(false)
-            }
-          }
-          // Official hosts can save their enabled selection before restart,
-          // even when newly installed modules are not live in this process.
-          // Finish both steps before showing the restart status.
-          const continueInstallAndUse = kind === 'install'
-            && pendingInstallActivation.current.has(target.id)
-            && management?.official === true
-          let clientNeedsRestart = false
-          if (management?.official === true) {
-            // The host applies both halves of an official bundle. Do not
-            // separately remount its browser loader from this market.
-            restoreMarketStyleOrder()
-          } else if (kind === 'deactivate' || kind === 'uninstall') {
-            clientRestartNotices.current.delete(target.id)
-            await clientRuntime?.setActive(target.package, false)
-          } else if (kind === 'unpin' && targetState.primary !== true) {
-            clientRestartNotices.current.delete(target.id)
-            await clientRuntime?.setActive(target.package, false)
-          } else if (kind === 'pin' && clientRuntime !== undefined) {
-            clientNeedsRestart = !(await clientRuntime.setActive(target.package, true))
-            restoreMarketStyleOrder()
-          } else if (kind === 'activate' && clientRuntime !== undefined) {
-            const pinnedPackages = states
-              .filter(item => item.pinned)
-              .map(item => skins.find(skin => skin.id === item.skinId)?.package)
-              .filter((packageName): packageName is string => packageName !== undefined)
-            clientNeedsRestart = !(await switchClientSkin(clientRuntime, skins.map(skin => skin.package), target.package, pinnedPackages))
-            restoreMarketStyleOrder()
-          }
-          if ((kind === 'activate' || kind === 'pin') && !clientNeedsRestart) clientRestartNotices.current.delete(target.id)
-          const installBeforeUse = kind === 'install' && hostKind === 'desktop'
-          const restartNotice: PendingRestartNotice = { target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
-            ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
-            : pendingRestartTitle(`${target.name.zh} ${kind === 'uninstall' ? '已卸载' : kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
-            description: installBeforeUse ? `“${target.name.zh}”已安装，重启后可使用。`
-              : kind === 'activate' ? `已启用“${target.name.zh}”，重启后生效。`
-                : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
-            startedAt: new Date().toISOString() }
-          if (kind === 'install' && operation.restartRequired === true) installRestartNotices.current.set(target.id, restartNotice)
-          if (continueInstallAndUse) continuingInstallActivation.current.add(target.id)
-          else continuingInstallActivation.current.delete(target.id)
-          inflightSkinIds.current.delete(target.id)
-          const refreshed = await refresh(false, continueInstallAndUse ? undefined : restartNotice)
-          if (continueInstallAndUse) return true
-          if (clientNeedsRestart && refreshed.hostKind !== 'desktop') {
-            const notice: PendingRestartNotice = { ...restartNotice, source: 'client', instanceId: refreshed.instanceId,
-              description: `“${target.name.zh}”的客户端组件尚未加载，重启后生效。` }
-            clientRestartNotices.current.set(target.id, notice)
-            presentRestartNotice(notice, refreshed)
-          }
-          const needsRestart = clientNeedsRestart || runtimeFor(refreshed.skins, target.id).activation === 'restart-required'
-          if (kind === 'uninstall' && !needsRestart) {
-            setCompletedUninstall({ skinId: target.id, title: `${target.name.zh} 已卸载`, startedAt: restartNotice.startedAt })
-          }
-          if (kind === 'activate' || kind === 'uninstall') installRestartNotices.current.delete(target.id)
-          // Install-only stops here; official install-and-use returns above
-          // so the caller can save the target selection before restart.
-          return kind !== 'install' || !needsRestart
-        }
-        if (operation.phase === 'cancelled') {
-          operationCompatibilityContexts.current.delete(operationId)
-          continuingInstallActivation.current.delete(target.id)
-          await refresh()
-          await restoreInstallRestartNotice(target.id)
-          return false
-        }
-        if (operation.phase === 'failed') {
-          continuingInstallActivation.current.delete(target.id)
-          await refresh(false, undefined, false).catch(() => undefined)
-          setOperations(list => upsertOperation(list, operation))
-          setError(null)
-          await restoreInstallRestartNotice(target.id, false)
-          return false
-        }
-        await new Promise(resolve => setTimeout(resolve, operation.phase === 'waiting' ? 5000 : 600))
-      }
-    } catch (reason) {
-      continuingInstallActivation.current.delete(target.id)
-      inflightSkinIds.current.delete(target.id)
-      await refresh(false, undefined, false).catch(() => undefined)
-      const message = reason instanceof Error ? reason.message : String(reason)
-      setOperations(list => upsertOperation(list, {
-        id: `skin-operation-failed-${target.id}`, kind, skinId: target.id, phase: 'failed', startedAt: new Date().toISOString(), message,
-      }))
+      const targetState = runtimeFor(statesRef.current, target.id)
       setError(null)
-      await restoreInstallRestartNotice(target.id, false, kind === 'activate')
+      setCompletedUninstall(current => current?.skinId === skinId ? null : current)
+      inflightSkinIds.current.add(target.id)
+      if (existingOperationId === undefined) {
+        setOperations(list => upsertOperation(list, {
+          id: pendingOperationId(target.id), kind, skinId: target.id, phase: 'queued', startedAt: new Date().toISOString(),
+        }))
+      }
+      try {
+        const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...((kind === 'activate' || kind === 'pin') && acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(configurationContext !== undefined && { configurationContext }) }),
+        })).operationId
+        if (acceptedContext !== undefined) operationCompatibilityContexts.current.set(operationId, { skinId: target.id, kind, context: acceptedContext, artifactContext })
+        for (;;) {
+          if (!mounted.current) return false
+          const operation = await json<Operation>(`/dsh-skin-market/operations/${operationId}`)
+          if (!mounted.current) return false
+          if (operation.phase === 'waiting') setProfileBusy(operation.message ?? '插件启停结果尚未确认，暂时不能修改此 profile')
+          setOperations(list => {
+            const next = upsertOperation(list, operation)
+            if (operation.phase === 'done' || operation.phase === 'cancelled') {
+              return next.filter(item => item.id !== operation.id && item.id !== pendingOperationId(operation.skinId))
+            }
+            return next
+          })
+          if (operation.phase === 'cancelled' || operation.phase === 'failed') {
+            inflightSkinIds.current.delete(target.id)
+          }
+          if (operation.phase === 'done') {
+            operationCompatibilityContexts.current.delete(operationId)
+            if (kind === 'uninstall') {
+              // Removal is confirmed even if refreshing the catalog fails.
+              // An earlier install reminder must never be restored afterward.
+              installRestartNotices.current.delete(target.id)
+              pendingInstallActivation.current.delete(target.id)
+              clientRestartNotices.current.delete(target.id)
+              if (pendingRestartRef.current?.target.kind === 'skin' && pendingRestartRef.current.target.skinId === target.id) {
+                pendingRestartRef.current = null
+                setPendingRestart(null)
+              }
+              if (restartTargetRef.current?.kind === 'skin' && restartTargetRef.current.skinId === target.id) {
+                restartTargetRef.current = null
+                setRestartTarget(null)
+                setConfirmRestart(false)
+              }
+            }
+            // Official hosts can save their enabled selection before restart,
+            // even when newly installed modules are not live in this process.
+            // Finish both steps before showing the restart status.
+            const continueInstallAndUse = kind === 'install'
+              && pendingInstallActivation.current.has(target.id)
+              && management?.official === true
+            let clientNeedsRestart = false
+            if (management?.official === true) {
+              // The host applies both halves of an official bundle. Do not
+              // separately remount its browser loader from this market.
+              restoreMarketStyleOrder()
+            } else if (kind === 'deactivate' || kind === 'uninstall') {
+              clientRestartNotices.current.delete(target.id)
+              await clientRuntime?.setActive(target.package, false)
+            } else if (kind === 'unpin' && targetState.primary !== true) {
+              clientRestartNotices.current.delete(target.id)
+              await clientRuntime?.setActive(target.package, false)
+            } else if (kind === 'pin' && clientRuntime !== undefined) {
+              clientNeedsRestart = !(await clientRuntime.setActive(target.package, true))
+              restoreMarketStyleOrder()
+            } else if (kind === 'activate' && clientRuntime !== undefined) {
+              const pinnedPackages = states
+                .filter(item => item.pinned)
+                .map(item => skins.find(skin => skin.id === item.skinId)?.package)
+                .filter((packageName): packageName is string => packageName !== undefined)
+              clientNeedsRestart = !(await switchClientSkin(clientRuntime, skins.map(skin => skin.package), target.package, pinnedPackages))
+              restoreMarketStyleOrder()
+            }
+            if ((kind === 'activate' || kind === 'pin') && !clientNeedsRestart) clientRestartNotices.current.delete(target.id)
+            const installBeforeUse = kind === 'install' && hostKind === 'desktop'
+            const restartNotice: PendingRestartNotice = { target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
+              ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
+              : pendingRestartTitle(`${target.name.zh} ${kind === 'uninstall' ? '已卸载' : kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
+              description: installBeforeUse ? `“${target.name.zh}”已安装，重启后可使用。`
+                : kind === 'activate' ? `已启用“${target.name.zh}”，重启后生效。`
+                  : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
+              startedAt: new Date().toISOString() }
+            if (kind === 'install' && operation.restartRequired === true) installRestartNotices.current.set(target.id, restartNotice)
+            if (continueInstallAndUse) continuingInstallActivation.current.add(target.id)
+            else continuingInstallActivation.current.delete(target.id)
+            inflightSkinIds.current.delete(target.id)
+            const refreshed = await refresh(false, continueInstallAndUse ? undefined : restartNotice)
+            if (continueInstallAndUse) return true
+            if (clientNeedsRestart && refreshed.hostKind !== 'desktop') {
+              const notice: PendingRestartNotice = { ...restartNotice, source: 'client', instanceId: refreshed.instanceId,
+                description: `“${target.name.zh}”的客户端组件尚未加载，重启后生效。` }
+              clientRestartNotices.current.set(target.id, notice)
+              presentRestartNotice(notice, refreshed)
+            }
+            const needsRestart = clientNeedsRestart || runtimeFor(refreshed.skins, target.id).activation === 'restart-required'
+            if (kind === 'uninstall' && !needsRestart) {
+              setCompletedUninstall({ skinId: target.id, title: `${target.name.zh} 已卸载`, startedAt: restartNotice.startedAt })
+            }
+            if (kind === 'activate' || kind === 'uninstall') installRestartNotices.current.delete(target.id)
+            // Install-only stops here; official install-and-use returns above
+            // so the caller can save the target selection before restart.
+            return kind !== 'install' || !needsRestart
+          }
+          if (operation.phase === 'cancelled') {
+            operationCompatibilityContexts.current.delete(operationId)
+            continuingInstallActivation.current.delete(target.id)
+            await refresh()
+            await restoreInstallRestartNotice(target.id)
+            return false
+          }
+          if (operation.phase === 'failed') {
+            continuingInstallActivation.current.delete(target.id)
+            await refresh(false, undefined, false).catch(() => undefined)
+            setOperations(list => upsertOperation(list, operation))
+            setError(null)
+            await restoreInstallRestartNotice(target.id, false)
+            return false
+          }
+          await new Promise(resolve => setTimeout(resolve, operation.phase === 'waiting' ? 5000 : 600))
+        }
+      } catch (reason) {
+        continuingInstallActivation.current.delete(target.id)
+        inflightSkinIds.current.delete(target.id)
+        await refresh(false, undefined, false).catch(() => undefined)
+        const message = reason instanceof Error ? reason.message : String(reason)
+        setOperations(list => upsertOperation(list, {
+          id: `skin-operation-failed-${target.id}`, kind, skinId: target.id, phase: 'failed', startedAt: new Date().toISOString(), message,
+        }))
+        setError(null)
+        await restoreInstallRestartNotice(target.id, false, kind === 'activate')
+        return false
+      }
+    } catch {
+      const continuing = continuingInstallActivation.current.delete(skinId)
+      if (continuing && mounted.current) {
+        await refresh(false, undefined, false).catch(() => undefined)
+        await restoreInstallRestartNotice(skinId, false)
+      }
+      if (mounted.current) setError('暂时无法检查启停设置，请稍后重试。')
       return false
+    } finally {
+      if (starting && startingSkinIds.current.get(skinId) === startingToken) startingSkinIds.current.delete(skinId)
     }
-  }, [actionReason, clientRuntime, hostKind, management, officialDesktop, presentRestartNotice, refresh, requestCompatibilityConsent, restartAvailable, restoreInstallRestartNotice, runtime, skins, states])
+  }, [actionReason, clientRuntime, hostKind, management, officialDesktop, prepareSelection, presentRestartNotice, refresh, requestCompatibilityConsent, restartAvailable, restoreInstallRestartNotice, runtime, selectionPlanAvailable, skins, states])
 
   const activateSkin = useCallback((skinId: string, compatibilityContext?: string) => {
     if (!mounted.current) return
@@ -1584,7 +1651,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     void runForSkin(skinId, 'activate', undefined, { compatibilityContext })
   }, [runForSkin])
 
-  const retrySkinOperation = useCallback(async (operation: Operation, requestedAction?: NonNullable<Operation['failure']>['action']) => {
+  const retrySkinOperation = useCallback(async (operation: Operation, requestedAction?: NonNullable<Operation['failure']>['action'], combinedConsent?: UseConsentContext) => {
     const action = requestedAction ?? (operation.failure?.action === 'approve-release-age' || operation.failure?.action === 'approve-artifact' ? undefined : operation.failure?.action)
     if (action === undefined || action !== operation.failure?.action) return
     try {
@@ -1593,8 +1660,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       const installAndUse = operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)
       const previous = operationCompatibilityContexts.current.get(operation.id)
       const boundContext = previous?.skinId === operation.skinId && previous.kind === operation.kind ? previous.context : undefined
-      let acceptedContext = boundContext === skinCompatibilityContext(skin, runtimeRef.current) ? boundContext : undefined
-      let artifactContext: string | undefined
+      let acceptedContext = combinedConsent?.context ?? (boundContext === skinCompatibilityContext(skin, runtimeRef.current) ? boundContext : undefined)
+      let artifactContext = combinedConsent !== undefined ? combinedConsent.artifactContext : acceptedContext !== undefined ? previous?.artifactContext : undefined
       if (action === 'approve-artifact') acceptedContext = skinCompatibilityContext(skin, runtimeRef.current)
       while (action !== 'approve-artifact' && (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(skin, runtimeRef.current)
         || (operation.kind === 'activate' || operation.kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, skin.id).artifactRisk?.context)) {
@@ -1608,22 +1675,22 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       }
       const reason = currentActionReason.current(operation.kind)
       if (reason !== null) {
-        if (action === 'retry' || action === 'approve-release-age' || action === 'approve-artifact') setInterceptApprovalError({ operationId: operation.id, message: reason })
+        if (action !== 'approve-build') setInterceptApprovalError({ operationId: operation.id, message: reason })
         else setError(reason)
         return
       }
       if (installAndUse) pendingInstallActivation.current.set(operation.skinId, acceptedContext)
       const result = await json<{ operationId: string }>(`/dsh-skin-market/operations/${operation.id}/retry`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }) }),
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ...(acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(action === 'repair-configuration' && { configurationContext: operation.failure?.configurationOverride?.context }) }),
       })
       operationCompatibilityContexts.current.delete(operation.id)
       setOperations(list => list.filter(item => item.id !== operation.id))
-      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext })
+      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext, artifactContext })
       if (retried && operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason)
       setOperations(list => list.map(item => item.id === operation.id ? { ...item, message } : item))
-      if (action === 'retry' || action === 'approve-release-age' || action === 'approve-artifact') setInterceptApprovalError({ operationId: operation.id, message })
+      if (action !== 'approve-build') setInterceptApprovalError({ operationId: operation.id, message })
       setError(null)
     }
   }, [activateSkin, requestCompatibilityConsent, runForSkin])
@@ -1790,7 +1857,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     (isInterceptFailure(operation) || operation.phase === 'failed' && operation.failure?.action === 'retry')
       && !dismissedNoticeIds.includes(`failed:${operation.id}`)
   const interceptOperation = operations.find(needsFailurePrompt) ?? null
-  const interceptSkin = interceptOperation === null ? undefined : skins.find(skin => skin.id === interceptOperation.skinId)
+  const interceptSkin = interceptOperation === null ? undefined : skins.find(skin => skin.id === (interceptOperation.failure?.targetSkinId ?? interceptOperation.skinId))
   const marketInterceptOperation = interceptOperation === null && marketOperation !== null && needsFailurePrompt(marketOperation) ? marketOperation : null
   const intercept = interceptOperation !== null
     ? interceptNotice(interceptOperation, interceptSkin?.name.zh ?? interceptOperation.skinId, interceptSkin)
@@ -1804,8 +1871,52 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const releaseAgeTarget = interceptFailure?.kind === 'release-age' && interceptFailure.action === 'approve-release-age' ? interceptFailure.releaseAgeTarget : undefined
   const artifactRisk = interceptOperation?.failure?.kind === 'integrity' && interceptOperation.failure.action === 'approve-artifact'
     && interceptOperation.failure.artifactRisk?.context.trim() ? interceptOperation.failure.artifactRisk : undefined
+  const configurationPlan = interceptOperation?.failure?.action === 'repair-configuration'
+    && interceptOperation.failure.configurationOverride?.status === 'repairable'
+    && /^[a-f0-9]{64}$/.test(interceptOperation.failure.configurationOverride.context ?? '')
+    ? interceptOperation.failure.configurationOverride : undefined
+  // The edit can affect the previous skin. Use consent always describes the
+  // skin being requested, rather than borrowing the edited row's identity.
+  const interceptUseSkin = configurationPlan === undefined || interceptOperation === null || !['activate', 'pin'].includes(interceptOperation.kind)
+    ? undefined : skins.find(skin => skin.id === interceptOperation.skinId)
+  const interceptUseConsent = interceptUseSkin === undefined ? undefined : {
+    context: skinCompatibilityContext(interceptUseSkin, runtime),
+    artifactContext: runtimeFor(states, interceptUseSkin.id).artifactRisk?.context,
+  }
   const interceptCompatibility = artifactRisk !== undefined && interceptSkin !== undefined ? installCompatibility(interceptSkin, 'dsh', runtime) : null
-  const interceptApprovalAction = releaseAgeTarget !== undefined ? 'approve-release-age' : artifactRisk !== undefined ? 'approve-artifact' : interceptFailure?.action === 'retry' ? 'retry' : undefined
+  const interceptApprovalAction = configurationPlan !== undefined ? 'repair-configuration' : releaseAgeTarget !== undefined ? 'approve-release-age' : artifactRisk !== undefined ? 'approve-artifact' : interceptFailure?.action === 'retry' ? 'retry' : undefined
+  const repairPromptOptions = interceptOperation === null ? null : {
+    operation: interceptOperation, skin: interceptSkin, hostKind, runtimeVersion: runtime?.version,
+  }
+  const repairPrompt = configurationPlan !== undefined || repairPromptOptions === null ? null : createFailureRepairPrompt(repairPromptOptions)
+  const copyRepairPrompt = async () => {
+    if (repairPromptOptions === null || repairPrompt === null) return
+    const operationId = repairPromptOptions.operation.id
+    setCopyingPromptId(operationId)
+    setCopiedPromptId(null)
+    setPromptFallback(null)
+    try {
+      let diagnosticLog: string
+      try {
+        const response = await fetch(`/dsh-skin-market/logs?operationId=${encodeURIComponent(operationId)}`, { cache: 'no-store' })
+        if (!response.ok) throw new Error('日志导出失败')
+        diagnosticLog = await response.text()
+      } catch {
+        setPromptFallback({ operationId, text: `${repairPrompt}\n\n本次诊断日志未能导出，以下判断需先核对实际状态。`, error: '诊断日志未能导出。下方提示词不含本次日志，可手动复制或重试。' })
+        return
+      }
+      const text = createFailureRepairPrompt({ ...repairPromptOptions, diagnosticLog })!
+      try {
+        await copyTextToClipboard(text)
+        setCopiedPromptId(operationId)
+        window.setTimeout(() => setCopiedPromptId(current => current === operationId ? null : current), 2400)
+      } catch {
+        setPromptFallback({ operationId, text, error: '无法写入剪贴板，请手动复制下方排查提示词。' })
+      }
+    } finally {
+      setCopyingPromptId(current => current === operationId ? null : current)
+    }
+  }
   const waitingOperation = operations.find(operation => operation.phase === 'waiting' && !dismissedNoticeIds.includes(`waiting:${operation.id}`))
     ?? (marketOperation?.phase === 'waiting' && !dismissedNoticeIds.includes(`waiting:${marketOperation.id}`) ? marketOperation : null)
   const warningDialog = compatibilityConfirmation !== null ? 'use'
@@ -1827,6 +1938,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const dismissIntercept = () => {
     if (interceptLogId !== undefined && interceptApprovalPendingRef.current.has(interceptLogId)) return
     setCopyLogError(null)
+    setPromptFallback(null)
     setInterceptApprovalError(null)
     if (interceptOperation !== null) {
       operationCompatibilityContexts.current.delete(interceptOperation.id)
@@ -1839,16 +1951,24 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }
   const approveInterceptRisk = async () => {
     if (interceptApprovalAction === undefined || interceptLogId === undefined || interceptApprovalPendingRef.current.has(interceptLogId)) return
+    if (interceptUseConsent !== undefined && interceptOperation !== null) {
+      const current = skinsRef.current.find(skin => skin.id === interceptOperation.skinId)
+      if (current === undefined || interceptUseConsent.context !== skinCompatibilityContext(current, runtimeRef.current)
+        || interceptUseConsent.artifactContext !== runtimeFor(statesRef.current, current.id).artifactRisk?.context) {
+        setInterceptConsentChangedId(interceptLogId)
+        return
+      }
+    }
     interceptApprovalPendingRef.current.add(interceptLogId)
     setInterceptApprovalPending(ids => [...ids, interceptLogId])
     setInterceptApprovalError(null)
-    if (artifactRisk !== undefined) {
+    if (artifactRisk !== undefined || interceptUseConsent !== undefined) {
       try { window.localStorage.setItem(ACTIVATION_WARNING_KEY, 'true') } catch { /* storage may be unavailable */ }
       setActivationWarningAccepted(true)
     }
     try {
-      if (interceptOperation !== null) await retrySkinOperation(interceptOperation, interceptApprovalAction)
-      else if (marketInterceptOperation !== null && interceptApprovalAction !== 'approve-artifact') await retryMarketUpdate(interceptApprovalAction)
+      if (interceptOperation !== null) await retrySkinOperation(interceptOperation, interceptApprovalAction, interceptUseConsent)
+      else if (marketInterceptOperation !== null && interceptApprovalAction !== 'approve-artifact' && interceptApprovalAction !== 'repair-configuration') await retryMarketUpdate(interceptApprovalAction)
     } finally {
       interceptApprovalPendingRef.current.delete(interceptLogId)
       if (mounted.current) setInterceptApprovalPending(ids => ids.filter(id => id !== interceptLogId))
@@ -1996,7 +2116,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             <div className={css.homeSectionTitle}><h3 id="installed-skins-title">已安装</h3><span>正在使用、常驻优先，其余按最近操作排序</span></div>
             {loading ? <div className={css.installedRow} style={{ '--installed-columns': installedSlots } as CSSProperties} role="status" aria-label="正在加载已安装皮肤"><span className={css.srOnly}>正在加载已安装皮肤…</span>{Array.from({ length: installedSlots }, (_, index) => <article className={css.installedSkeletonCard} key={index} aria-hidden="true"><span /><span><i /><i /></span></article>)}</div> : <div className={css.installedRow} style={{ '--installed-columns': installedSlots } as CSSProperties}>
               {installedRowSkins.map(skin => renderHomeCard(skin, 'installed'))}
-              {installedOverflow && <Button variant="ghost" className={`${css.homeCard} ${css.installedMoreCard}`} onClick={() => openInstalledBrowser()}><SquaresFourIcon size={24} aria-hidden="true" /><strong>查看全部已安装</strong></Button>}
+              {installedOverflow && <button type="button" className={`${css.homeCard} ${css.installedMoreCard}`} onClick={() => openInstalledBrowser()}><SquaresFourIcon size={24} aria-hidden="true" /><strong>查看全部已安装</strong></button>}
             </div>}
           </section>}
 
@@ -2179,7 +2299,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         title={intercept?.title ?? '已拦截安装'}
         closeLabel="关闭"
         className={css.warningModal}
-        description={artifactRisk === undefined ? [...new Set([intercept?.what.trim(), intercept?.why.trim()].filter(Boolean))].join('') || undefined : describeUseConfirmation({
+        description={configurationPlan !== undefined ? `${intercept?.what ?? ''}${interceptUseSkin === undefined ? '' : describeUseConfirmation({ name: interceptUseSkin.name.zh, version: interceptUseSkin.install.version, assessment: installCompatibility(interceptUseSkin, 'dsh', runtime), artifactRisk: runtimeFor(states, interceptUseSkin.id).artifactRisk, firstUse: !activationWarningAccepted, pin: interceptOperation?.kind === 'pin', changed: interceptConsentChangedId === interceptLogId })}` : artifactRisk === undefined ? [...new Set([intercept?.what.trim(), intercept?.why.trim()].filter(Boolean))].join('') || undefined : describeUseConfirmation({
           name: interceptSkin?.name.zh ?? artifactRisk.packageName,
           version: artifactRisk.version,
           assessment: interceptCompatibility,
@@ -2188,22 +2308,33 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           pin: interceptOperation?.kind === 'pin',
         })}
         footer={<>
+          {repairPrompt !== null && <Button variant="outline" size="sm" icon={<IconCopyOutline />}
+            disabled={copyingPromptId === interceptLogId || copyingLogId === interceptLogId || interceptPending}
+            onClick={() => { void copyRepairPrompt() }}
+          >{copiedPromptId === interceptLogId ? '提示词已复制' : copyingPromptId === interceptLogId ? '复制中…' : '复制排查提示词'}</Button>}
           <Button
             variant="outline"
             size="sm"
             icon={<IconCopyOutline />}
-            disabled={interceptLogId === undefined || copyingLogId === interceptLogId}
+            disabled={interceptLogId === undefined || copyingLogId === interceptLogId || copyingPromptId === interceptLogId}
             onClick={() => { if (interceptLogId !== undefined) void copyOperationLog(interceptLogId) }}
           >{copiedLogId === interceptLogId ? '日志已复制' : copyingLogId === interceptLogId ? '复制中…' : '复制日志'}</Button>
           {interceptApprovalAction === undefined
             ? <Button variant="primary" size="sm" onClick={dismissIntercept}>知道了</Button>
             : <>
               <Button variant="outline" size="sm" disabled={interceptPending} onClick={dismissIntercept}>取消</Button>
-              <Button variant="primary" size="sm" disabled={interceptPending} onClick={() => { void approveInterceptRisk() }}>{interceptPending ? '处理中…' : interceptApprovalAction === 'retry' ? '重试' : artifactRisk === undefined ? '允许并继续' : interceptOperation?.kind === 'activate' ? '仍然使用' : interceptOperation?.kind === 'pin' ? '仍然常驻使用' : '仍然继续'}</Button>
+              <Button variant="primary" size="sm" disabled={interceptPending} onClick={() => { void approveInterceptRisk() }}>{interceptPending ? '处理中…' : interceptApprovalAction === 'repair-configuration' ? '解除覆盖并继续' : interceptApprovalAction === 'retry' ? '重试' : artifactRisk === undefined ? '允许并继续' : interceptOperation?.kind === 'activate' ? '仍然使用' : interceptOperation?.kind === 'pin' ? '仍然常驻使用' : '仍然继续'}</Button>
             </>}
         </>}
       >
-        {intercept !== null && (artifactRisk === undefined && intercept.links.length > 0 || interceptHasError || copyLogError !== null) ? <div className={css.interceptNotice}>
+        {intercept !== null && (configurationPlan !== undefined || repairPrompt !== null || artifactRisk === undefined && intercept.links.length > 0 || interceptHasError || copyLogError !== null) ? <div className={css.interceptNotice}>
+          {configurationPlan !== undefined && interceptOperation !== null && <ConfigurationChanges skins={skins} plan={{ status: 'repairable', reason: configurationPlan.reason, changes: [{ ...configurationPlan, skinId: interceptOperation.failure?.targetSkinId ?? interceptOperation.skinId }] }} />}
+          {repairPrompt !== null && <p>可复制排查提示词交给本地 Agent，先检查实际环境和失败阶段。</p>}
+          {repairPrompt !== null && interceptFailure?.configurationOverride?.status === 'blocked' && <p>{interceptFailure.configurationOverride.reason}</p>}
+          {promptFallback !== null && promptFallback.operationId === interceptLogId && <>
+            <p role="alert">{promptFallback.error}</p>
+            <textarea className={css.repairPromptFallback} aria-label="排查提示词" readOnly rows={8} value={promptFallback.text} />
+          </>}
           {interceptHasError && <p role="alert">未能继续操作，请复制日志反馈。</p>}
           {artifactRisk === undefined && intercept.links.length > 0 && <div className={css.interceptHelp}>
             {intercept.links.map(link => (
@@ -2226,11 +2357,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         <div className={css.installOptions}>
           <div><strong>{manualOnly ? '让 Agent 检查并指导安装' : '提示词'}</strong><span className={css.copyCapsule}><code title={installPrompt}>{installPrompt}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:prompt` ? '提示词已复制' : '复制提示词'} title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
           {manualOnly && selected !== undefined && <div className={css.manualInstallGuide}>
-            <strong>插件页安装目标</strong>
+            <strong>插件包名</strong>
             <p>也可自行打开「插件 → 添加插件」，输入：</p>
             <span className={css.copyCapsule}>
-              <Input className={css.copyCapsuleInput} readOnly value={manualInstallKeyword} aria-label="插件页安装目标" />
-              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected.id}:keyword` ? '插件页安装目标已复制' : '复制插件页安装目标'} title="复制插件页安装目标" onClick={() => void copyInstallOption('keyword')} />
+              <Input className={css.copyCapsuleInput} readOnly value={manualInstallKeyword} aria-label="插件包名" />
+              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected.id}:keyword` ? '插件包名已复制' : '复制插件包名'} title="复制插件包名" onClick={() => void copyInstallOption('keyword')} />
             </span>
           </div>}
           {!manualOnly && <div><strong>命令</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:command` ? '命令已复制' : '复制命令'} title="复制命令" onClick={() => void copyInstallOption('command')} /></span><small>{CLI_INSTALL_WARNING}</small></div>}
@@ -2239,16 +2370,19 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       <Modal
         open={warningDialog === 'use'}
         onClose={() => finishCompatibilityConfirmation(false)}
-        title="使用前确认"
+        title={compatibilityConfirmation?.kind === 'deactivate' || compatibilityConfirmation?.kind === 'unpin' ? '操作前确认' : '使用前确认'}
         closeLabel="关闭"
         className={css.warningModal}
         description={compatibilityConfirmation === null ? undefined : describeUseConfirmation({
           ...compatibilityConfirmation,
+          assessment: compatibilityConfirmation.kind === 'activate' || compatibilityConfirmation.kind === 'pin' ? compatibilityConfirmation.assessment : undefined,
           name: compatibilityConfirmation.skin.name.zh,
           version: compatibilityConfirmation.skin.install.version,
         })}
-        footer={<><Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(false)}>取消</Button><Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>{compatibilityConfirmation?.artifactRisk !== undefined || compatibilityConfirmation?.assessment.decision === 'incompatible' ? '仍然' : '确认'}{compatibilityConfirmation?.actionLabel}</Button></>}
-      />
+        footer={<><Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(false)}>取消</Button><Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>{compatibilityConfirmation?.configurationPlan !== undefined ? '解除覆盖并' : compatibilityConfirmation?.artifactRisk !== undefined || compatibilityConfirmation?.assessment.decision === 'incompatible' ? '仍然' : '确认'}{compatibilityConfirmation?.actionLabel}</Button></>}
+      >
+        {compatibilityConfirmation?.configurationPlan !== undefined && <ConfigurationChanges plan={compatibilityConfirmation.configurationPlan} skins={skins} />}
+      </Modal>
       <Modal
         open={warningDialog === 'waiting'}
         onClose={() => { if (waitingOperation !== null) dismissNotice(`waiting:${waitingOperation.id}`) }}

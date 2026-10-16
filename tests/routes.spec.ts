@@ -73,6 +73,7 @@ const guardedRequests = [
   ['/dsh-skin-market/catalog', 'GET'],
   ['/dsh-skin-market/logs', 'GET'],
   ['/dsh-skin-market/state', 'GET'],
+  ['/dsh-skin-market/selection-plan', 'POST'],
   ['/dsh-skin-market/market-update', 'GET'],
   ['/dsh-skin-market/market-update', 'POST'],
   ['/dsh-skin-market/operations/fixture', 'GET'],
