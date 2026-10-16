@@ -1,6 +1,6 @@
 import { effectiveBuildApprovalKey } from './build-approval.ts';
 import { type LoaderIdentity } from './loader-ownership.ts';
-import type { InstallConflict, InstalledClientPlugin, PersistedMarketState, SkinActivity, SkinEntry, SkinRuntimeState } from './types.ts';
+import type { InstallConflict, InstalledClientPlugin, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts';
 export type { LoaderIdentity } from './loader-ownership.ts';
 export declare function resolveProfileDir(profile: string, explicit?: string): string;
 export declare function manifestFile(profileDir: string): string;
@@ -42,13 +42,23 @@ export interface InstalledArtifactSnapshot {
 }
 /** Inspect only this package's declared executable entries; never import code. */
 export declare function snapshotInstalledArtifact(profileDir: string, packageName: string): InstalledArtifactSnapshot;
+/** Return only risks for a complete, correctly resolved, conflict-free skin artifact. */
+export declare function inspectSkinArtifactRisk(profileDir: string, skin: SkinEntry, hostKind?: MarketHostKind): SkinArtifactRisk | undefined;
+export declare function isSkinArtifactRiskAcknowledged(profileDir: string, skin: SkinEntry, hostKind?: MarketHostKind): boolean;
+/** Recompute immediately before persisting; stale or structurally invalid targets never gain consent. */
+export declare function acknowledgeSkinArtifactRisk(profileDir: string, skin: SkinEntry, context: string, hostKind?: MarketHostKind): boolean;
 /** Compare recovery to the installed release before the operation, not today's catalog. */
 export declare function compareInstalledArtifact(profileDir: string, baseline: InstalledArtifactSnapshot): {
     ok: boolean;
     reason?: string;
     artifact: InstalledArtifactSnapshot;
 };
-export declare function validateInstalledSkin(profileDir: string, skin: SkinEntry): {
+export interface SkinArtifactValidationOptions {
+    /** Installation may retain a usable artifact; selecting it still requires exact user consent. */
+    allowArtifactRisk?: true;
+    hostKind?: MarketHostKind;
+}
+export declare function validateInstalledSkin(profileDir: string, skin: SkinEntry, options?: SkinArtifactValidationOptions): {
     ok: boolean;
     reason?: string;
     version?: string;
@@ -56,7 +66,7 @@ export declare function validateInstalledSkin(profileDir: string, skin: SkinEntr
 };
 export declare function installedSpecMatches(skin: SkinEntry, spec: string | null | undefined): boolean;
 /** A manager-written npm range is accepted only through its installed resolution. */
-export declare function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined): boolean;
+export declare function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined, options?: SkinArtifactValidationOptions): boolean;
 export interface NpmArtifactSource {
     name: string;
     version: string;
@@ -72,7 +82,7 @@ export declare function validateNpmArtifact(profileDir: string, source: NpmArtif
     integrityVerified: boolean;
 };
 /** Validate managed Desktop metadata without inventing missing npm provenance. */
-export declare function validateDesktopArtifact(profileDir: string, skin: SkinEntry): {
+export declare function validateDesktopArtifact(profileDir: string, skin: SkinEntry, options?: SkinArtifactValidationOptions): {
     ok: boolean;
     version?: string;
     reason?: string;
@@ -141,4 +151,4 @@ export declare function snapshotFile(file: string): FileSnapshot;
 export declare function restoreFile(file: string, snapshot: FileSnapshot): void;
 export declare function snapshotManifest(profileDir: string): FileSnapshot;
 export declare function restoreManifest(profileDir: string, snapshot: FileSnapshot): void;
-export declare function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds?: string[], activity?: SkinActivity): SkinRuntimeState;
+export declare function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds?: string[], activity?: SkinActivity, hostKind?: MarketHostKind): SkinRuntimeState;

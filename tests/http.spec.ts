@@ -93,7 +93,7 @@ describe('HTTP guards', () => {
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({
       skinId: 'fixture-skin', acknowledgeCompatibility: acknowledgement === true, ...context,
     })
-    for (const action of ['retry', 'approve-build', 'approve-release-age'] as const) {
+    for (const action of ['retry', 'approve-build', 'approve-release-age', 'approve-artifact'] as const) {
       await expect(readOperationRetry(jsonRequest({ action, ...body }))).resolves.toEqual({
         action, acknowledgeCompatibility: acknowledgement === true, ...context,
       })
@@ -105,7 +105,7 @@ describe('HTTP guards', () => {
     const empty = Readable.from([]) as IncomingMessage
     empty.headers = {}
     await expect(readMarketUpdateRetryAction(empty)).resolves.toBe('retry')
-    for (const body of [{ action: 'approve-build' }, { action: null }, { action: 1 }, { action: 'approve-release-age', version: '2.0.0' }]) await expect(readMarketUpdateRetryAction(jsonRequest(body))).rejects.toThrow('invalid market update retry action')
+    for (const body of [{ action: 'approve-build' }, { action: 'approve-artifact' }, { action: null }, { action: 1 }, { action: 'approve-release-age', version: '2.0.0' }]) await expect(readMarketUpdateRetryAction(jsonRequest(body))).rejects.toThrow('invalid market update retry action')
     const untyped = Readable.from([JSON.stringify({ action: 'approve-release-age' })]) as IncomingMessage
     untyped.headers = {}
     await expect(readMarketUpdateRetryAction(untyped)).rejects.toThrow('content-type must be application/json')
@@ -127,5 +127,19 @@ describe('HTTP guards', () => {
     const body = { acknowledgeCompatibility: true, compatibilityContext: 'x'.repeat(4096) }
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({ skinId: 'fixture-skin', ...body })
     await expect(readOperationRetry(jsonRequest({ action: 'retry', ...body }))).resolves.toEqual({ action: 'retry', ...body })
+  })
+
+  it('reads a displayed artifact context without converting it to compatibility consent', async () => {
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', artifactContext: 'displayed-artifact' }))).resolves.toEqual({
+      skinId: 'fixture-skin', artifactContext: 'displayed-artifact', acknowledgeCompatibility: false,
+    })
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', artifactContext: 'displayed-artifact' }))).resolves.toEqual({
+      action: 'retry', artifactContext: 'displayed-artifact', acknowledgeCompatibility: false,
+    })
+  })
+
+  it.each(['', 1, null, {}, [], 'x'.repeat(4097)])('refuses invalid artifact acceptance context (%j)', async artifactContext => {
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', artifactContext }))).rejects.toThrow('invalid artifact context')
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', artifactContext }))).rejects.toThrow('invalid artifact context')
   })
 })

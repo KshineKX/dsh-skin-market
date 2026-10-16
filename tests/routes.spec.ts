@@ -233,7 +233,7 @@ describe('market routes', () => {
     expect(fixture.begin).toHaveBeenCalledTimes(3)
   })
 
-  it.each(['retry', 'approve-build', 'approve-release-age'] as const)('forwards compatibility acknowledgement with the %s retry action', async action => {
+  it.each(['retry', 'approve-build', 'approve-release-age', 'approve-artifact'] as const)('forwards compatibility acknowledgement with the %s retry action', async action => {
     const fixture = admissionFixture()
     const retry = vi.spyOn(SkinLifecycle.prototype, 'retry').mockImplementation(() => ({
       id: 'retried-operation', kind: 'install', skinId: 'fixture-skin', phase: 'queued', startedAt: '2026-10-14T00:00:00Z',
@@ -246,6 +246,34 @@ describe('market routes', () => {
       expect(retry).toHaveBeenLastCalledWith('existing-skin', action, acknowledgement === true, acknowledgement ? 'shown-version' : undefined)
     }
     expect(retry).toHaveBeenCalledTimes(3)
+  })
+
+  it.each(['activate', 'pin'])('forwards the displayed artifact context together with compatibility consent during %s', async kind => {
+    const fixture = admissionFixture()
+    const result = await fixture.request(`/dsh-skin-market/${kind}`, 'POST', {}, '127.0.0.1', {
+      skinId: 'fixture-skin', acknowledgeCompatibility: true, compatibilityContext: 'shown-compatibility', artifactContext: 'shown-artifact',
+    })
+    expect(result.status).toBe(202)
+    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith(kind, 'fixture-skin', undefined, true, 'shown-compatibility', undefined, 'shown-artifact')
+  })
+
+  it('preserves an explicitly accepted artifact context when retrying an activation', async () => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry').mockImplementation(() => ({
+      id: 'retried-operation', kind: 'activate', skinId: 'fixture-skin', phase: 'queued', startedAt: '2026-10-16T00:00:00Z',
+    }))
+    const result = await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST', {}, '127.0.0.1', {
+      action: 'retry', acknowledgeCompatibility: true, compatibilityContext: 'shown-compatibility', artifactContext: 'shown-artifact',
+    })
+    expect(result.status).toBe(202)
+    expect(retry).toHaveBeenCalledExactlyOnceWith('existing-skin', 'retry', true, 'shown-compatibility', 'shown-artifact')
+  })
+
+  it.each(['', 1, null, {}, [], 'x'.repeat(4097)])('rejects invalid artifact context before starting a lifecycle operation (%j)', async artifactContext => {
+    const fixture = admissionFixture()
+    const result = await fixture.request('/dsh-skin-market/activate', 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', artifactContext })
+    expect(result.status).toBe(409)
+    expect(fixture.begin).not.toHaveBeenCalled()
   })
 
   it.each(['retry', 'approve-release-age'] as const)('forwards only the explicit %s action for market update retries', async action => {
@@ -262,7 +290,7 @@ describe('market routes', () => {
     expect(fixture.updater.retry).toHaveBeenCalledExactlyOnceWith('existing-update', 'retry')
   })
 
-  it.each([{ action: 'approve-build' }, { action: null }, { action: 'approve-release-age', packageName: 'other' }, { releaseAgeTarget: { packageName: 'other', version: '1.0.0' } }])('rejects invalid market retry bodies before any update (%j)', async body => {
+  it.each([{ action: 'approve-build' }, { action: 'approve-artifact' }, { action: null }, { action: 'approve-release-age', packageName: 'other' }, { releaseAgeTarget: { packageName: 'other', version: '1.0.0' } }])('rejects invalid market retry bodies before any update (%j)', async body => {
     const fixture = admissionFixture()
     const result = await fixture.request('/dsh-skin-market/market-update/operations/existing-update/retry', 'POST', {}, '127.0.0.1', body)
     expect(result.status).toBe(409)
@@ -274,6 +302,14 @@ describe('market routes', () => {
     const result = await fixture.request(path, 'POST', { host: '127.0.0.1:3080', origin: 'https://evil.example' }, '127.0.0.1', { action: 'approve-release-age' })
     expect(result.status).toBe(403)
     expect(fixture.updater.retry).not.toHaveBeenCalled()
+  })
+
+  it('requires the same origin for artifact risk acceptance before calling the skin lifecycle', async () => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry')
+    const result = await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST', { host: '127.0.0.1:3080', origin: 'https://evil.example' }, '127.0.0.1', { action: 'approve-artifact' })
+    expect(result.status).toBe(403)
+    expect(retry).not.toHaveBeenCalled()
   })
 
   it.each(['skin', 'market'] as const)('rechecks mutual exclusion after a streamed %s approval body is read', async kind => {

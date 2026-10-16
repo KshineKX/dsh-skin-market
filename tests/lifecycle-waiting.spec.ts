@@ -44,7 +44,8 @@ function fixture() {
   mkdirSync(packageDir, { recursive: true })
   // This is a real installed bundle fixture, without a browser boot graph that
   // would force restart instead of exercising the Host Loader update.
-  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { bundle: { patch: './cordis.patch.yml' }, client: {} } })
+  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { bundle: { patch: './cordis.patch.yml' }, client: {} } })
+  atomicWriteText(join(packageDir, 'client.js'), 'export const fixture = true\n')
   atomicWriteText(join(packageDir, 'cordis.patch.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${skin.package}\n`)
   const pending = deferred()
   let first = true

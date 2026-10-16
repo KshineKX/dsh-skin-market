@@ -1,6 +1,6 @@
 import type { PluginRunner } from './commands.ts';
 import { type ReleaseAgeTarget } from './release-age.ts';
-import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, SkinEntry, SkinRuntimeState } from './types.ts';
+import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, OperationRetryAction, SkinEntry, SkinRuntimeState } from './types.ts';
 export interface LifecycleHost {
     loader: {
         entries(): Iterable<LoaderEntry>;
@@ -45,6 +45,8 @@ export declare class SkinLifecycle {
     private readonly pendingBuildKeys;
     private readonly failedReleaseAgeApprovals;
     private readonly pendingReleaseAgeApprovals;
+    private readonly artifactContexts;
+    private readonly failedArtifactContexts;
     private readonly compatibilityContexts;
     private readonly deadlines;
     private readonly deadlineTimers;
@@ -83,6 +85,8 @@ export declare class SkinLifecycle {
     private registerSkin;
     private get runtime();
     private assertCompatibilityContext;
+    /** Revalidate the shown artifact inside the profile queue before changing selection. */
+    private assertArtifactUseApproved;
     private assertLegacyOfficialPeers;
     private applyCompatibility;
     private syncPnpmMetadata;
@@ -112,8 +116,8 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval): Operation;
-    retry(id: string, action: 'retry' | 'approve-build' | 'approve-release-age', acknowledgeCompatibility?: boolean, acknowledgedContext?: string): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string): Operation;
+    retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
     private withProfileLock;

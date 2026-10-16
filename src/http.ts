@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { OperationRetryAction } from './types.ts'
 
 export function sendJson(response: ServerResponse, status: number, value: unknown): void {
   const body = JSON.stringify(value)
@@ -107,23 +108,29 @@ function compatibilityAcknowledgement(body: Record<string, unknown>): { acknowle
   return { acknowledgeCompatibility: true, compatibilityContext: body.compatibilityContext }
 }
 
-export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
+function artifactAcknowledgement(body: Record<string, unknown>): { artifactContext?: string } {
+  if (body.artifactContext === undefined) return {}
+  if (typeof body.artifactContext !== 'string' || body.artifactContext.length === 0 || body.artifactContext.length > 4096) throw new Error('invalid artifact context')
+  return { artifactContext: body.artifactContext }
+}
+
+export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string }> {
   const body = await readJsonBody(request, limit)
   if (typeof body.skinId !== 'string' || body.skinId.length > 128) throw new Error('invalid skinId')
-  return { skinId: body.skinId, ...compatibilityAcknowledgement(body) }
+  return { skinId: body.skinId, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body) }
 }
 
 export async function readSkinId(request: IncomingMessage, limit = 8192): Promise<string> {
   return (await readSkinMutation(request, limit)).skinId
 }
 
-export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: 'retry' | 'approve-build' | 'approve-release-age'; acknowledgeCompatibility: boolean; compatibilityContext?: string }> {
+export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: OperationRetryAction; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string }> {
   const body = await readJsonBody(request, limit)
-  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age') throw new Error('invalid operation retry action')
-  return { action: body.action, ...compatibilityAcknowledgement(body) }
+  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age' && body.action !== 'approve-artifact') throw new Error('invalid operation retry action')
+  return { action: body.action, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body) }
 }
 
-export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<'retry' | 'approve-build' | 'approve-release-age'> {
+export async function readOperationRetryAction(request: IncomingMessage, limit = 8192): Promise<OperationRetryAction> {
   return (await readOperationRetry(request, limit)).action
 }
 

@@ -97,6 +97,7 @@ export interface RuntimeSkin {
   lastOperatedAt?: string | null
   updateAvailable: boolean
   sourceMigration?: { target: string; currentSource: string }
+  artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
   error?: string
 }
 
@@ -131,7 +132,8 @@ export interface Operation {
     packageName?: string
     buildKeys?: string[]
     releaseAgeTarget?: { packageName: string; version: string }
-    action?: 'retry' | 'approve-build' | 'approve-release-age'
+    artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
+    action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }
   startedAt: string

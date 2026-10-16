@@ -1,16 +1,240 @@
 import { createHash } from 'node:crypto'
+import fs from 'node:fs'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
+import { syncBuiltinESMExports } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { parse } from 'yaml'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from '../src/build-approval.ts'
-import { assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, InstallConflictError, installedClientPlugins, installedSpecMatches, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
+import { acknowledgeSkinArtifactRisk, assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, inspectSkinArtifactRisk, InstallConflictError, installedClientPlugins, installedSpecMatches, isSkinArtifactRiskAcknowledged, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
 import { loadCatalog } from '../src/catalog.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-profile-')) }
 
+function artifactRiskFixture() {
+  const dir = fixture()
+  // Keep the real conflicting catalog metadata: the product must handle this
+  // uncertainty without repairing away the user's reproduction.
+  const skin = structuredClone(loadCatalog().skins.find(skin => skin.id === 'johnnyting.dsh-official-homepage-theme')!)
+  const directory = join(dir, 'node_modules', skin.package)
+  const manifest = { name: skin.package, version: skin.install.version, repository: skin.repo,
+    exports: { './client': './client.js' }, dsh: { client: { platform: 'web' } } }
+  atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.version } })
+  atomicWriteJson(join(directory, 'package.json'), manifest)
+  atomicWriteText(join(directory, 'client.js'), 'export const source = "installed artifact"')
+  const lock = (integrity: string | null = skin.install.npm!.integrity, tarball?: string) => atomicWriteText(join(dir, 'pnpm-lock.yaml'),
+    `importers:\n  .:\n    dependencies:\n      '${skin.package}':\n        specifier: '${skin.install.version}'\n        version: '${skin.install.version}'\npackages:\n  '${skin.package}@${skin.install.version}':\n    resolution:${integrity === null && tarball === undefined ? ' {}' : ''}\n${integrity === null ? '' : `      integrity: ${integrity}\n`}${tarball === undefined ? '' : `      tarball: ${tarball}\n`}`)
+  lock()
+  return { dir, skin, directory, manifest, lock }
+}
+
+describe('exact installed artifact acknowledgement', () => {
+  it('does not warn Web users about an unrelated Desktop SRI record', () => {
+    const { dir, skin } = artifactRiskFixture()
+    expect(inspectSkinArtifactRisk(dir, skin, 'desktop')).toBeDefined()
+    expect(inspectSkinArtifactRisk(dir, skin, 'dsh')).toBeUndefined()
+    expect(validateInstalledSkin(dir, skin).ok).toBe(true)
+    expect(runtimeState(dir, skin, null, false, true)).toMatchObject({ installation: 'installed', updateAvailable: false })
+    expect(runtimeState(dir, skin, null, false, true).artifactRisk).toBeUndefined()
+  })
+
+  it('keeps artifact acknowledgement bound to the displayed host', () => {
+    const { dir, skin, lock } = artifactRiskFixture()
+    lock('sha512-unreviewed')
+    const desktop = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    const web = inspectSkinArtifactRisk(dir, skin, 'dsh')!
+    expect(desktop.context).not.toBe(web.context)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, desktop.context, 'desktop')).toBe(true)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'desktop')).toBe(true)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'dsh')).toBe(false)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, desktop.context, 'dsh')).toBe(false)
+  })
+
+  it('does not invalidate Web consent when only the unrelated Desktop review record changes', () => {
+    const { dir, skin, lock } = artifactRiskFixture()
+    lock('sha512-unreviewed')
+    const risk = inspectSkinArtifactRisk(dir, skin, 'dsh')!
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'dsh')).toBe(true)
+    if (skin.install.desktop?.mode !== 'managed') throw new Error('expected a managed skin')
+    skin.install.desktop.integrity = 'sha512-changed-desktop-only'
+    expect(inspectSkinArtifactRisk(dir, skin, 'dsh')?.context).toBe(risk.context)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'dsh')).toBe(true)
+  })
+
+  it('preserves consent across scan, listing and review refreshes of the same artifact', () => {
+    const { dir, skin } = artifactRiskFixture()
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    skin.starsSnapshot += 1
+    skin.description = 'Updated listing description'
+    skin.screenshots = ['https://example.test/refreshed-preview.png']
+    skin.metadataUpdatedAt = '2030-01-01T00:00:00.000Z'
+    skin.review = { compatibility: 'verified', preview: 'verified', installation: 'verified' }
+    if (skin.health?.scan !== undefined) {
+      skin.health.scan.checkedAt = '2030-01-01T00:00:00.000Z'
+      skin.health.scan.scannerVersion = 'review-refresh'
+    }
+    expect(inspectSkinArtifactRisk(dir, skin, 'desktop')?.context).toBe(risk.context)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'desktop')).toBe(true)
+  })
+
+  it('keeps the original catalog conflict blocked until the user confirms its exact installed bytes', () => {
+    const { dir, skin } = artifactRiskFixture()
+    if (skin.install.desktop?.mode !== 'managed') throw new Error('expected a managed skin')
+    expect(skin.install.desktop.integrity).not.toBe(skin.install.npm!.integrity)
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(risk).toMatchObject({ packageName: skin.package, version: skin.install.version })
+    expect(risk.warnings.join(' ')).toContain('SRI')
+    expect(risk.warnings.join(' ')).toContain('冲突')
+    expect(validateDesktopArtifact(dir, skin)).toMatchObject({ ok: false, integrityVerified: false })
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(false)
+    expect(reviewedInstalledSpecMatches(dir, skin, skin.install.version, { hostKind: 'desktop' })).toBe(false)
+    expect(validateInstalledSkin(dir, skin, { allowArtifactRisk: true, hostKind: 'desktop' }).ok).toBe(true)
+    expect(validateDesktopArtifact(dir, skin, { allowArtifactRisk: true })).toMatchObject({ ok: true, integrityVerified: false })
+    expect(reviewedInstalledSpecMatches(dir, skin, skin.install.version, { allowArtifactRisk: true, hostKind: 'desktop' })).toBe(true)
+    expect(runtimeState(dir, skin, null, false, true, [], undefined, 'desktop')).toMatchObject({ installation: 'installed', artifactRisk: risk, updateAvailable: false })
+    expect(readMarketState(dir).artifactAcknowledgements).toBeUndefined()
+    expect(acknowledgeSkinArtifactRisk(dir, skin, 'cancelled-or-stale', 'desktop')).toBe(false)
+    expect(readMarketState(dir).artifactAcknowledgements).toBeUndefined()
+
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'desktop')).toBe(true)
+    expect(inspectSkinArtifactRisk(dir, skin, 'desktop')).toEqual(risk)
+    expect(readMarketState(dir).artifactAcknowledgements).toEqual({ [skin.id]: risk.context })
+    expect(validateDesktopArtifact(dir, skin)).toEqual({ ok: true, version: skin.install.version, integrityVerified: false })
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' })).toMatchObject({ ok: true, version: skin.install.version })
+    expect(reviewedInstalledSpecMatches(dir, skin, skin.install.version, { hostKind: 'desktop' })).toBe(true)
+    expect(runtimeState(dir, skin, skin.id, true, true, [], undefined, 'desktop')).toMatchObject({ installation: 'installed', updateAvailable: false })
+    expect(runtimeState(dir, skin, skin.id, true, true, [], undefined, 'desktop').artifactRisk).toBeUndefined()
+    expect(validateNpmArtifact(dir, { name: skin.package, version: skin.install.version, integrity: skin.install.desktop.integrity })).toMatchObject({ ok: false, integrityVerified: false })
+  })
+
+  it('also binds a Desktop-only artifact without inventing npm repository evidence', () => {
+    const { dir, skin } = artifactRiskFixture()
+    delete skin.install.npm
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    expect(validateDesktopArtifact(dir, skin)).toEqual({ ok: true, version: skin.install.version, integrityVerified: false })
+    expect(runtimeState(dir, skin, null, false, true, [], undefined, 'desktop')).toMatchObject({ installation: 'installed', updateAvailable: false })
+  })
+
+  it('permits missing installed SRI only after confirming a complete artifact and matching root importer', () => {
+    const { dir, skin, lock } = artifactRiskFixture()
+    lock(null)
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(risk.warnings.join(' ')).toContain('缺少')
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(false)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    expect(validateDesktopArtifact(dir, skin)).toEqual({ ok: true, version: skin.install.version, integrityVerified: false })
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(true)
+  })
+
+  it('includes repository and gitHead uncertainty in the same explicit artifact confirmation', () => {
+    const { dir, skin, directory, manifest } = artifactRiskFixture()
+    if (skin.install.desktop?.mode !== 'managed') throw new Error('expected a managed skin')
+    skin.install.desktop.integrity = skin.install.npm!.integrity
+    atomicWriteJson(join(directory, 'package.json'), { ...manifest, repository: 'https://github.com/other/package', gitHead: 'f'.repeat(40) })
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(risk.warnings.join(' ')).toContain('repository')
+    expect(risk.warnings.join(' ')).toContain('gitHead')
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(false)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(true)
+    expect(validateDesktopArtifact(dir, skin).integrityVerified).toBe(false)
+  })
+
+  it.each(['client bytes', 'manifest repository', 'manifest gitHead', 'lock resolution', 'reviewed npm SRI', 'reviewed Desktop SRI', 'reviewed source', 'compatibility'] as const)('expires consent after %s changes', changed => {
+    const { dir, skin, directory, manifest, lock } = artifactRiskFixture()
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    if (changed === 'client bytes') atomicWriteText(join(directory, 'client.js'), 'export const source = "different same-version artifact"')
+    if (changed === 'manifest repository') atomicWriteJson(join(directory, 'package.json'), { ...manifest, repository: 'https://github.com/changed/repository' })
+    if (changed === 'manifest gitHead') atomicWriteJson(join(directory, 'package.json'), { ...manifest, gitHead: 'f'.repeat(40) })
+    if (changed === 'lock resolution') lock(skin.install.npm!.integrity, 'https://registry.example.test/changed.tgz')
+    if (changed === 'reviewed npm SRI') skin.install.npm!.integrity = 'sha512-changed'
+    if (changed === 'reviewed Desktop SRI' && skin.install.desktop?.mode === 'managed') skin.install.desktop.integrity = 'sha512-changed'
+    if (changed === 'reviewed source') skin.install.target = skin.install.target.replace(skin.install.commit, 'f'.repeat(40))
+    if (changed === 'compatibility') skin.compatibility.dsh = '^99.0.0'
+    expect(inspectSkinArtifactRisk(dir, skin, 'desktop')?.context).not.toBe(risk.context)
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'desktop')).toBe(false)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(false)
+    expect(validateDesktopArtifact(dir, skin)).toMatchObject({ ok: false, integrityVerified: false })
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(false)
+    expect(runtimeState(dir, skin, null, false, true, [], undefined, 'desktop')).toMatchObject({ installation: 'installed', updateAvailable: false })
+    expect(runtimeState(dir, skin, null, false, true, [], undefined, 'desktop').artifactRisk).toBeDefined()
+  })
+
+  it.each(['wrong package', 'wrong version', 'wrong importer', 'missing importer', 'missing client', 'unsafe client', 'symlink client', 'wrong platform', 'wrong primary loader', 'loader conflict'] as const)('never offers artifact approval for %s', fault => {
+    const { dir, skin, directory, manifest } = artifactRiskFixture()
+    const risk = inspectSkinArtifactRisk(dir, skin, 'desktop')!
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(true)
+    if (fault === 'wrong package') atomicWriteJson(join(directory, 'package.json'), { ...manifest, name: 'another-package' })
+    if (fault === 'wrong version') atomicWriteJson(join(directory, 'package.json'), { ...manifest, version: '0.0.0' })
+    if (fault === 'wrong importer') atomicWriteText(join(dir, 'pnpm-lock.yaml'), `importers:\n  .:\n    dependencies:\n      '${skin.package}':\n        specifier: '${skin.install.version}'\n        version: '0.0.0'\n`)
+    if (fault === 'missing importer') atomicWriteText(join(dir, 'pnpm-lock.yaml'), 'packages: {}\n')
+    if (fault === 'missing client') rmSync(join(directory, 'client.js'))
+    if (fault === 'unsafe client') atomicWriteJson(join(directory, 'package.json'), { ...manifest, exports: { './client': './.env' } })
+    if (fault === 'symlink client') {
+      rmSync(join(directory, 'client.js'))
+      atomicWriteText(join(dir, 'outside.js'), 'export const source = "outside"')
+      symlinkSync(join(dir, 'outside.js'), join(directory, 'client.js'))
+    }
+    if (fault === 'wrong platform') atomicWriteJson(join(directory, 'package.json'), { ...manifest, dsh: { client: { platform: 'desktop' } } })
+    if (fault === 'wrong primary loader') {
+      atomicWriteJson(join(directory, 'package.json'), { ...manifest, dsh: { ...manifest.dsh, bundle: { patch: './bundle.yml' } } })
+      atomicWriteText(join(directory, 'bundle.yml'), `- insert:\n    - id: wrong-row\n      name: ${skin.package}\n`)
+    }
+    if (fault === 'loader conflict') atomicWriteText(profilePatchFile(dir), `- insert:\n    - id: ${skin.rowId}\n      name: another-package\n`)
+    expect(inspectSkinArtifactRisk(dir, skin, 'desktop')).toBeUndefined()
+    expect(isSkinArtifactRiskAcknowledged(dir, skin, 'desktop')).toBe(false)
+    expect(acknowledgeSkinArtifactRisk(dir, skin, risk.context, 'desktop')).toBe(false)
+    expect(validateDesktopArtifact(dir, skin).ok).toBe(false)
+    expect(validateInstalledSkin(dir, skin, { hostKind: 'desktop' }).ok).toBe(false)
+    expect(validateDesktopArtifact(dir, skin, { allowArtifactRisk: true }).ok).toBe(false)
+    expect(validateInstalledSkin(dir, skin, { allowArtifactRisk: true, hostKind: 'desktop' }).ok).toBe(false)
+    expect(runtimeState(dir, skin, null, false, true, [], undefined, 'desktop').installation).toBe('broken')
+  })
+
+  it('discards malformed persisted artifact acknowledgement data', () => {
+    const dir = fixture()
+    atomicWriteJson(join(dir, '.dsh-skin-market', 'state.json'), { version: 1, activeSkinId: null, disabledSkinIds: [],
+      artifactAcknowledgements: { valid: 'a'.repeat(64), old: 'permanent-version-exemption', malformed: true } })
+    expect(readMarketState(dir).artifactAcknowledgements).toEqual({ valid: 'a'.repeat(64) })
+  })
+})
+
 describe('profile state', () => {
+  it.each(['client', 'bundle'] as const)('rejects a %s realpath resolving to a secret-shaped file before reading it', kind => {
+    const dir = fixture()
+    const skin = loadCatalog().skins[0]
+    const directory = join(dir, 'node_modules', skin.package)
+    const entry = join(directory, kind === 'client' ? 'client.js' : 'bundle.yml')
+    atomicWriteJson(join(directory, 'package.json'), {
+      name: skin.package, version: skin.install.version,
+      ...(kind === 'client'
+        ? { exports: { './client': './client.js' }, dsh: { client: { platform: 'web' } } }
+        : { dsh: { bundle: { patch: './bundle.yml' } } }),
+    })
+    atomicWriteText(entry, kind === 'client' ? 'export const enabled = true' : '[]\n')
+    const actualRealpath = fs.realpathSync
+    const physicalDirectory = actualRealpath(directory)
+    // Simulate symlink resolution only. No secret-shaped file is created or read.
+    const secretTarget = join(physicalDirectory, '.env.fixture-not-created')
+    vi.spyOn(fs, 'realpathSync').mockImplementation(((file: Parameters<typeof fs.realpathSync>[0]) =>
+      String(file) === entry ? secretTarget : actualRealpath(file)) as typeof fs.realpathSync)
+    const reads = vi.spyOn(fs, 'readFileSync')
+    syncBuiltinESMExports()
+    try {
+      if (kind === 'client') expect(snapshotInstalledArtifact(dir, skin.package).ok).toBe(false)
+      else expect(() => assertLoaderMetadata(dir, skin)).toThrow('unsafe')
+      expect(reads.mock.calls.some(([file]) => String(file) === entry || String(file) === secretTarget)).toBe(false)
+    } finally {
+      vi.restoreAllMocks()
+      syncBuiltinESMExports()
+    }
+  })
+
   it('preserves pending restart facts and discards malformed values', () => {
     const dir = fixture()
     writeMarketState(dir, { version: 1, activeSkinId: null, disabledSkinIds: [], pendingRestart: { pid: 1234, skinIds: ['one', 'one', 'two'] } })

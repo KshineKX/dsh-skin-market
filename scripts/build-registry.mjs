@@ -24,6 +24,14 @@ function isVersionRange(value) {
   return value.split('||').every(alternative => alternative.trim().split(/\s+/).filter(Boolean).every(term => versionTerm.test(term)))
 }
 
+function isCanonicalIntegrity(value) {
+  const match = /^(sha(?:1|256|384|512))-([A-Za-z0-9+/]+={0,2})$/.exec(value)
+  if (match === null) return false
+  const digest = Buffer.from(match[2], 'base64')
+  const bytes = { sha1: 20, sha256: 32, sha384: 48, sha512: 64 }
+  return digest.length === bytes[match[1]] && digest.toString('base64') === match[2]
+}
+
 for (const file of files) {
   let skin = parse(await readFile(join(sourceDir, file), 'utf8'))
   if (isThinSubmission(skin)) {
@@ -36,6 +44,11 @@ for (const file of files) {
     throw new Error(hint ? `${file}: ${details}; ${hint}` : `${file}: ${details}`)
   }
   if (!isVersionRange(skin.compatibility.dsh)) throw new Error(`${file}: compatibility.dsh is not a supported semver range`)
+  // Surface stale review data to maintainers without removing the entry or
+  // rewriting it. The plugin confirms usable artifacts when users select them.
+  for (const [field, integrity] of [['install.desktop.integrity', skin.install.desktop?.integrity], ['install.npm.integrity', skin.install.npm?.integrity]]) {
+    if (integrity !== undefined && !isCanonicalIntegrity(integrity)) console.warn(`${file}: ${field} has an invalid SRI digest; recheck the recorded artifact`)
+  }
   for (const adapter of skin.compatibility.adapters ?? []) {
     if (!isVersionRange(adapter.when)) throw new Error(`${file}: compatibility adapter ${adapter.id} has an invalid when range`)
   }
@@ -61,6 +74,11 @@ for (const file of files) {
     if (npm.version !== skin.install.version) throw new Error(`${file}: install.npm.version must equal install.version`)
     if (npmRepo !== repo) throw new Error(`${file}: install.npm.repository must equal repo`)
     if (typeof npm.gitHead !== 'string' || !/^[0-9a-f]{40}$/i.test(npm.gitHead) || npm.gitHead.toLowerCase() !== skin.install.commit.toLowerCase()) throw new Error(`${file}: install.npm.gitHead must be a full commit matching install.commit`)
+    const desktop = skin.install.desktop
+    if (desktop?.mode === 'managed' && desktop.packageName === npm.name && desktop.packageVersion === npm.version
+      && desktop.integrity !== undefined && desktop.integrity !== npm.integrity) {
+      console.warn(`${file}: Desktop and npm record conflicting SRI for the same package release; recheck the review data`)
+    }
   }
   if (skin.subpath !== undefined && skin.install.allowBuild !== undefined && !skin.install.allowBuild.endsWith(`#path:${skin.subpath}`)) {
     throw new Error(`${file}: install.allowBuild must end with #path:${skin.subpath}`)

@@ -42,14 +42,16 @@ function anotherInstallable(lifecycle: SkinLifecycle, excludedId: string) {
 function writeBundlePackage(dir: string, skin: { package: string; rowId: string; install: { version: string } }): void {
   const packageDir = join(dir, 'node_modules', ...skin.package.split('/'))
   mkdirSync(packageDir, { recursive: true })
-  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { bundle: { patch: './cordis.patch.yml' }, client: {} } })
+  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { bundle: { patch: './cordis.patch.yml' }, client: {} } })
+  atomicWriteText(join(packageDir, 'client.js'), 'export const fixture = true\n')
   atomicWriteText(join(packageDir, 'cordis.patch.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n`)
 }
 
 function writeBundleRows(dir: string, skin: { package: string; install: { version: string } }, rows: Array<{ id: string; name: string }>): void {
   const packageDir = join(dir, 'node_modules', ...skin.package.split('/'))
   mkdirSync(packageDir, { recursive: true })
-  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web' } } })
+  atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web' } } })
+  atomicWriteText(join(packageDir, 'client.js'), 'export const fixture = true\n')
   atomicWriteText(join(packageDir, 'cordis.patch.yml'), `- insert:\n${rows.map(row => `    - id: ${row.id}\n      name: ${JSON.stringify(row.name)}`).join('\n')}\n`)
 }
 
@@ -64,7 +66,8 @@ function materializeReviewedSkin(targetDir: string, skin: { package: string; row
   else {
     const packageDir = join(targetDir, 'node_modules', ...skin.package.split('/'))
     mkdirSync(packageDir, { recursive: true })
-    atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { client: { platform: 'web' } } })
+    atomicWriteJson(join(packageDir, 'package.json'), { name: skin.package, version: skin.install.version, exports: { './client': './client.js' }, dsh: { client: { platform: 'web' } } })
+    atomicWriteText(join(packageDir, 'client.js'), 'export const fixture = true\n')
   }
 }
 
@@ -1133,6 +1136,7 @@ describe('skin lifecycle', () => {
       atomicWriteJson(join(dir, 'node_modules', ...skin.package.split('/'), 'package.json'), {
         name: skin.package,
         version: skin.install.version,
+        exports: { './client': './client.js' },
         dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web' } },
       })
     }

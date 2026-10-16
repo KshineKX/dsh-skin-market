@@ -55,6 +55,19 @@ describe('catalog', () => {
     expect(() => validateCatalog(invalid)).toThrow('invalid Desktop package version')
   })
 
+  it('preserves conflicting review digests for the use-time risk confirmation path', () => {
+    const catalog = loadCatalog()
+    const skin = structuredClone(catalog.skins.find(item => item.id === 'johnnyting.dsh-official-homepage-theme')!)
+    const desktop = skin.install.desktop!
+    if (desktop.mode !== 'managed' || skin.install.npm === undefined) throw new Error('expected reviewed npm and Desktop sources')
+    // Keep the reported failure reproducible even after review data is refreshed.
+    desktop.integrity = 'sha512-NNSnPIeK5HHG1ogholwmUEcqtQz/FdJ3CG1UWsRRNlRQbdghf29v1q7/RPb5jaZw8rUz6SLCngqX0zPR05Iolw=='
+    skin.install.npm.integrity = 'sha512-CWs1PXSUDXyVFvJXWJmyD844TcQuzcFBnF+2l16dQl4nWZlRviSevRWl0HEd31u2g7bfiANYhrJ2yqijsEhtbw=='
+    const checked = validateCatalog({ ...catalog, skins: [skin] })
+    expect(checked.skins[0]).toEqual(skin)
+    expect(checked.skins[0].install.desktop).toEqual(desktop)
+  })
+
   it('keeps the Chinese homepage description for dsh-ads', () => {
     const skin = loadCatalog().skins.find(item => item.id === 'nagi-ovo.dsh-ads')
     expect(skin?.description).toMatch(/[\u3400-\u9fff]/)

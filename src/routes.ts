@@ -157,9 +157,11 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     if (!method(request, response, 'POST')) return
     if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
     try {
-      const { skinId, acknowledgeCompatibility, compatibilityContext } = await readSkinMutation(request)
+      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext } = await readSkinMutation(request)
       if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-      const operation = lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
+      const operation = artifactContext === undefined
+        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
+        : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext)
       sendJson(response, 202, { operationId: operation.id })
     } catch (error) {
       sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
@@ -269,9 +271,12 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
         try {
           if (cancelling) return sendJson(response, 202, lifecycle.cancel(id))
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-          const { action, acknowledgeCompatibility, compatibilityContext } = await readOperationRetry(request)
+          const { action, acknowledgeCompatibility, compatibilityContext, artifactContext } = await readOperationRetry(request)
           if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
-          return sendJson(response, 202, { operationId: lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext).id })
+          const retried = artifactContext === undefined
+            ? lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext)
+            : lifecycle.retry(id, action, acknowledgeCompatibility, compatibilityContext, artifactContext)
+          return sendJson(response, 202, { operationId: retried.id })
         } catch (error) {
           return sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
         }

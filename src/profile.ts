@@ -7,7 +7,7 @@ import { effectiveBuildApprovalKey } from './build-approval.ts'
 import { npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError } from './install-resolution.ts'
 import { parseInsertedLoaderRows, primaryLoaderCandidates, sharedLoaderIdentifiers, type LoaderIdentity } from './loader-ownership.ts'
 import { isVersionRange, satisfiesVersionRange } from './semver.ts'
-import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, PersistedMarketState, SkinActivity, SkinEntry, SkinRuntimeState } from './types.ts'
+import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
 
 export type { LoaderIdentity } from './loader-ownership.ts'
 
@@ -44,6 +44,14 @@ export function readMarketState(profileDir: string): PersistedMarketState {
   if (value.version !== 1 || !Array.isArray(value.disabledSkinIds)) return fallback
   if (value.pinnedSkinIds !== undefined && !Array.isArray(value.pinnedSkinIds)) delete value.pinnedSkinIds
   if (value.activity !== undefined && (typeof value.activity !== 'object' || value.activity === null || Array.isArray(value.activity))) delete value.activity
+  if (value.artifactAcknowledgements !== undefined) {
+    if (!isRecord(value.artifactAcknowledgements)) delete value.artifactAcknowledgements
+    else {
+      value.artifactAcknowledgements = Object.fromEntries(Object.entries(value.artifactAcknowledgements)
+        .filter(([id, context]) => id.length > 0 && typeof context === 'string' && /^[a-f0-9]{64}$/.test(context)))
+      if (Object.keys(value.artifactAcknowledgements).length === 0) delete value.artifactAcknowledgements
+    }
+  }
   if (value.managedCompanions !== undefined) {
     const normalized = normalizeManagedCompanions(value.managedCompanions)
     if (normalized === undefined) delete value.managedCompanions
@@ -301,7 +309,9 @@ export function snapshotInstalledArtifact(profileDir: string, packageName: strin
     }
     const physicalDirectory = realpathSync(directory)
     const physicalFile = realpathSync(file)
-    if (!physicalFile.startsWith(`${physicalDirectory}${sep}`) || !statSync(file).isFile()) throw new Error(`${kind} entry missing for ${packageName}`)
+    if (!physicalFile.startsWith(`${physicalDirectory}${sep}`)
+      || physicalFile.split(/[\\/]/).some(part => part === '.env' || part.startsWith('.env.'))
+      || !statSync(file).isFile()) throw new Error(`${kind} entry missing for ${packageName}`)
     const sha256 = createHash('sha256').update(readFileSync(file)).digest('hex')
     if (!snapshot.files.some(entry => entry.kind === kind && entry.path === target)) snapshot.files.push({ kind, path: target, sha256 })
   }
@@ -334,6 +344,105 @@ export function snapshotInstalledArtifact(profileDir: string, packageName: strin
   return snapshot
 }
 
+function npmSkinSpec(profileDir: string, skin: SkinEntry): boolean {
+  const spec = readDependencies(profileDir)[skin.package]
+  if (exactNpmSpecMatches(spec, skin.package, skin.install.version)) return true
+  const range = npmRange(spec, skin.package)
+  return range !== null && satisfiesVersionRange(skin.install.version, range)
+}
+
+/** Metadata uncertainty can be acknowledged; package identity and loadability cannot. */
+function skinArtifactWarnings(profileDir: string, skin: SkinEntry, hostKind: MarketHostKind): string[] {
+  if (!npmSkinSpec(profileDir, skin)) return []
+  const warnings: string[] = []
+  const npm = skin.install.npm
+  const desktop = hostKind === 'desktop' ? skin.install.desktop : undefined
+  const resolution = npmLockfileResolution(profileDir, skin.package, skin.install.version)
+  const integrity = resolution?.integrity ?? null
+  const sources = [
+    ...(desktop?.mode === 'managed' && desktop.integrity !== undefined ? [{ label: 'Desktop', integrity: desktop.integrity }] : []),
+    ...(npm === undefined ? [] : [{ label: 'npm', integrity: npm.integrity }]),
+  ]
+  for (const source of sources) {
+    if (integrity !== source.integrity) warnings.push(integrity === null
+      ? `${source.label} 安装包缺少可与市场审查记录比对的 SRI，无法确认与已审查构件一致`
+      : `${source.label} npm 包完整性与已核验的 SRI 不一致`)
+  }
+  if (desktop?.mode === 'managed' && desktop.integrity !== undefined && npm !== undefined
+    && desktop.packageName === npm.name && desktop.packageVersion === npm.version && desktop.integrity !== npm.integrity) {
+    warnings.push('市场 Desktop 与 npm 对同一包版本记录了不同的 SRI，审查元数据存在冲突')
+  }
+  if (npm !== undefined) {
+    const sourceError = reviewedNpmSourceError(skin)
+    if (sourceError !== null) warnings.push(sourceError)
+    const manifest = packageManifest(profileDir, skin.package)
+    if (repositoryIdentity(manifest?.repository) !== repositoryIdentity(npm.repository) || repositoryIdentity(manifest?.repository) === null) {
+      warnings.push('安装包 repository 与市场审查仓库不一致或缺失')
+    }
+    if (manifest?.gitHead !== undefined && (typeof manifest.gitHead !== 'string' || typeof npm.gitHead !== 'string' || manifest.gitHead.toLowerCase() !== npm.gitHead.toLowerCase())) {
+      warnings.push('安装包 gitHead 与市场审查 commit 不一致')
+    }
+  }
+  return [...new Set(warnings)]
+}
+
+function stableArtifactValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableArtifactValue)
+  if (!isRecord(value)) return value
+  return Object.fromEntries(Object.keys(value).sort().map(key => [key, stableArtifactValue(value[key])]))
+}
+
+/** Return only risks for a complete, correctly resolved, conflict-free skin artifact. */
+export function inspectSkinArtifactRisk(profileDir: string, skin: SkinEntry, hostKind: MarketHostKind = 'dsh'): SkinArtifactRisk | undefined {
+  const warnings = skinArtifactWarnings(profileDir, skin, hostKind)
+  if (warnings.length === 0) return undefined
+  const artifact = snapshotInstalledArtifact(profileDir, skin.package)
+  if (!artifact.ok || artifact.name !== skin.package || artifact.version !== skin.install.version || !npmSkinSpec(profileDir, skin)) return undefined
+  if (artifact.spec === null || !npmImporterMatches(profileDir, skin.package, artifact.spec, skin.install.version)) return undefined
+  const npm = skin.install.npm
+  const desktop = hostKind === 'desktop' ? skin.install.desktop : undefined
+  if (npm === undefined && desktop?.mode !== 'managed') return undefined
+  if (npm !== undefined && (npm.name !== skin.package || npm.version !== skin.install.version)) return undefined
+  if (desktop?.mode === 'managed' && (desktop.packageName !== skin.package || desktop.packageVersion !== skin.install.version)) return undefined
+  const manifest = packageManifest(profileDir, skin.package)
+  const dsh = isRecord(manifest?.dsh) ? manifest.dsh : undefined
+  if (!isRecord(dsh?.client) || (dsh.client.platform !== undefined && dsh.client.platform !== 'web')) return undefined
+  try {
+    bundlePatchOperations(profileDir, skin.package)
+    assertNoLoaderConflicts(profileDir, skin)
+  } catch { return undefined }
+  // The receipt covers the host's reviewed targets, actual manifest metadata, lock
+  // resolution and declared executable bytes. It is never a version exemption.
+  const { desktop: desktopTarget, ...webInstall } = skin.install
+  const context = createHash('sha256').update(JSON.stringify(stableArtifactValue({
+    contract: 'skin-artifact-risk-v1',
+    hostKind,
+    reviewed: { id: skin.id, package: skin.package, rowId: skin.rowId, repo: skin.repo, subpath: skin.subpath,
+      install: hostKind === 'desktop' ? { ...webInstall, desktop: desktopTarget } : webInstall,
+      compatibility: skin.compatibility },
+    artifact, manifest, warnings,
+  }))).digest('hex')
+  return { context, packageName: skin.package, version: skin.install.version, warnings }
+}
+
+function artifactRiskAcknowledged(profileDir: string, skin: SkinEntry, risk: SkinArtifactRisk | undefined): boolean {
+  return risk !== undefined && readMarketState(profileDir).artifactAcknowledgements?.[skin.id] === risk.context
+}
+
+export function isSkinArtifactRiskAcknowledged(profileDir: string, skin: SkinEntry, hostKind: MarketHostKind = 'dsh'): boolean {
+  return artifactRiskAcknowledged(profileDir, skin, inspectSkinArtifactRisk(profileDir, skin, hostKind))
+}
+
+/** Recompute immediately before persisting; stale or structurally invalid targets never gain consent. */
+export function acknowledgeSkinArtifactRisk(profileDir: string, skin: SkinEntry, context: string, hostKind: MarketHostKind = 'dsh'): boolean {
+  const risk = inspectSkinArtifactRisk(profileDir, skin, hostKind)
+  if (risk === undefined || risk.context !== context) return false
+  const state = readMarketState(profileDir)
+  state.artifactAcknowledgements = { ...state.artifactAcknowledgements, [skin.id]: risk.context }
+  writeMarketState(profileDir, state)
+  return true
+}
+
 /** Compare recovery to the installed release before the operation, not today's catalog. */
 export function compareInstalledArtifact(profileDir: string, baseline: InstalledArtifactSnapshot): { ok: boolean; reason?: string; artifact: InstalledArtifactSnapshot } {
   const artifact = snapshotInstalledArtifact(profileDir, baseline.packageName)
@@ -357,7 +466,13 @@ function pathSelectorTruncationHint(skin: SkinEntry): string {
   return '。检测到含 &path: 的子目录选择器在安装过程中可能被截断（argv 不完整），因而装上了仓库根包而非目录子包；请确认 pnpm 以真实二进制、shell:false 收到完整目标后重试'
 }
 
-export function validateInstalledSkin(profileDir: string, skin: SkinEntry): { ok: boolean; reason?: string; version?: string; repairable?: boolean } {
+export interface SkinArtifactValidationOptions {
+  /** Installation may retain a usable artifact; selecting it still requires exact user consent. */
+  allowArtifactRisk?: true
+  hostKind?: MarketHostKind
+}
+
+export function validateInstalledSkin(profileDir: string, skin: SkinEntry, options: SkinArtifactValidationOptions = {}): { ok: boolean; reason?: string; version?: string; repairable?: boolean } {
   const hint = pathSelectorTruncationHint(skin)
   const manifest = packageManifest(profileDir, skin.package)
   if (manifest === null) return {
@@ -388,7 +503,11 @@ export function validateInstalledSkin(profileDir: string, skin: SkinEntry): { ok
     return { ok: false, reason: error instanceof Error ? error.message : String(error) }
   }
   const npmError = validateInstalledNpmSource(profileDir, skin, manifest)
-  if (npmError !== null) return { ok: false, reason: npmError }
+  const warnings = skinArtifactWarnings(profileDir, skin, options.hostKind ?? 'dsh')
+  if (npmError !== null || warnings.length > 0) {
+    const risk = inspectSkinArtifactRisk(profileDir, skin, options.hostKind)
+    if (!(risk !== undefined && options.allowArtifactRisk === true) && !artifactRiskAcknowledged(profileDir, skin, risk)) return { ok: false, reason: npmError ?? warnings[0] }
+  }
   return { ok: true, version }
 }
 
@@ -402,15 +521,17 @@ export function installedSpecMatches(skin: SkinEntry, spec: string | null | unde
 }
 
 /** A manager-written npm range is accepted only through its installed resolution. */
-export function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined): boolean {
-  if (installedSpecMatches(skin, spec)) return true
+export function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined, options: SkinArtifactValidationOptions = {}): boolean {
+  if (installedSpecMatches(skin, spec)) {
+    return !npmSkinSpec(profileDir, skin) || validateInstalledSkin(profileDir, skin, options).ok
+  }
   if (typeof spec !== 'string' || readDependencies(profileDir)[skin.package] !== spec) return false
   const manifest = packageManifest(profileDir, skin.package)
   const npm = skin.install.npm
   if (manifest?.name === skin.package && npm !== undefined && manifest.version === npm.version && npmRange(spec, npm.name) !== null) {
-    return npmImporterMatches(profileDir, skin.package, spec, npm.version) && validateInstalledNpmSource(profileDir, skin, manifest) === null
+    return npmImporterMatches(profileDir, skin.package, spec, npm.version) && validateInstalledSkin(profileDir, skin, options).ok
   }
-  return skin.install.desktop?.mode === 'managed' && validateDesktopArtifact(profileDir, skin).ok
+  return skin.install.desktop?.mode === 'managed' && validateDesktopArtifact(profileDir, skin, options).ok
 }
 
 export interface NpmArtifactSource {
@@ -454,12 +575,19 @@ export function validateNpmArtifact(profileDir: string, source: NpmArtifactSourc
 }
 
 /** Validate managed Desktop metadata without inventing missing npm provenance. */
-export function validateDesktopArtifact(profileDir: string, skin: SkinEntry): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
+export function validateDesktopArtifact(profileDir: string, skin: SkinEntry, options: SkinArtifactValidationOptions = {}): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
   const capability = skin.install.desktop
   if (capability?.mode !== 'managed' || capability.packageName !== skin.package || capability.packageVersion !== skin.install.version) {
     return { ok: false, reason: 'Desktop 安装元数据与市场固定包或版本不一致', integrityVerified: false }
   }
-  return validateNpmArtifact(profileDir, { name: capability.packageName, version: capability.packageVersion, ...(capability.integrity === undefined ? {} : { integrity: capability.integrity }) })
+  const validation = validateNpmArtifact(profileDir, { name: capability.packageName, version: capability.packageVersion, ...(capability.integrity === undefined ? {} : { integrity: capability.integrity }) })
+  const warnings = skinArtifactWarnings(profileDir, skin, 'desktop')
+  if (!validation.ok || warnings.length > 0) {
+    const risk = inspectSkinArtifactRisk(profileDir, skin, 'desktop')
+    if (risk !== undefined && (options.allowArtifactRisk === true || artifactRiskAcknowledged(profileDir, skin, risk))) return { ok: true, version: capability.packageVersion, integrityVerified: false }
+    if (validation.ok && warnings.length > 0) return { ok: false, reason: warnings[0], integrityVerified: false }
+  }
+  return validation
 }
 
 /** Only offer an explicit migration between the same reviewed GitHub/npm release. */
@@ -657,7 +785,9 @@ function bundlePatchOperationsAt(packageDirectory: string, packageName: string):
       throw new Error(`${packageName} bundle patch path is unsafe`)
     }
     if (!existsSync(file)) throw new Error(`${packageName} bundle patch is missing: ${target}`)
-    if (!realpathSync(file).startsWith(`${realpathSync(directory)}${sep}`)) throw new Error(`${packageName} bundle patch path is unsafe`)
+    const physicalFile = realpathSync(file)
+    if (!physicalFile.startsWith(`${realpathSync(directory)}${sep}`)
+      || physicalFile.split(/[\\/]/).some(part => part === '.env' || part.startsWith('.env.'))) throw new Error(`${packageName} bundle patch path is unsafe`)
     const value = parse(readFileSync(file, 'utf8')) as unknown
     if (!Array.isArray(value)) throw new Error(`${packageName} cordis.patch.yml must contain a YAML sequence`)
     return value as PatchOperation[]
@@ -1025,7 +1155,7 @@ function latestOperationAt(installedAt: string | null, activity?: SkinActivity):
   return timestamps.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null
 }
 
-export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds: string[] = [], activity?: SkinActivity): SkinRuntimeState {
+export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds: string[] = [], activity?: SkinActivity, hostKind: MarketHostKind = 'dsh'): SkinRuntimeState {
   const dependencies = readDependencies(profileDir)
   const spec = dependencies[skin.package] ?? null
   const primary = activeSkinId === skin.id
@@ -1035,14 +1165,15 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
   }
   const installedAt = packageInstalledAt(profileDir, skin.package)
   const lastOperatedAt = latestOperationAt(installedAt, activity)
-  const validation = validateInstalledSkin(profileDir, skin)
+  const validation = validateInstalledSkin(profileDir, skin, { allowArtifactRisk: true, hostKind })
   if (!validation.ok) {
     return { skinId: skin.id, installation: 'broken', activation: 'inactive', primary, pinned, installedVersion: null, installedSpec: spec, installedAt, lastOperatedAt, updateAvailable: false, error: validation.reason }
   }
   const selected = primary || pinned
   const activation = selected ? (loaderFound && loaderLive ? 'active' : 'unavailable') : 'inactive'
-  const pinnedSpecMatches = reviewedInstalledSpecMatches(profileDir, skin, spec)
+  const pinnedSpecMatches = reviewedInstalledSpecMatches(profileDir, skin, spec, { allowArtifactRisk: true, hostKind })
   const updateAvailable = validation.version !== skin.install.version || !pinnedSpecMatches || companionsNeedInstall(profileDir, skin)
+  const artifactRisk = inspectSkinArtifactRisk(profileDir, skin, hostKind)
   return {
     skinId: skin.id,
     installation: 'installed',
@@ -1054,6 +1185,7 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
     installedAt,
     lastOperatedAt,
     updateAvailable,
+    ...(artifactRisk !== undefined && !artifactRiskAcknowledged(profileDir, skin, artifactRisk) ? { artifactRisk } : {}),
     ...(activation === 'unavailable' ? {
       error: loaderFound
         ? '皮肤已选中，但组件尚未运行，尚未生效。'

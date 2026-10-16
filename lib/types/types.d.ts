@@ -144,6 +144,7 @@ export interface SkinRuntimeState {
     installedAt: string | null;
     lastOperatedAt: string | null;
     updateAvailable: boolean;
+    artifactRisk?: SkinArtifactRisk;
     sourceMigration?: {
         target: string;
         currentSource: string;
@@ -166,7 +167,13 @@ export interface InstallConflict {
 }
 export type OperationKind = 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall';
 export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed';
-export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age';
+export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact';
+export interface SkinArtifactRisk {
+    context: string;
+    packageName: string;
+    version: string;
+    warnings: string[];
+}
 export interface OperationFailure {
     kind: 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'compatibility' | 'conflict' | 'command' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'pnpm-missing' | 'no-matching-version' | 'disk-full' | 'permission' | 'integrity';
     message: string;
@@ -175,6 +182,7 @@ export interface OperationFailure {
         packageName: string;
         version: string;
     };
+    artifactRisk?: SkinArtifactRisk;
     buildKeys?: string[];
     action?: OperationRetryAction;
     conflicts?: InstallConflict[];
@@ -205,6 +213,8 @@ export interface PersistedMarketState {
     activeSkinId: string | null;
     disabledSkinIds: string[];
     pinnedSkinIds?: string[];
+    /** Exact reviewed target and installed bytes acknowledged by the user. */
+    artifactAcknowledgements?: Record<string, string>;
     pendingRestart?: {
         pid: number;
         skinIds: string[];

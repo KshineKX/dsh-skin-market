@@ -8,7 +8,7 @@ import { SkinLifecycle } from '../src/lifecycle.ts'
 import { compatibilityContext } from '../src/compatibility.ts'
 import { exportLogs, sanitizeLogText } from '../src/log.ts'
 import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
-import { atomicWriteJson, atomicWriteText, packageDir, profilePatchFile, readDependencies, readMarketState, readProfileBundles, writeMarketState } from '../src/profile.ts'
+import { atomicWriteJson, atomicWriteText, inspectSkinArtifactRisk, isSkinArtifactRiskAcknowledged, packageDir, profilePatchFile, readDependencies, readMarketState, readProfileBundles, writeMarketState } from '../src/profile.ts'
 import type { DshRuntime, LoaderEntry, Operation, SkinEntry } from '../src/types.ts'
 
 const directories: string[] = []
@@ -38,6 +38,25 @@ function skin(id: string, version = '1.0.0'): SkinEntry {
     compatibility: { dsh: '*', platform: ['web'] },
     review: { compatibility: 'verified', preview: 'verified', installation: 'verified' },
   }
+}
+
+/** Preserve the original homepage failure: npm/lock SRI is current, Desktop SRI is stale. */
+function homepageSkin(): SkinEntry {
+  const item = skin('homepage', '1.0.10')
+  item.id = 'johnnyting.dsh-official-homepage-theme'
+  item.package = item.rowId = 'dsh-official-homepage-theme'
+  item.repo = 'https://github.com/JohnnyTing/dsh-official-homepage-theme'
+  item.install.commit = '838a882162cdcfb2e72a601905c1f9a08cebbb72'
+  item.install.target = `github:JohnnyTing/dsh-official-homepage-theme#${item.install.commit}`
+  item.install.npm = {
+    name: item.package, version: item.install.version, repository: item.repo, gitHead: item.install.commit,
+    integrity: 'sha512-CWs1PXSUDXyVFvJXWJmyD844TcQuzcFBnF+2l16dQl4nWZlRviSevRWl0HEd31u2g7bfiANYhrJ2yqijsEhtbw==',
+  }
+  item.install.desktop = {
+    mode: 'managed', registry: 'npm', packageName: item.package, packageVersion: item.install.version,
+    integrity: 'sha512-NNSnPIeK5HHG1ogholwmUEcqtQz/FdJ3CG1UWsRRNlRQbdghf29v1q7/RPb5jaZw8rUz6SLCngqX0zPR05Iolw==',
+  }
+  return item
 }
 
 function deferred<T = unknown>() {
@@ -836,16 +855,231 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.setBundleEnabled.mock.calls).toEqual([[old.package, false], [target.package, true]])
   })
 
-  it.each(['install', 'update'] as const)('allows an out-of-range %s only after acknowledgement on DSH 0.2.0-rc.2', async kind => {
+  it.each(['activate', 'pin'] as const)('installs the original homepage SRI mismatch silently and confirms only before %s', async kind => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    const installed = await finished(host.lifecycle.begin('install', item.id))
+    expect(installed.phase).toBe('done')
+    expect(installed.failure).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(readProfileBundles(host.directory)).toEqual([])
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+    expect(host.lifecycle.states()[0]).toMatchObject({ installation: 'installed', activation: 'inactive', artifactRisk: { packageName: item.package, version: '1.0.10' } })
+    const risk = host.lifecycle.states()[0]!.artifactRisk!
+    expect(risk.warnings.join(' ')).toContain('SRI')
+    // Declining the dialog sends no request and leaves this usable package disabled.
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(isSkinArtifactRiskAcknowledged(host.directory, item, 'desktop')).toBe(false)
+    const used = await finished(host.lifecycle.begin(kind, item.id, undefined, false, undefined, undefined, risk.context))
+    expect(used).toMatchObject({ phase: 'done' })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(host.manager.installBundle.mock.calls[0]![1]).not.toHaveProperty('force')
+    expect(host.lifecycle.states()[0]).toMatchObject({ installation: 'installed', activation: 'active' })
+    expect(host.lifecycle.states()[0]!.artifactRisk).toBeUndefined()
+    expect(isSkinArtifactRiskAcknowledged(host.directory, item, 'desktop')).toBe(true)
+    expect(await finished(host.lifecycle.begin(kind === 'activate' ? 'pin' : 'activate', item.id))).toMatchObject({ phase: 'done' })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(await finished(host.lifecycle.begin('uninstall', item.id))).toMatchObject({ phase: 'done' })
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+  })
+
+  it('accepts an already materialized homepage artifact without reinstalling or enabling it', async () => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(item)
+    expect(await finished(host.lifecycle.begin('install', item.id))).toMatchObject({ phase: 'done' })
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+    expect(readProfileBundles(host.directory)).toEqual([])
+    expect(host.lifecycle.states()[0]).toMatchObject({ installation: 'installed', artifactRisk: { packageName: item.package } })
+  })
+
+  it('keeps a Desktop-only stale SRI out of the Web use confirmation', async () => {
+    const item = homepageSkin()
+    const host = fixture([item])
+    host.materialize(item)
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => host.entries.values() } }, {
+      profile: 'web', profileDir: host.directory, hostKind: 'dsh', runner: async () => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }),
+    }, [item])
+    lifecycles.push(lifecycle)
+    expect(lifecycle.states()[0]).toMatchObject({ installation: 'installed' })
+    expect(lifecycle.states()[0]!.artifactRisk).toBeUndefined()
+    expect(await finished(lifecycle.begin('activate', item.id))).toMatchObject({ phase: 'done' })
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+  })
+
+  it('preserves old-host first-install restart inference through artifact confirmation and clears it after verified use', async () => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    expect(await finished(host.lifecycle.begin('install', item.id))).toMatchObject({ phase: 'done', restartRequired: true })
+    expect(readMarketState(host.directory).pendingRestart?.inferredInstalls?.[item.id]).toEqual(expect.any(String))
+    const risk = inspectSkinArtifactRisk(host.directory, item, 'desktop')!
+    expect(await finished(host.lifecycle.begin('activate', item.id, undefined, false, undefined, undefined, risk.context))).toMatchObject({ phase: 'done', restartRequired: false })
+    expect(host.lifecycle.states()[0]).toMatchObject({ installation: 'installed', activation: 'active' })
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers the existing retry interception for an unacknowledged artifact only when using it', async () => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    await finished(host.lifecycle.begin('install', item.id))
+    const failed = await finished(host.lifecycle.begin('activate', item.id))
+    expect(failed).toMatchObject({ phase: 'failed', failure: { kind: 'integrity', action: 'approve-artifact', artifactRisk: { packageName: item.package } } })
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(() => host.lifecycle.retry(failed.id, 'retry')).toThrow('不支持')
+    expect(() => host.lifecycle.retry(failed.id, 'approve-artifact', false, undefined, 'b'.repeat(64))).toThrow('已变化')
+    expect(await finished(host.lifecycle.retry(failed.id, 'approve-artifact'))).toMatchObject({ phase: 'done' })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(readProfileBundles(host.directory)).toEqual([item.package])
+  })
+
+  it('accepts compatibility and artifact consent together on the first use request', async () => {
+    const item = homepageSkin()
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    expect((await finished(host.lifecycle.begin('install', item.id))).phase).toBe('done')
+    const risk = inspectSkinArtifactRisk(host.directory, item, 'desktop')!
+    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('兼容性提示')
+    const using = host.lifecycle.begin('activate', item.id, undefined, true, compatibilityContext(item, host.runtime), undefined, risk.context)
+    expect(await finished(using)).toMatchObject({ phase: 'done' })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+    expect(readProfileBundles(host.directory)).toEqual([item.package])
+    expect(isSkinArtifactRiskAcknowledged(host.directory, item, 'desktop')).toBe(true)
+  })
+
+  it('accepts a newly shown artifact context on an ordinary activation retry', async () => {
+    const item = skin('retry-new-artifact-risk')
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(item)
+    host.manager.setBundleEnabled.mockResolvedValueOnce({ application: 'failed', changed: false, error: { code: 'network', message: 'ECONNRESET' }, packageResult: { exitCode: 1, kind: 'network', output: 'ECONNRESET' } })
+    const failed = await finished(host.lifecycle.begin('activate', item.id))
+    expect(failed.failure?.action).toBe('retry')
+    if (item.install.desktop?.mode === 'managed') item.install.desktop.integrity = 'sha512-NNSnPIeK5HHG1ogholwmUEcqtQz/FdJ3CG1UWsRRNlRQbdghf29v1q7/RPb5jaZw8rUz6SLCngqX0zPR05Iolw=='
+    const risk = inspectSkinArtifactRisk(host.directory, item, 'desktop')!
+    const retried = await finished(host.lifecycle.retry(failed.id, 'retry', false, undefined, risk.context))
+    expect(retried.phase).toBe('done')
+    expect(readProfileBundles(host.directory)).toEqual([item.package])
+    expect(isSkinArtifactRiskAcknowledged(host.directory, item, 'desktop')).toBe(true)
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it.each(['catalog', 'entry'] as const)('rejects a previously shown artifact approval when its %s changes while queued', async change => {
+    const item = homepageSkin(), blocker = skin('artifact-context-blocker')
+    const host = fixture([item, blocker], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(item)
+    const risk = inspectSkinArtifactRisk(host.directory, item, 'desktop')!
+    const pending = deferred()
+    host.manager.installBundle.mockImplementationOnce(() => pending.promise)
+    const blocking = host.lifecycle.begin('install', blocker.id)
+    await until(() => host.manager.installBundle.mock.calls.length === 1)
+    const using = host.lifecycle.begin('activate', item.id, undefined, false, undefined, undefined, risk.context)
+    let replacing: Promise<void> | undefined
+    if (change === 'catalog') {
+      const changed = { ...item, install: { ...item.install, target: item.install.target.replace(item.install.commit, 'b'.repeat(40)), commit: 'b'.repeat(40), npm: { ...item.install.npm!, gitHead: 'b'.repeat(40) } } }
+      replacing = host.lifecycle.replaceCatalog([changed, blocker])
+    } else atomicWriteText(join(packageDir(host.directory, item.package), 'client/client.js'), 'export const changed = true\n')
+    pending.resolve(host.applyInstall(`${blocker.package}@${blocker.install.version}`))
+    await finished(blocking)
+    await replacing
+    expect(await finished(using)).toMatchObject({ phase: 'failed' })
+    expect(using.message).toContain('已变化')
+    expect(using.failure?.action).not.toBe('approve-artifact')
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+    expect(readProfileBundles(host.directory)).toEqual([])
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('binds fallback artifact retry to the old failure and refuses a changed entry without granting a receipt', async () => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(item)
+    const failed = await finished(host.lifecycle.begin('pin', item.id))
+    expect(failed.failure?.action).toBe('approve-artifact')
+    atomicWriteText(join(packageDir(host.directory, item.package), 'client/client.js'), 'export const changed = true\n')
+    const retry = await finished(host.lifecycle.retry(failed.id, 'approve-artifact'))
+    expect(retry.phase).toBe('failed')
+    expect(retry.message).toContain('已变化')
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+    expect(readProfileBundles(host.directory)).toEqual([])
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it('keeps hard artifact errors and native failures outside artifact confirmation', async () => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    let context: string | undefined
+    host.manager.installBundle.mockImplementationOnce(async spec => {
+      const result = host.applyInstall(spec)
+      context = inspectSkinArtifactRisk(host.directory, item, 'desktop')!.context
+      rmSync(join(packageDir(host.directory, item.package), 'client/client.js'))
+      return result
+    })
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    expect(failed.phase).toBe('failed')
+    expect(failed.failure?.action).not.toBe('approve-artifact')
+    const use = await finished(host.lifecycle.begin('activate', item.id, undefined, false, undefined, undefined, context))
+    expect(use.phase).toBe('failed')
+    expect(use.failure?.action).not.toBe('approve-artifact')
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+  })
+
+  it.each(['entry', 'importer', 'name'] as const)('refuses a hard %s error on use without converting it into an approvable risk', async change => {
+    const item = homepageSkin()
+    const host = fixture([item], { hostVersion: '0.2.1-alpha.3' })
+    expect((await finished(host.lifecycle.begin('install', item.id))).phase).toBe('done')
+    if (change === 'entry') rmSync(join(packageDir(host.directory, item.package), 'client/client.js'))
+    else if (change === 'name') {
+      const file = join(packageDir(host.directory, item.package), 'package.json')
+      const manifest = JSON.parse(readFileSync(file, 'utf8'))
+      atomicWriteJson(file, { ...manifest, name: 'wrong-package-name' })
+    } else {
+      const file = join(host.directory, 'pnpm-lock.yaml')
+      const lock = parse(readFileSync(file, 'utf8'))
+      lock.importers['.'].dependencies[item.package].version = '1.0.9'
+      atomicWriteText(file, stringify(lock))
+    }
+    expect(inspectSkinArtifactRisk(host.directory, item, 'desktop')).toBeUndefined()
+    for (const kind of ['activate', 'pin'] as const) {
+      const failed = await finished(host.lifecycle.begin(kind, item.id))
+      expect(failed.phase).toBe('failed')
+      expect(failed.failure?.action).not.toBe('approve-artifact')
+      expect(() => host.lifecycle.retry(failed.id, 'approve-artifact')).toThrow('不支持')
+    }
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(readProfileBundles(host.directory)).toEqual([])
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+  })
+
+  it('finishes a risky update without a dialog and disables the new artifact until use is confirmed', async () => {
+    const item = homepageSkin(), pinned = skin('artifact-unrelated-pinned')
+    const host = fixture([item, pinned], { hostVersion: '0.2.1-alpha.3' })
+    const old = structuredClone(item)
+    old.install.version = '1.0.9'
+    old.install.npm!.version = '1.0.9'
+    if (old.install.desktop?.mode === 'managed') old.install.desktop.packageVersion = '1.0.9'
+    host.materialize(old); host.materialize(pinned)
+    host.select(item.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: item.id, pinnedSkinIds: [item.id, pinned.id], disabledSkinIds: [] })
+    const update = await finished(host.lifecycle.begin('update', item.id))
+    expect(update).toMatchObject({ phase: 'done', restartRequired: true })
+    expect(update.failure).toBeUndefined()
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: null, pinnedSkinIds: [pinned.id], disabledSkinIds: [item.id] })
+    expect(readProfileBundles(host.directory)).toEqual([pinned.package])
+    expect(host.lifecycle.states().find(state => state.skinId === item.id)).toMatchObject({ installation: 'installed', artifactRisk: { packageName: item.package } })
+    const risk = inspectSkinArtifactRisk(host.directory, item, 'desktop')!
+    expect(await finished(host.lifecycle.begin('activate', item.id, undefined, false, undefined, undefined, risk.context))).toMatchObject({ phase: 'done' })
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: item.id, pinnedSkinIds: [pinned.id] })
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['install', 'update'] as const)('installs an out-of-range %s without a warning and asks only before use on DSH 0.2.0-rc.2', async kind => {
     const item = skin(`range-${kind}`)
     item.compatibility.dsh = '0.1.0-rc.6'
     const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
     if (kind === 'update') host.materialize(skin(item.id, '0.9.0'))
-    const before = readFileSync(join(host.directory, 'package.json'), 'utf8')
-    expect(() => host.lifecycle.begin(kind, item.id)).toThrow('请在兼容性提示中确认后继续')
-    expect(host.manager.installBundle).not.toHaveBeenCalled()
-    expect(readFileSync(join(host.directory, 'package.json'), 'utf8')).toBe(before)
-    const operation = await finished(host.lifecycle.begin(kind, item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    const operation = await finished(host.lifecycle.begin(kind, item.id))
     expect(operation.phase).toBe('done')
     expect(readDependencies(host.directory)[item.package]).toBe('1.0.0')
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
@@ -853,6 +1087,27 @@ describe('official plugin manager lifecycle', () => {
     expect(options).not.toHaveProperty('force')
     expect(options).not.toHaveProperty('acceptRisk')
     expect(readFileSync(profilePatchFile(host.directory), 'utf8')).toBe(host.originalPatch)
+    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('请在兼容性提示中确认后继续')
+  })
+
+  it('keeps an updated out-of-range version disabled until the combined use confirmation', async () => {
+    const item = skin('updated-range-confirmation', '1.1.0'), pinned = skin('range-unrelated-pinned')
+    item.compatibility.dsh = '0.1.0-rc.6'
+    const host = fixture([item, pinned], { hostVersion: '0.2.1-alpha.3' })
+    host.materialize(skin(item.id, '1.0.0')); host.materialize(pinned)
+    host.select(item.package, true); host.select(pinned.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: item.id, pinnedSkinIds: [item.id, pinned.id], disabledSkinIds: [] })
+    expect(await finished(host.lifecycle.begin('update', item.id))).toMatchObject({ phase: 'done' })
+    expect(inspectSkinArtifactRisk(host.directory, item, 'desktop')).toBeUndefined()
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: null, pinnedSkinIds: [pinned.id], disabledSkinIds: [item.id] })
+    expect(readProfileBundles(host.directory)).toEqual([pinned.package])
+    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('兼容性提示')
+    const using = await finished(host.lifecycle.begin('activate', item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    expect(using.phase).toBe('done')
+    expect(readProfileBundles(host.directory).sort()).toEqual([item.package, pinned.package].sort())
+    expect(readMarketState(host.directory)).toMatchObject({ activeSkinId: item.id, pinnedSkinIds: [pinned.id] })
+    expect(readMarketState(host.directory).artifactAcknowledgements).toBeUndefined()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
   })
 
   it.each(['activate', 'pin'] as const)('allows an out-of-range %s only for the acknowledged request', async kind => {
@@ -879,18 +1134,18 @@ describe('official plugin manager lifecycle', () => {
     expect(readDependencies(host.directory)).toEqual({})
   })
 
-  it('requires fresh compatibility acknowledgement when retrying a failed install', async () => {
+  it('defers compatibility acknowledgement until use when retrying a failed install', async () => {
     const item = skin('range-retry')
     item.compatibility.dsh = '0.1.0-rc.6'
     const host = fixture([item])
     host.manager.installBundle.mockResolvedValueOnce({ application: 'failed', pendingBuilds: ['fixture-build'], error: { code: 'build-approval-required', message: 'approval required' } })
-    const first = await finished(host.lifecycle.begin('install', item.id, undefined, true, compatibilityContext(item, host.runtime)))
+    const first = await finished(host.lifecycle.begin('install', item.id))
     expect(first).toMatchObject({ phase: 'failed', failure: { action: 'approve-build' } })
-    expect(() => host.lifecycle.retry(first.id, 'approve-build')).toThrow('请在兼容性提示中确认后继续')
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
-    const retry = await finished(host.lifecycle.retry(first.id, 'approve-build', true, compatibilityContext(item, host.runtime)))
+    const retry = await finished(host.lifecycle.retry(first.id, 'approve-build'))
     expect(retry.phase, retry.message).toBe('done')
     expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+    expect(() => host.lifecycle.begin('activate', item.id)).toThrow('请在兼容性提示中确认后继续')
   })
 
   it('does not misclassify unrelated errors as compatibility failures after acknowledgement', async () => {
@@ -913,7 +1168,7 @@ describe('official plugin manager lifecycle', () => {
     else if (change === 'range') await host.lifecycle.replaceCatalog([{ ...item, compatibility: { ...item.compatibility, dsh: '*' } }])
     else host.runtime.version = '0.2.1-alpha.2'
     const before = readFileSync(join(host.directory, 'package.json'), 'utf8')
-    expect(() => host.lifecycle.begin('install', item.id, undefined, true, context)).toThrow('已变化，请重新确认')
+    expect(() => host.lifecycle.begin('activate', item.id, undefined, true, context)).toThrow('已变化，请重新确认')
     expect(host.manager.installBundle).not.toHaveBeenCalled()
     expect(readFileSync(join(host.directory, 'package.json'), 'utf8')).toBe(before)
   })
@@ -922,7 +1177,7 @@ describe('official plugin manager lifecycle', () => {
     const item = skin('missing-context')
     item.compatibility.dsh = '0.1.0-rc.6'
     const host = fixture([item])
-    expect(() => host.lifecycle.begin('install', item.id, undefined, true)).toThrow('已变化，请重新确认')
+    expect(() => host.lifecycle.begin('activate', item.id, undefined, true)).toThrow('已变化，请重新确认')
     expect(host.manager.installBundle).not.toHaveBeenCalled()
   })
 
@@ -1374,7 +1629,7 @@ describe('official plugin manager lifecycle', () => {
   it.each([
     'initialization failure', 'missing service', 'another row', 'multiple rows',
     'selection not saved', 'old skin still selected', 'unreviewed source', 'missing entry file',
-  ])('rolls back an old Host import failure rather than accepting %s as a saved restart transition', async reason => {
+  ])('keeps the previous selection rather than accepting %s as a saved restart transition', async reason => {
     const item = skin('native-new'), current = skin('native-current')
     const host = fixture([item, current], { hostVersion: '0.2.0-rc.2' })
     host.materialize(current); host.select(current.package, true)
@@ -1398,7 +1653,13 @@ describe('official plugin manager lifecycle', () => {
         ? { application: 'failed', changed: true, stage: 'enable', target: name, enabled, error: { code: 'operation-error', diagnostic } }
         : { application: 'applied', changed: true, stage: 'enable', target: name, enabled }
     })
-    expect(await finished(host.lifecycle.begin('activate', item.id))).toMatchObject({ phase: 'failed', application: 'failed' })
+    const operation = await finished(host.lifecycle.begin('activate', item.id))
+    expect(operation.phase).toBe('failed')
+    if (reason === 'unreviewed source' || reason === 'missing entry file') {
+      expect(operation.application).toBeUndefined()
+      expect(operation.failure?.action).not.toBe('approve-artifact')
+      expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    } else expect(operation.application).toBe('failed')
     expect(readMarketState(host.directory).activeSkinId).toBe(current.id)
     expect(readProfileBundles(host.directory)).toEqual([current.package])
   })
