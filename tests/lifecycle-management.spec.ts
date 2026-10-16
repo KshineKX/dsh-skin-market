@@ -1427,8 +1427,15 @@ describe('official plugin manager lifecycle', () => {
     const host = fixture([a, b])
     host.materialize(a); host.materialize(b)
     const result = deferred()
-    host.manager.removeBundle.mockImplementationOnce(() => result.promise)
+    const started = deferred<void>()
+    host.manager.removeBundle.mockImplementationOnce(() => {
+      started.resolve(undefined)
+      return result.promise
+    })
     const operation = host.lifecycle.begin('uninstall', a.id)
+    await started.promise
+    expect(operation).toMatchObject({ phase: 'installing', cancelable: false })
+    expect(() => host.lifecycle.cancel(operation.id)).toThrow('当前阶段无法安全取消')
     await until(() => operation.phase === 'waiting')
     expect(() => host.lifecycle.begin('activate', b.id)).toThrow('暂时不能继续修改')
     result.resolve(host.applyRemove(a.package))

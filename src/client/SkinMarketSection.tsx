@@ -160,10 +160,10 @@ function pendingRestartTitle(title: string, restartAvailable: boolean): string {
 }
 
 function skinOperationTitle(operation: Operation, name: string): string {
+  if (operation.phase === 'installing' && operation.step === '恢复原有 profile 依赖') return `正在恢复原有依赖 · ${name}`
+  if (operation.kind === 'uninstall' && (operation.phase === 'resolving' || operation.phase === 'downloading' || operation.phase === 'installing')) return `正在卸载“${name}”`
   if (operation.phase === 'installing') {
-    if (operation.step === '恢复原有 profile 依赖') return `正在恢复原有依赖 · ${name}`
     if (operation.kind === 'update') return `正在更新“${name}”`
-    if (operation.kind === 'uninstall') return `正在卸载“${name}”`
     if (operation.kind === 'migrate') return `正在换用 npm · ${name}`
   }
   return `${phases[operation.phase]}“${name}”`
@@ -1849,7 +1849,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         progress={failed ? undefined : operation}
         message={failed ? undefined : operation.message}
         showMessage={operation.phase === 'waiting' || operation.phase === 'cancelling'}
-        downloading={operation.phase === 'downloading'}
+        downloading={operation.kind !== 'uninstall' && operation.phase === 'downloading'}
         terminal={terminal}
         failed={failed}
         cancelable={operation.cancelable === true}

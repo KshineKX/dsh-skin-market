@@ -2476,6 +2476,37 @@ describe('client market', () => {
     } finally { clock.mockRestore() }
   })
 
+  it.each([
+    { phase: 'resolving', step: '解析 profile 依赖', title: '正在卸载“测试皮肤”' },
+    { phase: 'downloading', step: '下载 profile 依赖', title: '正在卸载“测试皮肤”' },
+    { phase: 'installing', step: '移除皮肤插件', title: '正在卸载“测试皮肤”' },
+    { phase: 'installing', step: '恢复原有 profile 依赖', title: '正在恢复原有依赖 · 测试皮肤' },
+  ] as const)('keeps the uninstall banner honest during $phase ($step)', async ({ phase, step, title }) => {
+    const operation = {
+      id: 'uninstall-status', kind: 'uninstall', skinId: skin.id, phase, step,
+      startedAt: new Date().toISOString(), downloadedBytes: 2048, totalBytes: 4096,
+    }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({
+        skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }],
+        operation, runtime: dshRuntime,
+      }) }
+      throw new Error(`Unexpected request: ${url}`)
+    }))
+    render(<SkinMarketSection t={key => key} />)
+    await waitFor(() => expect(screen.getByRole('status').querySelector('strong')?.textContent).toBe(title))
+    await openSkinCard()
+    const banner = within(screen.getByRole('main', { name: '皮肤详情内容' })).getByRole('status')
+    expect(banner.querySelector('strong')?.textContent).toBe(title)
+    expect(within(banner).queryByText('正在下载“测试皮肤”')).toBeNull()
+    const disclosure = within(banner).getByRole('button', { name: '详情' })
+    const details = document.getElementById(disclosure.getAttribute('aria-controls')!)!
+    expect(details.hasAttribute('hidden')).toBe(true)
+    expect(within(banner).getByText(step).closest('[hidden]')).toBe(details)
+    expect(within(banner).getAllByText('2.0 KB / 4.0 KB').every(element => element.closest('[hidden]') === details)).toBe(true)
+  })
+
   it('uses the current command start for silence detection when the operation has already been running', async () => {
     const now = Date.now()
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {

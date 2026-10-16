@@ -1975,7 +1975,7 @@ export class SkinLifecycle {
       detachedPatchFiles = this.management === undefined ? detachCompatibilityPatches(this.options.profileDir, skin.package) : []
       const state = readMarketState(this.options.profileDir)
       if (this.management === undefined && enabledSkinIds(state).has(skin.id)) await this.deactivate(operation)
-      this.update(operation, 'downloading')
+      this.update(operation, 'installing')
       await this.run(['remove', skin.package], operation)
       await this.syncPnpmMetadata(operation, '正在清理兼容适配并同步 pnpm 锁文件')
       // A legacy install may predate managed-loader receipts. After pnpm has

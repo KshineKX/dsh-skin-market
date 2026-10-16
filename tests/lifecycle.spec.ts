@@ -696,6 +696,35 @@ describe('skin lifecycle', () => {
     expect(readFileSync(compatibilityPatchFile(dir, skin.package, skin.install.version), 'utf8')).toContain('+  key: "settings.generic",')
   })
 
+  it('reports removal as non-cancelable installation work while the legacy runner is pending', async () => {
+    const dir = fixture()
+    const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+    const skin = firstInstallable(probe)
+    materializeReviewedSkin(dir, skin)
+    let started!: () => void
+    const removeStarted = new Promise<void>(resolve => { started = resolve })
+    let release!: () => void
+    const removeResult = new Promise<void>(resolve => { release = resolve })
+    const runner: PluginRunner = async (_profile, args) => {
+      if (args[0] === 'remove') {
+        started()
+        await removeResult
+        atomicWriteJson(join(dir, 'package.json'), { dependencies: {} })
+      }
+      return success()
+    }
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner }, [skin])
+    const operation = lifecycle.begin('uninstall', skin.id)
+    await removeStarted
+
+    expect(operation).toMatchObject({ phase: 'installing', cancelable: false, step: '移除插件依赖' })
+    expect(() => lifecycle.cancel(operation.id)).toThrow('当前阶段无法安全取消')
+    release()
+
+    expect(await finished(operation)).toMatchObject({ phase: 'done', cancelable: false })
+    expect(readDependencies(dir)).toEqual({})
+  })
+
   it('syncs and removes compatibility patch metadata as one uninstall transaction', async () => {
     const dir = fixture()
     const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
