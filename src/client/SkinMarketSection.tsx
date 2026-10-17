@@ -381,12 +381,12 @@ function OperationBanner({ title, startedAt, metadata = [], progress, message, s
     {terminal ? <IconRefreshOutline size={16} /> : <IconLoadingOutline size={16} />}
     <strong title={title}>{title}</strong>
     {downloadProgress !== undefined && <small className={css.operationElapsed}>{downloadProgress}</small>}
-    {!terminal && <small className={css.operationElapsed} aria-hidden="true" title={`已用时 ${elapsedLabel(startedAt, now)}`}>· {elapsedLabel(startedAt, now)}</small>}
+    {!terminal && <small className={css.operationElapsed} aria-hidden="true" title={`已用时 ${elapsedLabel(startedAt, now)}`}>{elapsedLabel(startedAt, now)}</small>}
     <span className={css.operationActions}>
-      {cancelable && onCancel !== undefined && <Button className={css.operationCancel} variant="outline" size="sm" onClick={onCancel}>取消</Button>}
       {hasDetails && <Button variant="ghost" size="sm" aria-expanded={showDetails} aria-controls={detailsId} onClick={() => setShowDetails(value => !value)}>{showDetails ? '收起' : '详情'}</Button>}
       {failed && copyLogButton}
       {action}
+      {cancelable && onCancel !== undefined && <Button className={css.operationCancel} variant="outline" size="sm" onClick={onCancel}>取消</Button>}
       {onDismiss !== undefined && <Button className={css.operationDismiss} variant="ghost" size="sm" icon={<XIcon size={14} />} aria-label="关闭提示" title="关闭提示" onClick={onDismiss} />}
     </span>
     {showMessage && messageText !== undefined && <span className={css.operationMessage}>{messageText}</span>}

@@ -2800,7 +2800,7 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '仅安装' }))
 
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('正在下载“测试皮肤”'))
-    expect(within(screen.getByRole('status')).getByTitle(/^已用时 /).textContent).toMatch(/^· \d+ 秒$/)
+    expect(within(screen.getByRole('status')).getByTitle(/^已用时 /).textContent).toMatch(/^\d+ 秒$/)
     const dialog = await screen.findByRole('dialog', { name: '安装未完成' }, { timeout: 2_000 })
     expect(dialog.textContent).toContain('未能完成本次操作。请复制日志反馈。')
     expect(dialog.textContent).not.toContain('GitHub 插件下载超时')
@@ -2938,7 +2938,7 @@ describe('client market', () => {
       await openSkinCard(/深海女仆工坊 界面预览/)
       const banner = screen.getByRole('status')
       expect(banner.querySelector('strong')?.textContent).toBe('正在恢复原有依赖 · 深海女仆工坊')
-      expect(within(banner).getByTitle(`已用时 ${elapsedSeconds} 秒`).textContent).toBe(`· ${elapsedSeconds} 秒`)
+      expect(within(banner).getByTitle(`已用时 ${elapsedSeconds} 秒`).textContent).toBe(`${elapsedSeconds} 秒`)
       expect(banner.textContent).not.toContain('正在写入插件')
       const disclosure = within(banner).getByRole('button', { name: '详情' })
       const details = document.getElementById(disclosure.getAttribute('aria-controls')!)!
