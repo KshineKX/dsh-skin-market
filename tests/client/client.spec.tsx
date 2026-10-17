@@ -1705,7 +1705,7 @@ describe('client market', () => {
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} />)
 
-    fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     await waitFor(() => expect(dialog.textContent).toContain('无法自动安装：未找到可供 Desktop 安装的 npm 包'))
     expect(dialog.textContent).toContain('插件包名')
@@ -1717,6 +1717,86 @@ describe('client market', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(manual, 'desktop')))
     expect(dialog.textContent).not.toContain('手动安装路径')
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(false)
+  })
+
+  it('installs a reviewed GitHub Desktop skin without requiring an npm publication', async () => {
+    const github: CatalogSkin = {
+      ...managedDesktopSkin,
+      review: { compatibility: 'verified', preview: 'verified', installation: 'verified' },
+      install: { target: `github:a/b#${'a'.repeat(40)}&path:/packages/skin`, commit: 'a'.repeat(40), version: '1.0.0', desktop: { mode: 'manual-only', reason: 'npm-package-not-found' } },
+      subpath: 'packages/skin',
+    }
+    let installed = false
+    let active = false
+    const open = vi.fn()
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [github] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({
+        hostKind: 'desktop', runtime: { ...dshRuntime, version: '0.2.1-alpha.3' }, management: officialManagement,
+        skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: active ? 'active' : 'inactive', installedVersion: '1.0.0', updateAvailable: false }] : [],
+      }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/install') && init?.method === 'POST') { installed = true; return { ok: true, json: async () => ({ operationId: 'github-install' }) } }
+      if (url.endsWith('/activate') && init?.method === 'POST') { active = true; return { ok: true, json: async () => ({ operationId: 'github-activate' }) } }
+      if (url.endsWith('/operations/github-install')) return { ok: true, json: async () => ({ id: 'github-install', kind: 'install', skinId: skin.id, phase: 'done' }) }
+      if (url.endsWith('/operations/github-activate')) return { ok: true, json: async () => ({ id: 'github-activate', kind: 'activate', skinId: skin.id, phase: 'done' }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open }} />)
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toBe(true))
+    expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/install') && init?.method === 'POST')).toHaveLength(1)
+    expect(open).not.toHaveBeenCalled()
+    expect(await screen.findAllByRole('button', { name: '停用' })).not.toHaveLength(0)
+  })
+
+  it.each(['prefilled', 'resumed', 'unavailable'] as const)('hands a manual Desktop target to the official panel (%s)', async outcome => {
+    const target = `github:a/b#${'a'.repeat(40)}&path:/packages/skin`
+    const manual: CatalogSkin = {
+      ...skin, subpath: 'packages/skin',
+      install: { ...skin.install, target, allowBuild: 'github:a/b#path:packages/skin', desktop: { mode: 'manual-only', reason: 'npm-package-not-found' } },
+      review: { compatibility: 'verified', preview: 'verified', installation: 'verified' },
+    }
+    const open = vi.fn(async (_spec: string) => outcome === 'unavailable'
+      ? { ok: false as const, reason: '插件列表加载失败，请复制目标。' }
+      : { ok: true as const, kind: outcome })
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [manual] }
+      : { hostKind: 'desktop', runtime: dshRuntime, management: officialManagement, skins: [] } }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open }} />)
+    fireEvent.click(await screen.findByRole('button', { name: '安装' }))
+    await waitFor(() => expect(open).toHaveBeenCalledWith(target))
+    if (outcome === 'unavailable') {
+      expect((await screen.findByRole('alert')).textContent).toContain('插件列表加载失败')
+    }
+    expect(screen.queryByRole('dialog', { name: '安装 测试皮肤' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(false)
+  })
+
+  it('preserves the original manual Desktop panel without a second installation shortcut', async () => {
+    const main = `github:a/b#${'a'.repeat(40)}&path:/packages/skin`
+    const companion = `github:a/b#${'a'.repeat(40)}&path:/packages/manager`
+    const manual: CatalogSkin = {
+      ...skin, subpath: 'packages/skin',
+      install: { ...skin.install, target: main, companions: [{ package: 'manager', rowId: 'manager', target: companion, commit: 'a'.repeat(40), version: '1.0.0' }] },
+      review: { compatibility: 'verified', preview: 'verified', installation: 'verified' },
+    }
+    const open = vi.fn(async (_spec: string) => ({ ok: true as const, kind: 'prefilled' as const }))
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [manual] }
+      : { hostKind: 'desktop', runtime: dshRuntime, management: officialManagement, skins: [] } })))
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open }} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: '其他安装方式' }))
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).getByRole('textbox', { name: '插件包名' })).toHaveProperty('value', main)
+    expect(dialog.querySelector('code')?.textContent).toContain(companion)
+    expect(within(dialog).getByRole('button', { name: '复制插件包名' })).toBeTruthy()
+    expect(within(dialog).queryByRole('button', { name: '安装' })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: '打开添加插件' })).toBeNull()
+    expect(open).not.toHaveBeenCalled()
   })
 
   it('keeps installed skins in discovery and exposes Use and Update on both cards', async () => {

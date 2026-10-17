@@ -210,6 +210,15 @@ describe('pnpm provisioning', () => {
 })
 
 describe('Desktop pnpm adapter', () => {
+  it('rejects non-npm source requests instead of silently installing a different npm package', async () => {
+    const service = { runPlugin: vi.fn(), installPlugin: vi.fn() } as unknown as DesktopPnpmLike
+    const runner = desktopRunner(service, '/profiles/desktop')
+    const result = await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'git-fixture', spec: `github:fixture/skin#${'a'.repeat(40)}` })
+    expect(result).toMatchObject({ exitCode: 1, stderr: expect.stringContaining('npm') })
+    expect(service.installPlugin).not.toHaveBeenCalled()
+    expect(service.runPlugin).not.toHaveBeenCalled()
+  })
+
   it('uses installPlugin with an exact recovery request for managed installs', async () => {
     const calls: { run: unknown[]; install: unknown[] } = { run: [], install: [] }
     const handle = () => ({

@@ -1,3 +1,4 @@
+import { desktopInstallPlan } from '../desktop-install.ts'
 import { createInstallCommand } from '../install-command.ts'
 import { effectiveBuildApprovalKey } from '../build-approval.ts'
 import { preferredInstallTarget } from '../install-source.ts'
@@ -70,9 +71,9 @@ export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHost
   const metadata = `- 仓库：${skin.repo}\n- 固定安装目标：${target}\n- package：${skin.package}\n- loader rowId：${skin.rowId ?? skin.package}${companionLines}\n- 版本：${skin.install.version}\n- commit：${skin.install.commit}`
   const compatibility = skin.review?.compatibility !== 'unverified' ? '' : '\n维护者尚未声明可验证的 DSH 兼容范围。先只读检查仓库，核对当前宿主版本和安装方式；先告诉我结论和风险，等待我确认后再安装，不要直接安装。\n'
   const conflictCheck = `必须先完成只读冲突检查：从当前宿主的插件清单和实际启用状态识别其他皮肤、主题或外观插件，不能把“已安装”直接当成“已启用”。排除 @deepseek-ai/dsh-base、@deepseek-ai/dsh-web-app、dsh-skin-market 和本次目标 package ${packages}。可只读核对 package.json 的名称、描述、dsh.client/dsh.bundle 声明及仓库 README。不要读取 .env、凭据、聊天记录或其他存放秘密的配置。发现可能冲突的已启用皮肤时，列出名称和依据并停在安装前，指导我通过当前宿主插件页停用；未经我确认不得修改任何 profile 文件，也不得执行安装。无法读取启用状态时，先请我提供插件页中的状态，不要声称没有冲突。确认没有其他已启用皮肤后，才说“未检测到其他已启用的皮肤插件”。`
-  const desktopManual = skin.install.desktop?.mode !== 'managed'
+  const desktopManual = desktopInstallPlan(skin, true).kind === 'manual'
   const desktopSteps = desktopManual
-    ? `这款皮肤在桌面市场需要手动安装。不要让我回到「设置 → 皮肤市场」重复点击无法使用的安装按钮。先只读查看仓库维护者的安装说明，确认固定安装目标及子目录（如有）可用于当前 Desktop；无法确认时说明缺少什么，不要猜测安装方式。\n${conflictCheck}\n确认可以继续后，逐步指导我打开桌面应用「插件 → 添加插件」，按顺序输入以下完整固定安装目标（含伴生包），由我点击安装、处理应用提示并启用：\n${targets.map(target => `- ${target}`).join('\n')}\nGitHub 目标必须保留完整 commit 和 &path: 子目录，不要改成包名、main、HEAD 或最新版本。遇到构建授权，仅指导我在应用界面确认本次目标需要的精确构建项；界面不支持或安装失败时，收集完整错误并说明卡在哪一步，不要绕过限制。`
+    ? `这款皮肤需要在桌面应用的官方插件面板确认安装。先只读查看仓库维护者的安装说明，确认固定安装目标及子目录（如有）可用于当前 Desktop；无法确认时说明缺少什么，不要猜测安装方式。\n${conflictCheck}\n确认可以继续后，指导我在皮肤详情点击「安装」，由市场打开官方面板并填好固定目标；入口不可用时再指导我打开桌面应用「插件 → 添加插件」。按顺序核对以下完整固定安装目标（含伴生包），由我点击安装、处理应用提示并启用：\n${targets.map(target => `- ${target}`).join('\n')}\nGitHub 目标必须保留完整 commit 和 &path: 子目录，不要改成包名、main、HEAD 或最新版本。遇到构建授权，仅指导我在应用界面确认本次目标需要的精确构建项；界面不支持或安装失败时，收集完整错误并说明卡在哪一步，不要绕过限制。`
     : `${conflictCheck}\n确认可以继续后，指导我在「设置 → 皮肤市场」打开这款皮肤，由我点击一键安装并按应用提示使用。`
   const desktop = `官方 Desktop：你负责只读检查和指导，我负责点击安装、启用、停用和重启；不要代替我操作。以应用“关于”中的版本为准，不用系统终端的 npm dsh 版本代表桌面版本。不要执行 dsh plugin --profile desktop，不要用 npm/pnpm 写入 Desktop profile，也不要修改其 package.json、cordis.patch.yml 或构建权限。\n${desktopSteps}\n每次只给我一个具体操作，等我反馈后再给下一步；不要只丢给我仓库说明。安装后只读核对当前宿主的插件安装结果、版本和启用状态；读不到时请我提供插件页状态，未核实不能宣称安装成功。按应用提示指导我重启；需要时完全退出后重新打开（macOS 使用 ⌘Q，关闭窗口不算退出），然后确认皮肤已生效。`
   const web = `Web 版：\n${conflictCheck}\n安装前只读确认实际 Web profile 的 package.json 中 dependencies 与 dsh.profile.bundles，以及当前插件启用状态；不要把 Desktop profile 当作 Web profile。\n没有冲突且兼容性确认完成后，先处理目标所需的精确构建授权，再执行下面的全部固定安装命令（含伴生包），不要改成 main、HEAD 或最新版本：${buildApproval}\n${command}\n如果目标只有 dsh.client，幂等地确认 package ${packages} 和 rowId ${rowIds} 已注册到 Web profile 的 cordis.patch.yml；不要放宽其他包的构建权限。安装后验证同一 profile 的 dependencies、dsh.profile.bundles、目标 package 的 dsh.client/dsh.bundle 声明及 loader 注册项；缺失则报告失败。告诉我如何重启当前 Web 宿主。`

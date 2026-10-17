@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
 import { parse, stringify } from 'yaml'
 import { effectiveBuildApprovalKey } from './build-approval.ts'
-import { npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError } from './install-resolution.ts'
+import { normalizeGithubSubpath, npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError, type GithubTargetParts } from './install-resolution.ts'
 import { parseInsertedLoaderRows, primaryLoaderCandidates, sharedLoaderIdentifiers, type LoaderIdentity } from './loader-ownership.ts'
 import { isVersionRange, satisfiesVersionRange } from './semver.ts'
 import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
@@ -217,6 +217,94 @@ function npmImporterMatches(profileDir: string, packageName: string, spec: strin
   return exactNpmSpecMatches(resolved, packageName, version)
 }
 
+/** pnpm's GitHub archive references include a separate, immutable path selector. */
+function githubArchiveSource(source: string): GithubTargetParts | null {
+  const match = /^https:\/\/codeload\.github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/tar\.gz\/([0-9a-f]{40})(?:#path:(\/?[A-Za-z0-9_./-]+))?$/i.exec(source)
+  if (match === null) return null
+  try {
+    return { repository: match[1]!, commit: match[2]!.toLowerCase(), ...(match[3] === undefined ? {} : { subpath: normalizeGithubSubpath(match[3]) }) }
+  } catch { return null }
+}
+
+export function isGithubArtifactSpec(spec: string | null | undefined): boolean {
+  return typeof spec === 'string' && (parseGithubTarget(spec) !== null || githubArchiveSource(spec) !== null)
+}
+
+function sameGithubSource(left: GithubTargetParts | null, right: GithubTargetParts | null): boolean {
+  return left !== null && right !== null && left.repository.toLowerCase() === right.repository.toLowerCase()
+    && left.commit === right.commit && left.subpath === right.subpath
+}
+
+/** Source identity remains fixed during updates; only the pinned commit may advance. */
+export function githubArtifactSourceMatches(skin: SkinEntry, spec: string): boolean {
+  const current = parseGithubTarget(spec) ?? githubArchiveSource(spec)
+  const expected = parseGithubTarget(skin.install.target)
+  return current !== null && expected !== null && current.repository.toLowerCase() === expected.repository.toLowerCase()
+    && current.subpath === expected.subpath
+}
+
+interface GithubLockfileResolution {
+  gitHosted: boolean
+  path: string | null
+  tarball: string | null
+  integrity: string | null
+  gitPackageVersion: string | null
+}
+
+function githubLockfileResolution(profileDir: string, packageName: string, version: string): GithubLockfileResolution | null {
+  let lock: unknown
+  try { lock = parse(readFileSync(pnpmLockfile(profileDir), 'utf8')) as unknown } catch { return null }
+  if (!isRecord(lock) || !isRecord(lock.packages)) return null
+  const resolved = version.replace(/\(.*$/, '')
+  const key = `${packageName}@${resolved}`
+  const entry = lock.packages[key] ?? lock.packages[`/${key}`]
+  if (!isRecord(entry) || !isRecord(entry.resolution)) return null
+  return {
+    gitHosted: entry.resolution.gitHosted === true,
+    path: typeof entry.resolution.path === 'string' ? entry.resolution.path : null,
+    tarball: typeof entry.resolution.tarball === 'string' ? entry.resolution.tarball : null,
+    integrity: typeof entry.resolution.integrity === 'string' ? entry.resolution.integrity : null,
+    gitPackageVersion: typeof entry.version === 'string' ? entry.version : null,
+  }
+}
+
+/** Validate both the saved source and its actual GitHub root-importer resolution. */
+export function validateGithubArtifact(profileDir: string, skin: SkinEntry): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
+  const failure = (reason: string) => ({ ok: false, reason, integrityVerified: false })
+  const expected = parseGithubTarget(skin.install.target)
+  if (expected === null || expected.commit !== skin.install.commit.toLowerCase()
+    || expected.repository.toLowerCase() !== repositoryIdentity(skin.repo) || expected.subpath !== skin.subpath) {
+    return failure('GitHub 安装来源与市场固定仓库、commit 或子目录不一致')
+  }
+  const spec = readDependencies(profileDir)[skin.package]
+  if (spec === undefined || !sameGithubSource(parseGithubTarget(spec) ?? githubArchiveSource(spec), expected)) {
+    return failure('GitHub 已安装来源与市场固定仓库、commit 或子目录不一致')
+  }
+  const importer = npmImporterResolution(profileDir, skin.package)
+  if (importer === null || importer.specifier !== spec
+    || !sameGithubSource(githubArchiveSource(importer.version.replace(/\(.*$/, '')), expected)) {
+    return failure('GitHub 锁文件 root importer 未解析到固定仓库、commit 和子目录')
+  }
+  const resolution = githubLockfileResolution(profileDir, skin.package, importer.version)
+  let path: string | undefined
+  try { path = resolution?.path === null || resolution?.path === undefined ? undefined : normalizeGithubSubpath(resolution.path) } catch {
+    return failure('GitHub 锁文件构件子目录无效')
+  }
+  const archive = resolution?.tarball === null || resolution?.tarball === undefined ? null : githubArchiveSource(resolution.tarball)
+  if (resolution === null || !resolution.gitHosted || archive?.subpath !== undefined
+    || !sameGithubSource(archive === null ? null : { ...archive, subpath: expected.subpath }, expected)
+    || path !== expected.subpath || resolution.gitPackageVersion !== skin.install.version) {
+    return failure('GitHub 锁文件构件未匹配固定仓库、commit、子目录和版本')
+  }
+  const artifact = snapshotInstalledArtifact(profileDir, skin.package)
+  if (!artifact.ok || artifact.name !== skin.package || artifact.version !== skin.install.version) {
+    return failure('GitHub 未物化预期包版本或声明的可加载入口')
+  }
+  const validation = validateInstalledSkin(profileDir, skin, { hostKind: 'desktop' })
+  if (!validation.ok) return failure(validation.reason ?? 'GitHub 安装构件未通过核验')
+  return { ok: true, version: skin.install.version, integrityVerified: false }
+}
+
 function validateInstalledNpmSource(profileDir: string, skin: SkinEntry, manifest: Record<string, unknown>): string | null {
   const npm = skin.install.npm
   if (npm === undefined) return null
@@ -269,7 +357,7 @@ export interface InstalledArtifactSnapshot {
   ok: boolean
   reason?: string
   files: Array<{ kind: 'host' | 'client' | 'bundle'; path: string; sha256: string }>
-  resolution?: { specifier: string; version: string; integrity: string | null; tarball: string | null } | null
+  resolution?: { specifier: string; version: string; integrity: string | null; tarball: string | null; gitHosted?: boolean; path?: string | null; gitPackageVersion?: string | null } | null
 }
 
 function runtimeExport(value: unknown): string | null {
@@ -298,7 +386,10 @@ export function snapshotInstalledArtifact(profileDir: string, packageName: strin
     return snapshot
   }
   const importer = npmImporterResolution(profileDir, packageName)
-  snapshot.resolution = importer === null ? null : { ...importer, integrity: null, tarball: null, ...npmLockfileResolution(profileDir, packageName, snapshot.version) }
+  snapshot.resolution = importer === null ? null : { ...importer, integrity: null, tarball: null,
+    ...npmLockfileResolution(profileDir, packageName, snapshot.version),
+    ...(isGithubArtifactSpec(snapshot.spec) ? githubLockfileResolution(profileDir, packageName, importer.version) : null),
+  }
   const directory = resolve(packageDir(profileDir, packageName))
   const add = (kind: 'host' | 'client' | 'bundle', target: string): void => {
     const file = resolve(directory, target)
@@ -522,6 +613,9 @@ export function installedSpecMatches(skin: SkinEntry, spec: string | null | unde
 
 /** A manager-written npm range is accepted only through its installed resolution. */
 export function reviewedInstalledSpecMatches(profileDir: string, skin: SkinEntry, spec: string | null | undefined, options: SkinArtifactValidationOptions = {}): boolean {
+  if (options.hostKind === 'desktop' && isGithubArtifactSpec(spec)) {
+    return readDependencies(profileDir)[skin.package] === spec && validateGithubArtifact(profileDir, skin).ok
+  }
   if (installedSpecMatches(skin, spec)) {
     return !npmSkinSpec(profileDir, skin) || validateInstalledSkin(profileDir, skin, options).ok
   }
@@ -574,8 +668,9 @@ export function validateNpmArtifact(profileDir: string, source: NpmArtifactSourc
   return { ok: true, version: source.version, integrityVerified: source.integrity !== undefined }
 }
 
-/** Validate managed Desktop metadata without inventing missing npm provenance. */
+/** Validate the installed Desktop source without inventing missing npm provenance. */
 export function validateDesktopArtifact(profileDir: string, skin: SkinEntry, options: SkinArtifactValidationOptions = {}): { ok: boolean; version?: string; reason?: string; integrityVerified: boolean } {
+  if (isGithubArtifactSpec(readDependencies(profileDir)[skin.package])) return validateGithubArtifact(profileDir, skin)
   const capability = skin.install.desktop
   if (capability?.mode !== 'managed' || capability.packageName !== skin.package || capability.packageVersion !== skin.install.version) {
     return { ok: false, reason: 'Desktop 安装元数据与市场固定包或版本不一致', integrityVerified: false }

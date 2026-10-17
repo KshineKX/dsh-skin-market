@@ -21,6 +21,8 @@ export type CommandExecutor = (file: string, args: readonly string[], options?: 
 export interface PluginInstallRequest {
     packageName: string;
     packageVersion: string;
+    /** A reviewed pinned source; only the official manager accepts non-npm specs. */
+    spec?: string;
     receiptId: string;
     pnpmOptions?: readonly string[];
     /** Exact pending package names explicitly approved by the user. */

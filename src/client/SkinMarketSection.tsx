@@ -22,6 +22,8 @@ import { switchClientSkin, type ClientSkinRuntime } from './index.ts'
 import { displayTitle, githubRepoLabel } from '../display-title.ts'
 import { assessCompatibility, compatibilityContext as skinCompatibilityContext, type CompatibilityAssessment } from '../compatibility.ts'
 import { matchesCatalogSearch } from '../catalog-search.ts'
+import { desktopInstallPlan } from '../desktop-install.ts'
+import type { DesktopPluginPanel } from './desktop-plugin-panel.ts'
 import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin } from './types.ts'
 import type { ConfigurationOverrideBatchPlan } from '../configuration-override-types.ts'
 
@@ -64,6 +66,7 @@ export interface SkinMarketSectionProps {
   layout?: 'fill' | 'embedded'
   clientRuntime?: ClientSkinRuntime
   catalogCache?: CatalogCache
+  desktopPluginPanel?: DesktopPluginPanel
 }
 
 type MutationKind = Operation['kind']
@@ -654,7 +657,7 @@ const healthLabels = {
   topic: 'dsh-plugin Topic',
 } as const
 
-export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCache = browserCatalogCache }: SkinMarketSectionProps) {
+export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCache = browserCatalogCache, desktopPluginPanel }: SkinMarketSectionProps) {
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [skins, setSkins] = useState<CatalogSkin[]>([])
@@ -701,6 +704,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [submissionCopied, setSubmissionCopied] = useState(false)
   const [showInstallOptions, setShowInstallOptions] = useState(false)
   const [installCopied, setInstallCopied] = useState<string | null>(null)
+  const [openingPluginPanel, setOpeningPluginPanel] = useState(false)
   const [marketUpdate, setMarketUpdate] = useState<MarketUpdateStatus | null>(null)
   const [marketOperation, setMarketOperation] = useState<MarketUpdateOperation | null>(null)
   const [copyingLogId, setCopyingLogId] = useState<string | null>(null)
@@ -1164,12 +1168,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const state = selected === undefined ? null : runtimeFor(states, selected.id)
   const compatibilityUnverified = selected?.review?.compatibility === 'unverified'
   const isManualOnly = (skin: CatalogSkin): boolean => hostKind === 'desktop'
-    ? skin.install.desktop?.mode !== 'managed'
+    ? desktopInstallPlan(skin, officialDesktop).kind === 'manual'
     : skin.review?.installation === 'manual-only'
   const manualOnly = selected !== undefined && isManualOnly(selected)
-  const desktopManualReason = hostKind === 'desktop' && selected?.install.desktop?.mode === 'manual-only'
-    ? selected.install.desktop.reason
-    : undefined
+  const selectedDesktopPlan = selected === undefined ? undefined : desktopInstallPlan(selected, officialDesktop)
+  const desktopManualReason = selectedDesktopPlan?.kind === 'manual' ? selectedDesktopPlan.reason : undefined
   const manualInstallNotice = hostKind === 'desktop'
     ? `无法自动安装：${desktopManualReasonLabel(desktopManualReason)}。`
     : '该皮肤暂不支持市场直接安装。'
@@ -1762,6 +1765,42 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     if (target !== undefined) openBrowser(target, 'installed')
   }
   const closeBrowser = () => { setLightboxOpen(false); setBrowserOpen(false); setShowDetail(false) }
+  const openPluginPanel = async (skin: CatalogSkin, target: string) => {
+    if (openingPluginPanel) return
+    chooseSkin(skin.id)
+    setInstallCopied(null)
+    setError(null)
+    setShowInstallOptions(false)
+    closeBrowser()
+    if (!officialDesktop || desktopPluginPanel === undefined) {
+      setError('当前宿主暂未提供可用的安装面板入口，可从「其他安装方式」复制目标。')
+      return
+    }
+    setOpeningPluginPanel(true)
+    setShowInstallOptions(false)
+    closeBrowser()
+    try {
+      const result = await desktopPluginPanel.open(target)
+      if (!result.ok && mounted.current) {
+        setError(result.reason)
+      }
+    } catch {
+      if (mounted.current) {
+        setError('暂时无法打开安装面板，可从「其他安装方式」复制目标。')
+      }
+    } finally {
+      if (mounted.current) setOpeningPluginPanel(false)
+    }
+  }
+  const openManualInstall = (skin: CatalogSkin) => {
+    if (officialDesktop) {
+      void openPluginPanel(skin, skin.install.target)
+      return
+    }
+    chooseSkin(skin.id)
+    setInstallCopied(null)
+    setShowInstallOptions(true)
+  }
   const deferInstallAndUse = livePnpmOperations(operations).length > 0
   const restartInstallBlock = restartBlockedByInstalls(operations, skins)
   const manualDesktopRestart = hostKind === 'desktop' && !restartAvailable
@@ -1777,9 +1816,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     : `${restartNoticeMatchesTarget ? pendingRestart.description ?? restartTargetDescription : restartTargetDescription}请保存工作，完全退出 Desktop App 后重新打开。`
   const openCardInstall = (skin: CatalogSkin) => {
     if (isManualOnly(skin)) {
-      chooseSkin(skin.id)
-      setInstallCopied(null)
-      setShowInstallOptions(true)
+      openManualInstall(skin)
       return
     }
     if (officialDesktop && deferInstallAndUse) return
@@ -1840,7 +1877,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         {stateText !== null && <StatusLabel active={itemState.activation === 'active'}>{stateText}</StatusLabel>}
         {actionCount > 0 && <div className={css.cardInlineActions} role="group" aria-label={`${skin.name.zh} 操作`}>
           {cardMutation !== undefined ? <span className={css.cardActionProgress}><IconLoadingOutline />{mutationLabels[cardMutation.kind]}</span> : <>
-            {needsInstall && <Button className={css.cardAction} variant="outline" size="sm" disabled={!isManualOnly(skin) && (installAndUseReason !== null || officialDesktop && deferInstallAndUse)} title={isManualOnly(skin) ? '复制安装提示词' : installAndUseReason ?? (officialDesktop && deferInstallAndUse ? '请等待当前安装完成，再安装其他皮肤' : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : '安装并使用当前皮肤')} onClick={() => openCardInstall(skin)}>{isManualOnly(skin) ? '需手动安装' : officialDesktop || deferInstallAndUse ? '安装' : '安装并使用'}</Button>}
+            {needsInstall && <Button className={css.cardAction} variant="outline" size="sm" disabled={openingPluginPanel || (isManualOnly(skin) ? officialDesktop && deferInstallAndUse : installAndUseReason !== null || officialDesktop && deferInstallAndUse)} title={isManualOnly(skin) ? officialDesktop ? '安装此皮肤' : '复制安装提示词' : installAndUseReason ?? (officialDesktop && deferInstallAndUse ? '请等待当前安装完成，再安装其他皮肤' : deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : '安装并使用当前皮肤')} onClick={() => openCardInstall(skin)}>{isManualOnly(skin) ? hostKind === 'desktop' ? '安装' : '需手动安装' : officialDesktop || deferInstallAndUse ? '安装' : '安装并使用'}</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'inactive' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('activate') !== null} onClick={() => activateCard(skin.id)}>使用</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'unavailable' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('activate') !== null} onClick={() => activateCard(skin.id)}>重新使用</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'unavailable' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('deactivate') !== null} onClick={() => { void runForSkin(skin.id, 'deactivate') }}>停用</Button>}
@@ -2204,7 +2241,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
                 {autoInstallable && (officialDesktop || !deferInstallAndUse) && <Button variant="primary" size="sm" icon={<IconDownloadOutline />} disabled={selectedBusy !== undefined || installAndUseReason !== null || officialDesktop && deferInstallAndUse} title={installAndUseReason ?? (officialDesktop && deferInstallAndUse ? '请等待当前安装完成，再安装其他皮肤' : installRequiresRestart ? DESKTOP_INSTALL_RESTART_GUIDANCE : undefined)} onClick={() => void installAndActivate()}>{officialDesktop ? '安装' : '安装并使用'}</Button>}
                 {autoInstallable && !officialDesktop && <Button variant={deferInstallAndUse ? 'primary' : 'outline'} size="sm" icon={deferInstallAndUse ? <IconDownloadOutline /> : undefined} disabled={selectedBusy !== undefined || actionReason('install') !== null} title={deferInstallAndUse ? '先安装，当前有其他皮肤正在安装，完成后再使用' : undefined} onClick={() => void run('install')}>{deferInstallAndUse ? '安装' : '仅安装'}</Button>}
                 {autoInstallable && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined} onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>其他安装方式</Button>}
-                {manualOnly && <Button variant="outline" size="sm" icon={<MarkGithubIcon size={16} />} disabled={selectedBusy !== undefined} title="打开手动安装面板" onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>检查并指导安装</Button>}
+                {manualOnly && <Button variant="outline" size="sm" icon={<MarkGithubIcon size={16} />} disabled={selectedBusy !== undefined || openingPluginPanel || officialDesktop && deferInstallAndUse} title={officialDesktop ? '安装此皮肤' : '打开手动安装面板'} onClick={() => openManualInstall(selected)}>{hostKind === 'desktop' ? '安装' : '检查并指导安装'}</Button>}
+                {manualOnly && officialDesktop && <Button variant="outline" size="sm" onClick={() => { setInstallCopied(null); setShowInstallOptions(true) }}>其他安装方式</Button>}
               </>}
               {state.installation === 'installed' && state.activation === 'inactive' && <Button variant="primary" size="sm" disabled={selectedBusy !== undefined || actionReason('activate') !== null} onClick={activateSelected}>使用</Button>}
               {state.installation === 'installed' && state.activation === 'unavailable' && <Button variant="primary" size="sm" disabled={selectedBusy !== undefined || actionReason('activate') !== null} onClick={activateSelected}>重新使用</Button>}

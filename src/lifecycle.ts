@@ -7,6 +7,7 @@ import { assessCompatibility, compatibilityContext } from './compatibility.ts'
 import { persistCompatibilityPatch, planCompatibilityPatch } from './compatibility-adapter.ts'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { loadCatalog } from './catalog.ts'
+import { desktopGithubInstallPlan, desktopInstallPlan } from './desktop-install.ts'
 import { companionAsSkin, discoverMonorepoTarget, isNpmInstallTarget, preferredInstallTarget, reviewedNpmSourceError, updateInstallTarget } from './install-resolution.ts'
 import { sharedLoaderIdentifiers } from './loader-ownership.ts'
 import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
@@ -56,6 +57,8 @@ import {
   acknowledgeSkinArtifactRisk,
   validateInstalledSkin,
   validateDesktopArtifact,
+  isGithubArtifactSpec,
+  githubArtifactSourceMatches,
   writeMarketState,
   type FileSnapshot,
   type LoaderIdentity,
@@ -588,7 +591,7 @@ export class SkinLifecycle {
       const validation = validateInstalledSkin(this.options.profileDir, skin, { hostKind: this.hostKind })
       if (!validation.ok) throw new Error(validation.reason)
     }
-    if (this.hostKind === 'desktop' && skin.install.desktop?.mode === 'managed' && artifact.version === skin.install.version) {
+    if (this.hostKind === 'desktop' && (skin.install.desktop?.mode === 'managed' || isGithubArtifactSpec(artifact.spec)) && artifact.version === skin.install.version) {
       const validation = validateDesktopArtifact(this.options.profileDir, skin)
       if (!validation.ok) throw new Error(validation.reason)
     }
@@ -1030,8 +1033,9 @@ export class SkinLifecycle {
     }
     if (artifactContext !== undefined && kind !== 'activate' && kind !== 'pin') throw new Error('安装构件确认仅适用于使用或常驻操作')
     if (kind === 'install' || kind === 'update' || kind === 'migrate') {
-      if (this.hostKind === 'desktop' && skin.install.desktop?.mode !== 'managed') {
-        throw new Error(desktopInstallError(skin.install.desktop))
+      if (this.hostKind === 'desktop') {
+        const plan = desktopInstallPlan(skin, this.management !== undefined)
+        if (plan.kind === 'manual') throw new Error(`Desktop 当前不支持该皮肤的一键安装（${plan.reason}），请使用官方添加插件面板`)
       }
       if (this.hostKind !== 'desktop' && skin.review?.installation === 'manual-only') {
         throw new Error('该皮肤尚未满足市场自动安装所需信息，请查看仓库安装说明')
@@ -1546,22 +1550,44 @@ export class SkinLifecycle {
     return migration
   }
 
+  /** An ordinary Desktop update must retain the installed source family. */
+  private desktopUpdateTarget(skin: SkinEntry): string {
+    const current = readDependencies(this.options.profileDir)[skin.package]
+    if (current === undefined) throw new Error('请先安装皮肤，再执行更新')
+    if (/^github:/i.test(current) || /^(?:git\+)?(?:https?|git):\/\/github\.com\//i.test(current)
+      || /^https:\/\/codeload\.github\.com\//i.test(current) || /^(?:ssh:\/\/)?git@github\.com[:/]/i.test(current)) {
+      if (!githubArtifactSourceMatches(skin, current)) throw new Error('当前 GitHub 仓库或子目录与市场来源不同，无法自动换源；请按原安装方式更新')
+      const plan = desktopGithubInstallPlan(skin)
+      if (this.management === undefined || plan.kind !== 'github') throw new Error(`当前 GitHub 来源无法自动更新；${plan.kind === 'manual' ? plan.reason : '此宿主不支持 GitHub 安装'}，请按原安装方式更新`)
+      return plan.target
+    }
+    const plan = desktopInstallPlan(skin, this.management !== undefined)
+    const npm = current.startsWith(`npm:${skin.package}@`) ? current.slice(`npm:${skin.package}@`.length)
+      : current.startsWith(`${skin.package}@`) ? current.slice(`${skin.package}@`.length) : current
+    if (plan.kind === 'npm' && (isVersionRange(npm) && npm !== 'unverified' || /^[A-Za-z][A-Za-z0-9._-]*$/.test(npm))) return plan.target
+    throw new Error('当前皮肤使用本地、自定义或无法继续核验的安装来源，无法自动换源；请按原安装方式更新')
+  }
+
   private async installPackage(skin: SkinEntry, operation: Operation, state: PersistedMarketState, target?: string, prefetched?: PrefetchedPackage): Promise<void> {
     if (this.hostKind === 'desktop') {
       this.desktopManagedAttempts.add(operation.id)
-      const capability = skin.install.desktop
-      if (capability?.mode !== 'managed') throw new Error(desktopInstallError(capability))
-      if (capability.packageName !== skin.package || capability.packageVersion !== skin.install.version) {
-        throw new Error('Desktop 安装元数据与皮肤固定版本不一致，请等待市场重新抓取')
-      }
+      const current = readDependencies(this.options.profileDir)[skin.package]
+      // A repair or update of GitHub code cannot silently switch to a newly
+      // published npm alternative. Only the official transaction accepts Git.
+      const selectedTarget = target ?? (current === undefined ? undefined : this.desktopUpdateTarget(skin))
+      const githubTarget = selectedTarget === skin.install.target
+      const plan = githubTarget && this.management !== undefined ? desktopGithubInstallPlan(skin) : desktopInstallPlan(skin, this.management !== undefined)
+      if (plan.kind === 'manual') throw new Error(`Desktop 当前不支持该皮肤的一键安装（${plan.reason}），请使用官方添加插件面板`)
+      if (selectedTarget !== undefined && plan.target !== selectedTarget) throw new Error('Desktop 安装目标与已核验来源不一致')
       const installPlugin = this.options.runner.installPlugin
       if (installPlugin === undefined) throw new Error('当前 Desktop 未提供受支持的插件安装服务')
       this.update(operation, 'installing')
       const controller = this.abortControllers.get(operation.id)
       const tracker = new PnpmProgressTracker()
       const request: PluginInstallRequest = {
-        packageName: capability.packageName,
-        packageVersion: capability.packageVersion,
+        packageName: skin.package,
+        packageVersion: skin.install.version,
+        ...(plan.kind === 'github' ? { spec: plan.target } : {}),
         receiptId: randomUUID(),
         pnpmOptions: ['--prefer-offline', '--reporter=ndjson'],
         approvedBuilds: this.pendingBuildKeys.get(operation.id),
@@ -1580,7 +1606,7 @@ export class SkinLifecycle {
           },
         }), operation, skin.package, true)
         this.acceptManagement(result, operation)
-        if (result.management?.version !== undefined && result.management.version !== capability.packageVersion) throw new Error('官方宿主安装的版本与已核验目标不一致')
+        if (result.management?.version !== undefined && result.management.version !== skin.install.version) throw new Error('官方宿主安装的版本与已核验目标不一致')
         const artifact = validateDesktopArtifact(this.options.profileDir, skin, { allowArtifactRisk: true })
         if (!artifact.ok) throw new Error(artifact.reason ?? '官方宿主安装构件未通过核验')
         this.assertLegacyOfficialPeers(packageManifest(this.options.profileDir, skin.package))
@@ -2175,7 +2201,7 @@ export class SkinLifecycle {
 
   private async updateSkin(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
-    const target = this.hostKind === 'desktop' ? undefined : operation.kind === 'migrate'
+    const target = this.hostKind === 'desktop' ? this.desktopUpdateTarget(skin) : operation.kind === 'migrate'
       ? this.assertNpmMigration(skin).target
       : updateInstallTarget(skin, readDependencies(this.options.profileDir)[skin.package])
     this.applyPendingBuildApprovals(operation)
@@ -2192,6 +2218,7 @@ export class SkinLifecycle {
     }
     await this.withProfileLock(operation, async () => {
       this.assertCompatibilityContext(operation, skin)
+      if (this.hostKind === 'desktop' && this.desktopUpdateTarget(skin) !== target) throw new Error('Desktop 更新来源在排队期间发生变化，请刷新后重试')
       if (this.hostKind !== 'desktop') {
         await this.prepareProfile(skin, operation, () => this.syncPnpmMetadata(operation, '正在修复 profile 的 pnpm 锁文件'))
       }

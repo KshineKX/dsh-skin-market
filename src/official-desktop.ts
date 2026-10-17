@@ -340,7 +340,7 @@ export function officialDesktopRunner(
   }
   runner.hostKind = 'desktop'
   runner.ensurePnpm = async () => undefined
-  runner.installPlugin = (_profile, request, options) => install(`${request.packageName}@${request.packageVersion}`, request.receiptId, request, options)
+  runner.installPlugin = (_profile, request, options) => install(request.spec ?? `${request.packageName}@${request.packageVersion}`, request.receiptId, request, options)
   runner.management = {
     installRequiresRestart: version !== null && AUDITED_VERSIONS.has(version) && !versionAtLeast(RESOLUTION_REFRESH_VERSION),
     capabilities,

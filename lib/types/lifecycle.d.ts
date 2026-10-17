@@ -151,6 +151,8 @@ export declare class SkinLifecycle {
     private recoverProfile;
     private prepareProfile;
     private assertNpmMigration;
+    /** An ordinary Desktop update must retain the installed source family. */
+    private desktopUpdateTarget;
     private installPackage;
     private installCompanions;
     private claimManagedCompanion;

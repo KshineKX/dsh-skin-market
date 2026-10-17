@@ -21,6 +21,16 @@ export declare function packageDir(profileDir: string, packageName: string): str
 export declare function compatibilityPatchDir(profileDir: string): string;
 export declare function compatibilityPatchFile(profileDir: string, packageName: string, version: string): string;
 export declare function packageManifest(profileDir: string, packageName: string): Record<string, unknown> | null;
+export declare function isGithubArtifactSpec(spec: string | null | undefined): boolean;
+/** Source identity remains fixed during updates; only the pinned commit may advance. */
+export declare function githubArtifactSourceMatches(skin: SkinEntry, spec: string): boolean;
+/** Validate both the saved source and its actual GitHub root-importer resolution. */
+export declare function validateGithubArtifact(profileDir: string, skin: SkinEntry): {
+    ok: boolean;
+    version?: string;
+    reason?: string;
+    integrityVerified: boolean;
+};
 export interface InstalledArtifactSnapshot {
     packageName: string;
     name: string | null;
@@ -38,6 +48,9 @@ export interface InstalledArtifactSnapshot {
         version: string;
         integrity: string | null;
         tarball: string | null;
+        gitHosted?: boolean;
+        path?: string | null;
+        gitPackageVersion?: string | null;
     } | null;
 }
 /** Inspect only this package's declared executable entries; never import code. */
@@ -81,7 +94,7 @@ export declare function validateNpmArtifact(profileDir: string, source: NpmArtif
     reason?: string;
     integrityVerified: boolean;
 };
-/** Validate managed Desktop metadata without inventing missing npm provenance. */
+/** Validate the installed Desktop source without inventing missing npm provenance. */
 export declare function validateDesktopArtifact(profileDir: string, skin: SkinEntry, options?: SkinArtifactValidationOptions): {
     ok: boolean;
     version?: string;

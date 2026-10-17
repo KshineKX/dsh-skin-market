@@ -30,6 +30,8 @@ export type CommandExecutor = (file: string, args: readonly string[], options?: 
 export interface PluginInstallRequest {
   packageName: string
   packageVersion: string
+  /** A reviewed pinned source; only the official manager accepts non-npm specs. */
+  spec?: string
   receiptId: string
   pnpmOptions?: readonly string[]
   /** Exact pending package names explicitly approved by the user. */
@@ -541,19 +543,24 @@ export function desktopRunner(service: DesktopPnpmLike, profileDir: string): Plu
     options,
   )
   runner.hostKind = 'desktop'
-  runner.installPlugin = (_profile, request, options) => runDesktopOperation(
-    signal => service.installPlugin({
-      pnpmOptions: request.pnpmOptions,
-      invokingDir: profileDir,
-      recovery: {
-        packageName: request.packageName,
-        packageVersion: request.packageVersion,
-        receiptId: request.receiptId,
-      },
-      signal,
-    }),
-    options,
-  )
+  runner.installPlugin = (_profile, request, options) => {
+    if (request.spec !== undefined && request.spec !== `${request.packageName}@${request.packageVersion}`) {
+      return Promise.resolve({ exitCode: 1, stdout: '', stderr: '当前桌面宿主仅支持已验证的 npm 安装包', timedOut: false })
+    }
+    return runDesktopOperation(
+      signal => service.installPlugin({
+        pnpmOptions: request.pnpmOptions,
+        invokingDir: profileDir,
+        recovery: {
+          packageName: request.packageName,
+          packageVersion: request.packageVersion,
+          receiptId: request.receiptId,
+        },
+        signal,
+      }),
+      options,
+    )
+  }
   return runner
 }
 

@@ -1,6 +1,7 @@
 import { createElement as h } from 'react'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { SkinMarketSection } from './SkinMarketSection.tsx'
+import { createDesktopPluginPanel } from './desktop-plugin-panel.ts'
 
 const namespace = 'dsh-skin-market'
 const dictionaries = {
@@ -9,10 +10,12 @@ const dictionaries = {
 }
 
 interface ClientContext {
+  get?: (name: string) => unknown
   effect(callback: () => unknown, label?: string): void
   locale: { register(namespace: string, dictionaries: Record<string, Record<string, string>>): unknown; bind(namespace: string): (key: string) => string }
   loader: ClientLoader
-  slots: { inject(slot: string, callback: () => unknown): void; register(meta: Record<string, unknown>, component: () => unknown): unknown }
+  slots: { inject(slot: string, callback: () => unknown): void; register(meta: Record<string, unknown>, component: () => unknown): unknown; entriesOfSlot?: (slot: string) => readonly unknown[] }
+  layout?: { selectPanel(panelId: string): void }
 }
 
 interface ClientLoaderEntry {
@@ -62,14 +65,15 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(namespace, dictionaries), 'dsh-skin-market: locale')
   const t = ctx.locale.bind(namespace)
   const clientRuntime = createClientSkinRuntime(ctx.loader)
+  const desktopPluginPanel = createDesktopPluginPanel(ctx)
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section', id: 'skin-market', order: 45, label: () => t('nav'), locale: namespace, inject: () => ({ t }),
-  }, () => h(SkinMarketSection, { t, clientRuntime, layout: 'fill' })))
+  }, () => h(SkinMarketSection, { t, clientRuntime, desktopPluginPanel, layout: 'fill' })))
   // The injection stays dormant on older hosts and registers when the new
   // Plugins page owns this slot. Both entry points use the same market UI.
   ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
     name: 'plugins.bundle.config', key: namespace, locale: namespace, inject: () => ({ t }),
-  }, () => h(SkinMarketSection, { t, clientRuntime, layout: 'embedded' })))
+  }, () => h(SkinMarketSection, { t, clientRuntime, desktopPluginPanel, layout: 'embedded' })))
 }
 
 export { SkinMarketSection } from './SkinMarketSection.tsx'
