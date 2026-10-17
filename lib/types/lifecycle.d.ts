@@ -47,6 +47,7 @@ export declare class SkinLifecycle {
     readonly operations: Map<string, Operation>;
     private profileChain;
     private profileLockOwner;
+    private profileOperation?;
     private downloadAvailable;
     private readonly downloadWaiters;
     private readonly abortControllers;
@@ -74,6 +75,7 @@ export declare class SkinLifecycle {
     private unresolvedManager;
     private readonly unverifiedRestartSkinIds;
     private readonly componentUndo;
+    private readonly legacyBundleUndo;
     private readonly pendingConfigurationRepairs;
     private readonly failedConfigurationBindings;
     private readonly pendingSelectionConfigurations;
@@ -82,6 +84,12 @@ export declare class SkinLifecycle {
     get catalog(): SkinEntry[];
     private get hostKind();
     private get management();
+    private assertSkinLoaderConflicts;
+    private legacyBinding;
+    private inspectLegacyBundles;
+    private withdrawLegacyBundles;
+    /** Called after the ordinary selection rollback, so replay cannot re-enable the target. */
+    private restoreLegacyBundles;
     private configurationTarget;
     private configurationBinding;
     private describeConfigurationOverride;

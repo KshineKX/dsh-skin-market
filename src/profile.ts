@@ -500,7 +500,7 @@ export function inspectSkinArtifactRisk(profileDir: string, skin: SkinEntry, hos
   if (!isRecord(dsh?.client) || (dsh.client.platform !== undefined && dsh.client.platform !== 'web')) return undefined
   try {
     bundlePatchOperations(profileDir, skin.package)
-    assertNoLoaderConflicts(profileDir, skin)
+    assertNoLoaderConflicts(profileDir, skin, undefined, { hostKind })
   } catch { return undefined }
   // The receipt covers the host's reviewed targets, actual manifest metadata, lock
   // resolution and declared executable bytes. It is never a version exemption.
@@ -803,15 +803,77 @@ function collectInstalledPackageLoaderIdentities(profileDir: string, packageName
   }
 }
 
-export function installedLoaderIdentities(profileDir: string, excludePackage?: string): LoaderIdentity[] {
+export function installedLoaderIdentities(profileDir: string, excludePackage?: string, excludedRootPackages: readonly string[] = []): LoaderIdentity[] {
   const rows = patchOperations(profileDir).flatMap(operation => parseInsertedLoaderRows(operation))
   const seen = new Set<string>()
   for (const packageName of Object.keys(readDependencies(profileDir))) {
-    if (packageName === excludePackage) continue
+    // Withdrawing a root bundle does not remove rows introduced through a
+    // different dependency or through the user's profile patch.
+    if (packageName === excludePackage || excludedRootPackages.includes(packageName)) continue
     collectInstalledPackageLoaderIdentities(profileDir, packageName, seen, rows)
   }
   return rows
 }
+
+const REVIEWED_DESKTOP_LEGACY_PACKAGES = [{
+  skinId: 'king-of-soy-sauce.liang-intensity',
+  packageName: '@leon___/dsh-client-liang-intensity-skin',
+  repository: 'kingofsoysauce/dsh-liang-skin',
+  rowId: 'liang-intensity-skin',
+  legacyPackage: 'dsh-client-liang-intensity-skin',
+}] as const
+
+function singleSkinBundleRow(directory: string, packageName: string, rowId: string): Record<string, unknown> | null {
+  const operations = bundlePatchOperationsAt(directory, packageName)
+  if (operations?.length !== 1) return null
+  const operation = operations[0]
+  if (!isRecord(operation) || Object.keys(operation).some(key => key !== 'insert')
+    || !Array.isArray(operation.insert) || operation.insert.length !== 1) return null
+  const row = operation.insert[0]
+  // Withdrawing this bundle must affect this skin alone. Its own config
+  // and enabled flag are retained, but global patches and nested rows are
+  // outside the reviewed package-rename contract.
+  return isRecord(row) && row.id === rowId && row.name === packageName
+    && Object.keys(row).every(key => ['id', 'name', 'config', 'disabled'].includes(key))
+    && (row.disabled === undefined || typeof row.disabled === 'boolean') ? row : null
+}
+
+/** Root bundles whose reviewed predecessor can be withdrawn before selection. */
+export function verifiedDesktopLegacyPackages(profileDir: string, skin: SkinEntry): string[] {
+  const dependencies = readDependencies(profileDir)
+  return REVIEWED_DESKTOP_LEGACY_PACKAGES.filter(alias => {
+    if (skin.id !== alias.skinId || skin.package !== alias.packageName || skin.rowId !== alias.rowId
+      || repositoryIdentity(skin.repo) !== alias.repository || dependencies[alias.legacyPackage] === undefined) return false
+    const directory = packageDir(profileDir, alias.legacyPackage)
+    const manifest = packageManifestAt(directory)
+    if (manifest?.name !== alias.legacyPackage || repositoryIdentity(manifest.repository) !== alias.repository) return false
+    try {
+      return singleSkinBundleRow(directory, alias.legacyPackage, alias.rowId) !== null
+    } catch { return false }
+  }).map(alias => alias.legacyPackage)
+}
+
+/** Whether selecting the replacement alone will enable its sole component on restart. */
+export function desktopLegacyReplacementEnabled(profileDir: string, skin: SkinEntry): boolean {
+  if (verifiedDesktopLegacyPackages(profileDir, skin).length === 0) return false
+  const directory = packageDir(profileDir, skin.package)
+  if (packageManifestAt(directory)?.name !== skin.package) return false
+  try {
+    const row = singleSkinBundleRow(directory, skin.package, skin.rowId)
+    const profileCollision = (value: unknown): boolean => {
+      if (Array.isArray(value)) return value.some(profileCollision)
+      if (!isRecord(value)) return false
+      const identity = { id: typeof value.id === 'string' ? value.id : undefined, name: typeof value.name === 'string' ? value.name : undefined }
+      if (sharedLoaderIdentifiers(identity, { id: skin.rowId, name: skin.package }).length > 0) return true
+      // `config` contains loader rows only for a group. Ordinary plugin
+      // configuration is opaque even when it has fields named id or name.
+      return profileCollision(value.insert) || value.group === true && profileCollision(value.config)
+    }
+    return row !== null && row.disabled !== true && !profileCollision(patchOperations(profileDir))
+  } catch { return false }
+}
+
+export interface LoaderConflictOptions { hostKind?: MarketHostKind }
 
 function packageLoaderMetadata(profileDir: string, skin: SkinEntry): PackageLoaderOwnership {
   return packageLoaderOwnershipAt(packageDir(profileDir, skin.package), skin.package)
@@ -836,14 +898,20 @@ export function assertLoaderMetadata(profileDir: string, skin: SkinEntry): void 
   }
 }
 
-export function assertNoLoaderConflicts(profileDir: string, skin: SkinEntry, incomingRows?: readonly LoaderIdentity[]): void {
+export function assertNoLoaderConflicts(profileDir: string, skin: SkinEntry, incomingRows?: readonly LoaderIdentity[], options: LoaderConflictOptions = {}): void {
   assertLoaderMetadata(profileDir, skin)
   const ownership = packageLoaderMetadata(profileDir, skin)
   const incoming = incomingRows === undefined ? packageLoaderIdentities(profileDir, skin.package) : [...incomingRows]
   if (incoming.length === 0 && !ownership.hasBundle) {
     incoming.push({ id: skin.rowId, name: skin.package, packageName: skin.package })
   }
-  const existing = installedLoaderIdentities(profileDir, skin.package)
+  assertNoKnownLoaderConflicts(profileDir, skin, incoming, options)
+}
+
+/** Check known incoming identities before replacing an installed artifact. */
+export function assertNoKnownLoaderConflicts(profileDir: string, skin: SkinEntry, incoming: readonly LoaderIdentity[], options: LoaderConflictOptions = {}): void {
+  const legacyPackages = options.hostKind === 'desktop' ? verifiedDesktopLegacyPackages(profileDir, skin) : []
+  const existing = installedLoaderIdentities(profileDir, skin.package, legacyPackages)
   const conflicts: InstallConflict[] = []
   for (const incomingRow of incoming) {
     for (const existingRow of existing) {

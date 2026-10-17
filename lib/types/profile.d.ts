@@ -126,9 +126,18 @@ export declare class LoaderMetadataError extends Error {
 }
 export declare function packageLoaderOwnershipAt(packageDirectory: string, packageName: string): PackageLoaderOwnership;
 export declare function packageLoaderIdentities(profileDir: string, packageName: string): LoaderIdentity[];
-export declare function installedLoaderIdentities(profileDir: string, excludePackage?: string): LoaderIdentity[];
+export declare function installedLoaderIdentities(profileDir: string, excludePackage?: string, excludedRootPackages?: readonly string[]): LoaderIdentity[];
+/** Root bundles whose reviewed predecessor can be withdrawn before selection. */
+export declare function verifiedDesktopLegacyPackages(profileDir: string, skin: SkinEntry): string[];
+/** Whether selecting the replacement alone will enable its sole component on restart. */
+export declare function desktopLegacyReplacementEnabled(profileDir: string, skin: SkinEntry): boolean;
+export interface LoaderConflictOptions {
+    hostKind?: MarketHostKind;
+}
 export declare function assertLoaderMetadata(profileDir: string, skin: SkinEntry): void;
-export declare function assertNoLoaderConflicts(profileDir: string, skin: SkinEntry, incomingRows?: readonly LoaderIdentity[]): void;
+export declare function assertNoLoaderConflicts(profileDir: string, skin: SkinEntry, incomingRows?: readonly LoaderIdentity[], options?: LoaderConflictOptions): void;
+/** Check known incoming identities before replacing an installed artifact. */
+export declare function assertNoKnownLoaderConflicts(profileDir: string, skin: SkinEntry, incoming: readonly LoaderIdentity[], options?: LoaderConflictOptions): void;
 /** Whether a profile-level row already targets this loader. */
 export declare function hasLoaderOverride(profileDir: string, identity: LoaderIdentity): boolean;
 /**

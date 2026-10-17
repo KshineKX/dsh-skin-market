@@ -36,13 +36,17 @@ import {
   readMarketState,
   readProfileBundles,
   assertNoLoaderConflicts,
+  assertNoKnownLoaderConflicts,
   installedLoaderIdentities,
   InstallConflictError,
   LoaderMetadataError,
   compatibilityPatchFile,
   marketStateFile,
   packageManifest,
+  packageLoaderIdentities,
   packageLoaderOwnershipAt,
+  verifiedDesktopLegacyPackages,
+  desktopLegacyReplacementEnabled,
   patchedDependenciesNeedSync,
   removeSkinRegistration,
   restoreFile,
@@ -242,6 +246,7 @@ export class SkinLifecycle {
   readonly operations = new Map<string, Operation>()
   private profileChain: Promise<void> = Promise.resolve()
   private profileLockOwner: string | null = null
+  private profileOperation?: Operation
   private downloadAvailable = maxParallelDownloads()
   private readonly downloadWaiters: Array<() => void> = []
   private readonly abortControllers = new Map<string, AbortController>()
@@ -269,6 +274,7 @@ export class SkinLifecycle {
   private unresolvedManager = false
   private readonly unverifiedRestartSkinIds = new Set<string>()
   private readonly componentUndo = new Map<string, Map<string, { skin: SkinEntry; entryId: string; enabled: boolean }>>()
+  private readonly legacyBundleUndo = new Map<string, Map<string, { skin: SkinEntry; packages: string[]; binding: string }>>()
   private readonly pendingConfigurationRepairs = new Map<string, ConfigurationRepairApproval>()
   private readonly failedConfigurationBindings = new Map<string, string>()
   private readonly pendingSelectionConfigurations = new Map<string, string>()
@@ -288,6 +294,88 @@ export class SkinLifecycle {
 
   private get hostKind(): MarketHostKind { return this.options.hostKind ?? this.options.runner.hostKind ?? 'dsh' }
   private get management() { return this.options.runner.management }
+
+  private assertSkinLoaderConflicts(skin: SkinEntry, rows?: readonly LoaderIdentity[]): void {
+    assertNoLoaderConflicts(this.options.profileDir, skin, rows, this.management === undefined ? {} : { hostKind: 'desktop' })
+  }
+
+  private legacyBinding(skin: SkinEntry, packages: readonly string[]): string {
+    const dependencies = readDependencies(this.options.profileDir)
+    return JSON.stringify({ skinId: skin.id, packages: packages.map(name => ({ name, spec: dependencies[name], artifact: snapshotInstalledArtifact(this.options.profileDir, name) })) })
+  }
+
+  private async inspectLegacyBundles(skin: SkinEntry): Promise<Array<{ name: string; enabled: boolean }>> {
+    if (this.management === undefined) return []
+    const names = verifiedDesktopLegacyPackages(this.options.profileDir, skin)
+    if (names.length === 0) return []
+    const binding = this.legacyBinding(skin, names)
+    const inventory = await this.awaitLifecycle(this.management.listBundles())
+    if (!Array.isArray(inventory)) throw new Error('无法核对旧版皮肤组合包，请在官方插件页检查状态')
+    const selected = new Set(readProfileBundles(this.options.profileDir))
+    const bundles = names.map(name => {
+      const matches = inventory.filter(bundle => bundle?.name === name)
+      const bundle = matches.length === 1 ? matches[0] : undefined
+      const rows = bundle?.rows
+      if (bundle === undefined || bundle.error !== undefined || bundle.readOnlyReason !== undefined
+        || typeof bundle.enabled !== 'boolean' || bundle.enabled !== selected.has(name)
+        || !Array.isArray(rows) || rows.length !== 1 || rows[0]?.rowId !== skin.rowId || rows[0]?.moduleName !== name
+        || rows[0]?.readOnlyReason !== undefined
+        || bundle.overrides !== undefined && (!Array.isArray(bundle.overrides) || bundle.overrides.length !== 0)) {
+        throw new Error('无法确认可安全切换的唯一旧版皮肤组合包，请在官方插件页检查状态')
+      }
+      return { name, enabled: bundle.enabled as boolean }
+    })
+    if (selected.has(skin.package) && bundles.some(bundle => bundle.enabled)) throw new Error('新旧皮肤组合包同时被选中，请先在官方插件页核对状态')
+    if (binding !== this.legacyBinding(skin, names)
+      || JSON.stringify(names) !== JSON.stringify(verifiedDesktopLegacyPackages(this.options.profileDir, skin))) {
+      throw new Error('旧版皮肤安装身份已变化，请刷新后重试')
+    }
+    return bundles
+  }
+
+  private async withdrawLegacyBundles(skin: SkinEntry, operation?: Operation): Promise<void> {
+    if (this.management === undefined) return
+    this.assertSkinLoaderConflicts(skin)
+    const bundles = await this.inspectLegacyBundles(skin)
+    if (bundles.length === 0) return
+    this.assertRuntimeLoaderConflicts(skin, packageLoaderIdentities(this.options.profileDir, skin.package), bundles.map(bundle => bundle.name))
+    const selected = bundles.filter(bundle => bundle.enabled).map(bundle => bundle.name)
+    if (selected.length === 0) return
+    if (readProfileBundles(this.options.profileDir).includes(skin.package)) throw new Error('新旧皮肤组合包同时被选中，请先在官方插件页核对状态')
+    if (operation === undefined) throw new Error('无法记录旧版皮肤切换，请刷新后重试')
+    const undo = this.legacyBundleUndo.get(operation.id) ?? new Map()
+    // Failed native operations can still have saved changes. Record before the call.
+    if (!undo.has(skin.id)) undo.set(skin.id, { skin, packages: selected, binding: this.legacyBinding(skin, selected) })
+    this.legacyBundleUndo.set(operation.id, undo)
+    for (const name of selected) {
+      this.acceptManagement(await this.awaitLifecycle(this.management.setBundleEnabled(name, false)), operation, skin)
+      if (readProfileBundles(this.options.profileDir).includes(name)) throw new Error('旧版皮肤停用结果未生效，已停止切换')
+    }
+    logEvent('info', 'legacy-skin-switch', `已撤下旧版组合包：${selected.join('、')}；保留安装文件`, operation.id)
+  }
+
+  /** Called after the ordinary selection rollback, so replay cannot re-enable the target. */
+  private async restoreLegacyBundles(operation: Operation): Promise<void> {
+    const undo = this.legacyBundleUndo.get(operation.id)
+    if (undo === undefined || this.management === undefined || this.disposed || this.waitingReason !== undefined) return
+    for (const { skin, packages, binding } of [...undo.values()].reverse()) {
+      if (binding !== this.legacyBinding(skin, packages)
+        || packages.some(name => !verifiedDesktopLegacyPackages(this.options.profileDir, skin).includes(name))) {
+        throw new Error('旧版皮肤安装身份已变化，无法自动恢复，请在官方插件页核对状态')
+      }
+      await this.inspectLegacyBundles(skin)
+      if (readProfileBundles(this.options.profileDir).includes(skin.package)) {
+        this.acceptManagement(await this.awaitLifecycle(this.management.setBundleEnabled(skin.package, false)), operation, skin)
+      }
+      if (readProfileBundles(this.options.profileDir).includes(skin.package)) throw new Error('目标皮肤尚未撤下，已停止恢复旧版以避免冲突')
+      for (const name of packages) {
+        if (!readProfileBundles(this.options.profileDir).includes(name)) {
+          this.acceptManagement(await this.awaitLifecycle(this.management.setBundleEnabled(name, true)), operation, skin)
+        }
+        if (!readProfileBundles(this.options.profileDir).includes(name)) throw new Error('旧版皮肤启用选择恢复未完成，请在官方插件页核对状态')
+      }
+    }
+  }
 
   private configurationTarget(operation: Operation): ConfigurationOverrideTarget | undefined {
     if (operation.application !== 'overridden' || typeof operation.failure?.desiredEnabled !== 'boolean'
@@ -350,7 +438,8 @@ export class SkinLifecycle {
       targets: targets.map(target => {
         const skin = this.skin(target.skinId)
         return { target, install: skin.install, compatibility: skin.compatibility,
-          manifest: packageManifest(this.options.profileDir, skin.package), artifact: snapshotInstalledArtifact(this.options.profileDir, skin.package) }
+          manifest: packageManifest(this.options.profileDir, skin.package), artifact: snapshotInstalledArtifact(this.options.profileDir, skin.package),
+          legacy: this.management === undefined ? undefined : this.legacyBinding(skin, verifiedDesktopLegacyPackages(this.options.profileDir, skin)) }
       }),
     })
   }
@@ -368,7 +457,7 @@ export class SkinLifecycle {
         const skin = this.skin(target.skinId)
         const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
         if (!artifact.ok) throw new Error('目标安装文件不完整，请先修复安装后重新操作。')
-        assertNoLoaderConflicts(this.options.profileDir, skin)
+        this.assertSkinLoaderConflicts(skin)
         const manifest = packageManifest(this.options.profileDir, skin.package)
         const component = await this.officialComponent(skin, (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined)
         identities.push({ skinId: target.skinId, ...component })
@@ -464,7 +553,7 @@ export class SkinLifecycle {
     }
   }
 
-  private async awaitLifecycle<T>(promise: Promise<T>, operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)): Promise<T> {
+  private async awaitLifecycle<T>(promise: Promise<T>, operation = this.profileOperation): Promise<T> {
     let delayed = false
     const timer = setTimeout(() => {
       delayed = true
@@ -503,7 +592,7 @@ export class SkinLifecycle {
   }
 
   /** Resolve only the curated main component, using both official inventories. */
-  private async officialComponent(skin: SkinEntry, bundled: boolean): Promise<{ entryId: string; enabled: boolean } | undefined> {
+  private async officialComponent(skin: SkinEntry, bundled: boolean, allowLegacyRestart = false): Promise<{ entryId: string; enabled: boolean } | undefined> {
     const management = this.management!
     let entryId: string | undefined
     if (bundled) {
@@ -519,6 +608,21 @@ export class SkinLifecycle {
     }
     const plugins = await management.listPlugins()
     const matches = Array.isArray(plugins) ? plugins.filter(row => row?.patchId === skin.rowId && row.moduleName === skin.package && typeof row.entryId === 'string') : []
+    if (matches.length === 0 && entryId !== undefined && allowLegacyRestart && Array.isArray(plugins)
+      && desktopLegacyReplacementEnabled(this.options.profileDir, skin)) {
+      const aliases = verifiedDesktopLegacyPackages(this.options.profileDir, skin)
+      const selected = new Set(readProfileBundles(this.options.profileDir))
+      const stale = plugins.filter(row => row?.entryId === entryId && aliases.includes(row.moduleName) && row.readOnlyReason === 'unaddressable')
+      const oldLoaders = [...this.host.loader.entries()].filter(entry => entry.options.id === skin.rowId && stale.some(row => row.moduleName === entry.options.name))
+      const overrides = this.options.configurationOverride
+      if (selected.has(skin.package) && aliases.every(name => !selected.has(name)) && stale.length === 1 && oldLoaders.length === 1
+        && Array.isArray(overrides?.overlays) && overrides.overlays.length === 0
+        && inspectConfigurationOverride(overrides, { skinId: skin.id, packageName: skin.package, rowId: skin.rowId, enabled: true }).status === 'none') {
+        // rc.2 still exposes the old runtime entryId for the new row. It is
+        // unaddressable; never send it to setPluginEnabled for the new package.
+        return undefined
+      }
+    }
     if (matches.length !== 1 || (entryId !== undefined && matches[0].entryId !== entryId) || matches[0].readOnlyReason !== undefined || typeof matches[0].enabled !== 'boolean') throw new Error('无法确认可修改的唯一皮肤主组件，请使用官方插件页')
     return { entryId: matches[0].entryId, enabled: matches[0].enabled }
   }
@@ -531,7 +635,11 @@ export class SkinLifecycle {
     let restartRequired = false
     const manifest = packageManifest(this.options.profileDir, skin.package)
     if (!disabled) this.assertLegacyOfficialPeers(manifest)
-    const operation = this.profileLockOwner === null ? undefined : this.operations.get(this.profileLockOwner)
+    const operation = this.profileOperation
+    const pendingLegacyRestart = !disabled && verifiedDesktopLegacyPackages(this.options.profileDir, skin).length > 0
+      ? readMarketState(this.options.profileDir).pendingRestart : undefined
+    if (operation !== undefined && pendingLegacyRestart?.pid === process.pid && pendingLegacyRestart.skinIds.includes(skin.id)) operation.restartRequired = true
+    if (!disabled) await this.withdrawLegacyBundles(skin, operation)
     const bundled = manifest !== null && typeof manifest.dsh === 'object' && manifest.dsh !== null && (manifest.dsh as Record<string, unknown>).bundle !== undefined
     if (bundled) {
       const selected = readProfileBundles(this.options.profileDir).includes(skin.package)
@@ -542,12 +650,12 @@ export class SkinLifecycle {
       }
       if (disabled || !repairComponent) return restartRequired
     } else if (operation === undefined || !repairComponent) return false
-    const component = await this.officialComponent(skin, bundled)
+    const component = await this.officialComponent(skin, bundled, operation?.restartRequired === true)
     if (component === undefined) {
       if (restartRequired || operation?.restartRequired === true) return true
       throw new Error('目标皮肤组件尚未加载，请在官方插件页检查加载错误')
     }
-    if (component.enabled === !disabled) return restartRequired
+    if (component.enabled === !disabled) return restartRequired || operation?.restartRequired === true
     if (operation !== undefined) {
       const undo = this.componentUndo.get(operation.id) ?? new Map()
       if (!undo.has(skin.id)) undo.set(skin.id, { skin, entryId: component.entryId, enabled: component.enabled })
@@ -574,7 +682,7 @@ export class SkinLifecycle {
   private assertArtifactUseApproved(operation: Operation, skin: SkinEntry): void {
     const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
     if (!artifact.ok) throw new Error(artifact.reason)
-    assertNoLoaderConflicts(this.options.profileDir, skin)
+    this.assertSkinLoaderConflicts(skin)
     const context = this.artifactContexts.get(operation.id)
     const risk = inspectSkinArtifactRisk(this.options.profileDir, skin, this.hostKind)
     if (context !== undefined) {
@@ -717,6 +825,7 @@ export class SkinLifecycle {
     this.desktopRecoveryBaselines.clear()
     this.abortControllers.clear()
     this.executions.clear()
+    this.legacyBundleUndo.clear()
   }
 
   skin(id: string): SkinEntry {
@@ -1076,6 +1185,7 @@ export class SkinLifecycle {
     void execution.finally(() => {
       if (this.executions.get(operation.id) === execution) this.executions.delete(operation.id)
       this.componentUndo.delete(operation.id)
+      this.legacyBundleUndo.delete(operation.id)
     }).catch(() => undefined)
     return operation
   }
@@ -1149,6 +1259,7 @@ export class SkinLifecycle {
         operation.message = operation.phase === 'queued' ? '正在等待其他皮肤操作完成' : '下载完成，正在等待写入'
       }
       this.profileLockOwner = operation.id
+      this.profileOperation = operation
       this.applyReleaseAgeApproval(operation)
       const approval = this.pendingConfigurationRepairs.get(operation.id)
       this.pendingConfigurationRepairs.delete(operation.id)
@@ -1186,7 +1297,7 @@ export class SkinLifecycle {
         const skin = this.skin(target.skinId)
         const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
         if (!artifact.ok) throw new Error('目标安装文件已变化，请先核对安装结果后重新操作')
-        assertNoLoaderConflicts(this.options.profileDir, skin)
+        this.assertSkinLoaderConflicts(skin)
         // Removing a HOME disable can itself wake HMR before the normal retry.
         // Validate the actual bytes and use consent before editing that layer.
         if (target.enabled) {
@@ -1224,10 +1335,20 @@ export class SkinLifecycle {
             }
           }
         }
+        try {
+          await this.restoreLegacyBundles(operation)
+        } catch (restoreError) {
+          this.recoveryErrors.set(operation.id, '旧版皮肤启停选择恢复未完成，请先在官方插件页核对实际状态')
+          logEvent('error', 'legacy-skin-rollback', errorMessage(restoreError), operation.id)
+        }
         throw error
       }
     } finally {
-      if (this.profileLockOwner === operation.id) this.profileLockOwner = null
+      if (this.profileLockOwner === operation.id) {
+        this.profileLockOwner = null
+        this.profileOperation = undefined
+        if (!this.operations.has(operation.id)) this.legacyBundleUndo.delete(operation.id)
+      }
       release()
     }
   }
@@ -1579,6 +1700,13 @@ export class SkinLifecycle {
       const plan = githubTarget && this.management !== undefined ? desktopGithubInstallPlan(skin) : desktopInstallPlan(skin, this.management !== undefined)
       if (plan.kind === 'manual') throw new Error(`Desktop 当前不支持该皮肤的一键安装（${plan.reason}），请使用官方添加插件面板`)
       if (selectedTarget !== undefined && plan.target !== selectedTarget) throw new Error('Desktop 安装目标与已核验来源不一致')
+      // The native transaction materializes packages before we can inspect
+      // their full bundle. Reject an already-known main loader collision
+      // first; keep the actual artifact's metadata and full-row checks below.
+      const knownRows = [{ id: skin.rowId, name: skin.package, packageName: skin.package }]
+      assertNoKnownLoaderConflicts(this.options.profileDir, skin, knownRows, this.management === undefined ? {} : { hostKind: 'desktop' })
+      const legacyBundles = await this.inspectLegacyBundles(skin)
+      this.assertRuntimeLoaderConflicts(skin, knownRows, legacyBundles.map(bundle => bundle.name))
       const installPlugin = this.options.runner.installPlugin
       if (installPlugin === undefined) throw new Error('当前 Desktop 未提供受支持的插件安装服务')
       this.update(operation, 'installing')
@@ -1638,7 +1766,7 @@ export class SkinLifecycle {
     if (operation.kind === 'migrate' && this.assertNpmMigration(skin).target !== resolved.target) {
       throw new Error('npm 换源目标在下载期间发生变化，请刷新后重试')
     }
-    assertNoLoaderConflicts(this.options.profileDir, skin, resolved.loaderRows)
+    this.assertSkinLoaderConflicts(skin, resolved.loaderRows)
     this.assertRuntimeLoaderConflicts(skin, resolved.loaderRows)
     this.update(operation, 'installing')
     const buildApprovalKey = isNpmInstallTarget(skin, resolved.target) ? undefined : buildApprovalKeyForTarget(skin, resolved.target) ?? effectiveBuildApprovalKey(skin)
@@ -1742,7 +1870,7 @@ export class SkinLifecycle {
     if (state.managedCompanions !== undefined && Object.keys(state.managedCompanions).length === 0) delete state.managedCompanions
   }
 
-  private assertRuntimeLoaderConflicts(skin: SkinEntry, loaderRows: readonly LoaderIdentity[]): void {
+  private assertRuntimeLoaderConflicts(skin: SkinEntry, loaderRows: readonly LoaderIdentity[], legacyPackages: readonly string[] = []): void {
     const incoming = loaderRows.length > 0
       ? loaderRows
       : [{ id: skin.rowId, name: skin.package, packageName: skin.package }]
@@ -1758,7 +1886,8 @@ export class SkinLifecycle {
           && incomingRow.id === skin.rowId
           && id === skin.rowId
           && (name === undefined || name === skin.rowId || name === skin.package)
-        if (incomingRow.packageName === existing.packageName || currentSkinEntry) continue
+        if (incomingRow.packageName === existing.packageName || currentSkinEntry
+          || id === skin.rowId && name !== undefined && legacyPackages.includes(name)) continue
         conflicts.push({
           kind: 'loader' as const,
           incoming: incomingRow.packageName ?? incomingRow.name ?? skin.package,
@@ -1903,7 +2032,7 @@ export class SkinLifecycle {
       if (!reviewedInstalledSpecMatches(this.options.profileDir, skin, readDependencies(this.options.profileDir)[skin.package], { allowArtifactRisk: true, hostKind: this.hostKind })) {
         throw new Error(`installed package ${skin.package} does not match the reviewed source/version ${skin.install.target}`)
       }
-      assertNoLoaderConflicts(this.options.profileDir, skin)
+      this.assertSkinLoaderConflicts(skin)
       await this.registerSkin( skin)
       state.activeSkinId = state.activeSkinId === skin.id ? null : state.activeSkinId
       if (!state.disabledSkinIds.includes(skin.id)) state.disabledSkinIds.push(skin.id)
@@ -2039,6 +2168,7 @@ export class SkinLifecycle {
     this.assertCompatibilityContext(operation, skin)
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before using it')
     this.assertArtifactUseApproved(operation, skin)
+    await this.inspectLegacyBundles(skin)
     this.update(operation, 'activating')
     const previous = readMarketState(this.options.profileDir)
     if (this.management !== undefined && previous.pendingRestart?.pid === process.pid && previous.pendingRestart.skinIds.includes(skin.id)) {
@@ -2133,6 +2263,7 @@ export class SkinLifecycle {
     this.assertCompatibilityContext(operation, skin)
     if (readDependencies(this.options.profileDir)[skin.package] === undefined) throw new Error('install the skin before pinning it')
     this.assertArtifactUseApproved(operation, skin)
+    await this.inspectLegacyBundles(skin)
     const previous = readMarketState(this.options.profileDir)
     if (this.management !== undefined && previous.pendingRestart?.pid === process.pid && previous.pendingRestart.skinIds.includes(skin.id)) {
       operation.restartRequired = true
@@ -2242,7 +2373,7 @@ export class SkinLifecycle {
         if (operation.kind === 'migrate' && readDependencies(this.options.profileDir)[skin.package] !== skin.install.npm?.version) {
           throw new Error('npm 换源后未保存精确版本，已停止并恢复原有安装')
         }
-        assertNoLoaderConflicts(this.options.profileDir, skin)
+        this.assertSkinLoaderConflicts(skin)
         const risk = inspectSkinArtifactRisk(this.options.profileDir, skin, this.hostKind)
         const artifactNeedsConfirmation = risk !== undefined && !isSkinArtifactRiskAcknowledged(this.options.profileDir, skin, this.hostKind)
         const compatibilityNeedsConfirmation = this.management !== undefined && assessCompatibility(skin, this.runtime).decision === 'incompatible'
