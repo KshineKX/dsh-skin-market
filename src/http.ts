@@ -137,7 +137,7 @@ export async function readSkinId(request: IncomingMessage, limit = 8192): Promis
 
 export async function readOperationRetry(request: IncomingMessage, limit = 8192): Promise<{ action: OperationRetryAction; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string }> {
   const body = await readJsonBody(request, limit)
-  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age' && body.action !== 'approve-artifact' && body.action !== 'approve-compatibility' && body.action !== 'repair-configuration') throw new Error('invalid operation retry action')
+  if (body.action !== 'retry' && body.action !== 'approve-build' && body.action !== 'approve-release-age' && body.action !== 'approve-artifact' && body.action !== 'repair-configuration') throw new Error('invalid operation retry action')
   if (body.configurationContext !== undefined && (body.action !== 'repair-configuration' || typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
   if (body.action === 'repair-configuration' && body.configurationContext === undefined) throw new Error('configuration context required')
   if (body.action === 'repair-configuration' && Object.keys(body).some(key => !['action', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext'].includes(key))) throw new Error('invalid configuration repair request')

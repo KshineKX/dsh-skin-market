@@ -2,26 +2,7 @@ import type { CommandResult } from './commands.ts'
 import { sanitizeLogText } from './log.ts'
 import { classifyPnpmFailure } from './pnpm-recovery.ts'
 import { parseReleaseAgeTarget } from './release-age.ts'
-import type { CompatibilityOverride, OperationFailure } from './types.ts'
-
-/** Only structured, unambiguous Host refusals can offer an exact-version exemption. */
-export function officialCompatibilityOverride(result: CommandResult): CompatibilityOverride | undefined {
-  const managed = result.management
-  if (managed?.indeterminate === true || managed?.application !== 'failed' || managed.reportedApplication !== undefined || managed.error?.code !== 'incompatible-version') return undefined
-  const refusals = [managed.error.incompatible, managed.packageResult?.incompatible].filter(Array.isArray).flat()
-  if (refusals.length === 0) return undefined
-  let target: CompatibilityOverride | undefined
-  for (const refusal of refusals) {
-    if (refusal === null || typeof refusal !== 'object' || Array.isArray(refusal)) return undefined
-    const { name, version, runtimeVersion } = refusal as Record<string, unknown>
-    if (typeof name !== 'string' || typeof version !== 'string' || typeof runtimeVersion !== 'string'
-      || parseReleaseAgeTarget(name, version) === undefined || parseReleaseAgeTarget(name, runtimeVersion) === undefined) return undefined
-    const next = { packageName: name, version, hostVersion: runtimeVersion }
-    if (target !== undefined && JSON.stringify(target) !== JSON.stringify(next)) return undefined
-    target = next
-  }
-  return target
-}
+import type { OperationFailure } from './types.ts'
 
 const PACKAGE_FAILURES: Record<string, Pick<OperationFailure, 'kind' | 'message'>> = {
   'pnpm-missing': { kind: 'pnpm-missing', message: 'Desktop 未找到可用的 pnpm，安装没有完成；请检查 Desktop 的包管理器设置。' },

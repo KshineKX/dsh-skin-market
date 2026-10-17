@@ -168,12 +168,7 @@ export interface InstallConflict {
 export type SelectionOperationKind = 'activate' | 'deactivate' | 'pin' | 'unpin';
 export type OperationKind = 'install' | SelectionOperationKind | 'update' | 'migrate' | 'uninstall';
 export type OperationPhase = 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed';
-export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'approve-compatibility' | 'repair-configuration';
-export interface CompatibilityOverride {
-    packageName: string;
-    version: string;
-    hostVersion: string;
-}
+export type OperationRetryAction = 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'repair-configuration';
 export interface SkinArtifactRisk {
     context: string;
     packageName: string;
@@ -192,7 +187,6 @@ export interface OperationFailure {
         packageName: string;
         version: string;
     };
-    compatibilityOverride?: CompatibilityOverride;
     artifactRisk?: SkinArtifactRisk;
     buildKeys?: string[];
     action?: OperationRetryAction;

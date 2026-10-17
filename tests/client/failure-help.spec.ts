@@ -183,18 +183,7 @@ describe('failure help', () => {
     expect(notice.what).toBe('「测试皮肤」未通过当前 DSH 的兼容检查。')
     expect(notice.why).toContain('宿主版本与皮肤声明')
     expect(notice.what).not.toContain('没有改动')
-  })
-
-  it('explains the exact scope and persistence of explicit Host compatibility authorization', () => {
-    const operation = failed('compatibility', '插件依赖不兼容')
-    operation.failure!.action = 'approve-compatibility'
-    operation.failure!.compatibilityOverride = { packageName: '@fixture/skin', version: '1.3.0', hostVersion: '0.2.0-rc.2' }
-    const notice = interceptNotice(operation, '测试皮肤', skin)
-    expect(notice.title).toBe('安装需要确认兼容风险')
-    expect(notice.what).toContain('崩溃或数据丢失')
-    expect(notice.why).toContain('@fixture/skin@1.3.0')
-    expect(notice.why).toContain('保存仅适用于 DSH 0.2.0-rc.2')
-    expect(notice.why).toContain('撤销授权')
+    expect(`${notice.what}${notice.why}`).not.toMatch(/授权|豁免|忽略检查/)
   })
 
   it('explains a market store mismatch with the troubleshooting README', () => {

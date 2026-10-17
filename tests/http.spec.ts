@@ -93,11 +93,15 @@ describe('HTTP guards', () => {
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({
       skinId: 'fixture-skin', acknowledgeCompatibility: acknowledgement === true, ...context,
     })
-    for (const action of ['retry', 'approve-build', 'approve-release-age', 'approve-artifact', 'approve-compatibility'] as const) {
+    for (const action of ['retry', 'approve-build', 'approve-release-age', 'approve-artifact'] as const) {
       await expect(readOperationRetry(jsonRequest({ action, ...body }))).resolves.toEqual({
         action, acknowledgeCompatibility: acknowledgement === true, ...context,
       })
     }
+  })
+
+  it('rejects host compatibility exemption recovery requests', async () => {
+    await expect(readOperationRetry(jsonRequest({ action: 'approve-compatibility' }))).rejects.toThrow('invalid operation retry action')
   })
 
   it('allows only an explicit supported market retry action and keeps bodyless retries ordinary', async () => {

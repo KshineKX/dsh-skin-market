@@ -1678,7 +1678,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }, [runForSkin])
 
   const retrySkinOperation = useCallback(async (operation: Operation, requestedAction?: NonNullable<Operation['failure']>['action'], combinedConsent?: UseConsentContext) => {
-    const action = requestedAction ?? (operation.failure?.action === 'approve-release-age' || operation.failure?.action === 'approve-artifact' || operation.failure?.action === 'approve-compatibility' ? undefined : operation.failure?.action)
+    const action = requestedAction ?? (operation.failure?.action === 'approve-release-age' || operation.failure?.action === 'approve-artifact' ? undefined : operation.failure?.action)
     if (action === undefined || action !== operation.failure?.action) return
     try {
       let skin = skinsRef.current.find(item => item.id === operation.skinId)
@@ -1928,9 +1928,6 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const interceptHasError = interceptApprovalError !== null && interceptApprovalError.operationId === interceptLogId
   const interceptFailure = interceptOperation?.failure ?? marketInterceptOperation?.failure
   const releaseAgeTarget = interceptFailure?.kind === 'release-age' && interceptFailure.action === 'approve-release-age' ? interceptFailure.releaseAgeTarget : undefined
-  const compatibilityOverride = interceptFailure?.kind === 'compatibility' && interceptFailure.action === 'approve-compatibility'
-    && interceptFailure.compatibilityOverride?.packageName && interceptFailure.compatibilityOverride.version && interceptFailure.compatibilityOverride.hostVersion
-    ? interceptFailure.compatibilityOverride : undefined
   const artifactRisk = interceptOperation?.failure?.kind === 'integrity' && interceptOperation.failure.action === 'approve-artifact'
     && interceptOperation.failure.artifactRisk?.context.trim() ? interceptOperation.failure.artifactRisk : undefined
   const configurationPlan = interceptOperation?.failure?.action === 'repair-configuration'
@@ -1946,11 +1943,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     artifactContext: runtimeFor(states, interceptUseSkin.id).artifactRisk?.context,
   }
   const interceptCompatibility = artifactRisk !== undefined && interceptSkin !== undefined ? installCompatibility(interceptSkin, 'dsh', runtime) : null
-  const interceptApprovalAction = configurationPlan !== undefined ? 'repair-configuration' : releaseAgeTarget !== undefined ? 'approve-release-age' : compatibilityOverride !== undefined ? 'approve-compatibility' : artifactRisk !== undefined ? 'approve-artifact' : interceptFailure?.action === 'retry' ? 'retry' : undefined
-  const compatibilityApprovalLabel = interceptOperation === null ? '允许并继续' : ({
-    install: '仍然安装', update: '仍然更新', activate: '仍然使用', pin: '仍然常驻使用', migrate: '仍然换用 npm',
-    deactivate: '仍然停用', unpin: '仍然取消常驻', uninstall: '仍然卸载',
-  } satisfies Record<MutationKind, string>)[interceptOperation.kind]
+  const interceptApprovalAction = configurationPlan !== undefined ? 'repair-configuration' : releaseAgeTarget !== undefined ? 'approve-release-age' : artifactRisk !== undefined ? 'approve-artifact' : interceptFailure?.action === 'retry' ? 'retry' : undefined
   const repairPromptOptions = interceptOperation === null ? null : {
     operation: interceptOperation, skin: interceptSkin, hostKind, runtimeVersion: runtime?.version,
   }
@@ -2033,7 +2026,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
     try {
       if (interceptOperation !== null) await retrySkinOperation(interceptOperation, interceptApprovalAction, interceptUseConsent)
-      else if (marketInterceptOperation !== null && interceptApprovalAction !== 'approve-artifact' && interceptApprovalAction !== 'repair-configuration' && interceptApprovalAction !== 'approve-compatibility') await retryMarketUpdate(interceptApprovalAction)
+      else if (marketInterceptOperation !== null && interceptApprovalAction !== 'approve-artifact' && interceptApprovalAction !== 'repair-configuration') await retryMarketUpdate(interceptApprovalAction)
     } finally {
       interceptApprovalPendingRef.current.delete(interceptLogId)
       if (mounted.current) setInterceptApprovalPending(ids => ids.filter(id => id !== interceptLogId))
@@ -2388,7 +2381,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             ? <Button variant="primary" size="sm" onClick={dismissIntercept}>知道了</Button>
             : <>
               <Button variant="outline" size="sm" disabled={interceptPending} onClick={dismissIntercept}>取消</Button>
-              <Button variant="primary" size="sm" disabled={interceptPending} onClick={() => { void approveInterceptRisk() }}>{interceptPending ? '处理中…' : interceptApprovalAction === 'repair-configuration' ? '解除覆盖并继续' : interceptApprovalAction === 'retry' ? '重试' : interceptApprovalAction === 'approve-compatibility' ? compatibilityApprovalLabel : artifactRisk === undefined ? '允许并继续' : interceptOperation?.kind === 'activate' ? '仍然使用' : interceptOperation?.kind === 'pin' ? '仍然常驻使用' : '仍然继续'}</Button>
+              <Button variant="primary" size="sm" disabled={interceptPending} onClick={() => { void approveInterceptRisk() }}>{interceptPending ? '处理中…' : interceptApprovalAction === 'repair-configuration' ? '解除覆盖并继续' : interceptApprovalAction === 'retry' ? '重试' : artifactRisk === undefined ? '允许并继续' : interceptOperation?.kind === 'activate' ? '仍然使用' : interceptOperation?.kind === 'pin' ? '仍然常驻使用' : '仍然继续'}</Button>
             </>}
         </>}
       >

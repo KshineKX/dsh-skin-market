@@ -3504,60 +3504,48 @@ describe('client market', () => {
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
   })
 
-  it.each([
-    { kind: 'install', decision: 'accept' }, { kind: 'install', decision: 'cancel' }, { kind: 'install', decision: 'close' },
-    { kind: 'update', decision: 'accept' }, { kind: 'update', decision: 'cancel' },
-  ] as const)('requires explicit exact-version approval before $kind (decision=$decision)', async ({ kind, decision }) => {
-    const id = `compatibility-${kind}-${decision}`
-    let completed = false
+  it.each(['install', 'update', 'activate', 'pin'] as const)('acknowledges a Host compatibility rejection during %s without offering or issuing a retry', async kind => {
+    const target = { ...skin, compatibility: { dsh: '<0.1.0-rc.6', platform: ['web'] } }
+    const hostRuntime = { ...dshRuntime, version: '0.2.0-rc.2' }
+    const id = `host-compatibility-rejected-${kind}`
     const operation: Operation = { id, kind, skinId: skin.id, phase: 'failed', startedAt: new Date().toISOString(), failure: {
-      kind: 'compatibility', code: 'incompatible-version', message: 'Host rejected incompatible plugin peers', action: 'approve-compatibility',
-      compatibilityOverride: { packageName: skin.package, version: '1.0.0', hostVersion: '0.2.0-rc.2' },
+      kind: 'compatibility', code: 'incompatible-version', message: 'Host rejected incompatible plugin peers',
     } }
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
-      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: kind === 'update' || completed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: completed ? '1.0.0' : '0.9.0', updateAvailable: kind === 'update' && !completed }] : [], runtime: { ...dshRuntime, version: '0.2.0-rc.2' } }) }
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [target] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: kind === 'install' ? [] : [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: kind === 'update' ? '0.9.0' : '1.0.0', updateAvailable: kind === 'update' }], runtime: hostRuntime }) }
       if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
       if (url.endsWith(`/${kind}`) && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: id }) }
       if (url.endsWith(`/operations/${id}`)) return { ok: true, json: async () => operation }
-      if (url.endsWith(`/operations/${id}/retry`) && init?.method === 'POST') {
-        expect(JSON.parse(String(init.body))).toEqual({ action: 'approve-compatibility' })
-        completed = true
-        return { ok: true, json: async () => ({ operationId: `${id}-approved` }) }
-      }
-      if (url.endsWith(`/operations/${id}-approved`)) return { ok: true, json: async () => ({ ...operation, id: `${id}-approved`, phase: 'done', failure: undefined }) }
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} />)
     await openSkinCard()
-    fireEvent.click(screen.getByRole('button', { name: kind === 'install' ? '仅安装' : '更新' }))
-    const dialog = await screen.findByRole('dialog', { name: kind === 'install' ? '安装需要确认兼容风险' : '更新需要确认兼容风险' })
-    expect(dialog.textContent).toContain('skin@1.0.0')
-    expect(dialog.textContent).toContain('0.2.0-rc.2')
-    expect(dialog.textContent).toMatch(/崩溃|数据丢失/)
-    expect(within(dialog).queryByRole('button', { name: '重试' })).toBeNull()
-    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
-    fireEvent.click(within(dialog).getByRole('button', { name: decision === 'accept' ? kind === 'install' ? '仍然安装' : '仍然更新' : decision === 'cancel' ? '取消' : '关闭' }))
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: kind === 'install' ? '安装需要确认兼容风险' : '更新需要确认兼容风险' })).toBeNull())
-    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/retry'))).toHaveLength(decision === 'accept' ? 1 : 0)
-    expect(screen.queryByRole('dialog', { name: '使用前确认' })).toBeNull()
-    expect(screen.queryByRole('status')).toBeNull()
-  })
-
-  it('does not offer compatibility approval without a complete exact-version target', async () => {
-    const operation = { id: 'compatibility-without-target', kind: 'install', skinId: skin.id, phase: 'failed', failure: {
-      kind: 'compatibility', message: 'Host cannot identify the rejected plugin version', action: 'approve-compatibility',
-    } }
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : url.endsWith('/state') ? { skins: [], runtime: dshRuntime } : url.endsWith('/install') && init?.method === 'POST' ? { operationId: operation.id } : url.endsWith(`/operations/${operation.id}`) ? operation : {} }))
-    vi.stubGlobal('fetch', fetchMock)
-    render(<SkinMarketSection t={key => key} />)
-    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
-    const dialog = await screen.findByRole('dialog', { name: '安装未完成' })
-    expect(within(dialog).queryByRole('button', { name: '仍然安装' })).toBeNull()
-    expect(within(dialog).queryByRole('button', { name: '重试' })).toBeNull()
+    const actionLabel = { install: '仅安装', update: '更新', activate: '使用', pin: '常驻使用' }[kind]
+    fireEvent.click(screen.getByRole('button', { name: actionLabel }))
+    if (kind === 'activate' || kind === 'pin') {
+      const confirmation = await screen.findByRole('dialog', { name: '使用前确认' })
+      expect(confirmation.textContent).toContain('不在作者声明的兼容范围')
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith(`/${kind}`))).toBe(false)
+      fireEvent.click(within(confirmation).getByRole('button', { name: kind === 'pin' ? '仍然常驻使用' : '仍然使用' }))
+    }
+    const title = { install: '安装未完成', update: '更新未完成', activate: '启用未完成', pin: '设置常驻未完成' }[kind]
+    const dialog = await screen.findByRole('dialog', { name: title })
+    expect(dialog.textContent).toContain('未通过当前 DSH 的兼容检查')
+    expect(within(dialog).getByRole('button', { name: '知道了' })).toBeTruthy()
+    expect(within(dialog).queryByRole('button', { name: /重试|允许|仍然/ })).toBeNull()
+    const actionRequest = JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith(`/${kind}`) && init?.method === 'POST')?.[1]?.body))
+    expect(actionRequest).toEqual({ skinId: skin.id, ...((kind === 'activate' || kind === 'pin') && { acknowledgeCompatibility: true, compatibilityContext: compatibilityContext(target, hostRuntime) }) })
     fireEvent.click(within(dialog).getByRole('button', { name: '知道了' }))
+    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
     expect(screen.queryByRole('status')).toBeNull()
+    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent.focus(window)
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1)
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
   })
 

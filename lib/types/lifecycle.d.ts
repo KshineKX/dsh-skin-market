@@ -2,7 +2,7 @@ import type { PluginRunner } from './commands.ts';
 import { type ConfigurationOverrideOptions } from './configuration-override.ts';
 import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts';
 import { type ReleaseAgeTarget } from './release-age.ts';
-import type { CompatibilityOverride, DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, OperationRetryAction, SelectionOperationKind, SkinEntry, SkinRuntimeState } from './types.ts';
+import type { DesktopInstallCapability, DshRuntime, LoaderEntry, MarketHostKind, Operation, OperationKind, OperationRetryAction, SelectionOperationKind, SkinEntry, SkinRuntimeState } from './types.ts';
 export interface LifecycleHost {
     loader: {
         entries(): Iterable<LoaderEntry>;
@@ -36,11 +36,6 @@ interface ConfigurationRepairApproval {
     binding: string;
 }
 export declare function desktopInstallError(capability: DesktopInstallCapability | undefined): string;
-interface CompatibilityApproval {
-    target: CompatibilityOverride;
-    context: string;
-    failedId?: string;
-}
 interface ReleaseAgeApproval {
     target: ReleaseAgeTarget;
     context: string;
@@ -59,8 +54,6 @@ export declare class SkinLifecycle {
     private readonly pendingBuildKeys;
     private readonly failedReleaseAgeApprovals;
     private readonly pendingReleaseAgeApprovals;
-    private readonly failedCompatibilityApprovals;
-    private readonly pendingCompatibilityApprovals;
     private readonly artifactContexts;
     private readonly failedArtifactContexts;
     private readonly compatibilityContexts;
@@ -107,8 +100,6 @@ export declare class SkinLifecycle {
     /** Background preflight is read-only and never creates a visible Operation. */
     selectionPlan(kind: SelectionOperationKind, skinId: string): Promise<ConfigurationOverrideBatchPlan>;
     private releaseAgeContext;
-    private compatibilityApprovalContext;
-    private applyCompatibilityApproval;
     private repairReleaseAgePolicy;
     private applyReleaseAgeApproval;
     /** Called only for package transactions while holding the profile queue. */
@@ -153,7 +144,7 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, compatibilityApproval?: CompatibilityApproval): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation;
     retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string, configurationContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
