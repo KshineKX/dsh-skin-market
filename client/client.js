@@ -1459,6 +1459,7 @@ url: https://github.com/<owner>/<repo>
 		const primitiveModule = _deepseek_ai_dsh_client_ui_primitives;
 		const IconChevronLeftOutline = resolvePrimitiveIcon(primitiveModule, "IconChevronLeftOutlineRegular", "IconChevronLeftOutline14");
 		const IconChevronDownOutline = resolvePrimitiveIcon(primitiveModule, "IconChevronDownOutlineRegular", "IconChevronDownOutline14");
+		const IconCheckOutline = resolvePrimitiveIcon(primitiveModule, "IconCheckOutlineRegular", "IconCheckOutline16");
 		const IconCopyOutline = resolvePrimitiveIcon(primitiveModule, "IconCopyOutlineRegular", "IconCopyOutline16");
 		const IconDownloadOutline = resolvePrimitiveIcon(primitiveModule, "IconDownloadOutlineRegular", "IconDownloadOutline16");
 		const IconLoadingOutline = resolvePrimitiveIcon(primitiveModule, "IconLoadingOutlineRegular", "IconLoadingOutline16");
@@ -1663,10 +1664,10 @@ url: https://github.com/<owner>/<repo>
 				className: SkinMarket_module_css_default.operationCopyLog,
 				variant: "outline",
 				size: "sm",
-				icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+				icon: copiedLog ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
 				disabled: copyingLog,
 				onClick: onCopyLog,
-				children: copiedLog ? "日志已复制" : copyingLog ? "复制中…" : "复制日志"
+				children: "复制日志"
 			});
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 				className: `${SkinMarket_module_css_default.operation}${className === void 0 ? "" : ` ${className}`}`,
@@ -4787,22 +4788,22 @@ url: https://github.com/<owner>/<repo>
 							repairPrompt !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 								variant: "outline",
 								size: "sm",
-								icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+								icon: copiedPromptId === interceptLogId ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
 								disabled: copyingPromptId === interceptLogId || copyingLogId === interceptLogId || interceptPending,
 								onClick: () => {
 									copyRepairPrompt();
 								},
-								children: copiedPromptId === interceptLogId ? "提示词已复制" : copyingPromptId === interceptLogId ? "复制中…" : "复制排查提示词"
+								children: "复制排查提示词"
 							}),
 							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 								variant: "outline",
 								size: "sm",
-								icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+								icon: copiedLogId === interceptLogId ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
 								disabled: interceptLogId === void 0 || copyingLogId === interceptLogId || copyingPromptId === interceptLogId,
 								onClick: () => {
 									if (interceptLogId !== void 0) copyOperationLog(interceptLogId);
 								},
-								children: copiedLogId === interceptLogId ? "日志已复制" : copyingLogId === interceptLogId ? "复制中…" : "复制日志"
+								children: "复制日志"
 							}),
 							interceptApprovalAction === void 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 								variant: "primary",
@@ -4895,8 +4896,8 @@ url: https://github.com/<owner>/<repo>
 										className: SkinMarket_module_css_default.copyCapsuleButton,
 										variant: "outline",
 										size: "sm",
-										icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
-										"aria-label": installCopied === `${selected?.id}:prompt` ? "提示词已复制" : "复制提示词",
+										icon: installCopied === `${selected?.id}:prompt` ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+										"aria-label": "复制提示词",
 										title: "复制提示词",
 										onClick: () => void copyInstallOption("prompt")
 									})]
@@ -4917,8 +4918,8 @@ url: https://github.com/<owner>/<repo>
 												className: SkinMarket_module_css_default.copyCapsuleButton,
 												variant: "ghost",
 												size: "sm",
-												icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
-												"aria-label": installCopied === `${selected.id}:keyword` ? "插件包名已复制" : "复制插件包名",
+												icon: installCopied === `${selected.id}:keyword` ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+												"aria-label": "复制插件包名",
 												title: "复制插件包名",
 												onClick: () => void copyInstallOption("keyword")
 											})]
@@ -4936,8 +4937,8 @@ url: https://github.com/<owner>/<repo>
 											className: SkinMarket_module_css_default.copyCapsuleButton,
 											variant: "outline",
 											size: "sm",
-											icon: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
-											"aria-label": installCopied === `${selected?.id}:command` ? "命令已复制" : "复制命令",
+											icon: installCopied === `${selected?.id}:command` ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
+											"aria-label": "复制命令",
 											title: "复制命令",
 											onClick: () => void copyInstallOption("command")
 										})]
@@ -5030,8 +5031,9 @@ url: https://github.com/<owner>/<repo>
 						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 							variant: "primary",
 							size: "sm",
+							icon: submissionCopied ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCheckOutline, {}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(IconCopyOutline, {}),
 							onClick: () => void copySubmissionPrompt(),
-							children: submissionCopied ? "已复制" : "复制提示词"
+							children: "复制提示词"
 						})] }),
 						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 							className: SkinMarket_module_css_default.submission,

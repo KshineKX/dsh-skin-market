@@ -5,6 +5,8 @@ import React from 'react'
 
 vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
   const icon = () => React.createElement('span', { 'aria-hidden': true })
+  const copyIcon = () => React.createElement('span', { 'aria-hidden': true, 'data-icon': 'copy' })
+  const checkIcon = () => React.createElement('span', { 'aria-hidden': true, 'data-icon': 'check' })
   return {
     Button: ({ icon: leading, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { icon?: React.ReactNode }) => React.createElement('button', props, leading, children),
     Input: ({ icon: leading, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon?: React.ReactNode }) => React.createElement('label', null, leading, React.createElement('input', props)),
@@ -36,9 +38,9 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
       children,
       footer,
     ) : null,
-    IconChevronLeftOutline14: icon, IconChevronDownOutline14: icon, IconCopyOutline16: icon, IconDownloadOutline16: icon, IconLinkOutline16: icon, IconLoadingOutline16: icon,
+    IconChevronLeftOutline14: icon, IconChevronDownOutline14: icon, IconCopyOutline16: copyIcon, IconCheckOutline16: checkIcon, IconDownloadOutline16: icon, IconLinkOutline16: icon, IconLoadingOutline16: icon,
     IconRefreshOutline16: icon, IconSearchOutline16: icon, IconTrashOutline16: icon,
-    IconChevronLeftOutlineRegular: icon, IconChevronDownOutlineRegular: icon, IconCopyOutlineRegular: icon, IconDownloadOutlineRegular: icon, IconLoadingOutlineRegular: icon,
+    IconChevronLeftOutlineRegular: icon, IconChevronDownOutlineRegular: icon, IconCopyOutlineRegular: copyIcon, IconCheckOutlineRegular: checkIcon, IconDownloadOutlineRegular: icon, IconLoadingOutlineRegular: icon,
     IconRefreshOutlineRegular: icon, IconSearchOutlineRegular: icon, IconTrashOutlineRegular: icon,
     writeClipboard: async (text: string) => {
       if (navigator.clipboard?.writeText === undefined) return false
@@ -119,8 +121,13 @@ describe('client market', () => {
     const dialog = await screen.findByRole('dialog', { name: '卸载未完成' })
     expect(within(dialog).queryByRole('link', { name: '查看安装排查' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/logs?'))).toBe(false)
-    fireEvent.click(within(dialog).getByRole('button', { name: '复制排查提示词' }))
+    const copyPrompt = within(dialog).getByRole('button', { name: '复制排查提示词' })
+    expect(copyPrompt.querySelector('[data-icon="copy"]')).toBeTruthy()
+    fireEvent.click(copyPrompt)
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(copyPrompt.querySelector('[data-icon="check"]')).toBeTruthy())
+    expect(copyPrompt.textContent).toBe('复制排查提示词')
+    expect(within(dialog).getByRole('button', { name: '复制排查提示词' })).toBe(copyPrompt)
     const text = writeText.mock.calls[0]![0]
     expect(text).toContain(hostKind === 'desktop' ? '官方 Desktop' : 'DSH Web')
     expect(text).toContain('0.2.1-alpha.3')
@@ -3093,8 +3100,11 @@ describe('client market', () => {
       clock.mockReturnValue(now + 30_000)
       await waitFor(() => expect(within(details).getByText('已 30 秒未有输出')).toBeTruthy(), { timeout: 2000 })
       expect(banner.textContent).not.toContain('可复制日志查看')
-      fireEvent.click(within(banner).getByRole('button', { name: '复制日志' }))
+      const copyLog = within(banner).getByRole('button', { name: '复制日志' })
+      fireEvent.click(copyLog)
       await waitFor(() => expect(clipboard).toHaveBeenCalledWith(expect.stringContaining('diagnostic log')))
+      await waitFor(() => expect(copyLog.querySelector('[data-icon="check"]')).toBeTruthy())
+      expect(copyLog.textContent).toBe('复制日志')
       expect(banner.textContent).not.toContain('redacted')
       fireEvent.click(within(banner).getByRole('button', { name: '收起' }))
       expect(details.hasAttribute('hidden')).toBe(true)
@@ -3259,9 +3269,13 @@ describe('client market', () => {
     expect(within(dialog).queryByRole('button', { name: '重试' })).toBeNull()
     expect(within(dialog).queryByRole('link', { name: '打开皮肤仓库' })).toBeNull()
     expect(within(dialog).getByRole('link', { name: '查看安装排查' }).getAttribute('href')).toBe(MARKET_INSTALL_TROUBLESHOOT_URL)
-    fireEvent.click(within(dialog).getByRole('button', { name: '复制日志' }))
+    const copyLog = within(dialog).getByRole('button', { name: '复制日志' })
+    expect(copyLog.querySelector('[data-icon="copy"]')).toBeTruthy()
+    fireEvent.click(copyLog)
     await waitFor(() => expect(clipboard).toHaveBeenCalledWith(expect.stringContaining('diagnostic log')))
-    expect(within(dialog).getByRole('button', { name: '日志已复制' })).toBeTruthy()
+    await waitFor(() => expect(copyLog.querySelector('[data-icon="check"]')).toBeTruthy())
+    expect(copyLog.textContent).toBe('复制日志')
+    expect(within(dialog).getByRole('button', { name: '复制日志' })).toBe(copyLog)
     fireEvent.click(within(dialog).getByRole('button', { name: '知道了' }))
     expect(screen.queryByRole('dialog', { name: '安装未完成' })).toBeNull()
     expect(screen.queryByRole('status')).toBeNull()
@@ -3886,8 +3900,13 @@ describe('client market', () => {
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     expect(dialog.textContent).toContain('任选一种，不用都执行。')
     expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), createSkinInstallCommand(skin)])
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(skin, 'dsh')))
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="check"]')).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: '复制命令' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallCommand(skin)))
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制命令' }).querySelector('[data-icon="check"]')).toBeTruthy())
+    expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="copy"]')).toBeTruthy()
   })
 
   it('replaces a failed verified screenshot instead of retaining stale image pixels', async () => {
@@ -4058,6 +4077,8 @@ describe('client market', () => {
     expect(prompt.value).toContain('目标目录仓库：https://github.com/kingOfSoySauce/dsh-skin-market')
     fireEvent.click(screen.getByRole('button', { name: '复制提示词' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(prompt.value))
-    expect(screen.getByRole('button', { name: '已复制' })).toBeTruthy()
+    const copyPrompt = screen.getByRole('button', { name: '复制提示词' })
+    await waitFor(() => expect(copyPrompt.querySelector('[data-icon="check"]')).toBeTruthy())
+    expect(copyPrompt.textContent).toBe('复制提示词')
   })
 })

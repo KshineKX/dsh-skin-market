@@ -54,6 +54,7 @@ export function resolvePrimitiveIcon(module: Record<string, unknown>, currentNam
 const primitiveModule = primitiveExports as unknown as Record<string, unknown>
 const IconChevronLeftOutline = resolvePrimitiveIcon(primitiveModule, 'IconChevronLeftOutlineRegular', 'IconChevronLeftOutline14')
 const IconChevronDownOutline = resolvePrimitiveIcon(primitiveModule, 'IconChevronDownOutlineRegular', 'IconChevronDownOutline14')
+const IconCheckOutline = resolvePrimitiveIcon(primitiveModule, 'IconCheckOutlineRegular', 'IconCheckOutline16')
 const IconCopyOutline = resolvePrimitiveIcon(primitiveModule, 'IconCopyOutlineRegular', 'IconCopyOutline16')
 const IconDownloadOutline = resolvePrimitiveIcon(primitiveModule, 'IconDownloadOutlineRegular', 'IconDownloadOutline16')
 const IconLoadingOutline = resolvePrimitiveIcon(primitiveModule, 'IconLoadingOutlineRegular', 'IconLoadingOutline16')
@@ -377,7 +378,7 @@ function OperationBanner({ title, startedAt, metadata = [], progress, message, s
   const downloadProgress = downloading && progress?.downloadedBytes !== undefined
     ? progress.totalBytes === undefined ? `已下载 ${byteLabel(progress.downloadedBytes)}` : `${byteLabel(progress.downloadedBytes)} / ${byteLabel(progress.totalBytes)}`
     : undefined
-  const copyLogButton = canCopyLog && <Button className={css.operationCopyLog} variant="outline" size="sm" icon={<IconCopyOutline />} disabled={copyingLog} onClick={onCopyLog}>{copiedLog ? '日志已复制' : copyingLog ? '复制中…' : '复制日志'}</Button>
+  const copyLogButton = canCopyLog && <Button className={css.operationCopyLog} variant="outline" size="sm" icon={copiedLog ? <IconCheckOutline /> : <IconCopyOutline />} disabled={copyingLog} onClick={onCopyLog}>复制日志</Button>
   return <div className={`${css.operation}${className === undefined ? '' : ` ${className}`}`} role="status" aria-live="polite" data-terminal={terminal ? 'true' : undefined} data-failed={failed ? 'true' : undefined}>
     {terminal ? <IconRefreshOutline size={16} /> : <IconLoadingOutline size={16} />}
     <strong title={title}>{title}</strong>
@@ -2399,17 +2400,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           pin: interceptOperation?.kind === 'pin',
         })}
         footer={<>
-          {repairPrompt !== null && <Button variant="outline" size="sm" icon={<IconCopyOutline />}
+          {repairPrompt !== null && <Button variant="outline" size="sm" icon={copiedPromptId === interceptLogId ? <IconCheckOutline /> : <IconCopyOutline />}
             disabled={copyingPromptId === interceptLogId || copyingLogId === interceptLogId || interceptPending}
             onClick={() => { void copyRepairPrompt() }}
-          >{copiedPromptId === interceptLogId ? '提示词已复制' : copyingPromptId === interceptLogId ? '复制中…' : '复制排查提示词'}</Button>}
+          >复制排查提示词</Button>}
           <Button
             variant="outline"
             size="sm"
-            icon={<IconCopyOutline />}
+            icon={copiedLogId === interceptLogId ? <IconCheckOutline /> : <IconCopyOutline />}
             disabled={interceptLogId === undefined || copyingLogId === interceptLogId || copyingPromptId === interceptLogId}
             onClick={() => { if (interceptLogId !== undefined) void copyOperationLog(interceptLogId) }}
-          >{copiedLogId === interceptLogId ? '日志已复制' : copyingLogId === interceptLogId ? '复制中…' : '复制日志'}</Button>
+          >复制日志</Button>
           {interceptApprovalAction === undefined
             ? <Button variant="primary" size="sm" onClick={dismissIntercept}>知道了</Button>
             : <>
@@ -2446,16 +2447,16 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         footer={manualOnly ? undefined : <Button variant="outline" size="sm" onClick={() => setShowInstallOptions(false)}>关闭</Button>}
       >
         <div className={css.installOptions}>
-          <div><strong>{manualOnly ? '让 Agent 检查并指导安装' : '提示词'}</strong><span className={css.copyCapsule}><code title={installPrompt}>{installPrompt}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:prompt` ? '提示词已复制' : '复制提示词'} title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
+          <div><strong>{manualOnly ? '让 Agent 检查并指导安装' : '提示词'}</strong><span className={css.copyCapsule}><code title={installPrompt}>{installPrompt}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:prompt` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制提示词" title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
           {manualOnly && selected !== undefined && <div className={css.manualInstallGuide}>
             <strong>插件包名</strong>
             <p>也可自行打开「插件 → 添加插件」，输入：</p>
             <span className={css.copyCapsule}>
               <Input className={css.copyCapsuleInput} readOnly value={manualInstallKeyword} aria-label="插件包名" />
-              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected.id}:keyword` ? '插件包名已复制' : '复制插件包名'} title="复制插件包名" onClick={() => void copyInstallOption('keyword')} />
+              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected.id}:keyword` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制插件包名" title="复制插件包名" onClick={() => void copyInstallOption('keyword')} />
             </span>
           </div>}
-          {!manualOnly && <div><strong>命令</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={<IconCopyOutline />} aria-label={installCopied === `${selected?.id}:command` ? '命令已复制' : '复制命令'} title="复制命令" onClick={() => void copyInstallOption('command')} /></span><small>{CLI_INSTALL_WARNING}</small></div>}
+          {!manualOnly && <div><strong>命令</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:command` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制命令" title="复制命令" onClick={() => void copyInstallOption('command')} /></span><small>{CLI_INSTALL_WARNING}</small></div>}
         </div>
       </Modal>
       <Modal
@@ -2504,7 +2505,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         title="提交你的皮肤"
         closeLabel="关闭"
         description="复制下面的提示词交给你的 Agent，它会确认皮肤仓库、完成检查并准备市场 PR。"
-        footer={<><Button variant="outline" size="sm" onClick={() => setShowSubmission(false)}>关闭</Button><Button variant="primary" size="sm" onClick={() => void copySubmissionPrompt()}>{submissionCopied ? '已复制' : '复制提示词'}</Button></>}
+        footer={<><Button variant="outline" size="sm" onClick={() => setShowSubmission(false)}>关闭</Button><Button variant="primary" size="sm" icon={submissionCopied ? <IconCheckOutline /> : <IconCopyOutline />} onClick={() => void copySubmissionPrompt()}>复制提示词</Button></>}
       >
         <div className={css.submission}>
           <textarea aria-label="Agent 投稿提示词" readOnly value={submissionPrompt} rows={16} />
