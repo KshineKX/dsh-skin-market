@@ -8,7 +8,7 @@ import { persistCompatibilityPatch, planCompatibilityPatch } from './compatibili
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { loadCatalog } from './catalog.ts'
 import { desktopGithubInstallPlan, desktopInstallPlan } from './desktop-install.ts'
-import { companionAsSkin, discoverMonorepoTarget, isNpmInstallTarget, preferredInstallTarget, reviewedNpmSourceError, updateInstallTarget } from './install-resolution.ts'
+import { companionAsSkin, discoverMonorepoTarget, isNpmInstallTarget, npmInstallTarget, preferredInstallTarget, reviewedNpmSourceError, updateInstallTarget } from './install-resolution.ts'
 import { sharedLoaderIdentifiers } from './loader-ownership.ts'
 import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
@@ -60,6 +60,7 @@ import {
   isSkinArtifactRiskAcknowledged,
   acknowledgeSkinArtifactRisk,
   validateInstalledSkin,
+  validateNpmArtifact,
   validateDesktopArtifact,
   isGithubArtifactSpec,
   githubArtifactSourceMatches,
@@ -254,6 +255,7 @@ export class SkinLifecycle {
   private readonly failedReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
   private readonly pendingReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
   private readonly artifactContexts = new Map<string, string>()
+  private readonly sourceMigrationContexts = new Map<string, { context: string; reviewed: string }>()
   private readonly failedArtifactContexts = new Map<string, { context: string; skinId: string; kind: 'activate' | 'pin' }>()
   private readonly compatibilityContexts = new Map<string, string>()
   private readonly deadlines = new Map<string, number>()
@@ -814,6 +816,7 @@ export class SkinLifecycle {
     this.failedConfigurationBindings.clear()
     this.pendingSelectionConfigurations.clear()
     this.artifactContexts.clear()
+    this.sourceMigrationContexts.clear()
     this.failedArtifactContexts.clear()
     this.compatibilityContexts.clear()
     this.deadlines.clear()
@@ -1127,10 +1130,11 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
     if (selectionConfigurationContext !== undefined && (!isSelectionOperation(kind) || !/^[a-f0-9]{64}$/.test(selectionConfigurationContext) || configurationRepair !== undefined)) throw new Error('invalid configuration context')
+    if (sourceContext !== undefined && (kind !== 'migrate' || sourceContext.length !== 64 || !/^[a-f0-9]{64}$/.test(sourceContext))) throw new Error('invalid source context')
     const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
     const capability = this.management?.capabilities()[action]
     if (capability?.available === false) throw new Error(capability.reason ?? '当前宿主不支持此操作，请使用官方插件页')
@@ -1150,7 +1154,7 @@ export class SkinLifecycle {
         throw new Error('该皮肤尚未满足市场自动安装所需信息，请查看仓库安装说明')
       }
     }
-    if (kind === 'migrate') this.assertNpmMigration(skin)
+    if (kind === 'migrate') this.assertNpmMigration(skin, sourceContext)
     if (this.liveOperations().some(operation => operation.skinId === skinId)) {
       throw new Error('another operation is already running for this skin')
     }
@@ -1159,6 +1163,7 @@ export class SkinLifecycle {
       cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
+    if (sourceContext !== undefined) this.sourceMigrationContexts.set(operation.id, { context: sourceContext, reviewed: this.replacementReview(skin) })
     if (selectionConfigurationContext !== undefined) this.pendingSelectionConfigurations.set(operation.id, selectionConfigurationContext)
     if (configurationRepair !== undefined) this.pendingConfigurationRepairs.set(operation.id, configurationRepair)
     if (releaseAgeApproval !== undefined) this.pendingReleaseAgeApprovals.set(operation.id, releaseAgeApproval)
@@ -1221,7 +1226,7 @@ export class SkinLifecycle {
     }
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair, undefined, this.sourceMigrationContexts.get(id)?.context)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -1498,6 +1503,7 @@ export class SkinLifecycle {
       const timer = setTimeout(() => {
         this.operationCleanupTimers.delete(operation.id)
         this.operations.delete(operation.id)
+        this.sourceMigrationContexts.delete(operation.id)
         this.pendingBuildKeys.delete(operation.id)
         this.failedReleaseAgeApprovals.delete(operation.id)
         this.failedArtifactContexts.delete(operation.id)
@@ -1653,22 +1659,50 @@ export class SkinLifecycle {
     }
   }
 
-  private async prepareProfile(skin: SkinEntry, operation: Operation, prepare: () => Promise<void>): Promise<void> {
+  private async prepareProfile(skin: SkinEntry, operation: Operation, prepare: () => Promise<void>, expectedSpec?: string): Promise<void> {
     const snapshot = snapshotInstallFiles(this.options.profileDir, skin.package, skin.install.version)
     const mutationsBefore = this.profileMutations.get(operation.id) ?? 0
     try {
       await prepare()
     } catch (error) {
+      if (expectedSpec !== undefined && readDependencies(this.options.profileDir)[skin.package] !== expectedSpec) throw new Error('更新来源在安装准备期间发生变化，请刷新后重试')
       await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
       throw error
     }
   }
 
-  private assertNpmMigration(skin: SkinEntry): { target: string; currentSource: string } {
+  private assertNpmMigration(skin: SkinEntry, sourceContext?: string): NonNullable<ReturnType<typeof npmSourceMigration>> {
     if (this.hostKind === 'desktop') throw new Error('Desktop 暂不支持换用 npm')
-    const migration = npmSourceMigration(this.options.profileDir, skin)
+    const migration = npmSourceMigration(this.options.profileDir, this.skin(skin.id))
+    if (sourceContext !== undefined && (migration?.kind !== 'local' || migration.context !== sourceContext)) {
+      throw new Error('本地安装来源或市场版本已变化，请重新确认替换')
+    }
     if (migration === undefined) throw new Error('当前安装与已核验的 npm 来源不对应，无法换用 npm；请刷新目录并先更新 GitHub 版本')
+    if (migration.kind === 'local' && sourceContext === undefined) throw new Error('本地安装需先确认替换为市场版本')
     return migration
+  }
+
+  private replacementReview(skin: SkinEntry): string {
+    return JSON.stringify([skin.id, skin.package, skin.repo, skin.rowId, skin.subpath, skin.install, skin.review, skin.compatibility])
+  }
+
+  private replacementTarget(skin: SkinEntry, operation: Operation): string | undefined {
+    const consent = this.sourceMigrationContexts.get(operation.id)
+    if (consent === undefined) return undefined
+    const current = this.skin(skin.id)
+    if (consent.reviewed !== this.replacementReview(current) || consent.reviewed !== this.replacementReview(skin)
+      || reviewedNpmSourceError(current) !== null) throw new Error('本地安装来源或市场版本已变化，请重新确认替换')
+    return npmInstallTarget(current)!
+  }
+
+  private assertReplacementArtifact(directory: string, skin: SkinEntry, operation: Operation): void {
+    if (this.replacementTarget(skin, operation) === undefined) return
+    const source = skin.install.npm
+    if (reviewedNpmSourceError(skin) !== null || source === undefined) throw new Error('市场 npm 安装目标已变化，请重新确认替换')
+    const validation = validateNpmArtifact(directory, source)
+    if (!validation.ok) throw new Error(validation.reason ?? '市场 npm 安装包未通过核验')
+    const risk = inspectSkinArtifactRisk(directory, skin, 'dsh')
+    if (risk !== undefined) throw new Error(risk.warnings[0] ?? '市场 npm 安装包未通过核验')
   }
 
   /** An ordinary Desktop update must retain the installed source family. */
@@ -1763,7 +1797,13 @@ export class SkinLifecycle {
 
     const beforeRows = installedLoaderIdentities(this.options.profileDir)
     const resolved = prefetched ?? await this.prefetch(skin, operation, target)
-    if (operation.kind === 'migrate' && this.assertNpmMigration(skin).target !== resolved.target) {
+    // The complete local consent was checked under the profile lock before
+    // preparation. Our own lockfile/patch repairs may now have changed that
+    // snapshot; only recheck the reviewed target here.
+    const migrationTarget = this.sourceMigrationContexts.has(operation.id)
+      ? this.replacementTarget(skin, operation)
+      : operation.kind === 'migrate' ? this.assertNpmMigration(skin).target : undefined
+    if (operation.kind === 'migrate' && migrationTarget !== resolved.target) {
       throw new Error('npm 换源目标在下载期间发生变化，请刷新后重试')
     }
     this.assertSkinLoaderConflicts(skin, resolved.loaderRows)
@@ -1771,12 +1811,13 @@ export class SkinLifecycle {
     this.update(operation, 'installing')
     const buildApprovalKey = isNpmInstallTarget(skin, resolved.target) ? undefined : buildApprovalKeyForTarget(skin, resolved.target) ?? effectiveBuildApprovalKey(skin)
     if (buildApprovalKey !== undefined) ensureBuildAllowed(this.options.profileDir, buildApprovalKey)
-    // A source migration replaces this exact skin release only. Companion
+    // A source migration replaces only this skin. Companion
     // upgrades remain part of the separate ordinary Update operation.
     if (operation.kind !== 'migrate') await this.installCompanions(skin, operation, state)
     await this.run(['add', resolved.target, '--prefer-offline', ...(isNpmInstallTarget(skin, resolved.target) ? ['--save-exact'] : [])], operation)
     const liveValidation = validateInstalledSkin(this.options.profileDir, skin, { allowArtifactRisk: true, hostKind: this.hostKind })
     if (!liveValidation.ok) throw new Error(liveValidation.reason)
+    this.assertReplacementArtifact(this.options.profileDir, skin, operation)
     this.claimManagedLoaders(state, skin, resolved.loaderRows, beforeRows)
   }
 
@@ -1926,6 +1967,7 @@ export class SkinLifecycle {
       // repo root under a different dependency key. Refuse before live profile add.
       const validation = validateInstalledSkin(directory, skin, { allowArtifactRisk: true, hostKind: this.hostKind })
       if (!validation.ok) throw new Error(validation.reason)
+      this.assertReplacementArtifact(directory, skin, operation)
       if (isNpmInstallTarget(skin, target)) {
         if (readDependencies(directory)[skin.package] !== skin.install.npm?.version) {
           throw new Error('下载的 npm 依赖未记录目录固定版本，已停止安装')
@@ -2332,9 +2374,11 @@ export class SkinLifecycle {
 
   private async updateSkin(operation: Operation): Promise<void> {
     const skin = this.skin(operation.skinId)
+    const sourceContext = this.sourceMigrationContexts.get(operation.id)?.context
+    const originalSpec = readDependencies(this.options.profileDir)[skin.package]
     const target = this.hostKind === 'desktop' ? this.desktopUpdateTarget(skin) : operation.kind === 'migrate'
-      ? this.assertNpmMigration(skin).target
-      : updateInstallTarget(skin, readDependencies(this.options.profileDir)[skin.package])
+      ? this.assertNpmMigration(skin, sourceContext).target
+      : updateInstallTarget(skin, originalSpec)
     this.applyPendingBuildApprovals(operation)
     let prefetched: PrefetchedPackage | undefined
     if (this.hostKind !== 'desktop') {
@@ -2343,7 +2387,7 @@ export class SkinLifecycle {
         this.update(operation, 'downloading')
         return await this.prefetch(skin, operation, target)
       })
-      if (operation.kind === 'migrate' && this.assertNpmMigration(skin).target !== prefetched.target) {
+      if (operation.kind === 'migrate' && this.assertNpmMigration(skin, sourceContext).target !== prefetched.target) {
         throw new Error('npm 换源目标在下载期间发生变化，请刷新后重试')
       }
     }
@@ -2351,7 +2395,10 @@ export class SkinLifecycle {
       this.assertCompatibilityContext(operation, skin)
       if (this.hostKind === 'desktop' && this.desktopUpdateTarget(skin) !== target) throw new Error('Desktop 更新来源在排队期间发生变化，请刷新后重试')
       if (this.hostKind !== 'desktop') {
-        await this.prepareProfile(skin, operation, () => this.syncPnpmMetadata(operation, '正在修复 profile 的 pnpm 锁文件'))
+        if (operation.kind === 'migrate' && this.assertNpmMigration(skin, sourceContext).target !== target) throw new Error('npm 换源目标在排队期间发生变化，请刷新后重试')
+        if (readDependencies(this.options.profileDir)[skin.package] !== originalSpec) throw new Error('更新来源在下载或排队期间发生变化，请刷新后重试')
+        await this.prepareProfile(skin, operation, () => this.syncPnpmMetadata(operation, '正在修复 profile 的 pnpm 锁文件'), originalSpec)
+        if (readDependencies(this.options.profileDir)[skin.package] !== originalSpec) throw new Error('更新来源在安装准备期间发生变化，请刷新后重试')
       }
       const previousState = readMarketState(this.options.profileDir)
       const wasActive = enabledSkinIds(previousState).has(skin.id)
@@ -2359,14 +2406,18 @@ export class SkinLifecycle {
       const mutationsBefore = this.profileMutations.get(operation.id) ?? 0
       const detachedPatchFiles = this.hostKind === 'desktop' ? [] : detachCompatibilityPatches(this.options.profileDir, skin.package)
       if (prefetched === undefined) this.update(operation, 'resolving')
+      let installationStarted = false
       try {
         if (this.hostKind !== 'desktop') await this.syncPnpmMetadata(operation, '正在清理旧的兼容适配')
+        if (this.hostKind !== 'desktop' && readDependencies(this.options.profileDir)[skin.package] !== originalSpec) throw new Error('更新来源在安装准备期间发生变化，请刷新后重试')
         if (prefetched === undefined) this.update(operation, 'downloading')
+        installationStarted = true
         await this.installPackage(skin, operation, previousState, target, prefetched)
         await this.applyCompatibility(skin, operation)
         this.update(operation, 'validating')
         const validation = validateInstalledSkin(this.options.profileDir, skin, { allowArtifactRisk: true, hostKind: this.hostKind })
         if (!validation.ok) throw new Error(validation.reason)
+        this.assertReplacementArtifact(this.options.profileDir, skin, operation)
         if (validation.version !== skin.install.version || !reviewedInstalledSpecMatches(this.options.profileDir, skin, readDependencies(this.options.profileDir)[skin.package], { allowArtifactRisk: true, hostKind: this.hostKind })) {
           throw new Error(`installed package did not change to the reviewed source/version ${skin.install.target}`)
         }
@@ -2392,10 +2443,16 @@ export class SkinLifecycle {
         this.recordRestart(nextState, skin.id, operation.restartRequired === true)
         writeMarketState(this.options.profileDir, nextState)
         cleanupCompatibilityPatchFiles(detachedPatchFiles.filter(file => file !== compatibilityPatchFile(this.options.profileDir, skin.package, skin.install.version)))
+        const migrationLabel = sourceContext === undefined ? '已换用 npm' : '已替换为市场版本'
         operation.message = needsUseConfirmation ? '安装构件已更新；使用或常驻前请确认当前版本提示' : operation.kind === 'migrate'
-          ? wasActive ? '已换用 npm 并保留启用状态；重启 DSH 后生效' : '已换用 npm 并保留停用状态'
+          ? wasActive ? `${migrationLabel}并保留启用状态；重启 DSH 后生效` : `${migrationLabel}并保留停用状态`
           : operation.restartRequired ? '更新已验证，原启停状态已保留；重启宿主后加载新版本' : wasActive ? 'updated and kept active' : 'updated and kept inactive'
       } catch (error) {
+        // Before our add starts, a new source belongs to another writer. Do
+        // not restore the old manifest over that newer choice.
+        if (!installationStarted && this.hostKind !== 'desktop' && readDependencies(this.options.profileDir)[skin.package] !== originalSpec) {
+          throw new Error('更新来源在安装准备期间发生变化，请刷新后重试')
+        }
         await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
         throw error
       }

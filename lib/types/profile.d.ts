@@ -1,6 +1,6 @@
 import { effectiveBuildApprovalKey } from './build-approval.ts';
 import { type LoaderIdentity } from './loader-ownership.ts';
-import type { InstallConflict, InstalledClientPlugin, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts';
+import type { InstallConflict, InstalledClientPlugin, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState, SkinSourceMigration } from './types.ts';
 export type { LoaderIdentity } from './loader-ownership.ts';
 export declare function resolveProfileDir(profile: string, explicit?: string): string;
 export declare function manifestFile(profileDir: string): string;
@@ -101,11 +101,8 @@ export declare function validateDesktopArtifact(profileDir: string, skin: SkinEn
     reason?: string;
     integrityVerified: boolean;
 };
-/** Only offer an explicit migration between the same reviewed GitHub/npm release. */
-export declare function npmSourceMigration(profileDir: string, skin: SkinEntry): {
-    target: string;
-    currentSource: string;
-} | undefined;
+/** Explicitly replace a verified local source, or migrate the same reviewed GitHub/npm release. */
+export declare function npmSourceMigration(profileDir: string, skin: SkinEntry): SkinSourceMigration | undefined;
 export declare function companionNeedsInstall(profileDir: string, companion: {
     package: string;
     commit: string;

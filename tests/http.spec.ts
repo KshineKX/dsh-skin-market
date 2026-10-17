@@ -146,4 +146,23 @@ describe('HTTP guards', () => {
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', artifactContext }))).rejects.toThrow('invalid artifact context')
     await expect(readOperationRetry(jsonRequest({ action: 'retry', artifactContext }))).rejects.toThrow('invalid artifact context')
   })
+
+  it('reads the displayed local source context without treating it as compatibility consent', async () => {
+    const sourceContext = 'a0'.repeat(32)
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', sourceContext }))).resolves.toEqual({
+      skinId: 'fixture-skin', acknowledgeCompatibility: false, sourceContext,
+    })
+  })
+
+  it.each(['', 1, null, {}, [], 'a'.repeat(63), 'a'.repeat(65), 'A'.repeat(64), 'g'.repeat(64), ` ${'a'.repeat(64)}`, `${'a'.repeat(64)}\n`])('refuses malformed local source context (%j)', async sourceContext => {
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', sourceContext }))).rejects.toThrow('invalid source context')
+  })
+
+  it('rejects local source consent mixed into configuration repair or operation retry requests', async () => {
+    const sourceContext = 'a'.repeat(64)
+    const configurationContext = 'b'.repeat(64)
+    await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', configurationContext, sourceContext }))).rejects.toThrow('invalid configuration repair request')
+    await expect(readOperationRetry(jsonRequest({ action: 'repair-configuration', configurationContext, sourceContext }))).rejects.toThrow('invalid configuration repair request')
+    await expect(readOperationRetry(jsonRequest({ action: 'retry', sourceContext }))).rejects.toThrow('invalid source context')
+  })
 })

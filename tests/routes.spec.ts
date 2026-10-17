@@ -258,6 +258,52 @@ describe('market routes', () => {
     expect(fixture.begin).toHaveBeenCalledExactlyOnceWith(kind, 'fixture-skin', undefined, true, 'shown-compatibility', undefined, 'shown-artifact')
   })
 
+  it('forwards confirmed local source context only in the final migration argument', async () => {
+    const fixture = admissionFixture()
+    const sourceContext = 'a0'.repeat(32)
+    const result = await fixture.request('/dsh-skin-market/migrate', 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', sourceContext })
+    expect(result.status).toBe(202)
+    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith('migrate', 'fixture-skin', undefined, false, undefined, undefined, undefined, undefined, undefined, sourceContext)
+  })
+
+  it('preserves existing migration argument shape when source context is omitted', async () => {
+    const fixture = admissionFixture()
+    const result = await fixture.request('/dsh-skin-market/migrate', 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin' })
+    expect(result.status).toBe(202)
+    expect(fixture.begin).toHaveBeenCalledExactlyOnceWith('migrate', 'fixture-skin', undefined, false, undefined)
+  })
+
+  it.each(['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'uninstall'])('rejects local source context on the %s route', async kind => {
+    const fixture = admissionFixture()
+    const result = await fixture.request(`/dsh-skin-market/${kind}`, 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', sourceContext: 'a'.repeat(64) })
+    expect(result.status).toBe(409)
+    expect(JSON.parse(result.body).error).toBe('invalid source context')
+    expect(fixture.begin).not.toHaveBeenCalled()
+  })
+
+  it.each(['', 1, null, {}, [], 'a'.repeat(63), 'a'.repeat(65), 'A'.repeat(64), 'g'.repeat(64), `${'a'.repeat(64)}\n`])('rejects malformed local source context before migration (%j)', async sourceContext => {
+    const fixture = admissionFixture()
+    const result = await fixture.request('/dsh-skin-market/migrate', 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', sourceContext })
+    expect(result.status).toBe(409)
+    expect(fixture.begin).not.toHaveBeenCalled()
+  })
+
+  it('rejects local source context mixed into selection repair and repair retries', async () => {
+    const fixture = admissionFixture()
+    const retry = vi.spyOn(SkinLifecycle.prototype, 'retry')
+    const contexts = { sourceContext: 'a'.repeat(64), configurationContext: 'b'.repeat(64) }
+    const selection = await fixture.request('/dsh-skin-market/activate', 'POST', {}, '127.0.0.1', { skinId: 'fixture-skin', ...contexts })
+    expect(selection.status).toBe(409)
+    expect(JSON.parse(selection.body).error).toBe('invalid configuration repair request')
+    const repaired = await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST', {}, '127.0.0.1', { action: 'repair-configuration', ...contexts })
+    expect(repaired.status).toBe(409)
+    expect(JSON.parse(repaired.body).error).toBe('invalid configuration repair request')
+    const retried = await fixture.request('/dsh-skin-market/operations/existing-skin/retry', 'POST', {}, '127.0.0.1', { action: 'retry', sourceContext: contexts.sourceContext })
+    expect(retried.status).toBe(409)
+    expect(fixture.begin).not.toHaveBeenCalled()
+    expect(retry).not.toHaveBeenCalled()
+  })
+
   it('preserves an explicitly accepted artifact context when retrying an activation', async () => {
     const fixture = admissionFixture()
     const retry = vi.spyOn(SkinLifecycle.prototype, 'retry').mockImplementation(() => ({

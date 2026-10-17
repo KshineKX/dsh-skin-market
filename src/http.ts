@@ -114,13 +114,15 @@ function artifactAcknowledgement(body: Record<string, unknown>): { artifactConte
   return { artifactContext: body.artifactContext }
 }
 
-export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string }> {
+export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string; sourceContext?: string }> {
   const body = await readJsonBody(request, limit)
   if (typeof body.skinId !== 'string' || body.skinId.length > 128) throw new Error('invalid skinId')
+  if (body.sourceContext !== undefined && (typeof body.sourceContext !== 'string' || body.sourceContext.length !== 64 || !/^[a-f0-9]{64}$/.test(body.sourceContext))) throw new Error('invalid source context')
   if (body.configurationContext !== undefined && (typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
   if (body.configurationContext !== undefined && Object.keys(body).some(key => !['skinId', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext'].includes(key))) throw new Error('invalid configuration repair request')
   return { skinId: body.skinId, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body),
-    ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}) }
+    ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}),
+    ...(typeof body.sourceContext === 'string' ? { sourceContext: body.sourceContext } : {}) }
 }
 
 export async function readSelectionPlan(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; kind: SelectionOperationKind }> {
@@ -141,6 +143,7 @@ export async function readOperationRetry(request: IncomingMessage, limit = 8192)
   if (body.configurationContext !== undefined && (body.action !== 'repair-configuration' || typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
   if (body.action === 'repair-configuration' && body.configurationContext === undefined) throw new Error('configuration context required')
   if (body.action === 'repair-configuration' && Object.keys(body).some(key => !['action', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext'].includes(key))) throw new Error('invalid configuration repair request')
+  if (body.sourceContext !== undefined) throw new Error('invalid source context')
   return { action: body.action, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body),
     ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}) }
 }

@@ -555,6 +555,92 @@ describe('client market', () => {
     expect(screen.queryByRole('button', { name: '换用 npm' })).toBeNull()
   })
 
+  it.each(['card replacement', 'card update', 'detail update'])('confirms local replacement from the %s entry and sends the approved source context', async entry => {
+    let migrated = false
+    const sourceMigration = { kind: 'local', target: 'skin@1.0.0', currentSource: 'file:/Users/example/private-skins/local.tgz', currentVersion: '1.1.0-compat.2', targetVersion: '1.0.0', context: 'a'.repeat(64), downgrade: true }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'dsh', runningAgentCount: 0, runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: migrated ? 'restart-required' : 'active', pinned: true, installedVersion: migrated ? '1.0.0' : sourceMigration.currentVersion, updateAvailable: !migrated, ...(!migrated && { sourceMigration }) }] }) }
+      if (url.endsWith('/migrate') && init?.method === 'POST') {
+        migrated = true
+        return { ok: true, json: async () => ({ operationId: 'local-replacement' }) }
+      }
+      if (url.endsWith('/operations/local-replacement')) return { ok: true, json: async () => ({ id: 'local-replacement', kind: 'migrate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    if (entry === 'detail update') await openSkinCard(/测试皮肤 已安装卡片/)
+    fireEvent.click((await screen.findAllByRole('button', { name: entry === 'card replacement' ? '替换为市场版本' : '更新' }))[0]!)
+    const dialog = await screen.findByRole('dialog', { name: '替换为市场版本' })
+    expect(dialog.textContent).toContain('当前版本 1.1.0-compat.2 → 市场版本 1.0.0')
+    expect(dialog.textContent).toContain('本次将降级到市场版本')
+    expect(dialog.textContent).toContain('保留当前启用和常驻状态')
+    expect(dialog.textContent).toContain('原始本地文件保留')
+    expect(dialog.textContent).toContain('取消不会更换安装来源')
+    expect(dialog.textContent).not.toContain(sourceMigration.currentSource)
+    fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+
+    fireEvent.click(screen.getAllByRole('button', { name: '替换为市场版本' })[0]!)
+    fireEvent.click(screen.getByRole('button', { name: '确认替换' }))
+    expect(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
+    expect(screen.getAllByText('测试皮肤 已替换为市场版本，待重启生效').length).toBeGreaterThan(0)
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, sourceContext: sourceMigration.context })
+    expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/update') && init?.method === 'POST')).toBe(false)
+    expect(screen.queryByRole('button', { name: '替换为市场版本' })).toBeNull()
+  })
+
+  it('explains that an incompatible market replacement first disables the selected local skin', async () => {
+    const entry = { ...skin, compatibility: { ...skin.compatibility, dsh: '^9.0.0' } }
+    const sourceMigration = { kind: 'local', target: 'skin@1.0.0', currentSource: 'file:/tmp/local.tgz', currentVersion: '1.1.0', targetVersion: '1.0.0', context: 'a'.repeat(64), downgrade: true }
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [entry] } : {
+      hostKind: 'dsh', runtime: dshRuntime, management: officialManagement,
+      skins: [{ skinId: skin.id, installation: 'installed', activation: 'active', primary: true, pinned: true, installedVersion: sourceMigration.currentVersion, updateAvailable: true, sourceMigration }],
+    } }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click((await screen.findAllByRole('button', { name: '替换为市场版本' }))[0]!)
+    const dialog = await screen.findByRole('dialog', { name: '替换为市场版本' })
+    expect(dialog.textContent).toContain('目标版本需要兼容性确认，替换后先停用；确认使用或常驻后再启用')
+    expect(dialog.textContent).not.toContain('保留当前启用和常驻状态')
+    fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
+    expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true)
+  })
+
+  it.each(['context', 'version'] as const)('requires another confirmation when local replacement %s changes', async changed => {
+    let sourceMigration = { kind: 'local' as const, target: 'skin@1.0.0', currentSource: 'link:/Users/example/private-skins/local', currentVersion: '0.9.0', targetVersion: '1.0.0', context: 'a'.repeat(64), downgrade: false }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'dsh', runtime: dshRuntime, skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: sourceMigration.currentVersion, updateAvailable: true, sourceMigration }] }) }
+      if (url.endsWith('/migrate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'replacement-refreshed' }) }
+      if (url.endsWith('/operations/replacement-refreshed')) return { ok: true, json: async () => ({ id: 'replacement-refreshed', kind: 'migrate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click((await screen.findAllByRole('button', { name: '替换为市场版本' }))[0]!)
+    expect(screen.getByRole('dialog', { name: '替换为市场版本' }).textContent).toContain('当前版本 0.9.0 → 市场版本 1.0.0')
+    expect(screen.getByRole('dialog', { name: '替换为市场版本' }).textContent).not.toContain('本次将降级')
+    sourceMigration = changed === 'context'
+      ? { ...sourceMigration, context: 'b'.repeat(64) }
+      : { ...sourceMigration, currentVersion: '1.1.0', downgrade: true }
+    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent(window, new Event('focus'))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+    fireEvent.click(screen.getByRole('button', { name: '确认替换' }))
+    const updated = screen.getByRole('dialog', { name: '替换为市场版本' })
+    expect(updated.textContent).toContain('安装来源或版本已变化，请重新确认')
+    if (changed === 'version') {
+      expect(updated.textContent).toContain('当前版本 1.1.0 → 市场版本 1.0.0')
+      expect(updated.textContent).toContain('降级')
+    }
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    fireEvent.click(within(updated).getByRole('button', { name: '确认替换' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')).toBe(true))
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url.endsWith('/migrate') && init?.method === 'POST')?.[1]?.body))).toEqual({ skinId: skin.id, sourceContext: sourceMigration.context })
+  })
+
   it('puts skins without a usable preview after previewed skins before comparing stars', () => {
     const noPreview = {
       ...skin,

@@ -87,6 +87,19 @@ function contextExplanation(code: string | undefined, message: string): { proble
   return code === undefined ? undefined : hostExplanations[code]
 }
 
+function sourceMigrationExplanation(message: string): { problem: string; next: string } | undefined {
+  if (/本地安装来源或市场版本已变化|本地安装需先确认/.test(message)) {
+    return { problem: '本地来源替换需要重新确认。', next: '请刷新皮肤详情，核对当前版本与市场版本，重新确认「替换为市场版本」。' }
+  }
+  if (/更新来源在(?:下载或排队|下载|排队|安装准备)期间发生变化/.test(message)) {
+    return { problem: '更新来源已变化。', next: '请刷新皮肤详情，核对当前安装来源后重新操作；替换本地版本需再次确认。' }
+  }
+  if (/本地或自定义安装来源，无法自动更新/.test(message)) {
+    return { problem: '当前安装使用本地或自定义来源，无法直接更新。', next: '页面提供「替换为市场版本」时，可核对版本差异后确认；也可按原安装方式更新。' }
+  }
+  return undefined
+}
+
 /** Translate diagnostic categories; raw package output remains in copied logs. */
 function failureExplanation(kind: FailureHelpSubject['failureKind'], message: string, code?: string): { problem: string; next: string } {
   const context = contextExplanation(code, message)
@@ -97,6 +110,8 @@ function failureExplanation(kind: FailureHelpSubject['failureKind'], message: st
   // A recognized Host category wins; otherwise inspect the final error rather
   // than recovered warnings earlier in a diagnostic log. Neither is displayed.
   const diagnostic = terminalDiagnostic(kind, message)
+  const migration = kind === undefined || kind === 'command' ? sourceMigrationExplanation(diagnostic) : undefined
+  if (migration !== undefined) return migration
   if (kind === 'release-age' || /minimumReleaseAge|ERR_PNPM[^\s]*RELEASE[^\s]*AGE|新包保护/i.test(diagnostic)) {
     return { problem: '所需版本仍处于新包保护期。', next: '请等待保护期结束后重试。' }
   }
@@ -243,6 +258,7 @@ export function failureHelpLinks(options: FailureHelpSubject): FailureHelpLink[]
   if (message.includes('目录元数据与包实际声明不一致') || options.failureKind === 'adding-to-root' || options.failureKind === 'not-a-workspace'
     || options.failureCode === 'invalid-spec' || options.failureCode === 'ambiguous-install') return [reportLink]
   if (contextExplanation(options.failureCode, message) !== undefined) return []
+  if (sourceMigrationExplanation(diagnostic) !== undefined) return []
   if (options.failureKind === 'conflict' || message.includes('发现插件安装冲突')) return []
   // Known local problems get the tailored in-product agent handoff. Keep a
   // documentation fallback for self-update or an unavailable catalog target.

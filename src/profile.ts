@@ -6,8 +6,8 @@ import { parse, stringify } from 'yaml'
 import { effectiveBuildApprovalKey } from './build-approval.ts'
 import { normalizeGithubSubpath, npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError, type GithubTargetParts } from './install-resolution.ts'
 import { parseInsertedLoaderRows, primaryLoaderCandidates, sharedLoaderIdentifiers, type LoaderIdentity } from './loader-ownership.ts'
-import { isVersionRange, satisfiesVersionRange } from './semver.ts'
-import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
+import { compareVersions, isVersionRange, parseVersion, satisfiesVersionRange } from './semver.ts'
+import type { InstallConflict, InstalledClientPlugin, ManagedCompanionState, ManagedLoaderState, MarketHostKind, PersistedMarketState, SkinActivity, SkinArtifactRisk, SkinEntry, SkinRuntimeState, SkinSourceMigration } from './types.ts'
 
 export type { LoaderIdentity } from './loader-ownership.ts'
 
@@ -685,11 +685,52 @@ export function validateDesktopArtifact(profileDir: string, skin: SkinEntry, opt
   return validation
 }
 
-/** Only offer an explicit migration between the same reviewed GitHub/npm release. */
-export function npmSourceMigration(profileDir: string, skin: SkinEntry): { target: string; currentSource: string } | undefined {
+function isLocalMigrationSource(source: string): boolean {
+  const prefixed = /^(?:file|link):(.+)$/.exec(source)
+  if (prefixed !== null) return prefixed[1].trim().length > 0 && !/^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(prefixed[1])
+  return /^(?:\/(?!\/)|\.\.?[\\/]|~[\\/]|[A-Za-z]:[\\/])/.test(source)
+}
+
+function comparableMigrationVersion(version: string): boolean {
+  const parsed = parseVersion(version)
+  if (parsed === null || version.trim() !== version || !parsed.core.every(Number.isSafeInteger)) return false
+  if (!version.split(/[+-]/, 1)[0].split('.').every(part => /^(?:0|[1-9]\d*)$/.test(part))) return false
+  if (parsed.prerelease.some(part => part === '' || /^\d+$/.test(part) && (!/^(?:0|[1-9]\d*)$/.test(part) || !Number.isSafeInteger(Number(part))))) return false
+  return version.split('+')[1]?.split('.').every(part => part !== '') !== false
+}
+
+function localNpmSourceMigration(profileDir: string, skin: SkinEntry, currentSource: string): SkinSourceMigration | undefined {
+  if (skin.review?.installation !== 'verified' || (skin.install.companions?.length ?? 0) > 0) return undefined
+  const manifest = packageManifest(profileDir, skin.package)
+  const repository = repositoryIdentity(skin.repo)
+  if (manifest?.name !== skin.package || repository === null || repositoryIdentity(manifest.repository) !== repository) return undefined
+  const artifact = snapshotInstalledArtifact(profileDir, skin.package)
+  if (!artifact.ok || artifact.spec !== currentSource || artifact.version === null
+    || !comparableMigrationVersion(artifact.version) || !comparableMigrationVersion(skin.install.version)) return undefined
+  const validation = validateInstalledSkin(profileDir, skin)
+  if (!validation.ok) return undefined
+  try {
+    assertNoLoaderConflicts(profileDir, skin)
+    const lockfile = pnpmLockfile(profileDir)
+    const lockfileHash = existsSync(lockfile) ? createHash('sha256').update(readFileSync(lockfile)).digest('hex') : null
+    const context = createHash('sha256').update(JSON.stringify(stableArtifactValue({
+      contract: 'local-skin-source-migration-v1',
+      artifact, manifest, lockfileHash,
+      reviewed: { id: skin.id, package: skin.package, repo: skin.repo, rowId: skin.rowId, subpath: skin.subpath, install: skin.install, review: skin.review, compatibility: skin.compatibility },
+    }))).digest('hex')
+    return {
+      target: npmInstallTarget(skin)!, currentSource, kind: 'local', currentVersion: artifact.version,
+      targetVersion: skin.install.version, context, downgrade: compareVersions(skin.install.version, artifact.version) < 0,
+    }
+  } catch { return undefined }
+}
+
+/** Explicitly replace a verified local source, or migrate the same reviewed GitHub/npm release. */
+export function npmSourceMigration(profileDir: string, skin: SkinEntry): SkinSourceMigration | undefined {
   if (skin.review?.installation === 'manual-only' || reviewedNpmSourceError(skin) !== null) return undefined
   const currentSource = readDependencies(profileDir)[skin.package]
   if (currentSource === undefined) return undefined
+  if (isLocalMigrationSource(currentSource)) return localNpmSourceMigration(profileDir, skin, currentSource)
   const current = parseGithubTarget(currentSource)
   const reviewed = parseGithubTarget(skin.install.target)
   if (current === null || reviewed === null

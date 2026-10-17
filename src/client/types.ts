@@ -99,7 +99,13 @@ export interface RuntimeSkin {
   installedAt?: string | null
   lastOperatedAt?: string | null
   updateAvailable: boolean
-  sourceMigration?: { target: string; currentSource: string }
+  sourceMigration?: { target: string; currentSource: string } & ({ kind?: undefined } | {
+    kind: 'local'
+    currentVersion: string
+    targetVersion: string
+    context: string
+    downgrade: boolean
+  })
   artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
   error?: string
 }

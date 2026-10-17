@@ -117,6 +117,7 @@ interface SkinOperationOptions {
   compatibilityContext?: string
   artifactContext?: string
   configurationContext?: string
+  sourceContext?: string
   installAndUse?: boolean
 }
 
@@ -695,7 +696,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [operations, setOperations] = useState<Operation[]>([])
   const [error, setError] = useState<string | null>(null)
   const [confirmUninstall, setConfirmUninstall] = useState(false)
-  const [confirmMigration, setConfirmMigration] = useState<{ skin: CatalogSkin; source: NonNullable<RuntimeSkin['sourceMigration']> } | null>(null)
+  const [confirmMigration, setConfirmMigration] = useState<{ skin: CatalogSkin; source: NonNullable<RuntimeSkin['sourceMigration']>; changed?: boolean } | null>(null)
   const [activationWarningAccepted, setActivationWarningAccepted] = useState(() => {
     try { return window.localStorage.getItem(ACTIVATION_WARNING_KEY) === 'true' } catch { return false }
   })
@@ -1480,6 +1481,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     try {
       let target = skinsRef.current.find(skin => skin.id === skinId)
       if (target === undefined) { continuingInstallActivation.current.delete(skinId); return false }
+      if (starting && kind === 'update' && hostKind === 'dsh') {
+        const source = runtimeFor(statesRef.current, skinId).sourceMigration
+        if (source?.kind === 'local') {
+          setConfirmMigration({ skin: target, source })
+          return false
+        }
+      }
       const stopContinuation = async () => {
         if (!continuingInstallActivation.current.delete(skinId) || !mounted.current) return
         await refresh().catch(() => undefined)
@@ -1525,6 +1533,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         }
       }
       const targetState = runtimeFor(statesRef.current, target.id)
+      if (starting && kind === 'migrate' && (targetState.sourceMigration?.kind === 'local' || options.sourceContext !== undefined)) {
+        const source = targetState.sourceMigration
+        if (source === undefined || targetState.installation !== 'installed') {
+          setError('安装来源已变化，请刷新后重新选择操作。')
+          return false
+        }
+        if (source.kind !== 'local' || source.context !== options.sourceContext) {
+          setConfirmMigration({ skin: target, source, changed: options.sourceContext !== undefined })
+          return false
+        }
+      }
       setError(null)
       setCompletedUninstall(current => current?.skinId === skinId ? null : current)
       inflightSkinIds.current.add(target.id)
@@ -1535,7 +1554,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       }
       try {
         const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
-          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...((kind === 'activate' || kind === 'pin') && acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(configurationContext !== undefined && { configurationContext }) }),
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...((kind === 'activate' || kind === 'pin') && acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(configurationContext !== undefined && { configurationContext }), ...(kind === 'migrate' && options.sourceContext !== undefined && { sourceContext: options.sourceContext }) }),
         })).operationId
         if (acceptedContext !== undefined) operationCompatibilityContexts.current.set(operationId, { skinId: target.id, kind, context: acceptedContext, artifactContext })
         for (;;) {
@@ -1603,7 +1622,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             const installBeforeUse = kind === 'install' && hostKind === 'desktop'
             const restartNotice: PendingRestartNotice = { target: { kind: 'skin', skinId: target.id }, title: installBeforeUse
               ? `${target.name.zh} 已安装，请手动重启 Desktop App 后再使用`
-              : pendingRestartTitle(`${target.name.zh} ${kind === 'uninstall' ? '已卸载' : kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? '已换用 npm' : '已完成操作'}`, restartAvailable),
+              : pendingRestartTitle(`${target.name.zh} ${kind === 'uninstall' ? '已卸载' : kind === 'activate' ? '已切换' : kind === 'update' ? '已更新' : kind === 'migrate' ? targetState.sourceMigration?.kind === 'local' ? '已替换为市场版本' : '已换用 npm' : '已完成操作'}`, restartAvailable),
               description: installBeforeUse ? `“${target.name.zh}”已安装，重启后可使用。`
                 : kind === 'activate' ? `已启用“${target.name.zh}”，重启后生效。`
                   : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
@@ -1905,7 +1924,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             {itemState.installation === 'installed' && itemState.activation === 'unavailable' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('deactivate') !== null} onClick={() => { void runForSkin(skin.id, 'deactivate') }}>停用</Button>}
             {itemState.installation === 'installed' && itemState.activation === 'active' && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('deactivate') !== null} onClick={() => { void runForSkin(skin.id, 'deactivate') }}>停用</Button>}
             {itemState.installation === 'installed' && itemState.updateAvailable && !isManualOnly(skin) && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('update') !== null} onClick={() => { void runForSkin(skin.id, 'update') }}>更新</Button>}
-            {canMigrate && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('migrate') !== null} onClick={() => setConfirmMigration({ skin, source: itemState.sourceMigration! })}>换用 npm</Button>}
+            {canMigrate && <Button className={css.cardAction} variant="outline" size="sm" disabled={actionReason('migrate') !== null} onClick={() => setConfirmMigration({ skin, source: itemState.sourceMigration! })}>{itemState.sourceMigration?.kind === 'local' ? '替换为市场版本' : '换用 npm'}</Button>}
           </>}
         </div>}
       </div>
@@ -2275,7 +2294,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               {state.activation === 'active' && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed={state.pinned === true} title={state.pinned ? '取消后，如果它不是当前主皮肤，将立即停用；以后切换皮肤时也不会再保留' : '切换其他皮肤时仍保持启用，适合宠物、音效等可叠加插件；多个皮肤可能发生冲突'} disabled={selectedBusy !== undefined || actionReason(state.pinned ? 'unpin' : 'pin') !== null} onClick={() => { void run(state.pinned ? 'unpin' : 'pin') }}>{state.pinned ? '取消常驻' : '常驻使用'}</Button>}
               {state.activation === 'restart-required' && state.pinned && <Button className={css.pinAction} variant="outline" size="sm" aria-pressed="true" title="取消常驻并撤销待重启的启用状态" disabled={selectedBusy !== undefined || actionReason('unpin') !== null} onClick={() => void run('unpin')}>取消常驻</Button>}
               {state.updateAvailable && !manualOnly && <Button variant={state.activation === 'active' && !state.pinned ? 'primary' : 'outline'} size="sm" icon={<IconRefreshOutline />} disabled={selectedBusy !== undefined || actionReason('update') !== null} onClick={() => void run('update')}>更新</Button>}
-              {hostKind === 'dsh' && state.installation === 'installed' && state.sourceMigration !== undefined && !manualOnly && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined} onClick={() => setConfirmMigration({ skin: selected, source: state.sourceMigration! })}>换用 npm</Button>}
+              {hostKind === 'dsh' && state.installation === 'installed' && state.sourceMigration !== undefined && !manualOnly && <Button variant="outline" size="sm" disabled={selectedBusy !== undefined || actionReason('migrate') !== null} onClick={() => setConfirmMigration({ skin: selected, source: state.sourceMigration! })}>{state.sourceMigration.kind === 'local' ? '替换为市场版本' : '换用 npm'}</Button>}
               {state.installation !== 'missing' && <Button className={css.iconOnlyButton} variant="outline" size="sm" icon={<IconTrashOutline />} aria-label="卸载" title="卸载" disabled={selectedBusy !== undefined || actionReason('uninstall') !== null} onClick={() => setConfirmUninstall(true)} />}
               <span className={css.actionDivider} aria-hidden="true" />
               <span className={css.repoMeta}>
@@ -2340,16 +2359,30 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       <Modal
         open={warningDialog === 'migration'}
         onClose={() => setConfirmMigration(null)}
-        title="换用 npm 安装源"
+        title={confirmMigration?.source.kind === 'local' ? '替换为市场版本' : '换用 npm 安装源'}
         closeLabel="关闭"
         className={css.warningModal}
-        description={`${confirmMigration?.skin.name.zh ?? '此皮肤'}将换用同版本 npm 安装包，保留当前启用和常驻状态。`}
+        description={confirmMigration?.source.kind === 'local'
+          ? `${confirmMigration.changed ? '安装来源或版本已变化，请重新确认。' : ''}${confirmMigration.skin.name.zh}：当前版本 ${confirmMigration.source.currentVersion} → 市场版本 ${confirmMigration.source.targetVersion}。${confirmMigration.source.downgrade ? '本次将降级到市场版本。' : ''}确认后替换安装来源，${management !== undefined && installCompatibility(confirmMigration.skin, 'dsh', runtime)?.decision === 'incompatible' ? '目标版本需要兼容性确认，替换后先停用；确认使用或常驻后再启用。' : '保留当前启用和常驻状态；'}原始本地文件保留。取消不会更换安装来源。`
+          : `${confirmMigration?.changed ? '安装来源或版本已变化，请重新确认。' : ''}${confirmMigration?.skin.name.zh ?? '此皮肤'}将换用同版本 npm 安装包，保留当前启用和常驻状态。`}
         footer={<><Button variant="outline" size="sm" onClick={() => setConfirmMigration(null)}>取消</Button><Button variant="primary" size="sm" disabled={confirmMigration !== null && liveOperationFor(operations, confirmMigration.skin.id) !== undefined} onClick={() => {
           if (confirmMigration === null) return
-          const { skin } = confirmMigration
+          const { skin, source } = confirmMigration
+          if (source.kind === 'local') {
+            const current = runtimeFor(statesRef.current, skin.id).sourceMigration
+            if (current === undefined) {
+              setConfirmMigration(null)
+              setError('安装来源已变化，请刷新后重新选择操作。')
+              return
+            }
+            if (current.kind !== 'local' || current.context !== source.context || current.currentVersion !== source.currentVersion || current.targetVersion !== source.targetVersion || current.target !== source.target || current.currentSource !== source.currentSource || current.downgrade !== source.downgrade) {
+              setConfirmMigration({ skin, source: current, changed: true })
+              return
+            }
+          }
           setConfirmMigration(null)
-          void runForSkin(skin.id, 'migrate')
-        }}>确认换用 npm</Button></>}
+          void runForSkin(skin.id, 'migrate', undefined, source.kind === 'local' ? { sourceContext: source.context } : undefined)
+        }}>{confirmMigration?.source.kind === 'local' ? '确认替换' : '确认换用 npm'}</Button></>}
       />
       <Modal
         open={warningDialog === 'intercept'}

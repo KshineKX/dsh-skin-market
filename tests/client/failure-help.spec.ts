@@ -336,6 +336,48 @@ describe('failure help', () => {
     expect(exported.what).toContain('插件缺少运行所需的文件或依赖')
   })
 
+  it('explains local update limits and the explicit market replacement without exposing local paths', () => {
+    const raw = '当前皮肤使用本地或自定义安装来源，无法自动更新；请按原安装方式更新 RAW_DIAGNOSTIC_MARKER file:/Users/example/private-profile/skin.tgz'
+    const operation = failed('command', raw, { kind: 'update' })
+    const notice = interceptNotice(operation, '测试皮肤', skin)
+
+    expect(notice.what).toContain('本地或自定义来源，无法直接更新')
+    expect(notice.why).toContain('替换为市场版本')
+    expect(notice.why).toContain('版本差异')
+    expect(notice.why).toContain('按原安装方式更新')
+    expect(notice.links).toEqual([])
+    expect(JSON.stringify(notice)).not.toMatch(/RAW_DIAGNOSTIC_MARKER|private-profile|file:/)
+    expect(operation.failure?.message).toBe(raw)
+  })
+
+  it.each([
+    '本地安装来源或市场版本已变化，请重新确认替换',
+    '本地安装需先确认当前版本与市场版本，再替换',
+    '更新来源在下载或排队期间发生变化，请刷新后重试',
+    '更新来源在下载期间发生变化，请刷新后重试',
+    '更新来源在排队期间发生变化，请刷新后重试',
+    '更新来源在安装准备期间发生变化，请刷新后重试',
+  ])('requires fresh confirmation for %s while keeping diagnostic details private', message => {
+    const raw = `${message} RAW_DIAGNOSTIC_MARKER link:/Users/example/private-profile/skin`
+    const operation = failed('command', raw, { kind: 'migrate' })
+    const notice = interceptNotice(operation, '测试皮肤', skin)
+
+    expect(notice.what).not.toContain('未能完成本次操作')
+    expect(notice.why).toContain('刷新皮肤详情')
+    expect(notice.why).toMatch(/重新|再次确认/)
+    expect(notice.links).toEqual([])
+    expect(JSON.stringify(notice)).not.toMatch(/RAW_DIAGNOSTIC_MARKER|private-profile|link:/)
+    expect(operation.failure?.message).toBe(raw)
+  })
+
+  it('keeps a structured Host failure ahead of source replacement hints in raw diagnostics', () => {
+    const raw = '当前皮肤使用本地或自定义安装来源，无法自动更新 RAW_DIAGNOSTIC_MARKER'
+    const notice = interceptNotice(failed('network', raw), '测试皮肤', skin)
+
+    expect(notice.what).toContain('暂时无法连接安装源')
+    expect(notice.why).not.toContain('替换为市场版本')
+  })
+
   it.each([
     'release-age', 'network', 'fetch-timeout', 'build-approval', 'fetch-404', 'adding-to-root',
     'not-a-workspace', 'unexpected-store', 'compatibility', 'conflict', 'command', 'lockfile-outdated',

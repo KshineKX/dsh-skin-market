@@ -157,10 +157,13 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     if (!method(request, response, 'POST')) return
     if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
     try {
-      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext } = await readSkinMutation(request)
+      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext, sourceContext } = await readSkinMutation(request)
+      if (sourceContext !== undefined && kind !== 'migrate') throw new Error('invalid source context')
       if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
       if (configurationContext !== undefined && !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) throw new Error('invalid configuration context')
-      const operation = configurationContext !== undefined
+      const operation = sourceContext !== undefined
+        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, sourceContext)
+        : configurationContext !== undefined
         ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, configurationContext)
         : artifactContext === undefined
           ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)

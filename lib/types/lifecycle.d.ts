@@ -55,6 +55,7 @@ export declare class SkinLifecycle {
     private readonly failedReleaseAgeApprovals;
     private readonly pendingReleaseAgeApprovals;
     private readonly artifactContexts;
+    private readonly sourceMigrationContexts;
     private readonly failedArtifactContexts;
     private readonly compatibilityContexts;
     private readonly deadlines;
@@ -144,7 +145,7 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string): Operation;
     retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string, configurationContext?: string): Operation;
     private update;
     cancel(id: string): Operation;
@@ -159,6 +160,9 @@ export declare class SkinLifecycle {
     private recoverProfile;
     private prepareProfile;
     private assertNpmMigration;
+    private replacementReview;
+    private replacementTarget;
+    private assertReplacementArtifact;
     /** An ordinary Desktop update must retain the installed source family. */
     private desktopUpdateTarget;
     private installPackage;

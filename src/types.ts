@@ -127,6 +127,20 @@ export interface CatalogSkin extends SkinEntry {
 export type InstallationState = 'missing' | 'installed' | 'updating' | 'broken'
 export type ActivationState = 'inactive' | 'active' | 'switching' | 'restart-required' | 'unavailable'
 
+export type SkinSourceMigration = {
+  target: string
+  currentSource: string
+  kind?: undefined
+} | {
+  target: string
+  currentSource: string
+  kind: 'local'
+  currentVersion: string
+  targetVersion: string
+  context: string
+  downgrade: boolean
+}
+
 export interface SkinRuntimeState {
   skinId: string
   installation: InstallationState
@@ -139,7 +153,7 @@ export interface SkinRuntimeState {
   lastOperatedAt: string | null
   updateAvailable: boolean
   artifactRisk?: SkinArtifactRisk
-  sourceMigration?: { target: string; currentSource: string }
+  sourceMigration?: SkinSourceMigration
   error?: string
 }
 
