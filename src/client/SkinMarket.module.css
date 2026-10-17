@@ -44,6 +44,8 @@
   inset: 0 0 calc(-1 * var(--market-sticky-extension));
   pointer-events: none;
   background: var(--dsw-alias-bg-layer-2);
+  -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter, none);
+  backdrop-filter: var(--dsw-menu-backdrop-filter, none);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
   mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
@@ -142,7 +144,7 @@
    Hover tokens may be translucent or absent in a different plugin entry point;
    paint them over the card surface without replacing its background color. */
 .homeCardOpen,
-.installedMoreCard { --market-card-hover: var(--dsw-alias-interactive-bg-hover); appearance: none; background: var(--dsw-alias-bg-layer-1); }
+.installedMoreCard { --market-card-hover: var(--dsw-alias-interactive-bg-hover); appearance: none; background: var(--dsw-alias-bg-layer-1); -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter, none); backdrop-filter: var(--dsw-menu-backdrop-filter, none); }
 .homeCardOpen { display: flex; width: 100%; height: auto !important; min-width: 0; min-height: 0 !important; max-height: none !important; grid-area: 1 / 1; align-self: stretch; z-index: 0; flex-direction: column; align-items: stretch; padding: 0; color: inherit; border: 0; border-radius: inherit; cursor: pointer; font: inherit; text-align: left; }
 .homeCardOpen:hover, .homeCardOpen:focus-visible, .homeCardOpen:active,
 .installedMoreCard:hover, .installedMoreCard:focus-visible, .installedMoreCard:active { background-image: linear-gradient(var(--market-card-hover), var(--market-card-hover)); }

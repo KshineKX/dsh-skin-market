@@ -28,6 +28,7 @@
   --dsw-alias-button-floating-hover: #414247;
   --dsw-alias-bg-mask-photo: rgba(0, 0, 0, .88);
   --dsw-mask-blur: none;
+  --dsw-menu-backdrop-filter: blur(40px) saturate(150%);
   --dsw-elevation-panel: 0 0 0 .5px var(--dsw-alias-border-l2), 0 3px 8px #00000008, 0 0 16px #00000005;
   --dsw-alias-bg-mask-1: rgba(0,0,0,.72);
   --dsw-alias-bg-layer-1: #222326;
