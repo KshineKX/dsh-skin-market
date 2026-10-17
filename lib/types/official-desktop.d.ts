@@ -11,6 +11,7 @@ export interface OfficialPluginManagerLike {
     inspect?(spec: string, optionsOrSignal?: unknown, signal?: AbortSignal): Promise<unknown>;
     listBundles?(): Promise<unknown>;
     listPlugins?(): Promise<unknown>;
+    setVersionExemption?(packageVersion: string, runtimeVersion: string, enabled: boolean, acceptRisk?: boolean): Promise<unknown>;
 }
 export interface OfficialManagementError {
     code?: string;
@@ -82,6 +83,7 @@ export interface OfficialManagementCapabilities {
     buildApprovals: OfficialCapability;
     registry: OfficialCapability;
     saveExact: OfficialCapability;
+    compatibilityOverrides?: OfficialCapability;
 }
 export interface OfficialInspectionOptions {
     registry?: string | null;
@@ -96,6 +98,7 @@ export interface OfficialManagementAdapter {
     inspect(spec: string, options?: OfficialInspectionOptions): Promise<unknown>;
     listBundles(): Promise<unknown>;
     listPlugins(): Promise<unknown>;
+    allowIncompatibleVersion?(packageName: string, packageVersion: string, runtimeVersion: string, options?: CommandOptions): Promise<CommandResult>;
 }
 /** One-argument callers retain structural compatibility; added option fields require audited runtime versions. */
 export declare function officialDesktopRunner(getManager: () => OfficialPluginManagerLike | undefined, runtime?: DshRuntime, events?: OfficialManagementEvents): PluginRunner;

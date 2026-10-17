@@ -314,6 +314,13 @@ export function interceptNotice(operation: Operation, skinName: string, skin?: F
     }
   }
   if (operation.failure?.kind === 'compatibility') {
+    const target = operation.failure.compatibilityOverride
+    if (operation.failure.action === 'approve-compatibility' && target !== undefined) return {
+      title: `${kind}需要确认兼容风险`,
+      what: `「${skinName}」${target.version} 的依赖声明与 DSH ${target.hostVersion} 不兼容。继续运行可能导致崩溃或数据丢失。`,
+      why: `确认后将为 ${target.packageName}@${target.version} 在当前环境保存仅适用于 DSH ${target.hostVersion} 的精确版本授权，并继续本次${kind}；其他皮肤或版本不会获准。可在官方插件页撤销授权。`,
+      links,
+    }
     return {
       title: `${kind}未完成`,
       what: `「${skinName}」未通过当前 DSH 的兼容检查。`,

@@ -13,7 +13,7 @@ import { sharedLoaderIdentifiers } from './loader-ownership.ts'
 import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
-import { officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
+import { officialCompatibilityOverride, officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
 import { applyConfigurationOverride, applyConfigurationOverrides, inspectConfigurationOverride, inspectConfigurationOverrides, rollbackConfigurationOverride, type ConfigurationOverrideOptions, type ConfigurationOverrideTarget } from './configuration-override.ts'
 import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts'
 import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
@@ -68,7 +68,7 @@ import {
   type LoaderIdentity,
   type InstalledArtifactSnapshot,
 } from './profile.ts'
-import type { DesktopInstallCapability, DshRuntime, InstallConflict, LoaderEntry, MarketHostKind, Operation, OperationFailure, OperationKind, OperationRetryAction, PersistedMarketState, SelectionOperationKind, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
+import type { CompatibilityOverride, DesktopInstallCapability, DshRuntime, InstallConflict, LoaderEntry, MarketHostKind, Operation, OperationFailure, OperationKind, OperationRetryAction, PersistedMarketState, SelectionOperationKind, SkinArtifactRisk, SkinEntry, SkinRuntimeState } from './types.ts'
 
 export interface LifecycleHost {
   loader: { entries(): Iterable<LoaderEntry> }
@@ -196,6 +196,12 @@ interface PrefetchedPackage {
   hasBundle: boolean
 }
 
+interface CompatibilityApproval {
+  target: CompatibilityOverride
+  context: string
+  failedId?: string
+}
+
 interface ReleaseAgeApproval {
   target: ReleaseAgeTarget
   context: string
@@ -253,6 +259,8 @@ export class SkinLifecycle {
   private readonly pendingBuildKeys = new Map<string, string[]>()
   private readonly failedReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
   private readonly pendingReleaseAgeApprovals = new Map<string, ReleaseAgeApproval>()
+  private readonly failedCompatibilityApprovals = new Map<string, CompatibilityApproval>()
+  private readonly pendingCompatibilityApprovals = new Map<string, CompatibilityApproval>()
   private readonly artifactContexts = new Map<string, string>()
   private readonly failedArtifactContexts = new Map<string, { context: string; skinId: string; kind: 'activate' | 'pin' }>()
   private readonly compatibilityContexts = new Map<string, string>()
@@ -484,6 +492,31 @@ export class SkinLifecycle {
   private releaseAgeContext(operation: Pick<Operation, 'kind' | 'skinId'>): string {
     const skin = this.skin(operation.skinId)
     return JSON.stringify({ kind: operation.kind, package: skin.package, rowId: skin.rowId, install: skin.install, runtime: this.runtime.version })
+  }
+
+  private compatibilityApprovalContext(operation: Pick<Operation, 'kind' | 'skinId'>): string {
+    return JSON.stringify({ selection: this.releaseAgeContext(operation), artifact: snapshotInstalledArtifact(this.options.profileDir, this.skin(operation.skinId).package) })
+  }
+
+  private async applyCompatibilityApproval(operation: Operation): Promise<void> {
+    const approval = this.pendingCompatibilityApprovals.get(operation.id)
+    if (approval === undefined) return
+    this.pendingCompatibilityApprovals.delete(operation.id)
+    const failed = approval.failedId === undefined ? undefined : this.operations.get(approval.failedId)
+    const target = failed?.failure?.compatibilityOverride
+    if (failed?.phase !== 'failed' || failed.failure?.action !== 'approve-compatibility'
+      || target === undefined || JSON.stringify(target) !== JSON.stringify(approval.target)
+      || approval.context !== this.compatibilityApprovalContext(operation)
+      || this.management?.capabilities().compatibilityOverrides?.available !== true
+      || this.management.allowIncompatibleVersion === undefined) throw new Error('需要确认的皮肤版本、安装状态或 DSH 版本已变化，请重新操作后确认')
+    this.checkDeadline(operation)
+    const result = await this.awaitLifecycle(this.management.allowIncompatibleVersion(target.packageName, target.version, target.hostVersion, {
+      signal: this.abortControllers.get(operation.id)?.signal, timeoutMs: this.remainingTime(operation),
+    }), operation)
+    this.acceptManagement(result, operation)
+    this.checkDeadline(operation)
+    if (approval.context !== this.compatibilityApprovalContext(operation)) throw new Error('兼容授权已保存，但皮肤版本、安装状态或 DSH 版本已变化；请重新操作后确认')
+    logEvent('info', 'compatibility-approved', `已授权 ${target.packageName}@${target.version} 在 DSH ${target.hostVersion} 中运行`, operation.id)
   }
 
   private repairReleaseAgePolicy(operation?: Operation): string[] {
@@ -810,6 +843,8 @@ export class SkinLifecycle {
     this.pendingBuildKeys.clear()
     this.failedReleaseAgeApprovals.clear()
     this.pendingReleaseAgeApprovals.clear()
+    this.failedCompatibilityApprovals.clear()
+    this.pendingCompatibilityApprovals.clear()
     this.pendingConfigurationRepairs.clear()
     this.failedConfigurationBindings.clear()
     this.pendingSelectionConfigurations.clear()
@@ -1127,7 +1162,7 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, compatibilityApproval?: CompatibilityApproval): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
     if (selectionConfigurationContext !== undefined && (!isSelectionOperation(kind) || !/^[a-f0-9]{64}$/.test(selectionConfigurationContext) || configurationRepair !== undefined)) throw new Error('invalid configuration context')
@@ -1162,6 +1197,7 @@ export class SkinLifecycle {
     if (selectionConfigurationContext !== undefined) this.pendingSelectionConfigurations.set(operation.id, selectionConfigurationContext)
     if (configurationRepair !== undefined) this.pendingConfigurationRepairs.set(operation.id, configurationRepair)
     if (releaseAgeApproval !== undefined) this.pendingReleaseAgeApprovals.set(operation.id, releaseAgeApproval)
+    if (compatibilityApproval !== undefined) this.pendingCompatibilityApprovals.set(operation.id, compatibilityApproval)
     if ((kind === 'activate' || kind === 'pin') && acknowledgeCompatibility === true && acknowledgedContext !== undefined) this.compatibilityContexts.set(operation.id, acknowledgedContext)
     if (artifactContext !== undefined) this.artifactContexts.set(operation.id, artifactContext)
     this.abortControllers.set(operation.id, new AbortController())
@@ -1196,6 +1232,14 @@ export class SkinLifecycle {
     if (failed.failure?.action !== action) throw new Error('该操作不支持此恢复动作')
     let releaseAgeApproval: ReleaseAgeApproval | undefined
     let configurationRepair: ConfigurationRepairApproval | undefined
+    let compatibilityApproval: CompatibilityApproval | undefined
+    if (action === 'approve-compatibility') {
+      const approved = this.failedCompatibilityApprovals.get(id)
+      const target = failed.failure.compatibilityOverride
+      if (approved === undefined || target === undefined || JSON.stringify(target) !== JSON.stringify(approved.target)
+        || approved.context !== this.compatibilityApprovalContext(failed)) throw new Error('需要确认的皮肤版本、安装状态或 DSH 版本已变化，请重新操作后确认')
+      compatibilityApproval = { target: { ...approved.target }, context: approved.context, failedId: id }
+    }
     if (action === 'repair-configuration') {
       const plan = failed.failure.configurationOverride
       const binding = this.failedConfigurationBindings.get(id)
@@ -1221,7 +1265,7 @@ export class SkinLifecycle {
     }
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair, undefined, compatibilityApproval)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -1261,6 +1305,7 @@ export class SkinLifecycle {
       this.profileLockOwner = operation.id
       this.profileOperation = operation
       this.applyReleaseAgeApproval(operation)
+      await this.applyCompatibilityApproval(operation)
       const approval = this.pendingConfigurationRepairs.get(operation.id)
       this.pendingConfigurationRepairs.delete(operation.id)
       let repair: ReturnType<typeof applyConfigurationOverride> | ReturnType<typeof applyConfigurationOverrides> | undefined
@@ -1457,6 +1502,22 @@ export class SkinLifecycle {
           operation.id,
         )
         const recoveryError = this.recoveryErrors.get(operation.id)
+        const compatibilityTarget = error instanceof ManagedOperationError ? officialCompatibilityOverride(error.result) : undefined
+        const compatibilitySkin = this.skin(operation.skinId)
+        const expectedVersion = operation.kind === 'activate' || operation.kind === 'pin'
+          ? packageManifest(this.options.profileDir, compatibilitySkin.package)?.version : compatibilitySkin.install.version
+        if (recoveryError === undefined && compatibilityTarget !== undefined
+          && this.management?.capabilities().compatibilityOverrides?.available === true
+          && compatibilityTarget.packageName === compatibilitySkin.package && compatibilityTarget.version === expectedVersion
+          && compatibilityTarget.hostVersion === this.runtime.version
+          && error instanceof ManagedOperationError && !error.result.aborted && !error.result.timedOut
+          && this.abortControllers.get(operation.id)?.signal.aborted !== true
+          && ['install', 'update', 'migrate', 'activate', 'pin'].includes(operation.kind)
+          && operation.failure !== undefined) {
+          operation.failure.action = 'approve-compatibility'
+          operation.failure.compatibilityOverride = compatibilityTarget
+          this.failedCompatibilityApprovals.set(operation.id, { target: { ...compatibilityTarget }, context: this.compatibilityApprovalContext(operation) })
+        }
         const ageTarget = operation.failure?.releaseAgeTarget
         const exactAgeTarget = ageTarget === undefined ? undefined : parseReleaseAgeTarget(ageTarget.packageName, ageTarget.version)
         const canCompletePartial = this.partialManagedArtifacts.has(operation.id) && ['install', 'update', 'migrate'].includes(operation.kind)
@@ -1489,6 +1550,7 @@ export class SkinLifecycle {
       this.desktopManagedAttempts.delete(operation.id)
       this.desktopRecoveryBaselines.delete(operation.id)
       this.pendingReleaseAgeApprovals.delete(operation.id)
+      this.pendingCompatibilityApprovals.delete(operation.id)
       this.pendingConfigurationRepairs.delete(operation.id)
       this.pendingSelectionConfigurations.delete(operation.id)
       this.abortControllers.delete(operation.id)
@@ -1500,6 +1562,7 @@ export class SkinLifecycle {
         this.operations.delete(operation.id)
         this.pendingBuildKeys.delete(operation.id)
         this.failedReleaseAgeApprovals.delete(operation.id)
+        this.failedCompatibilityApprovals.delete(operation.id)
         this.failedArtifactContexts.delete(operation.id)
         this.failedConfigurationBindings.delete(operation.id)
       }, 30 * 60 * 1000)

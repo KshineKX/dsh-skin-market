@@ -31,7 +31,7 @@ describe('static catalog prompts', () => {
     expect(prompt).toContain(skin.install.target)
     expect(prompt).toContain('判断当前是 Web 版还是官方 Desktop')
     expect(prompt).toContain('不要执行 dsh plugin --profile desktop')
-    expect(prompt).toContain('设置 → 皮肤市场')
+    expect(prompt).toContain('皮肤详情点击「安装」')
     expect(prompt).toContain('必须先完成只读冲突检查')
     expect(prompt).toContain('停在安装前')
     const desktop = prompt.split('\n\n官方 Desktop：')[1]!.split('\n\nWeb 版：')[0]!

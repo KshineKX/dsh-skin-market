@@ -40,6 +40,7 @@ function fullManager(): OfficialPluginManagerLike {
     inspect: vi.fn(async () => ({ status: 'accepted', kind: 'registry' })),
     listBundles: vi.fn(async () => []),
     listPlugins: vi.fn(async () => []),
+    setVersionExemption: vi.fn(async (target: string, _runtimeVersion: string, enabled: boolean) => ({ changed: true, application: 'applied', stage: 'enable', target, enabled })),
   }
 }
 
@@ -245,6 +246,83 @@ describe('official Desktop runner', () => {
 })
 
 describe('official management release contracts', () => {
+  it.each([
+    ['0.1.6-alpha.2', false], ['0.1.7-alpha.1', false], ['0.1.7-alpha.2', false],
+    ['0.1.7-rc.1', true], ['0.1.7-rc.2', true], ['0.2.0-rc.1', true], ['0.2.0-rc.2', true],
+    ['0.2.1-alpha.1', true], ['0.2.1-alpha.2', true], ['0.2.1-alpha.3', true],
+    ['0.2.1-alpha.4', false], [null, false],
+  ] as const)('gates exact compatibility grants on the audited %s contract', async (version, available) => {
+    const manager = fullManager()
+    const management = officialDesktopRunner(() => manager, runtime(version)).management!
+    expect(management.capabilities().compatibilityOverrides?.available).toBe(available)
+    const result = await management.allowIncompatibleVersion!('@scope/skin', '1.3.0', version ?? '0.2.0-rc.2')
+    expect(manager.setVersionExemption).toHaveBeenCalledTimes(available ? 1 : 0)
+    expect(result.exitCode).toBe(available ? 0 : null)
+  })
+
+  it.each(['applied', 'restart-required'] as const)('grants the exact package/runtime pair and preserves %s', async application => {
+    const manager = fullManager()
+    manager.setVersionExemption = vi.fn(async (target, _host, enabled) => ({ ok: true, value: {
+      changed: true, application, stage: 'enable', target, enabled,
+    } }))
+    const management = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!
+    const result = await management.allowIncompatibleVersion!('@scope/skin', '1.3.0', '0.2.0-rc.2')
+    expect(manager.setVersionExemption).toHaveBeenCalledExactlyOnceWith('@scope/skin@1.3.0', '0.2.0-rc.2', true, true)
+    expect(result).toMatchObject({ exitCode: 0, management: { application, target: '@scope/skin@1.3.0', enabled: true } })
+    expect(manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it('requires the actual exemption method even on a supported host', async () => {
+    const manager = fullManager()
+    manager.setVersionExemption = undefined
+    const management = officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!
+    expect(management.capabilities().compatibilityOverrides?.available).toBe(false)
+    expect(await management.allowIncompatibleVersion!('skin', '1.0.0', '0.2.0-rc.2')).toMatchObject({ exitCode: null })
+  })
+
+  it.each([
+    ['github:owner/skin', '1.0.0', '0.2.0-rc.2'], ['skin', '^1.0.0', '0.2.0-rc.2'],
+    ['skin', 'latest', '0.2.0-rc.2'], ['skin', ' 1.0.0', '0.2.0-rc.2'],
+    ['skin', '1.0.0', '0.2.0-rc.1'], ['skin', '1.0.0', '0.2.0-rc.2+other'],
+  ])('rejects a non-exact or stale grant for %s@%s on %s', async (name, version, host) => {
+    const manager = fullManager()
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.allowIncompatibleVersion!(name, version, host)
+    expect(result).toMatchObject({ exitCode: null })
+    expect(manager.setVersionExemption).not.toHaveBeenCalled()
+  })
+
+  it('preserves a confirmed exemption refusal', async () => {
+    const manager = fullManager()
+    manager.setVersionExemption = vi.fn(async () => ({ changed: false, application: 'failed', stage: 'enable',
+      target: 'skin@1.0.0', enabled: true, error: { code: 'operation-error', diagnostic: 'exemption rejected' } }))
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.allowIncompatibleVersion!('skin', '1.0.0', '0.2.0-rc.2')
+    expect(result).toMatchObject({ exitCode: 1, management: { application: 'failed', error: { code: 'operation-error' } } })
+    expect(manager.setVersionExemption).toHaveBeenCalledTimes(1)
+    expect(manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    null, {}, { ok: false, error: { message: 'transport unavailable' } },
+    { application: 'applied', stage: 'enable', target: 'other@1.0.0', enabled: true },
+    { application: 'applied', stage: 'enable', target: 'skin@1.0.0', enabled: false },
+    { application: 'applied', target: 'skin@1.0.0', enabled: true },
+  ])('keeps an unconfirmed exemption result unknown: %j', async value => {
+    const manager = fullManager()
+    manager.setVersionExemption = vi.fn(async () => value)
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.allowIncompatibleVersion!('skin', '1.0.0', '0.2.0-rc.2')
+    expect(result).toMatchObject({ exitCode: 1, management: { application: 'unknown', indeterminate: true } })
+    expect(manager.setVersionExemption).toHaveBeenCalledTimes(1)
+    expect(manager.installBundle).not.toHaveBeenCalled()
+  })
+
+  it('does not repeat an exemption mutation after a transport rejection', async () => {
+    const manager = fullManager()
+    manager.setVersionExemption = vi.fn(async () => { throw new Error('connection lost') })
+    const result = await officialDesktopRunner(() => manager, runtime('0.2.0-rc.2')).management!.allowIncompatibleVersion!('skin', '1.0.0', '0.2.0-rc.2')
+    expect(result).toMatchObject({ exitCode: 1, management: { application: 'unknown', indeterminate: true } })
+    expect(manager.setVersionExemption).toHaveBeenCalledTimes(1)
+  })
+
   it.each([
     ['0.1.6-alpha.2', false, false, true],
     ['0.1.7-alpha.1', true, false, true],

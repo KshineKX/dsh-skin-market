@@ -167,6 +167,7 @@ function fixture(catalog: SkinEntry[], options: { lifecycleWaitMs?: number; host
     setPluginEnabled: vi.fn(async (id: string, enabled: boolean): Promise<unknown> => applyComponentEnable(id, enabled)),
     cancelInstall: vi.fn(async (_requestId: string): Promise<unknown> => ({ status: 'not-running' })),
     waitForInstall: vi.fn(async (_requestId: string): Promise<unknown> => null),
+    setVersionExemption: vi.fn(async (target: string, _runtime: string, enabled: boolean, _acceptRisk?: boolean): Promise<unknown> => ({ application: 'applied', changed: true, stage: 'enable', target, enabled })),
     listPlugins: vi.fn(async (): Promise<unknown> => catalog.filter(item => entries.has(item.package) && readProfileBundles(directory).includes(item.package)).map(item => ({
       entryId: entryId(item.package), patchId: item.rowId, moduleName: item.package, enabled: componentEnabled.get(item.package) !== false, fiberPhase: entries.get(item.package)?.fiber === undefined ? null : 'active',
     }))),
@@ -186,6 +187,120 @@ function fixture(catalog: SkinEntry[], options: { lifecycleWaitMs?: number; host
 }
 
 describe('official plugin manager lifecycle', () => {
+  const compatibilityRefusal = (item: SkinEntry, hostVersion: string) => ({
+    application: 'failed', changed: false,
+    error: { code: 'incompatible-version', incompatible: [{ name: item.package, version: item.install.version, runtimeVersion: hostVersion, peers: { '@deepseek-ai/dsh-client-runtime': '^0.1.0-rc.5' } }] },
+  })
+
+  it.each(['install', 'update'] as const)('grants only the refused exact plugin/runtime pair after explicit %s recovery', async kind => {
+    const item = skin(`compatibility-${kind}`)
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    if (kind !== 'install') host.materialize(skin(item.id, '0.9.0'))
+    host.manager.installBundle.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin(kind, item.id))
+    expect(failed, failed.message).toMatchObject({ phase: 'failed', failure: { action: 'approve-compatibility', compatibilityOverride: { packageName: item.package, version: item.install.version, hostVersion: host.runtime.version } } })
+    expect(host.manager.setVersionExemption).not.toHaveBeenCalled()
+    expect(() => host.lifecycle.retry(failed.id, 'retry')).toThrow('不支持此恢复动作')
+    const retried = await finished(host.lifecycle.retry(failed.id, 'approve-compatibility'))
+    expect(retried.phase, retried.message).toBe('done')
+    expect(host.manager.setVersionExemption).toHaveBeenCalledExactlyOnceWith(`${item.package}@${item.install.version}`, host.runtime.version, true, true)
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+    expect(host.manager.setVersionExemption.mock.invocationCallOrder[0]).toBeLessThan(host.manager.installBundle.mock.invocationCallOrder[1]!)
+  })
+
+  it.each(['activate', 'pin'] as const)('permits an installed exact version only after explicit %s recovery', async kind => {
+    const item = skin(`compatibility-${kind}`)
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    host.materialize(item)
+    host.manager.setBundleEnabled.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin(kind, item.id))
+    expect(failed, failed.message).toMatchObject({ phase: 'failed', failure: { action: 'approve-compatibility' } })
+    const retried = await finished(host.lifecycle.retry(failed.id, 'approve-compatibility'))
+    expect(retried.phase, retried.message).toBe('done')
+    expect(host.manager.setVersionExemption).toHaveBeenCalledExactlyOnceWith(`${item.package}@${item.install.version}`, host.runtime.version, true, true)
+    expect(host.manager.installBundle).not.toHaveBeenCalled()
+    expect(readMarketState(host.directory).activeSkinId === item.id || readMarketState(host.directory).pinnedSkinIds?.includes(item.id)).toBe(true)
+  })
+
+  it.each(['runtime', 'catalog', 'artifact'] as const)('does not grant stale compatibility recovery after the %s changes', async changed => {
+    const item = skin(`stale-host-compatibility-${changed}`)
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    host.manager.installBundle.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    if (changed === 'runtime') host.runtime.version = '0.2.1-alpha.3'
+    if (changed === 'catalog') await host.lifecycle.replaceCatalog([skin(item.id, '1.1.0')])
+    if (changed === 'artifact') host.materialize(item)
+    expect(() => host.lifecycle.retry(failed.id, 'approve-compatibility')).toThrow('已变化')
+    expect(host.manager.setVersionExemption).not.toHaveBeenCalled()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('rechecks compatibility consent after waiting for the profile queue', async () => {
+    const item = skin('queued-compatibility'), other = skin('queue-blocker')
+    const host = fixture([item, other], { hostVersion: '0.2.0-rc.2' })
+    host.manager.installBundle.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    const waiting = deferred<unknown>()
+    host.manager.installBundle.mockImplementationOnce(async () => waiting.promise)
+    const blocker = host.lifecycle.begin('install', other.id)
+    await until(() => host.manager.installBundle.mock.calls.length === 2)
+    const retry = host.lifecycle.retry(failed.id, 'approve-compatibility')
+    host.runtime.version = '0.2.1-alpha.3'
+    waiting.resolve(host.applyInstall(`${other.package}@${other.install.version}`))
+    await finished(blocker)
+    expect(await finished(retry)).toMatchObject({ phase: 'failed', message: expect.stringContaining('已变化') })
+    expect(host.manager.setVersionExemption).not.toHaveBeenCalled()
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not reinstall if granting the exact exemption has an unconfirmed result', async () => {
+    const item = skin('compatibility-grant-lost')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    host.manager.installBundle.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    host.manager.setVersionExemption.mockRejectedValueOnce(new Error('carrier disconnected'))
+    const retry = host.lifecycle.retry(failed.id, 'approve-compatibility')
+    await until(() => retry.phase === 'waiting')
+    expect(host.lifecycle.waitingReason).toContain('未返回可确认')
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not continue a changed target while the Host is saving an exact exemption', async () => {
+    const item = skin('compatibility-grant-changing')
+    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    host.manager.installBundle.mockResolvedValueOnce(compatibilityRefusal(item, host.runtime.version!))
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    const grant = deferred<unknown>()
+    host.manager.setVersionExemption.mockImplementationOnce(async () => grant.promise)
+    const retry = host.lifecycle.retry(failed.id, 'approve-compatibility')
+    await until(() => host.manager.setVersionExemption.mock.calls.length === 1)
+    const replacement = host.lifecycle.replaceCatalog([skin(item.id, '1.1.0')])
+    grant.resolve({ application: 'applied', stage: 'enable', enabled: true, target: `${item.package}@${item.install.version}` })
+    expect(await finished(retry)).toMatchObject({ phase: 'failed', message: expect.stringContaining('兼容授权已保存') })
+    await replacement
+    expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['unrelated', 'other-version', 'other-runtime', 'ambiguous', 'unstructured', 'old-host', 'rollback'] as const)('keeps %s compatibility refusals diagnostic-only', async scenario => {
+    const item = skin(`host-compatibility-${scenario}`)
+    const host = fixture([item], { hostVersion: scenario === 'old-host' ? '0.1.7-alpha.2' : '0.2.0-rc.2' })
+    const refusal = compatibilityRefusal(item, host.runtime.version!)
+    const target = refusal.error.incompatible[0]!
+    if (scenario === 'unrelated') target.name = 'other-plugin'
+    if (scenario === 'other-version') target.version = '2.0.0'
+    if (scenario === 'other-runtime') target.runtimeVersion = '0.2.1-alpha.3'
+    if (scenario === 'ambiguous') refusal.error.incompatible.push({ ...target, name: 'other-plugin' })
+    if (scenario === 'unstructured') refusal.error.incompatible = []
+    host.manager.installBundle.mockImplementationOnce(async () => {
+      if (scenario === 'rollback') host.materialize(item)
+      return refusal
+    })
+    const failed = await finished(host.lifecycle.begin('install', item.id))
+    expect(failed).toMatchObject({ phase: 'failed', failure: { kind: 'compatibility' } })
+    expect(failed.failure?.action).toBeUndefined()
+    expect(host.manager.setVersionExemption).not.toHaveBeenCalled()
+  })
+
   const ageRefusal = (name = 'dsh-skin-market', version = '0.1.60') => {
     const output = `[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification: ${name}@${version} was published at 2026-10-15T07:47:31.608Z, within the minimumReleaseAge cutoff (2026-10-14T08:04:41.370Z)`
     return { changed: false, application: 'failed', stage: 'install', error: { code: 'operation-error', diagnostic: output }, packageResult: { exitCode: 1, kind: 'unknown', output } }

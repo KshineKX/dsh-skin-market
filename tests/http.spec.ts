@@ -93,7 +93,7 @@ describe('HTTP guards', () => {
     await expect(readSkinMutation(jsonRequest({ skinId: 'fixture-skin', ...body }))).resolves.toEqual({
       skinId: 'fixture-skin', acknowledgeCompatibility: acknowledgement === true, ...context,
     })
-    for (const action of ['retry', 'approve-build', 'approve-release-age', 'approve-artifact'] as const) {
+    for (const action of ['retry', 'approve-build', 'approve-release-age', 'approve-artifact', 'approve-compatibility'] as const) {
       await expect(readOperationRetry(jsonRequest({ action, ...body }))).resolves.toEqual({
         action, acknowledgeCompatibility: acknowledgement === true, ...context,
       })

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
-import { compareVersions } from './semver.ts'
+import { compareVersions, parseVersion } from './semver.ts'
 import { officialOperationFailure } from './official-failure.ts'
 import type { DshRuntime } from './types.ts'
 
@@ -15,6 +15,7 @@ export interface OfficialPluginManagerLike {
   inspect?(spec: string, optionsOrSignal?: unknown, signal?: AbortSignal): Promise<unknown>
   listBundles?(): Promise<unknown>
   listPlugins?(): Promise<unknown>
+  setVersionExemption?(packageVersion: string, runtimeVersion: string, enabled: boolean, acceptRisk?: boolean): Promise<unknown>
 }
 
 export interface OfficialManagementError {
@@ -74,6 +75,7 @@ export interface OfficialManagementCapabilities {
   buildApprovals: OfficialCapability
   registry: OfficialCapability
   saveExact: OfficialCapability
+  compatibilityOverrides?: OfficialCapability
 }
 export interface OfficialInspectionOptions { registry?: string | null; signal?: AbortSignal }
 export interface OfficialManagementAdapter {
@@ -85,10 +87,12 @@ export interface OfficialManagementAdapter {
   inspect(spec: string, options?: OfficialInspectionOptions): Promise<unknown>
   listBundles(): Promise<unknown>
   listPlugins(): Promise<unknown>
+  allowIncompatibleVersion?(packageName: string, packageVersion: string, runtimeVersion: string, options?: CommandOptions): Promise<CommandResult>
 }
 
 const CORE_VERSION = '0.1.6-alpha.2'
 const RECOVERY_VERSION = '0.1.7-alpha.1'
+const COMPATIBILITY_OVERRIDE_VERSION = '0.1.7-rc.1'
 const RESOLUTION_REFRESH_VERSION = '0.2.1-alpha.1'
 const EXACT_VERSION = '0.2.1-alpha.2'
 // Published snapshots, not a promise that future or untagged releases share the contract.
@@ -286,11 +290,12 @@ export function officialDesktopRunner(
       buildApprovals: capability(install, !core ? unavailable : '官方 pluginManager 不支持构建脚本授权'),
       registry: capability(core && versionAtLeast(RECOVERY_VERSION), !core ? unavailable : `安装源选项需要已核验的 DSH ${RECOVERY_VERSION} 或更新版本`),
       saveExact: capability(core && versionAtLeast(EXACT_VERSION), !core ? unavailable : `精确保存依赖需要已核验的 DSH ${EXACT_VERSION} 或更新版本`),
+      compatibilityOverrides: capability(method('setVersionExemption') && versionAtLeast(COMPATIBILITY_OVERRIDE_VERSION), !core ? unavailable : '此 DSH 版本未提供已核验的精确版本兼容授权接口'),
     }
   }
   const requireCapability = (key: keyof OfficialManagementCapabilities): OfficialPluginManagerLike => {
     const state = capabilities()[key]
-    if (!state.available) throw new Error(state.reason)
+    if (state?.available !== true) throw new Error(state?.reason ?? '官方管理能力不可用')
     return getManager()!
   }
   const install = async (spec: string, requestId: string, request: Partial<PluginInstallRequest>, options?: CommandOptions): Promise<CommandResult> => {
@@ -375,6 +380,23 @@ export function officialDesktopRunner(
       const manager = getManager()
       if (!coreVersion || typeof manager?.listPlugins !== 'function') throw new Error('官方 pluginManager 未提供可用的插件清单')
       return readManagerResult(await manager.listPlugins())
+    },
+    async allowIncompatibleVersion(packageName, packageVersion, runtimeVersion, options) {
+      try {
+        const manager = requireCapability('compatibilityOverrides')
+        if (!/^(?:@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*$/.test(packageName)
+          || packageVersion !== packageVersion.trim() || parseVersion(packageVersion) === null
+          || runtimeVersion !== runtime?.version?.trim() || parseVersion(runtimeVersion) === null) {
+          throw new Error('兼容授权只接受精确包版本和当前 DSH 版本')
+        }
+        const target = `${packageName}@${packageVersion}`
+        const result = await callManager(() => manager.setVersionExemption!(target, runtimeVersion, true, true), options, undefined, true)
+        if (['applied', 'restart-required'].includes(result.management?.application ?? '')
+          && (result.management?.target !== target || result.management.enabled !== true || result.management.stage !== 'enable')) {
+          return unknownResult(new Error('官方宿主未确认目标精确版本的兼容授权'))
+        }
+        return result
+      } catch (error) { return managerError(error, options) }
     },
   }
   return runner

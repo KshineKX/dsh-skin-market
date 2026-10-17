@@ -213,7 +213,7 @@ describe('client market', () => {
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/configuration-override'))).toBe(false)
   })
 
-  it.each(['skin', 'market'] as const)('shows a %s retry failure once, retains its banner, and reports a rejected banner retry visibly', async source => {
+  it.each(['skin', 'market'] as const)('keeps a rejected %s retry in its dialog and hides the acknowledged failure across refresh and remount', async source => {
     const id = `${source}-retry-visible`
     const operation = { id, phase: 'failed', startedAt: new Date().toISOString(), message: 'ECONNRESET /Users/private/raw-error', failure: { kind: 'network', message: 'ECONNRESET /Users/private/raw-error', action: 'retry' } }
     let retries = 0
@@ -235,39 +235,117 @@ describe('client market', () => {
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
-    render(<SkinMarketSection t={key => key} />)
+    const view = render(<SkinMarketSection t={key => key} />)
     if (source === 'skin') fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
     const title = source === 'skin' ? '安装未完成' : '皮肤市场更新失败'
-    let dialog = await screen.findByRole('dialog', { name: title })
+    const dialog = await screen.findByRole('dialog', { name: title })
     expect(dialog.className).toContain('warningModal')
     expect(dialog.textContent).toContain('暂时无法连接安装源。请检查网络后重试。')
     expect(dialog.textContent).not.toContain('ECONNRESET')
     expect(dialog.querySelector('details, code, ul, ol')).toBeNull()
     expect(within(dialog).queryAllByRole('link').length).toBeLessThanOrEqual(1)
-    fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
-    let banner = screen.getByRole('status')
-    expect(within(banner).getByRole('button', { name: '查看提示' })).toBeTruthy()
-    expect(within(banner).getByRole('button', { name: '重试' })).toBeTruthy()
-    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
-    fireEvent.focus(window)
-    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
-    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
-    fireEvent.click(within(banner).getByRole('button', { name: '查看提示' }))
-    dialog = await screen.findByRole('dialog', { name: title })
-    fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
-    banner = screen.getByRole('status')
-    fireEvent.click(within(banner).getByRole('button', { name: '重试' }))
-    dialog = await screen.findByRole('dialog', { name: title })
+    fireEvent.click(within(dialog).getByRole('button', { name: '重试' }))
     expect(within(dialog).getByRole('button', { name: '处理中…' }).hasAttribute('disabled')).toBe(true)
     expect(within(dialog).getByRole('button', { name: '取消' }).hasAttribute('disabled')).toBe(true)
-    fireEvent.click(within(banner).queryByRole('button', { name: '重试' }) ?? within(dialog).getByRole('button', { name: '处理中…' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: '处理中…' }))
     await act(async () => { finishRetry({ ok: false, status: 409, json: async () => ({ error: 'raw retry failure /Users/private/token' }) }); await pending })
     await waitFor(() => expect(within(dialog).getByRole('alert').textContent).toBe('未能继续操作，请复制日志反馈。'))
     expect(retries).toBe(1)
     expect(dialog.textContent).not.toContain('raw retry failure')
     expect(within(dialog).getByRole('button', { name: '重试' }).hasAttribute('disabled')).toBe(false)
     fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
-    expect(within(screen.getByRole('status')).getByRole('button', { name: '查看提示' })).toBeTruthy()
+    expect(screen.queryByRole('status')).toBeNull()
+    const stateRequests = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent.focus(window)
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
+    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+    view.unmount()
+    render(<SkinMarketSection t={key => key} />)
+    await screen.findByRole('button', { name: /测试皮肤 界面预览/ })
+    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it.each(['plain', 'build'] as const)('hides an acknowledged %s failure and prompts again for a new operation', async type => {
+    let generation = 0
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], runtime: dshRuntime }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/install') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: `${type}-${++generation}` }) }
+      if (url.endsWith(`/operations/${type}-${generation}`)) return { ok: true, json: async () => ({
+        id: `${type}-${generation}`, kind: 'install', skinId: skin.id, phase: 'failed', startedAt: new Date().toISOString(),
+        ...(type === 'build' && { failure: { kind: 'build-approval', message: 'blocked native build', action: 'approve-build', packageName: 'node-pty' } }),
+      }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const install = await screen.findByRole('button', { name: '安装并使用' })
+    fireEvent.click(install)
+    const title = type === 'build' ? '需要批准构建脚本' : '安装未完成'
+    fireEvent.click(within(await screen.findByRole('dialog', { name: title })).getByRole('button', { name: type === 'build' ? '取消' : '知道了' }))
+    expect(screen.queryByRole('dialog', { name: title })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    const next = await screen.findByRole('dialog', { name: title })
+    expect(generation).toBe(2)
+    fireEvent.click(within(next).getByRole('button', { name: '关闭' }))
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
+  })
+
+  it.each(['post', 'poll'] as const)('prompts again after a second independent skin installation %s exception', async stage => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000)
+    let attempts = 0
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], runtime: dshRuntime }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/install') && init?.method === 'POST') {
+        attempts += 1
+        if (stage === 'post') throw new Error('connection failed')
+        return { ok: true, json: async () => ({ operationId: `poll-exception-${attempts}` }) }
+      }
+      if (url.includes('/operations/poll-exception-')) throw new Error('poll failed')
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      render(<SkinMarketSection t={key => key} />)
+      await openSkinCard()
+      const install = screen.getByRole('button', { name: '仅安装' })
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        fireEvent.click(screen.getByRole('button', { name: '仅安装' }))
+        fireEvent.click(within(await screen.findByRole('dialog', { name: '安装未完成' })).getByRole('button', { name: '知道了' }))
+        expect(attempts).toBe(attempt)
+        expect(screen.queryByRole('status')).toBeNull()
+      }
+    } finally { clock.mockRestore() }
+  })
+
+  it('prompts again when a second market-update request fails before returning an operation', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000)
+    let attempts = 0
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], runtime: dshRuntime }) }
+      if (url.endsWith('/market-update') && init?.method === 'POST') { attempts += 1; throw new Error('request failed') }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ currentVersion: '0.1.61', latestVersion: '0.1.62', updateAvailable: true }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      render(<SkinMarketSection t={key => key} />)
+      const update = await screen.findByRole('button', { name: '更新皮肤市场到 0.1.62' })
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        fireEvent.click(update)
+        fireEvent.click(within(await screen.findByRole('dialog', { name: '皮肤市场更新失败' })).getByRole('button', { name: '知道了' }))
+        expect(attempts).toBe(attempt)
+        expect(screen.queryByRole('status')).toBeNull()
+      }
+    } finally { clock.mockRestore() }
   })
 
   it.each(['skin', 'market'] as const)('prompts once for a %s waiting result and closes the current prompt when it completes', async source => {
@@ -295,6 +373,7 @@ describe('client market', () => {
     fireEvent.focus(window)
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
     expect(screen.queryByRole('dialog', { name: '操作结果待确认' })).toBeNull()
+    expect(document.querySelector('[role="status"] strong')).toBeNull()
     expect(screen.queryByRole('button', { name: '重试' })).toBeNull()
     const blockedInstall = screen.queryByRole('button', { name: /^安装(?:并使用)?$/ })
     expect(blockedInstall === null || blockedInstall.hasAttribute('disabled')).toBe(true)
@@ -305,6 +384,29 @@ describe('client market', () => {
     fireEvent.focus(window)
     await waitFor(() => expect(screen.queryByRole('dialog', { name: '操作结果待确认' })).toBeNull())
     await waitFor(() => expect(screen.getByRole('button', { name: /^安装(?:并使用)?$/ }).hasAttribute('disabled')).toBe(false))
+  })
+
+  it.each(['skin', 'market'] as const)('prompts for a restored %s waiting operation when it later fails, even after acknowledging the wait', async source => {
+    let phase = 'waiting'
+    const operation = () => ({ id: `${source}-restored-wait`, phase, startedAt: new Date().toISOString(), message: 'Host result',
+      ...(source === 'skin' && { kind: 'install', skinId: skin.id }),
+      ...(phase === 'failed' && { failure: { kind: 'network', message: 'ECONNRESET', action: 'retry' } }),
+    })
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] }
+      : url.endsWith('/state') ? { skins: [], runtime: dshRuntime, ...(phase === 'waiting' && { profileBusy: '等待宿主确认' }), ...(source === 'skin' ? { operations: [operation()] } : { marketUpdateOperation: operation() }) }
+        : url.endsWith('/market-update') ? { updateAvailable: false } : operation() }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const waiting = await screen.findByRole('dialog', { name: '操作结果待确认' })
+    fireEvent.click(within(waiting).getByRole('button', { name: '知道了' }))
+    expect(document.querySelector('[role="status"] strong')).toBeNull()
+    phase = 'failed'
+    fireEvent.focus(window)
+    const failure = await screen.findByRole('dialog', { name: source === 'skin' ? '安装未完成' : '皮肤市场更新失败' })
+    expect(within(failure).getByRole('button', { name: '重试' })).toBeTruthy()
+    fireEvent.click(within(failure).getByRole('button', { name: '取消' }))
+    expect(document.querySelector('[role="status"] strong')).toBeNull()
+    expect(screen.getByRole('button', { name: '安装并使用' }).hasAttribute('disabled')).toBe(false)
   })
 
   it.each(['restart', 'waiting'] as const)('keeps a use confirmation in front of a new passive %s prompt without dropping that prompt', async pendingKind => {
@@ -360,8 +462,7 @@ describe('client market', () => {
     const firstCard = (await screen.findByRole('button', { name: '测试皮肤 界面预览' })).closest('article')!
     fireEvent.click(within(firstCard).getByRole('button', { name: '安装并使用' }))
     const firstDialog = await screen.findByRole('dialog', { name: '安装未完成' })
-    fireEvent.click(within(firstDialog).getByRole('button', { name: '取消' }))
-    fireEvent.click(within(screen.getByRole('status')).getByRole('button', { name: '重试' }))
+    fireEvent.click(within(firstDialog).getByRole('button', { name: '重试' }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/operations/first-retry-running'))).toBe(true))
     const otherCard = screen.getByRole('button', { name: '另一皮肤 界面预览' }).closest('article')!
     fireEvent.click(within(otherCard).getByRole('button', { name: /^安装(?:并使用)?$/ }))
@@ -566,18 +667,14 @@ describe('client market', () => {
     expect(screen.getByText(/皮肤市场 0.1.16 将在重启后生效/)).toBeTruthy()
     expect(screen.getByRole('button', { name: '取消' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '取消' }))
-    expect(screen.getAllByText('皮肤市场已更新，待重启生效').length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole('button', { name: '重启' }))
-    expect(screen.getByRole('dialog', { name: '需要重启 DSH 应用皮肤市场更新' })).toBeTruthy()
-    fireEvent.click(screen.getAllByRole('button', { name: '关闭提示' })[0])
     expect(screen.queryByText('皮肤市场已更新，待重启生效')).toBeNull()
     await waitFor(() => expect(screen.queryByRole('button', { name: '更新皮肤市场到 0.1.16' })).toBeNull())
 
-    // Remount restores the pending banner without repeatedly interrupting
-    // a user who has already acknowledged this same restart reminder.
+    // Closing this receipt also survives a remount in the same session.
     view.unmount()
     render(<SkinMarketSection t={key => key} />)
-    expect(await screen.findByText('皮肤市场已更新，待重启生效')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: /测试皮肤 界面预览/ })).toBeTruthy()
+    expect(screen.queryByText('皮肤市场已更新，待重启生效')).toBeNull()
     expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用皮肤市场更新' })).toBeNull()
   })
 
@@ -1194,6 +1291,8 @@ describe('client market', () => {
       expect(restartDialog.textContent).toContain('已启用“测试皮肤”')
       fireEvent.click(within(restartDialog).getByRole('button', { name: '知道了' }))
       expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+      expect(screen.queryByText('测试皮肤 已切换，请手动重启 Desktop App 后生效')).toBeNull()
+      if (entry === 'discovery') await openSkinCard()
       fireEvent.click(screen.getAllByRole('button', { name: '查看重启提示' })[0]!)
       expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
       fireEvent.click(within(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).getByRole('button', { name: '关闭' }))
@@ -2213,8 +2312,10 @@ describe('client market', () => {
     expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
     view.unmount()
     render(<SkinMarketSection t={key => key} />)
-    expect(await screen.findByText('测试皮肤 设置已保存，请手动重启 Desktop App 后生效')).toBeTruthy()
+    await screen.findByRole('button', { name: /测试皮肤 已安装卡片/ })
+    expect(screen.queryByText('测试皮肤 设置已保存，请手动重启 Desktop App 后生效')).toBeNull()
     expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+    await openSkinCard()
     fireEvent.click(screen.getByRole('button', { name: '查看重启提示' }))
     expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
     restarted = true
@@ -2226,6 +2327,56 @@ describe('client market', () => {
     expect(screen.queryByText('待重启')).toBeNull()
     expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
     if (outcome === 'unavailable') expect(screen.getByText('皮肤组件已关闭，尚未生效。')).toBeTruthy()
+  })
+
+  it.each(['skin', 'market-update'] as const)('keeps an acknowledged %s restart notice closed across polling and remount, then shows a new receipt', async target => {
+    let receipt = 'first-change'
+    let pending = true
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [managedDesktopSkin] } : url.endsWith('/state') ? {
+      instanceId: 'same-desktop-process', restartNoticeId: receipt, marketUpdateNoticeId: receipt, hostKind: 'desktop', restartAvailable: false, management: officialManagement,
+      marketUpdateRestartRequired: pending && target === 'market-update',
+      skins: [{ skinId: skin.id, installation: 'installed', activation: pending && target === 'skin' ? 'restart-required' : 'active', primary: true, installedVersion: '1.0.0', updateAvailable: false }],
+    } : {} }))
+    vi.stubGlobal('fetch', fetchMock)
+    const intervalSpy = vi.spyOn(window, 'setInterval')
+    const view = render(<SkinMarketSection t={key => key} />)
+    const pollRefresh = intervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60 * 1000)?.[0]
+    intervalSpy.mockRestore()
+    expect(typeof pollRefresh).toBe('function')
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '请手动重启 Desktop App' })).getByRole('button', { name: '知道了' }))
+    const bannerTitle = target === 'skin' ? '测试皮肤 设置已保存，请手动重启 Desktop App 后生效' : '皮肤市场已更新，请手动重启 Desktop App 后生效'
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    await act(async () => { (pollRefresh as () => void)() })
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    const refreshState = async () => {
+      const previous = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+      fireEvent(window, new Event('focus'))
+      await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(previous))
+    }
+    await refreshState()
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
+    view.unmount()
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    if (target === 'skin') {
+      expect(screen.getAllByText('待重启').length).toBeGreaterThan(0)
+      expect(screen.getByRole('button', { name: '查看重启提示' })).toBeTruthy()
+    }
+    receipt = 'second-change'
+    await refreshState()
+    expect((await screen.findAllByText(bannerTitle)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    fireEvent.click(within(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).getByRole('button', { name: '知道了' }))
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    pending = false
+    await refreshState()
+    expect(screen.queryByText(bannerTitle)).toBeNull()
+    pending = true
+    await refreshState()
+    expect((await screen.findAllByText(bannerTitle)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
   })
 
   it('clears every restart reminder when the same Desktop process confirms the skin became active', async () => {
@@ -2414,7 +2565,7 @@ describe('client market', () => {
       expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
       if (kind === 'uninstall') {
         expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' }).textContent).toContain('“测试皮肤”已卸载，重启后生效。')
-        expect(within(screen.getByRole('main', { name: '皮肤详情内容' })).getByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeTruthy()
+        expect(within(screen.getByRole('main', { name: '皮肤详情内容' })).queryByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeNull()
       }
     } else {
       await act(async () => {})
@@ -2535,16 +2686,17 @@ describe('client market', () => {
 
     view.unmount()
     render(<SkinMarketSection t={key => key} />)
-    expect(await screen.findByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeTruthy()
+    await screen.findByRole('button', { name: /测试皮肤 界面预览/ })
+    expect(screen.queryByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeNull()
     expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
     await openSkinCard()
     const details = screen.getByRole('main', { name: '皮肤详情内容' })
-    expect(within(details).getByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeTruthy()
+    expect(within(details).queryByText('测试皮肤 已卸载，请手动重启 Desktop App 后生效')).toBeNull()
     fireEvent.click(within(details).getByRole('button', { name: '查看重启提示' }))
     expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' }).textContent).toContain('“测试皮肤”已卸载，重启后生效。')
   })
 
-  it.each(['completed-task', 'restored'] as const)('shows the manual market-update restart dialog once for a %s and restores only its banner after remount', async mode => {
+  it.each(['completed-task', 'restored'] as const)('hides the acknowledged manual market-update notice for a %s across refresh and remount', async mode => {
     let updated = mode === 'restored'
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
@@ -2567,11 +2719,11 @@ describe('client market', () => {
     fireEvent(window, new Event('focus'))
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
     expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: '查看重启提示' }))
-    expect(screen.getByRole('dialog', { name: '请手动重启 Desktop App' })).toBeTruthy()
+    expect(screen.queryByText('皮肤市场已更新，请手动重启 Desktop App 后生效')).toBeNull()
     view.unmount()
     render(<SkinMarketSection t={key => key} />)
-    expect(await screen.findByText('皮肤市场已更新，请手动重启 Desktop App 后生效')).toBeTruthy()
+    await screen.findByRole('button', { name: /测试皮肤 界面预览/ })
+    expect(screen.queryByText('皮肤市场已更新，请手动重启 Desktop App 后生效')).toBeNull()
     expect(screen.queryByRole('dialog', { name: '请手动重启 Desktop App' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
   })
@@ -2595,8 +2747,8 @@ describe('client market', () => {
     expect(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
     expect(await screen.findByText('重启会断开当前会话连接，请先保存工作。')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '取消' }))
-    expect(screen.getAllByText('测试皮肤 已更新，待重启生效').length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole('button', { name: '重启' }))
+    expect(screen.queryByText('测试皮肤 已更新，待重启生效')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '重启以应用' }))
     expect(screen.getByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/update') && init?.method === 'POST')).toBe(true)
   })
@@ -2669,7 +2821,7 @@ describe('client market', () => {
     fireEvent(window, new Event('focus'))
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequests))
     expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
-    expect(screen.getAllByText(/待重启生效/).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/待重启生效/)).toBeNull()
     instanceId = 'web-after-restart'
     fireEvent(window, new Event('focus'))
     await waitFor(() => expect(screen.queryByText(/待重启生效/)).toBeNull())
@@ -3026,7 +3178,7 @@ describe('client market', () => {
     expect(within(dialog).getByRole('button', { name: '日志已复制' })).toBeTruthy()
     fireEvent.click(within(dialog).getByRole('button', { name: '知道了' }))
     expect(screen.queryByRole('dialog', { name: '安装未完成' })).toBeNull()
-    expect(within(screen.getByRole('status')).getByRole('button', { name: '查看提示' })).toBeTruthy()
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('explains a missing bundle patch as a skin packaging intercept', async () => {
@@ -3352,6 +3504,63 @@ describe('client market', () => {
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
   })
 
+  it.each([
+    { kind: 'install', decision: 'accept' }, { kind: 'install', decision: 'cancel' }, { kind: 'install', decision: 'close' },
+    { kind: 'update', decision: 'accept' }, { kind: 'update', decision: 'cancel' },
+  ] as const)('requires explicit exact-version approval before $kind (decision=$decision)', async ({ kind, decision }) => {
+    const id = `compatibility-${kind}-${decision}`
+    let completed = false
+    const operation: Operation = { id, kind, skinId: skin.id, phase: 'failed', startedAt: new Date().toISOString(), failure: {
+      kind: 'compatibility', code: 'incompatible-version', message: 'Host rejected incompatible plugin peers', action: 'approve-compatibility',
+      compatibilityOverride: { packageName: skin.package, version: '1.0.0', hostVersion: '0.2.0-rc.2' },
+    } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: kind === 'update' || completed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: completed ? '1.0.0' : '0.9.0', updateAvailable: kind === 'update' && !completed }] : [], runtime: { ...dshRuntime, version: '0.2.0-rc.2' } }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith(`/${kind}`) && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: id }) }
+      if (url.endsWith(`/operations/${id}`)) return { ok: true, json: async () => operation }
+      if (url.endsWith(`/operations/${id}/retry`) && init?.method === 'POST') {
+        expect(JSON.parse(String(init.body))).toEqual({ action: 'approve-compatibility' })
+        completed = true
+        return { ok: true, json: async () => ({ operationId: `${id}-approved` }) }
+      }
+      if (url.endsWith(`/operations/${id}-approved`)) return { ok: true, json: async () => ({ ...operation, id: `${id}-approved`, phase: 'done', failure: undefined }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(screen.getByRole('button', { name: kind === 'install' ? '仅安装' : '更新' }))
+    const dialog = await screen.findByRole('dialog', { name: kind === 'install' ? '安装需要确认兼容风险' : '更新需要确认兼容风险' })
+    expect(dialog.textContent).toContain('skin@1.0.0')
+    expect(dialog.textContent).toContain('0.2.0-rc.2')
+    expect(dialog.textContent).toMatch(/崩溃|数据丢失/)
+    expect(within(dialog).queryByRole('button', { name: '重试' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: decision === 'accept' ? kind === 'install' ? '仍然安装' : '仍然更新' : decision === 'cancel' ? '取消' : '关闭' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: kind === 'install' ? '安装需要确认兼容风险' : '更新需要确认兼容风险' })).toBeNull())
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/retry'))).toHaveLength(decision === 'accept' ? 1 : 0)
+    expect(screen.queryByRole('dialog', { name: '使用前确认' })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('does not offer compatibility approval without a complete exact-version target', async () => {
+    const operation = { id: 'compatibility-without-target', kind: 'install', skinId: skin.id, phase: 'failed', failure: {
+      kind: 'compatibility', message: 'Host cannot identify the rejected plugin version', action: 'approve-compatibility',
+    } }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : url.endsWith('/state') ? { skins: [], runtime: dshRuntime } : url.endsWith('/install') && init?.method === 'POST' ? { operationId: operation.id } : url.endsWith(`/operations/${operation.id}`) ? operation : {} }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
+    const dialog = await screen.findByRole('dialog', { name: '安装未完成' })
+    expect(within(dialog).queryByRole('button', { name: '仍然安装' })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: '重试' })).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: '知道了' }))
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/retry'))).toBe(false)
+  })
+
   it('does not offer approval when the host cannot identify the exact blocked version', async () => {
     const operation = { id: 'unknown-age', kind: 'install', skinId: skin.id, phase: 'failed', startedAt: new Date().toISOString(), failure: {
       kind: 'release-age', message: '新包保护拦截，未能确定具体版本，请复制日志反馈。', action: 'approve-release-age',
@@ -3469,10 +3678,6 @@ describe('client market', () => {
     expect(screen.queryByRole('button', { name: '批准构建并重试' })).toBeNull()
     expect(screen.getByRole('button', { name: '允许并重试' })).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: '取消' }))
-    expect(screen.queryByRole('dialog', { name: '需要批准构建脚本' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: '查看批准说明' }))
-    expect(await screen.findByRole('dialog', { name: '需要批准构建脚本' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '允许并重试' }))
     await waitFor(() => expect(retryRequests).toBe(1))
   })

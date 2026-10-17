@@ -139,8 +139,9 @@ export interface Operation {
     packageName?: string
     buildKeys?: string[]
     releaseAgeTarget?: { packageName: string; version: string }
+    compatibilityOverride?: { packageName: string; version: string; hostVersion: string }
     artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
-    action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'repair-configuration'
+    action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'approve-compatibility' | 'repair-configuration'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }
   startedAt: string
