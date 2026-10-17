@@ -94,7 +94,7 @@ const EXACT_VERSION = '0.2.1-alpha.2'
 // Published snapshots, not a promise that future or untagged releases share the contract.
 const AUDITED_VERSIONS = new Set([
   CORE_VERSION, '0.1.7-alpha.1', '0.1.7-alpha.2', '0.1.7-rc.1', '0.1.7-rc.2',
-  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION, '0.2.1-alpha.3',
+  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION, '0.2.1-alpha.3', '0.2.1-rc.1',
 ])
 type RecordLike = Record<string, unknown>
 
@@ -266,7 +266,7 @@ export function officialDesktopRunner(
   const coreVersion = version === null ? runtime === undefined : AUDITED_VERSIONS.has(version)
   const versionAtLeast = (minimum: string): boolean => version !== null && AUDITED_VERSIONS.has(version) && compareVersions(version, minimum) >= 0
   const versionReason = version === null ? '未能识别官方 DSH 版本'
-    : `官方管理接口尚未核验 DSH ${version}；最低已核验版本为 ${CORE_VERSION}`
+    : `当前皮肤市场尚未适配 DSH ${version}，请更新皮肤市场后重试`
   const capabilities = (): OfficialManagementCapabilities => {
     const manager = getManager()
     const core = coreVersion && manager !== undefined
@@ -368,12 +368,14 @@ export function officialDesktopRunner(
     },
     async listBundles() {
       const manager = getManager()
-      if (!coreVersion || typeof manager?.listBundles !== 'function') throw new Error('官方 pluginManager 未提供可用的组合包清单')
+      if (!coreVersion) throw new Error(versionReason)
+      if (typeof manager?.listBundles !== 'function') throw new Error('官方 pluginManager 未提供可用的组合包清单')
       return readManagerResult(await manager.listBundles())
     },
     async listPlugins() {
       const manager = getManager()
-      if (!coreVersion || typeof manager?.listPlugins !== 'function') throw new Error('官方 pluginManager 未提供可用的插件清单')
+      if (!coreVersion) throw new Error(versionReason)
+      if (typeof manager?.listPlugins !== 'function') throw new Error('官方 pluginManager 未提供可用的插件清单')
       return readManagerResult(await manager.listPlugins())
     },
   }

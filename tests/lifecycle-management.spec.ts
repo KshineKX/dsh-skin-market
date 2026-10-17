@@ -713,6 +713,25 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
   })
 
+  it('reads component states on DSH rc.1 without reporting a missing plugin inventory', async () => {
+    const active = skin('rc1-active'), inactive = skin('rc1-inactive')
+    const host = fixture([active, inactive], { hostVersion: '0.2.1-rc.1' })
+    host.materialize(active); host.materialize(inactive); host.select(active.package, true)
+    writeMarketState(host.directory, { version: 1, activeSkinId: active.id, pinnedSkinIds: [], disabledSkinIds: [inactive.id] })
+    const before = [join(host.directory, 'package.json'), join(host.directory, 'pnpm-lock.yaml'), profilePatchFile(host.directory)].map(path => readFileSync(path, 'utf8'))
+    const selection = readMarketState(host.directory)
+    const states = await host.lifecycle.runtimeStates()
+    expect(states.find(state => state.skinId === active.id)).toMatchObject({ activation: 'active', error: undefined })
+    expect(states.find(state => state.skinId === inactive.id)?.activation).toBe('inactive')
+    expect(states.find(state => state.skinId === inactive.id)?.error).toBeUndefined()
+    expect(host.manager.listPlugins).toHaveBeenCalledOnce()
+    host.manager.listPlugins.mockResolvedValueOnce([{ entryId: host.entryId(active.package), patchId: active.rowId, moduleName: active.package, enabled: true, fiberPhase: 'failed' }])
+    expect((await host.lifecycle.runtimeStates()).find(state => state.skinId === active.id)).toMatchObject({ activation: 'unavailable', error: expect.stringContaining('加载失败') })
+    expect([join(host.directory, 'package.json'), join(host.directory, 'pnpm-lock.yaml'), profilePatchFile(host.directory)].map(path => readFileSync(path, 'utf8'))).toEqual(before)
+    expect(readMarketState(host.directory)).toEqual(selection)
+    for (const method of [host.manager.installBundle, host.manager.removeBundle, host.manager.setBundleEnabled, host.manager.setPluginEnabled]) expect(method).not.toHaveBeenCalled()
+  })
+
   it('reads an unaddressable component for diagnosis without treating it as writable', async () => {
     const target = skin('official-runtime-readonly')
     const host = fixture([target])

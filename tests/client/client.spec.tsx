@@ -1587,8 +1587,54 @@ describe('client market', () => {
     const install = within(region).getByRole('button', { name: '安装' })
     expect(install.hasAttribute('disabled')).toBe(true)
     expect(install.getAttribute('title')).toBe(reason)
-    expect(screen.getAllByText(reason).length).toBeGreaterThan(0)
+    expect(screen.queryByText(reason)).toBeNull()
     expect(within(region).queryByRole('button', { name: '仅安装' })).toBeNull()
+  })
+
+  it.each(['active', 'inactive'] as const)('keeps unavailable host action reasons on the %s skin controls without persistent banners', async activation => {
+    const reason = '官方管理接口尚未核验当前 DSH 版本'
+    const busy = '正在等待宿主确认当前操作'
+    let profileBusy: string | undefined
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [managedDesktopSkin] }
+      : url.endsWith('/market-update') ? { updateAvailable: true, currentVersion: '1.0.0', latestVersion: '9.0.0' }
+      : {
+        hostKind: 'desktop', runtime: { ...dshRuntime, version: '0.2.1-rc.1' }, profileBusy,
+        management: { ...officialManagement, capabilities: {
+          install: { available: false, reason }, update: { available: false, reason },
+          enable: { available: false, reason }, disable: { available: false, reason }, remove: { available: false, reason },
+        } },
+        skins: [{ skinId: skin.id, installation: 'installed', activation, installedVersion: '0.9.0', updateAvailable: true }],
+      } }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    const card = await screen.findByRole('button', { name: /测试皮肤 已安装卡片/ })
+    const actions = within(card.closest('article')!).getByRole('group', { name: '测试皮肤 操作' })
+    for (const name of [activation === 'active' ? '停用' : '使用', '更新']) {
+      const button = within(actions).getByRole('button', { name })
+      expect(button.hasAttribute('disabled')).toBe(true)
+      expect(button.getAttribute('title')).toBe(reason)
+      fireEvent.click(button)
+    }
+    const marketUpdate = screen.getByRole('button', { name: '更新皮肤市场到 9.0.0' })
+    expect(marketUpdate.hasAttribute('disabled')).toBe(true)
+    expect(marketUpdate.getAttribute('title')).toBe(reason)
+    expect(screen.queryByText(reason)).toBeNull()
+
+    await openSkinCard(/测试皮肤 已安装卡片/)
+    const detail = screen.getByRole('main', { name: '皮肤详情内容' })
+    for (const name of [activation === 'active' ? '停用' : '使用', '常驻使用', '更新', '卸载']) {
+      const button = within(detail).getByRole('button', { name })
+      expect(button.hasAttribute('disabled')).toBe(true)
+      expect(button.getAttribute('title')).toBe(reason)
+      fireEvent.click(button)
+    }
+    expect(screen.queryByText(reason)).toBeNull()
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+
+    profileBusy = busy
+    fireEvent.focus(window)
+    await waitFor(() => expect(within(detail).getByRole('status').textContent).toBe(busy))
+    expect(screen.queryByText(reason)).toBeNull()
   })
 
   it.each(['overridden', 'failed'] as const)('keeps the %s activation failure primary after installation and leaves only an honest manual restart banner', async application => {

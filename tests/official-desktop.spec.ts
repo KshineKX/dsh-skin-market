@@ -256,6 +256,7 @@ describe('official management release contracts', () => {
     ['0.2.1-alpha.1', true, false, false],
     ['0.2.1-alpha.2', true, true, false],
     ['0.2.1-alpha.3', true, true, false],
+    ['0.2.1-rc.1', true, true, false],
   ] as const)('gates %s options and post-install resolution by the audited snapshot', async (version, recovered, exact, requiresRestart) => {
     const manager = fullManager()
     const runner = officialDesktopRunner(() => manager, runtime(version))
@@ -281,9 +282,13 @@ describe('official management release contracts', () => {
     await runner.installPlugin!('desktop', { packageName: 'skin', packageVersion: '1.0.0', receiptId: 'request' })
     await runner.management!.setBundleEnabled('skin', true)
     await runner('desktop', ['remove', 'skin'])
+    await expect(runner.management!.listPlugins()).rejects.toThrow(caps.install.reason)
+    await expect(runner.management!.listBundles()).rejects.toThrow(caps.install.reason)
     expect(manager.installBundle).not.toHaveBeenCalled()
     expect(manager.setBundleEnabled).not.toHaveBeenCalled()
     expect(manager.removeBundle).not.toHaveBeenCalled()
+    expect(manager.listPlugins).not.toHaveBeenCalled()
+    expect(manager.listBundles).not.toHaveBeenCalled()
   })
 
   it('does not impose an audited Host restart policy on one-argument structural callers', () => {

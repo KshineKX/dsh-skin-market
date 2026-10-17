@@ -7,6 +7,9 @@ export const KEYED_SLOT_CAPABILITY_PREFIX = 'slot:keyed:'
 export const LIST_SLOT_CAPABILITY_PREFIX = 'slot:list:'
 export const LEGACY_KEYED_SETTINGS_RANGE = '>=0.1.0-rc.7 <0.1.6-alpha.2'
 const AUDITED_RUNTIME_RANGE = '>=0.1.0-rc.6 <=0.2.1-alpha.2'
+// Later snapshots are checked individually, without extending support to
+// intervening or future prereleases that have not been inspected.
+const AUDITED_MODERN_SLOT_VERSIONS = new Set(['0.2.1-rc.1'])
 
 interface RuntimeManifest { name?: unknown; version?: unknown }
 
@@ -65,7 +68,9 @@ function dshPackageVersion(): string | null {
 }
 
 export function runtimeCapabilities(version: string | null): string[] {
-  if (version === null || validVersion(version) === null || !satisfiesVersionRange(version, AUDITED_RUNTIME_RANGE)) return []
+  if (version === null || validVersion(version) === null) return []
+  const auditedModernSlots = AUDITED_MODERN_SLOT_VERSIONS.has(version.trim().replace(/\+.*/, ''))
+  if (!auditedModernSlots && !satisfiesVersionRange(version, AUDITED_RUNTIME_RANGE)) return []
   const capabilities: string[] = [`${LIST_SLOT_CAPABILITY_PREFIX}settings.section`]
   // The published rc.6 package declares a list. The first available rc.7 tag
   // declares a keyed slot, which is removed in 0.1.6-alpha.2.
@@ -73,7 +78,7 @@ export function runtimeCapabilities(version: string | null): string[] {
     capabilities.push(`${LIST_SLOT_CAPABILITY_PREFIX}settings.plugin.item`)
   } else if (satisfiesVersionRange(version, LEGACY_KEYED_SETTINGS_RANGE)) {
     capabilities.push(`${KEYED_SLOT_CAPABILITY_PREFIX}settings.plugin.item`)
-  } else if (satisfiesVersionRange(version, '>=0.1.6-alpha.2 <=0.2.1-alpha.2')) {
+  } else if (auditedModernSlots || satisfiesVersionRange(version, '>=0.1.6-alpha.2 <=0.2.1-alpha.2')) {
     capabilities.push(`${LIST_SLOT_CAPABILITY_PREFIX}plugins.item`, `${KEYED_SLOT_CAPABILITY_PREFIX}plugins.bundle.config`, `${KEYED_SLOT_CAPABILITY_PREFIX}plugins.row.config`)
   }
   return capabilities

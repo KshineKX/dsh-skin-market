@@ -19,9 +19,9 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
       return React.createElement('div', { role: 'dialog', 'aria-label': title, className },
         React.createElement('h2', null, title), React.createElement('button', { 'aria-label': closeLabel, onClick: onClose }), description, children, footer)
     },
-    IconChevronLeftOutline14: icon, IconChevronDownOutline14: icon, IconCopyOutline16: icon, IconDownloadOutline16: icon, IconLinkOutline16: icon, IconLoadingOutline16: icon,
+    IconChevronLeftOutline14: icon, IconChevronDownOutline14: icon, IconCheckOutline16: icon, IconCopyOutline16: icon, IconDownloadOutline16: icon, IconLinkOutline16: icon, IconLoadingOutline16: icon,
     IconRefreshOutline16: icon, IconSearchOutline16: icon, IconTrashOutline16: icon,
-    IconChevronLeftOutlineRegular: icon, IconChevronDownOutlineRegular: icon, IconCopyOutlineRegular: icon, IconDownloadOutlineRegular: icon, IconLoadingOutlineRegular: icon,
+    IconChevronLeftOutlineRegular: icon, IconChevronDownOutlineRegular: icon, IconCheckOutlineRegular: icon, IconCopyOutlineRegular: icon, IconDownloadOutlineRegular: icon, IconLoadingOutlineRegular: icon,
     IconRefreshOutlineRegular: icon, IconSearchOutlineRegular: icon, IconTrashOutlineRegular: icon,
   }
 })
