@@ -1,5 +1,51 @@
-url: https://github.com/Respawn-ID/dsh-rhine-splash
+id: respawn.id.dsh.rhine.splash
 name:
   zh: 莱茵生命开屏动画
   en: Rhine Lab Splash
+author: Respawn-ID
 description: 莱茵生命风格的开屏动画、界面配色和品牌标志，另带推理强度滑块、对话费用与余额显示、归档对话管理。
+repo: https://github.com/Respawn-ID/dsh-rhine-splash
+package: dsh-rhine-splash
+rowId: rhine-splash
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Respawn-ID/dsh-rhine-splash#11b858d9f94ae445b9a0e94e5fd6614266eccac1
+  version: 0.2.1
+  commit: 11b858d9f94ae445b9a0e94e5fd6614266eccac1
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/splash-light.png
+  - https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/splash-dark.png
+  - https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/home-light.png
+  - https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/home-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-18T08:13:03.924Z
+metadataUpdatedAt: 2026-10-18T08:13:03.924Z
+starsUpdatedAt: 2026-10-18T08:13:03.924Z
+updatedAt: 2026-10-18T08:13:03.924Z
