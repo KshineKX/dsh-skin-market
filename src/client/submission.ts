@@ -1,5 +1,5 @@
 import { desktopInstallPlan } from '../desktop-install.ts'
-import { createInstallCommand } from '../install-command.ts'
+import { createInstallCommand, type InstallCommandContext } from '../install-command.ts'
 import { effectiveBuildApprovalKey } from '../build-approval.ts'
 import { preferredInstallTarget } from '../install-source.ts'
 
@@ -79,6 +79,22 @@ export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHost
   const web = `Web 版：\n${conflictCheck}\n安装前只读确认实际 Web profile 的 package.json 中 dependencies 与 dsh.profile.bundles，以及当前插件启用状态；不要把 Desktop profile 当作 Web profile。\n没有冲突且兼容性确认完成后，先处理目标所需的精确构建授权，再执行下面的全部固定安装命令（含伴生包），不要改成 main、HEAD 或最新版本：${buildApproval}\n${command}\n如果目标只有 dsh.client，幂等地确认 package ${packages} 和 rowId ${rowIds} 已注册到 Web profile 的 cordis.patch.yml；不要放宽其他包的构建权限。安装后验证同一 profile 的 dependencies、dsh.profile.bundles、目标 package 的 dsh.client/dsh.bundle 声明及 loader 注册项；缺失则报告失败。告诉我如何重启当前 Web 宿主。`
   const workflow = hostKind === 'desktop' ? desktop : hostKind === 'dsh' ? web : `先判断当前是 Web 版还是官方 Desktop，并核对实际 profile；无法判断就先问我。Web 查看 dsh --version；Desktop 查看应用“关于”中的版本。只执行对应宿主的流程。\n\n${desktop}\n\n${web}`
   return `请帮我安装这个固定版本的 DSH 皮肤。${hostKind === 'desktop' ? '你负责检查和逐步指导，由我在桌面应用中操作。' : ''}\n\n${metadata}\n${compatibility}\n${workflow}\n\n不要替我安装、停用或卸载其他皮肤。`
+}
+
+export interface InstallCopyEntry { key: string; label: string; value: string }
+export interface InstallCommandGroup { key: string; label: string; commands: InstallCopyEntry[] }
+
+/** List the primary command for each applicable terminal. */
+export function createSkinInstallCommandGroups(skin: CatalogSkin, context: InstallCommandContext = {}, target = preferredInstallTarget(skin)): InstallCommandGroup[] {
+  const terminalSpecific = target.includes('&')
+  const shells = context.shell !== undefined ? [context.shell] : terminalSpecific ? ['posix', 'powershell', 'cmd'] as const : ['posix'] as const
+  const labels = { posix: 'macOS / Linux', powershell: 'Windows PowerShell', cmd: 'Windows CMD' }
+  try {
+    return shells.map(shell => ({
+      key: shell, label: terminalSpecific ? labels[shell] : '',
+      commands: [{ key: 'command', label: '命令', value: createInstallCommand(target, 'web', { shell }) }],
+    }))
+  } catch { return [] }
 }
 
 export function createSkinInstallCommand(skin: CatalogSkin): string {

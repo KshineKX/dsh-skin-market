@@ -8,7 +8,8 @@ import { getCatalogListScreenshot, getCatalogScreenshotUrls, usesMarketScreensho
 import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, hasGeneratedMediaBase, parseGeneratedMediaManifest, previewSourceCandidates, setGeneratedMediaSources } from '../src/media-preview.ts'
 import { useLazyMedia } from '../src/media-visibility.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
-import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_PUBLIC_URL, MARKET_REPOSITORY, skinDesktopInput, skinPrompt, skinWebCommand } from './prompts.ts'
+import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_PUBLIC_URL, MARKET_REPOSITORY, skinDesktopInput, skinPrompt, skinWebCommandGroups } from './prompts.ts'
+import type { InstallCommandGroup } from '../src/client/submission.ts'
 import { displayTitle, githubRepoLabel } from '../src/display-title.ts'
 import { matchesCatalogSearch } from '../src/catalog-search.ts'
 import './site.css'
@@ -298,7 +299,7 @@ export function App({ skins }: { skins: Skin[] }) {
       <section className="install-dialog" role="dialog" aria-modal="true" aria-labelledby="install-dialog-title">
         <header><div><h2 id="install-dialog-title">{installDialog === 'market' ? '安装皮肤市场' : `安装 ${selected.name.zh}`}</h2><p>任选一种方式，不用全部执行。</p></div><button aria-label="关闭" onClick={() => setInstallDialog(null)}><X size={18} /></button></header>
         <div className="install-method-grid" data-single={installDialog === 'market' ? 'true' : 'false'}>
-          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected)} desktopInput={skinDesktopInput(selected)} command={skinWebCommand(selected)} copyKey="skin" copied={copied} onCopy={copyPrompt} note="先检查已启用的皮肤，避免样式冲突。" />}
+          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected)} desktopInput={skinDesktopInput(selected)} commandGroups={skinWebCommandGroups(selected)} copyKey="skin" copied={copied} onCopy={copyPrompt} note="先检查已启用的皮肤，避免样式冲突。" />}
           <InstallGroup title={installDialog === 'skin' ? '通过皮肤市场安装' : undefined} prompt={MARKET_PROMPT} desktopInput={MARKET_DESKTOP_INPUT} command={MARKET_CLI_COMMAND} copyKey="market" copied={copied} onCopy={copyPrompt} note="装好市场后，在 DSH 内安装具体皮肤。" />
         </div>
       </section>
@@ -312,14 +313,19 @@ function InstallOption({ label, value, copied, onCopy, copyLabel = label, input 
   return <div className="install-option"><strong>{label}</strong><div className="copy-capsule">{input ? <input aria-label={copyLabel} title={value} value={value} readOnly onFocus={event => event.currentTarget.select()} /> : <code title={value}>{value}</code>}<button aria-label={`${copied ? '已复制' : '复制'}${copyLabel}`} title={copied ? '已复制' : '复制'} onClick={onCopy}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div></div>
 }
 
-function InstallGroup({ title, prompt, desktopInput, command, copyKey, copied, onCopy, note }: { title?: string; prompt: string; desktopInput: string; command?: string; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void>; note?: string }) {
+function InstallGroup({ title, prompt, desktopInput, command, commandGroups, copyKey, copied, onCopy, note }: { title?: string; prompt: string; desktopInput: string; command?: string; commandGroups?: InstallCommandGroup[]; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void>; note?: string }) {
   const groupName = copyKey === 'skin' ? '安装这个皮肤' : '安装皮肤市场'
+  const groups = commandGroups ?? (command === undefined ? [] : [{ key: 'common', label: '', commands: [{ key: 'command', label: '命令', value: command }] }])
+  const simpleCommand = groups.length === 1 && groups[0]!.label === '' && groups[0]!.commands.length === 1 ? groups[0]!.commands[0] : undefined
   return <section className="install-group" aria-label={groupName}>
     {title && <h3>{title}</h3>}
     <InstallOption label="桌面版" value={desktopInput} copyLabel={`${groupName}的桌面版插件包名`} input copied={copied === `${copyKey}:keyword`} onCopy={() => void onCopy(`${copyKey}:keyword`, desktopInput)} />
-    {command !== undefined
-      ? <InstallOption label="命令" value={command} copyLabel={`${groupName}的命令`} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, command)} />
-      : <div className="install-option"><strong>命令</strong><div className="copy-capsule install-command-hint"><code title="此皮肤需按实际环境安装，请复制提示词。">此皮肤需按实际环境安装，请复制提示词。</code></div></div>}
+    {simpleCommand !== undefined
+      ? <InstallOption label="命令" value={simpleCommand.value} copyLabel={`${groupName}的命令`} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, simpleCommand.value)} />
+      : groups.length > 0 ? groups.map(group => group.commands.map(entry => {
+        const key = `${copyKey}:command:${group.key}:${entry.key}`
+        return <InstallOption key={key} label={group.label || '命令'} value={entry.value} copyLabel={`${groupName}的${group.label || '命令'}`} copied={copied === key} onCopy={() => void onCopy(key, entry.value)} />
+      })) : <div className="install-option"><strong>命令</strong><div className="copy-capsule install-command-hint"><code title="此皮肤需按实际环境安装，请复制提示词。">此皮肤需按实际环境安装，请复制提示词。</code></div></div>}
     <InstallOption label="提示词" value={prompt} copyLabel={`${groupName}的提示词`} copied={copied === `${copyKey}:prompt`} onCopy={() => void onCopy(`${copyKey}:prompt`, prompt)} />
     {note && <p className="install-note">{note}</p>}
   </section>

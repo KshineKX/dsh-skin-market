@@ -17,7 +17,7 @@ import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, parseG
 import { useLazyMedia } from '../media-visibility.ts'
 import { browserCatalogCache, type CatalogCache } from './catalog-cache.ts'
 import { createFailureRepairPrompt, interceptNotice, isInterceptFailure, marketUpdateNotice } from './failure-help.ts'
-import { CLI_INSTALL_WARNING, createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
+import { CLI_INSTALL_WARNING, createSkinInstallCommand, createSkinInstallCommandGroups, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
 import { switchClientSkin, type ClientSkinRuntime } from './index.ts'
 import { displayTitle, githubRepoLabel } from '../display-title.ts'
 import { assessCompatibility, compatibilityContext as skinCompatibilityContext, type CompatibilityAssessment } from '../compatibility.ts'
@@ -1206,6 +1206,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     : '该仓库距离市场的一键安装规范还差少量信息；可参考右侧仓库健康建议完善，当前请按维护者说明安装。'
   const autoInstallable = !manualOnly
   const manualInstallKeyword = selected === undefined ? '' : createSkinInstallSearchKeyword(selected)
+  const installCommandGroups = selected === undefined ? [] : createSkinInstallCommandGroups(selected)
   const installPrompt = selected === undefined ? '' : createSkinInstallPrompt(selected, hostKind)
   const filtered = useMemo(() => skins.filter(skin => {
     if (!matchesCatalogSearch(skin, query)) return false
@@ -1872,13 +1873,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     await copyTextToClipboard(submissionPrompt)
     setSubmissionCopied(true)
   }
-  const copyInstallOption = async (method: 'prompt' | 'command' | 'keyword') => {
+  const copyInstallOption = async (method: string, value?: string) => {
     if (selected === undefined) return
-    const content = method === 'prompt'
+    const content = value ?? (method === 'prompt'
       ? installPrompt
       : method === 'command'
         ? createSkinInstallCommand(selected)
-        : createSkinInstallSearchKeyword(selected)
+        : createSkinInstallSearchKeyword(selected))
     await copyTextToClipboard(content)
     setInstallCopied(`${selected.id}:${method}`)
   }
@@ -2452,7 +2453,16 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected.id}:keyword` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制插件包名" title="复制插件包名" onClick={() => void copyInstallOption('keyword')} />
             </span>
           </div>}
-          {!manualOnly && <div><strong>命令</strong><span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:command` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制命令" title="复制命令" onClick={() => void copyInstallOption('command')} /></span><small>{CLI_INSTALL_WARNING}</small></div>}
+          {!manualOnly && <div><strong>命令</strong>
+            {hostKind === 'desktop' ? <span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:command` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制命令" title="复制命令" onClick={() => void copyInstallOption('command')} /></span> : installCommandGroups.map(group => <div key={group.key} className={css.installCommandGroup} role="group" aria-label={group.label || '安装命令'}>
+              {installCommandGroups.length > 1 && <strong>{group.label}</strong>}
+              {group.commands.map(entry => {
+                const label = installCommandGroups.length > 1 ? `${group.label} ${entry.label}` : entry.label
+                const key = installCommandGroups.length > 1 ? `command:${group.key}:${entry.key}` : 'command'
+                return <span key={key} className={css.copyCapsule}><code title={entry.value}>{entry.value}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:${key}` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label={`复制${label}`} title={`复制${label}`} onClick={() => void copyInstallOption(key, entry.value)} /></span>
+              })}
+            </div>)}
+            <small>{CLI_INSTALL_WARNING}</small></div>}
         </div>
       </Modal>
       <Modal

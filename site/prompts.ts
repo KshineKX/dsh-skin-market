@@ -1,5 +1,5 @@
 import { createDshPluginAddCommand, createInstallCommand } from '../src/install-command.ts'
-import { createSkinInstallPrompt } from '../src/client/submission.ts'
+import { createSkinInstallCommandGroups, createSkinInstallPrompt, type InstallCommandGroup } from '../src/client/submission.ts'
 import { desktopInstallPlan } from '../src/desktop-install.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
 
@@ -36,6 +36,10 @@ function skinCopyTarget(skin: CatalogSkin): string {
 export function skinWebCommand(skin: CatalogSkin): string | undefined {
   const target = skinCopyTarget(skin)
   return target.includes('&') ? undefined : skinCommand(target)
+}
+
+export function skinWebCommandGroups(skin: CatalogSkin): InstallCommandGroup[] {
+  return createSkinInstallCommandGroups(skin, {}, skinCopyTarget(skin))
 }
 
 export function skinCommand(installTarget: string): string {

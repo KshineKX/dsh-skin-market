@@ -53,7 +53,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
 import { HOME_CATALOG_BATCH_SIZE, captureListScroll, compareInstalledSkinOrder, compareSkinOrder, interceptNotice, isInterceptFailure, resolvePrimitiveIcon, restartDocumentProbeUrl, restartReloadUrl, restoreListScroll, restoreMarketStyleOrder, SkinMarketSection, waitForRestartDocument } from '../../src/client/SkinMarketSection.tsx'
 import { MARKET_INSTALL_TROUBLESHOOT_URL } from '../../src/client/failure-help.ts'
 import { apply as applyClient, createClientSkinRuntime, missingPrimitives, switchClientSkin } from '../../src/client/index.ts'
-import { createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
+import { createSkinInstallCommandGroups, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
 import { setGeneratedMediaSources } from '../../src/media-preview.ts'
 import { compatibilityContext } from '../../src/compatibility.ts'
 import type { CatalogSkin, Operation } from '../../src/client/types.ts'
@@ -3945,14 +3945,44 @@ describe('client market', () => {
     fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     expect(dialog.textContent).toContain('任选一种，不用都执行。')
-    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), createSkinInstallCommand(skin)])
+    const command = createSkinInstallCommandGroups(skin)[0]!.commands[0]!.value
+    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), command])
     fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(skin, 'dsh')))
     await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="check"]')).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: '复制命令' }))
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallCommand(skin)))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(command))
     await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制命令' }).querySelector('[data-icon="check"]')).toBeTruthy())
     expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="copy"]')).toBeTruthy()
+  })
+
+  it('lists one primary command for each terminal without adding companion commands or instructions', async () => {
+    const subdirectorySkin = { ...skin, install: { ...skin.install, target: `${skin.install.target}&path:/packages/skin`, companions: [
+      { package: 'skin-manager', rowId: 'skin-manager', target: `${skin.install.target}&path:/packages/manager`, version: '1.2.3', commit: skin.install.commit },
+    ] } }
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [subdirectorySkin] } : { skins: [] } })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).queryByText(/按运行 Web 版 DSH 的电脑和终端选择/)).toBeNull()
+    for (const group of createSkinInstallCommandGroups(subdirectorySkin)) {
+      const terminal = within(dialog).getByRole('group', { name: group.label })
+      expect(terminal.querySelectorAll('code')).toHaveLength(1)
+      const entry = group.commands[0]!
+      fireEvent.click(within(terminal).getByRole('button', { name: `复制${group.label} ${entry.label}` }))
+      await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(entry.value))
+    }
+    expect(writeText).toHaveBeenCalledTimes(3)
+    for (const [copied] of writeText.mock.calls) {
+      expect(copied).not.toMatch(/[\r\n]/)
+      expect(copied).not.toContain('/packages/manager')
+    }
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallPrompt(subdirectorySkin, 'dsh')))
+    expect(writeText.mock.calls.at(-1)![0]).toContain('/packages/manager')
   })
 
   it('replaces a failed verified screenshot instead of retaining stale image pixels', async () => {

@@ -62,16 +62,43 @@ describe('public install panel', () => {
     await waitFor(() => expect(writeText).toHaveBeenLastCalledWith('dsh plugin --profile web add "dsh-skin-market"'))
   })
 
-  it('uses the prompt for a Git subdirectory rather than offering a shell-specific command as universal', async () => {
-    render(<App skins={[skin]} />)
-    fireEvent.click(screen.getByRole('button', { name: '需手动安装' }))
+  it('lists one maid atelier command per terminal and keeps companions in the prompt', async () => {
+    const commit = 'b693d2c224a0a6fb5b621e7cc1284f20d9849c1c'
+    const primary = `github:Small-tailqwq/dsh-deep-whale#${commit}&path:/maid-atelier`
+    const companion = `github:Small-tailqwq/dsh-deep-whale#${commit}&path:/skin-manager`
+    const maidAtelier = {
+      ...skin, id: 'small-tailqwq.maid-atelier', name: { zh: '深海女仆工坊', en: 'Abyssal Maid Atelier' },
+      repo: 'https://github.com/Small-tailqwq/dsh-deep-whale', package: '@dsh-external/dsh-client-ui-skin-maid-atelier', rowId: 'ui-skin-maid-atelier',
+      install: { target: primary, version: '0.0.1', commit, desktop: { mode: 'manual-only' as const, reason: 'npm-package-not-found' }, companions: [{
+        package: '@dsh-external/dsh-client-ui-skin-deep-whale-manager', rowId: 'ui-skin-deep-whale-manager', target: companion, version: '0.1.0', commit,
+      }] },
+      review: { compatibility: 'verified' as const, preview: 'verified' as const, installation: 'verified' as const },
+    }
+    render(<App skins={[maidAtelier]} />)
+    fireEvent.click(screen.getByRole('button', { name: '安装' }))
     const group = screen.getByRole('region', { name: '安装这个皮肤' })
-    expect(within(group).getByText('此皮肤需按实际环境安装，请复制提示词。')).toBeTruthy()
+    expect(within(group).queryByText('此皮肤需按实际环境安装，请复制提示词。')).toBeNull()
+    expect(within(group).queryByText(/按运行 Web 版 DSH 的电脑和终端选择一组/)).toBeNull()
     expect(within(group).queryByRole('button', { name: '复制安装这个皮肤的命令' })).toBeNull()
+    const terminals = [
+      { label: 'macOS / Linux', directory: '"$HOME/.dsh/profiles/web"' },
+      { label: 'Windows PowerShell', directory: '"$env:USERPROFILE\\.dsh\\profiles\\web"' },
+      { label: 'Windows CMD', directory: '"%USERPROFILE%\\.dsh\\profiles\\web"' },
+    ]
+    for (const terminal of terminals) {
+      const primaryCommand = `pnpm add "${primary}" --dir ${terminal.directory}`
+      expect(within(group).getByText(terminal.label)).toBeTruthy()
+      expect(within(group).getByText(primaryCommand).closest('.copy-capsule')).toBeTruthy()
+      fireEvent.click(within(group).getByRole('button', { name: `复制安装这个皮肤的${terminal.label}` }))
+      await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(primaryCommand))
+    }
+    const commandRows = [...group.querySelectorAll('code')].filter(node => node.textContent?.startsWith('pnpm add '))
+    expect(commandRows).toHaveLength(3)
+    expect(commandRows.every(node => !node.textContent?.includes(companion))).toBe(true)
     fireEvent.click(within(group).getByRole('button', { name: '复制安装这个皮肤的桌面版插件包名' }))
-    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(skin.install.target))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(primary))
     fireEvent.click(within(group).getByRole('button', { name: '复制安装这个皮肤的提示词' }))
-    await waitFor(() => expect(writeText.mock.calls.at(-1)![0]).toContain('@example/bridge@1.2.3'))
+    await waitFor(() => expect(writeText.mock.calls.at(-1)![0]).toContain(companion))
   })
 
   it('keeps the market-only dialog as a single group with the same three fields', async () => {

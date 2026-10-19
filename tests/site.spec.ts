@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_REPOSITORY, MARKET_WEB_COMMAND, skinCommand, skinPrompt, skinWebCommand } from '../site/prompts.ts'
+import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_REPOSITORY, MARKET_WEB_COMMAND, skinCommand, skinPrompt, skinWebCommand, skinWebCommandGroups } from '../site/prompts.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
 
 const skin = {
@@ -61,8 +61,37 @@ describe('static catalog prompts', () => {
     expect(command).not.toContain('--profile desktop')
   })
 
-  it('leaves terminal-specific subdirectory installation to the Agent prompt', () => {
+  it('keeps the legacy single-command helper unavailable for subdirectory targets', () => {
     const target = `github:example/dsh-skin#${'a'.repeat(40)}&path:/packages/skin`
     expect(skinWebCommand({ ...skin, install: { ...skin.install, target } })).toBeUndefined()
+  })
+
+  it('keeps a common standalone command in one unlabeled group', () => {
+    const groups = skinWebCommandGroups(skin)
+    expect(groups).toHaveLength(1)
+    expect(groups[0]!.label).toBe('')
+    expect(groups[0]!.commands.map(entry => entry.value)).toEqual([`dsh plugin --profile web add "${skin.install.target}"`])
+  })
+
+  it('keeps public npm copy commands on the default tag', () => {
+    const groups = skinWebCommandGroups({ ...skin, install: { ...skin.install, target: 'example-skin@1.2.3' } })
+    expect(groups[0]!.commands.map(entry => entry.value)).toEqual(['dsh plugin --profile web add "example-skin"'])
+  })
+
+  it('provides each terminal with only the primary subdirectory command', () => {
+    const commit = 'b693d2c224a0a6fb5b621e7cc1284f20d9849c1c'
+    const primary = `github:Small-tailqwq/dsh-deep-whale#${commit}&path:/maid-atelier`
+    const companion = `github:Small-tailqwq/dsh-deep-whale#${commit}&path:/skin-manager`
+    const groups = skinWebCommandGroups({ ...skin, install: { ...skin.install, target: primary, companions: [{
+      package: '@dsh-external/dsh-client-ui-skin-deep-whale-manager', rowId: 'ui-skin-deep-whale-manager',
+      target: companion, version: '0.1.0', commit,
+    }] } })
+    expect(groups.map(group => group.label)).toEqual(['macOS / Linux', 'Windows PowerShell', 'Windows CMD'])
+    const directories = ['"$HOME/.dsh/profiles/web"', '"$env:USERPROFILE\\.dsh\\profiles\\web"', '"%USERPROFILE%\\.dsh\\profiles\\web"']
+    groups.forEach((group, index) => {
+      expect(group.commands.map(entry => entry.value)).toEqual([
+        `pnpm add "${primary}" --dir ${directories[index]}`,
+      ])
+    })
   })
 })
