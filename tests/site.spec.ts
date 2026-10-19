@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_REPOSITORY, MARKET_WEB_COMMAND, skinCommand, skinPrompt } from '../site/prompts.ts'
+import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_REPOSITORY, MARKET_WEB_COMMAND, skinCommand, skinPrompt, skinWebCommand } from '../site/prompts.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
 
 const skin = {
@@ -10,8 +10,11 @@ const skin = {
 describe('static catalog prompts', () => {
   it('generates the platform installation prompt', () => {
     expect(MARKET_PROMPT).toContain(MARKET_REPOSITORY)
-    expect(MARKET_CLI_COMMAND).toContain(MARKET_WEB_COMMAND)
-    expect(MARKET_CLI_COMMAND).toContain(MARKET_DESKTOP_INPUT)
+    expect(MARKET_DESKTOP_INPUT).toBe('dsh-skin-market')
+    expect(MARKET_CLI_COMMAND).toBe('dsh plugin --profile web add "dsh-skin-market"')
+    expect(MARKET_CLI_COMMAND).toBe(MARKET_WEB_COMMAND)
+    expect(MARKET_CLI_COMMAND).not.toContain('\n')
+    expect(MARKET_CLI_COMMAND).not.toContain('#')
     expect(MARKET_CLI_COMMAND).not.toContain('--profile desktop')
     expect(MARKET_PROMPT).toContain('判断是 Web 版还是官方 Desktop')
     expect(MARKET_PROMPT).toContain('无法判断就先问我')
@@ -53,23 +56,13 @@ describe('static catalog prompts', () => {
     const target = `github:example/dsh-skin#${'a'.repeat(40)}`
     const command = skinCommand(target)
 
-    expect(command).toBe([
-      '# Web 版',
-      `dsh plugin --profile web add "${target}"`,
-      '',
-      '# 官方桌面版：不要在终端执行；在桌面应用「设置 → 皮肤市场」中打开该皮肤并安装',
-    ].join('\n'))
+    expect(command).toBe(`dsh plugin --profile web add "${target}"`)
+    expect(command).not.toContain('\n')
     expect(command).not.toContain('--profile desktop')
   })
 
-  it('copies subdirectory skins as a direct pnpm add', () => {
+  it('leaves terminal-specific subdirectory installation to the Agent prompt', () => {
     const target = `github:example/dsh-skin#${'a'.repeat(40)}&path:/packages/skin`
-    expect(skinCommand(target)).toBe([
-      '# Web 版',
-      `pnpm add "${target}" --dir "$HOME/.dsh/profiles/web"`,
-      `pnpm add "${target}" --dir "$env:USERPROFILE\\.dsh\\profiles\\web"`,
-      '',
-      '# 官方桌面版：不要在终端执行；在桌面应用「设置 → 皮肤市场」中打开该皮肤并安装',
-    ].join('\n'))
+    expect(skinWebCommand({ ...skin, install: { ...skin.install, target } })).toBeUndefined()
   })
 })

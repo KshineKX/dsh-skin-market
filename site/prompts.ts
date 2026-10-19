@@ -1,18 +1,13 @@
 import { createDshPluginAddCommand, createInstallCommand } from '../src/install-command.ts'
 import { createSkinInstallPrompt } from '../src/client/submission.ts'
+import { desktopInstallPlan } from '../src/desktop-install.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
 
 export const MARKET_REPOSITORY = 'https://github.com/kingOfSoySauce/dsh-skin-market'
 export const MARKET_PUBLIC_URL = 'https://kingofsoysauce.github.io/dsh-skin-market/'
-export const MARKET_WEB_COMMAND = createDshPluginAddCommand('dsh-skin-market@latest')
-export const MARKET_DESKTOP_INPUT = 'dsh-skin-market@latest'
-export const MARKET_CLI_COMMAND = [
-  '# Web 版',
-  MARKET_WEB_COMMAND,
-  '',
-  '# 官方桌面版：不要在终端执行；在桌面应用「插件 → 添加插件」中输入并启用',
-  MARKET_DESKTOP_INPUT,
-].join('\n')
+export const MARKET_DESKTOP_INPUT = 'dsh-skin-market'
+export const MARKET_WEB_COMMAND = createDshPluginAddCommand(MARKET_DESKTOP_INPUT)
+export const MARKET_CLI_COMMAND = MARKET_WEB_COMMAND
 export { CLI_INSTALL_WARNING } from '../src/client/submission.ts'
 
 export const MARKET_PROMPT = `请帮我安装 dsh-skin-market。先判断是 Web 版还是官方 Desktop，并核对当前宿主的实际 profile；无法判断就先问我。Web 查看 dsh --version；Desktop 以应用“关于”中的版本为准，不用系统终端的 npm dsh 版本代表桌面版本。不要读取 .env、凭据或其他存放秘密的配置。
@@ -29,11 +24,20 @@ export function skinPrompt(skin: CatalogSkin): string {
   return createSkinInstallPrompt(skin)
 }
 
+export function skinDesktopInput(skin: CatalogSkin): string {
+  return desktopInstallPlan(skin, true).kind === 'npm' ? skin.package : skinCopyTarget(skin)
+}
+
+function skinCopyTarget(skin: CatalogSkin): string {
+  const target = skin.install.npm?.name ?? skin.install.target
+  return /^((?:@[a-z0-9._-]+\/)?[a-z0-9._-]+)(?:@[^/]+)?$/i.exec(target)?.[1] ?? target
+}
+
+export function skinWebCommand(skin: CatalogSkin): string | undefined {
+  const target = skinCopyTarget(skin)
+  return target.includes('&') ? undefined : skinCommand(target)
+}
+
 export function skinCommand(installTarget: string): string {
-  return [
-    '# Web 版',
-    createInstallCommand(installTarget),
-    '',
-    '# 官方桌面版：不要在终端执行；在桌面应用「设置 → 皮肤市场」中打开该皮肤并安装',
-  ].join('\n')
+  return createInstallCommand(installTarget)
 }

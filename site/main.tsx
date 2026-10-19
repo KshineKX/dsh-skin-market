@@ -8,8 +8,7 @@ import { getCatalogListScreenshot, getCatalogScreenshotUrls, usesMarketScreensho
 import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, hasGeneratedMediaBase, parseGeneratedMediaManifest, previewSourceCandidates, setGeneratedMediaSources } from '../src/media-preview.ts'
 import { useLazyMedia } from '../src/media-visibility.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
-import { preferredInstallTarget } from '../src/install-source.ts'
-import { CLI_INSTALL_WARNING, MARKET_CLI_COMMAND, MARKET_PROMPT, MARKET_PUBLIC_URL, MARKET_REPOSITORY, skinCommand, skinPrompt } from './prompts.ts'
+import { MARKET_CLI_COMMAND, MARKET_DESKTOP_INPUT, MARKET_PROMPT, MARKET_PUBLIC_URL, MARKET_REPOSITORY, skinDesktopInput, skinPrompt, skinWebCommand } from './prompts.ts'
 import { displayTitle, githubRepoLabel } from '../src/display-title.ts'
 import { matchesCatalogSearch } from '../src/catalog-search.ts'
 import './site.css'
@@ -61,7 +60,7 @@ function SearchBox({ query, onQueryChange, style }: { query: string; onQueryChan
   return <label className="search site-search" style={style}><MagnifyingGlass size={18} /><input value={query} onChange={event => onQueryChange(event.currentTarget.value)} placeholder="搜索皮肤、作者或标签" aria-label="搜索皮肤、作者或标签" /></label>
 }
 
-function App({ skins }: { skins: Skin[] }) {
+export function App({ skins }: { skins: Skin[] }) {
   const [selectedId, setSelectedId] = useState(skins[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'stars' | 'latest'>('stars')
@@ -215,7 +214,6 @@ function App({ skins }: { skins: Skin[] }) {
   if (selected === undefined) return <main className="empty-page">目录暂时为空</main>
 
   const verified = selected.review?.compatibility !== 'unverified'
-  const manualOnly = selected.review?.installation === 'manual-only'
 
   return <div className="page-shell" ref={pageShellRef} data-detail={detailOpen ? 'open' : 'closed'}>
     {detailOpen && <GalleryPreloads skin={selected} screenshots={selectedScreenshots} />}
@@ -298,10 +296,10 @@ function App({ skins }: { skins: Skin[] }) {
 
     {installDialog !== null && <div className="install-dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setInstallDialog(null) }}>
       <section className="install-dialog" role="dialog" aria-modal="true" aria-labelledby="install-dialog-title">
-        <header><div><h2 id="install-dialog-title">{installDialog === 'market' ? '安装皮肤市场' : `安装 ${selected.name.zh}`}</h2><p>{installDialog === 'skin' && manualOnly ? '让 Agent 检查冲突，并逐步指导安装。' : '任选一种，不用都执行。'}</p></div><button aria-label="关闭" onClick={() => setInstallDialog(null)}><X size={18} /></button></header>
+        <header><div><h2 id="install-dialog-title">{installDialog === 'market' ? '安装皮肤市场' : `安装 ${selected.name.zh}`}</h2><p>任选一种方式，不用全部执行。</p></div><button aria-label="关闭" onClick={() => setInstallDialog(null)}><X size={18} /></button></header>
         <div className="install-method-grid" data-single={installDialog === 'market' ? 'true' : 'false'}>
-          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected)} command={manualOnly ? undefined : skinCommand(preferredInstallTarget(selected))} manualOnly={manualOnly} repo={selected.repo} copyKey="skin" copied={copied} onCopy={copyPrompt} commandNote={CLI_INSTALL_WARNING} />}
-          <InstallGroup title={installDialog === 'skin' ? '皮肤市场插件内安装' : undefined} prompt={MARKET_PROMPT} command={MARKET_CLI_COMMAND} copyKey="market" copied={copied} onCopy={copyPrompt} />
+          {installDialog === 'skin' && <InstallGroup title="安装这个皮肤" prompt={skinPrompt(selected)} desktopInput={skinDesktopInput(selected)} command={skinWebCommand(selected)} copyKey="skin" copied={copied} onCopy={copyPrompt} note="先检查已启用的皮肤，避免样式冲突。" />}
+          <InstallGroup title={installDialog === 'skin' ? '通过皮肤市场安装' : undefined} prompt={MARKET_PROMPT} desktopInput={MARKET_DESKTOP_INPUT} command={MARKET_CLI_COMMAND} copyKey="market" copied={copied} onCopy={copyPrompt} note="装好市场后，在 DSH 内安装具体皮肤。" />
         </div>
       </section>
     </div>}
@@ -310,12 +308,21 @@ function App({ skins }: { skins: Skin[] }) {
   </div>
 }
 
-function InstallOption({ label, value, copied, onCopy, note }: { label: string; value: string; copied: boolean; onCopy: () => void; note?: string }) {
-  return <div className="install-option"><strong>{label}</strong><div className="copy-capsule"><code title={value}>{value}</code><button aria-label={`复制${label}`} title={`复制${label}`} onClick={onCopy}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>{note && <small>{note}</small>}</div>
+function InstallOption({ label, value, copied, onCopy, copyLabel = label, input = false }: { label: string; value: string; copied: boolean; onCopy: () => void; copyLabel?: string; input?: boolean }) {
+  return <div className="install-option"><strong>{label}</strong><div className="copy-capsule">{input ? <input aria-label={copyLabel} title={value} value={value} readOnly onFocus={event => event.currentTarget.select()} /> : <code title={value}>{value}</code>}<button aria-label={`${copied ? '已复制' : '复制'}${copyLabel}`} title={copied ? '已复制' : '复制'} onClick={onCopy}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div></div>
 }
 
-function InstallGroup({ title, prompt, command, manualOnly = false, repo, copyKey, copied, onCopy, commandNote }: { title?: string; prompt: string; command?: string; manualOnly?: boolean; repo?: string; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void>; commandNote?: string }) {
-  return <section className="install-group">{title && <h3>{title}</h3>}<InstallOption label={manualOnly ? '让 Agent 检查并指导安装' : '提示词'} value={prompt} copied={copied === `${copyKey}:prompt`} onCopy={() => void onCopy(`${copyKey}:prompt`, prompt)} />{manualOnly && repo !== undefined && <div className="manual-install-guide"><strong>安装说明</strong><p>复制提示词，让 Agent 核对仓库和冲突。桌面端由你在插件页操作，Agent 每次指导一步并跟进结果。</p><a href={repo} target="_blank" rel="noreferrer"><GithubLogo size={15} />打开 GitHub 仓库</a></div>}{command !== undefined && <InstallOption label="命令" value={command} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, command)} note={commandNote} />}</section>
+function InstallGroup({ title, prompt, desktopInput, command, copyKey, copied, onCopy, note }: { title?: string; prompt: string; desktopInput: string; command?: string; copyKey: string; copied: string | null; onCopy: (key: string, value: string) => Promise<void>; note?: string }) {
+  const groupName = copyKey === 'skin' ? '安装这个皮肤' : '安装皮肤市场'
+  return <section className="install-group" aria-label={groupName}>
+    {title && <h3>{title}</h3>}
+    <InstallOption label="桌面版" value={desktopInput} copyLabel={`${groupName}的桌面版插件包名`} input copied={copied === `${copyKey}:keyword`} onCopy={() => void onCopy(`${copyKey}:keyword`, desktopInput)} />
+    {command !== undefined
+      ? <InstallOption label="命令" value={command} copyLabel={`${groupName}的命令`} copied={copied === `${copyKey}:command`} onCopy={() => void onCopy(`${copyKey}:command`, command)} />
+      : <div className="install-option"><strong>命令</strong><div className="copy-capsule install-command-hint"><code title="此皮肤需按实际环境安装，请复制提示词。">此皮肤需按实际环境安装，请复制提示词。</code></div></div>}
+    <InstallOption label="提示词" value={prompt} copyLabel={`${groupName}的提示词`} copied={copied === `${copyKey}:prompt`} onCopy={() => void onCopy(`${copyKey}:prompt`, prompt)} />
+    {note && <p className="install-note">{note}</p>}
+  </section>
 }
 
 function Site() {
@@ -400,4 +407,5 @@ function PreviewMedia({ skin, src, fallbackSources, alt, kind, loading }: { skin
   return <img src={imageSource} alt={alt} loading={loading} decoding="async" onLoad={event => { event.currentTarget.dataset.loaded = 'true' }} onError={() => { if (previewFailed) tryNextSource(); else setPreviewFailed(true) }} />
 }
 
-createRoot(document.getElementById('root')!).render(<Site />)
+const rootElement = document.getElementById('root')
+if (rootElement !== null) createRoot(rootElement).render(<Site />)
