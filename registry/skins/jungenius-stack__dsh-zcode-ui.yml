@@ -1,1 +1,49 @@
-url: https://github.com/jungenius-stack/dsh-zcode-ui
+id: jungenius.stack.dsh.zcode.ui
+name:
+  zh: dsh-zcode-ui
+  en: dsh-zcode-ui
+author: jungenius-stack
+description: DSH ZCode UI — 把 DeepSeek Harness Web 的界面换成 ZCode 风格：侧栏、工作区会话树、全局搜索与轮次导航 · A ZCode-styled sidebar, workspace session tree, global search, and turn navigation skin for DSH Web
+repo: https://github.com/jungenius-stack/dsh-zcode-ui
+package: dsh-zcode-ui
+rowId: zcode-ui
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:jungenius-stack/dsh-zcode-ui#85551e89c3d88251264e6cf6f1227b90b58886e0
+  version: 1.16.0
+  commit: 85551e89c3d88251264e6cf6f1227b90b58886e0
+compatibility:
+  dsh: ">=0.2.0-rc.2 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/settings-light.png
+  - https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/search-light.png
+  - https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/collapsed-light.png
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions: []
+license:
+  code: Apache-2.0
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-19T01:34:05.465Z
+metadataUpdatedAt: 2026-10-19T01:34:05.465Z
+starsUpdatedAt: 2026-10-19T01:34:05.465Z
+updatedAt: 2026-10-19T01:34:05.465Z

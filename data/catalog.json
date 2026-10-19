@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-18T21:31:02.169Z",
+  "generatedAt": "2026-10-19T01:34:06.458Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -18882,6 +18882,88 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/d334b535420bfe4cbb3fad968ad6b2ec.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/d334b535420bfe4cbb3fad968ad6b2ec.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "jungenius.stack.dsh.zcode.ui",
+      "name": {
+        "zh": "dsh-zcode-ui",
+        "en": "dsh-zcode-ui"
+      },
+      "author": "jungenius-stack",
+      "description": "DSH ZCode UI — 把 DeepSeek Harness Web 的界面换成 ZCode 风格：侧栏、工作区会话树、全局搜索与轮次导航 · A ZCode-styled sidebar, workspace session tree, global search, and turn navigation skin for DSH Web",
+      "repo": "https://github.com/jungenius-stack/dsh-zcode-ui",
+      "package": "dsh-zcode-ui",
+      "rowId": "zcode-ui",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:jungenius-stack/dsh-zcode-ui#85551e89c3d88251264e6cf6f1227b90b58886e0",
+        "version": "1.16.0",
+        "commit": "85551e89c3d88251264e6cf6f1227b90b58886e0"
+      },
+      "compatibility": {
+        "dsh": ">=0.2.0-rc.2 <0.3.0-0",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/settings-light.png",
+        "https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/search-light.png",
+        "https://raw.githubusercontent.com/jungenius-stack/dsh-zcode-ui/85551e89c3d88251264e6cf6f1227b90b58886e0/assets/screenshots/collapsed-light.png"
+      ],
+      "review": {
+        "compatibility": "verified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "healthy",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "pass",
+          "installation": "pass",
+          "installCommand": "pass",
+          "topic": "pass"
+        },
+        "suggestions": []
+      },
+      "license": {
+        "code": "Apache-2.0",
+        "commercialUse": true
+      },
+      "featuredRank": 1000,
+      "starsSnapshot": 2,
+      "releaseUpdatedAt": "2026-10-19T01:34:05.465Z",
+      "metadataUpdatedAt": "2026-10-19T01:34:05.465Z",
+      "starsUpdatedAt": "2026-10-19T01:34:05.465Z",
+      "updatedAt": "2026-10-19T01:34:05.465Z",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/3fa7cda49cf6ab6fff8e338d4a408334.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/3fa7cda49cf6ab6fff8e338d4a408334.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/3fa7cda49cf6ab6fff8e338d4a408334.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/3fa7cda49cf6ab6fff8e338d4a408334.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b0ed12f6f508e4b1962412879b0eaba4.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b0ed12f6f508e4b1962412879b0eaba4.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/35536d73adeeef018a388495c370b53a.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/35536d73adeeef018a388495c370b53a.full.webp"
           }
         ]
       }
