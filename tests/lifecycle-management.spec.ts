@@ -1147,6 +1147,19 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.installBundle).toHaveBeenCalledTimes(1)
   })
 
+  it('gives a copyable install spec when Desktop still refuses the replacement', async () => {
+    const item = skin('replace-failed', '1.1.0')
+    const host = fixture([item])
+    host.materialize(skin(item.id, '1.0.0'))
+    host.manager.installBundle.mockResolvedValue({ application: 'failed', error: { code: 'already-installed', message: 'already installed' } })
+    host.manager.removeBundle.mockResolvedValue({ application: 'failed', error: { code: 'bundle-in-use', message: 'in use' } })
+    const failed = await finished(host.lifecycle.begin('update', item.id))
+    expect(failed.phase).toBe('failed')
+    expect(failed.failure?.manualSpec).toBe(`${item.package}@1.1.0`)
+    expect(failed.message).toContain(`请在官方插件页先卸载当前包，再添加 ${item.package}@1.1.0。`)
+    expect(host.manager.removeBundle).toHaveBeenCalledWith(item.package)
+  })
+
   it.each(['install', 'update'] as const)('installs an out-of-range %s without a warning and asks only before use on DSH 0.2.0-rc.2', async kind => {
     const item = skin(`range-${kind}`)
     item.compatibility.dsh = '0.1.0-rc.6'

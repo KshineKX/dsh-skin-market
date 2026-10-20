@@ -17,6 +17,7 @@ export interface InterceptNotice {
   what: string
   why: string
   links: FailureHelpLink[]
+  copySpec?: string
 }
 
 export interface FailureHelpSubject {
@@ -271,7 +272,21 @@ export function failureHelpLinks(options: FailureHelpSubject): FailureHelpLink[]
   return [troubleshootLink]
 }
 
+function manualInstallNotice(title: string, spec: string | undefined): InterceptNotice | undefined {
+  const value = spec?.trim()
+  if (value === undefined || value === '') return
+  return {
+    title,
+    what: '自动替换未完成。',
+    why: `请在官方插件页先卸载当前包，再添加 ${value}。`,
+    links: [],
+    copySpec: value,
+  }
+}
+
 export function interceptNotice(operation: Operation, skinName: string, skin?: FailureHelpSubject['skin']): InterceptNotice {
+  const manual = manualInstallNotice(`${operationKindLabels[operation.kind]}未完成`, operation.failure?.manualSpec)
+  if (manual !== undefined) return manual
   const raw = (operation.failure?.message ?? operation.message ?? '').trim()
   const kind = operationKindLabels[operation.kind]
   const links = failureHelpLinks({
@@ -355,6 +370,8 @@ export function interceptNotice(operation: Operation, skinName: string, skin?: F
 }
 
 export function marketUpdateNotice(operation: { failure?: Operation['failure']; message?: string }): InterceptNotice {
+  const manual = manualInstallNotice('皮肤市场更新失败', operation.failure?.manualSpec)
+  if (manual !== undefined) return manual
   const raw = (operation.failure?.message ?? operation.message ?? '').trim()
   if (operation.failure?.kind === 'release-age' && operation.failure.action === 'approve-release-age' && operation.failure.releaseAgeTarget !== undefined) {
     return {

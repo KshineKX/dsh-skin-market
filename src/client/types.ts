@@ -151,6 +151,7 @@ export interface Operation {
     buildKeys?: string[]
     releaseAgeTarget?: { packageName: string; version: string }
     artifactRisk?: { context: string; packageName: string; version: string; warnings: string[] }
+    manualSpec?: string
     action?: 'retry' | 'approve-build' | 'approve-release-age' | 'approve-artifact' | 'repair-configuration'
     conflicts?: Array<{ kind: 'package' | 'repository' | 'row' | 'loader'; incoming: string; existing: string; identifiers: string[] }>
   }

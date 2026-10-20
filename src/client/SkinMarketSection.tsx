@@ -739,6 +739,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [marketOperation, setMarketOperation] = useState<MarketUpdateOperation | null>(null)
   const [copyingLogId, setCopyingLogId] = useState<string | null>(null)
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null)
+  const [copiedSpec, setCopiedSpec] = useState(false)
   const [copyingPromptId, setCopyingPromptId] = useState<string | null>(null)
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null)
   const [promptFallback, setPromptFallback] = useState<{ operationId: string; text: string; error: string } | null>(null)
@@ -2663,6 +2664,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             disabled={copyingPromptId === interceptLogId || copyingLogId === interceptLogId || interceptPending}
             onClick={() => { void copyRepairPrompt() }}
           >复制排查提示词</Button>}
+          {intercept?.copySpec !== undefined && <Button variant="outline" size="sm" icon={copiedSpec ? <IconCheckOutline /> : <IconCopyOutline />}
+            disabled={interceptPending}
+            onClick={() => {
+              const spec = intercept.copySpec
+              if (spec === undefined) return
+              void copyTextToClipboard(spec).then(() => {
+                setCopiedSpec(true)
+                window.setTimeout(() => setCopiedSpec(false), 2000)
+              }).catch(error => setCopyLogError(error instanceof Error ? error.message : '复制包名失败'))
+            }}
+          >复制包名</Button>}
           <Button
             variant="outline"
             size="sm"
@@ -2678,7 +2690,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             </>}
         </>}
       >
-        {intercept !== null && (configurationPlan !== undefined || repairPrompt !== null || artifactRisk === undefined && intercept.links.length > 0 || interceptHasError || copyLogError !== null) ? <div className={css.interceptNotice}>
+        {intercept !== null && (configurationPlan !== undefined || repairPrompt !== null || artifactRisk === undefined && intercept.links.length > 0 || interceptHasError || copyLogError !== null || intercept.copySpec !== undefined) ? <div className={css.interceptNotice}>
+          {intercept.copySpec !== undefined && <p>手动添加时粘贴：<code>{intercept.copySpec}</code></p>}
           {configurationPlan !== undefined && interceptOperation !== null && <ConfigurationChanges skins={skins} plan={{ status: 'repairable', reason: configurationPlan.reason, changes: [{ ...configurationPlan, skinId: interceptOperation.failure?.targetSkinId ?? interceptOperation.skinId }] }} />}
           {repairPrompt !== null && <p>可复制排查提示词交给本地 Agent，先检查实际环境和失败阶段。</p>}
           {repairPrompt !== null && interceptFailure?.configurationOverride?.status === 'blocked' && <p>{interceptFailure.configurationOverride.reason}</p>}

@@ -13,7 +13,7 @@ import { sharedLoaderIdentifiers } from './loader-ownership.ts'
 import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
-import { officialFailureDiagnostic, officialOperationFailure } from './official-failure.ts'
+import { officialFailureDiagnostic, officialOperationFailure, manualInstallInstruction } from './official-failure.ts'
 import { applyConfigurationOverride, applyConfigurationOverrides, inspectConfigurationOverride, inspectConfigurationOverrides, rollbackConfigurationOverride, type ConfigurationOverrideOptions, type ConfigurationOverrideTarget } from './configuration-override.ts'
 import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts'
 import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
@@ -137,7 +137,7 @@ function removePrefetchDirectory(directory: string): void {
 function errorMessage(error: unknown): string { return error instanceof Error ? error.message : String(error) }
 
 class ManagedOperationError extends Error {
-  constructor(readonly result: CommandResult, message: string, readonly targetSkinId?: string) { super(message) }
+  constructor(readonly result: CommandResult, message: string, readonly targetSkinId?: string, readonly manualSpec?: string) { super(message) }
 }
 
 interface ConfigurationRepairApproval { failedId: string; context: string; binding: string }
@@ -572,6 +572,28 @@ export class SkinLifecycle {
       }
     }
     return result
+  }
+
+  /** HMR Desktop rejects installBundle for a dependency that already exists. */
+  private async replaceInstalledDesktopPackage(packageName: string, spec: string, operation: Operation, install: () => Promise<CommandResult>): Promise<CommandResult> {
+    const selected = readProfileBundles(this.options.profileDir).includes(packageName)
+    const signal = this.abortControllers.get(operation.id)?.signal
+    try {
+      const removed = await this.options.runner(this.options.profile, ['remove', packageName], { signal })
+      this.acceptManagement(removed, operation)
+      const installed = await this.managedPackageCall(install, operation, packageName, true)
+      this.acceptManagement(installed, operation)
+      if (selected && this.management !== undefined) {
+        const restored = await this.management.setBundleEnabled(packageName, true, { signal })
+        this.acceptManagement(restored, operation)
+      }
+      return installed
+    } catch (error) {
+      if (error instanceof ManagedOperationError) {
+        throw new ManagedOperationError(error.result, `${error.message} ${manualInstallInstruction(spec)}`, error.targetSkinId, spec)
+      }
+      throw error
+    }
   }
 
   private acceptManagement(result: CommandResult, operation?: Operation, subject?: SkinEntry): void {
@@ -1661,6 +1683,14 @@ export class SkinLifecycle {
         if (managed?.indeterminate !== true && managed?.application !== undefined) operation.application = managed.application
         operation.failure = officialOperationFailure(error.result, this.management?.capabilities().buildApprovals.available)
         if (operation.failure !== undefined && error.targetSkinId !== undefined) operation.failure.targetSkinId = error.targetSkinId
+        if (error.manualSpec !== undefined) {
+          operation.failure = {
+            ...(operation.failure ?? { kind: 'command', message: error.message }),
+            message: error.message,
+            manualSpec: error.manualSpec,
+            code: operation.failure?.code ?? 'already-installed',
+          }
+        }
         this.describeConfigurationOverride(operation)
         if (operation.failure?.buildKeys?.length) this.pendingBuildKeys.set(operation.id, operation.failure.buildKeys)
       }
@@ -2014,8 +2044,16 @@ export class SkinLifecycle {
             } else if (progress.phase === 'installing') operation.cancelable = this.management?.capabilities().cancel.available === true
           },
         }), operation, skin.package, true)
-        this.acceptManagement(result, operation)
-        if (result.management?.version !== undefined && result.management.version !== skin.install.version) throw new Error('官方宿主安装的版本与已核验目标不一致')
+        const replaced = current !== undefined && result.management?.application === 'failed' && result.management.error?.code === 'already-installed'
+          ? await this.replaceInstalledDesktopPackage(skin.package, plan.target, operation, () => installPlugin(this.options.profile, { ...request, receiptId: randomUUID() }, {
+            signal: controller?.signal,
+            timeoutMs: this.remainingTime(operation),
+            onStdout: chunk => tracker.push(chunk, operation),
+            onStderr: chunk => tracker.push(chunk, operation),
+          }))
+          : result
+        this.acceptManagement(replaced, operation)
+        if (replaced.management?.version !== undefined && replaced.management.version !== skin.install.version) throw new Error('官方宿主安装的版本与已核验目标不一致')
         const artifact = validateDesktopArtifact(this.options.profileDir, skin, { allowArtifactRisk: true })
         if (!artifact.ok) throw new Error(artifact.reason ?? '官方宿主安装构件未通过核验')
         this.assertLegacyOfficialPeers(packageManifest(this.options.profileDir, skin.package))

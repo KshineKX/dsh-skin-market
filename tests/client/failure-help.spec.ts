@@ -194,6 +194,17 @@ describe('failure help', () => {
     expect(notice.links).toEqual([{ href: MARKET_INSTALL_TROUBLESHOOT_URL, label: '查看安装排查' }])
   })
 
+  it('tells the user to uninstall and copy the package spec when automatic replacement fails', () => {
+    const spec = 'dsh-skin-market@0.1.65'
+    const notice = marketUpdateNotice({
+      failure: { kind: 'command', code: 'already-installed', message: '自动替换未完成', manualSpec: spec },
+    })
+    expect(notice.what).toBe('自动替换未完成。')
+    expect(notice.why).toBe(`请在官方插件页先卸载当前包，再添加 ${spec}。`)
+    expect(notice.copySpec).toBe(spec)
+    expect(interceptNotice(failed('command', '宿主拒绝安装', { failure: { kind: 'command', message: '宿主拒绝安装', manualSpec: 'dsh-test@1.1.0' } }), '测试皮肤').copySpec).toBe('dsh-test@1.1.0')
+  })
+
   it('summarizes a native package failure without showing multiline progress or raw error codes', () => {
     const message = [
       'Progress: resolved 1, reused 0, downloaded 0, added 0',

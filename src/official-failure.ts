@@ -28,6 +28,21 @@ const MANAGEMENT_MESSAGES: Record<string, string> = {
   'stop-profile': '目标组件仍在当前 Desktop 中运行；请手动重启 Desktop App 后再尝试卸载。',
   'bundle-in-use': '目标组合包仍有组件在运行，Desktop 尚未完成停用。',
   'stale-approval': '需要批准的构建项已变化；请重新核对当前待批准项目。',
+  'already-installed': '官方 Desktop 不允许在已安装的包上直接安装新版。',
+}
+
+export function manualInstallInstruction(spec: string): string {
+  return `请在官方插件页先卸载当前包，再添加 ${spec}。`
+}
+
+export class ManualInstallRequired extends Error {
+  readonly manualSpec: string
+
+  constructor(spec: string, cause: string) {
+    super(`${cause} ${manualInstallInstruction(spec)}`)
+    this.name = 'ManualInstallRequired'
+    this.manualSpec = spec
+  }
 }
 
 function unclassifiedDiagnosticSummary(diagnostic: string): string | undefined {

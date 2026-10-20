@@ -205,6 +205,7 @@ export interface OperationFailure {
   packageName?: string
   releaseAgeTarget?: { packageName: string; version: string }
   artifactRisk?: SkinArtifactRisk
+  manualSpec?: string
   buildKeys?: string[]
   action?: OperationRetryAction
   conflicts?: InstallConflict[]
