@@ -66,7 +66,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .feed-card:hover, .feed-card:focus-within { border-color: color-mix(in srgb, var(--primary) 34%, var(--border-strong)); background: var(--surface-2); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent), 0 0 10px color-mix(in srgb, var(--primary) 14%, transparent); }
 .feed-card-open { display: flex; width: 100%; min-width: 0; flex: 1; cursor: pointer; flex-direction: column; align-items: stretch; padding: 0; color: inherit; border: 0; border-radius: 0; background: transparent !important; text-align: left; }
 .feed-card-open:hover, .feed-card-open:focus-visible, .feed-card-open:active { border-radius: 0; background: transparent !important; }
-.feed-card-media { display: block; width: 100%; height: clamp(180px, 18vw, 220px); max-height: 220px; overflow: hidden; background: #090a0b; }
+.feed-card-media { display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #090a0b; }
 .feed-card-media > img, .feed-card-media > .preview-placeholder { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .feed-card-copy { display: flex; width: 100%; min-width: 0; flex: 1; flex-direction: column; justify-content: space-between; gap: 6px; padding: 12px 14px 10px; }
 .feed-card-title { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -239,7 +239,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .feed-content { padding: 20px 16px 36px; }
   .feed-section-title > div > span { display: none; }
   .skin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .feed-card-media { height: 160px; max-height: 160px; }
   .feed-card-copy { padding: 9px 12px 10px; }
   .feed-card-footer { padding-right: 12px; padding-left: 12px; }
   .browser-overlay { inset: 62px 0 0; display: block; padding: 0; background: var(--surface); }
