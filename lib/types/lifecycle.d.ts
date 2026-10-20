@@ -110,6 +110,8 @@ export declare class SkinLifecycle {
     private applyReleaseAgeApproval;
     /** Called only for package transactions while holding the profile queue. */
     private managedPackageCall;
+    /** HMR Desktop rejects installBundle for a dependency that already exists. */
+    private replaceInstalledDesktopPackage;
     private acceptManagement;
     private awaitLifecycle;
     private recordRestart;

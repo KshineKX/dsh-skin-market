@@ -210,6 +210,7 @@ export interface OperationFailure {
         version: string;
     };
     artifactRisk?: SkinArtifactRisk;
+    manualSpec?: string;
     buildKeys?: string[];
     action?: OperationRetryAction;
     conflicts?: InstallConflict[];
