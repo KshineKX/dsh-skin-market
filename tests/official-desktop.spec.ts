@@ -257,6 +257,11 @@ describe('official management release contracts', () => {
     ['0.2.1-alpha.2', true, true, false],
     ['0.2.1-alpha.3', true, true, false],
     ['0.2.1-rc.1', true, true, false],
+    ['0.2.1-rc.2', true, true, false],
+    ['0.2.1-rc.2+build.9', true, true, false],
+    ['0.2.2', true, true, false],
+    ['0.3.0', true, true, false],
+    ['1.0.0', true, true, false],
   ] as const)('gates %s options and post-install resolution by the audited snapshot', async (version, recovered, exact, requiresRestart) => {
     const manager = fullManager()
     const runner = officialDesktopRunner(() => manager, runtime(version))
@@ -272,7 +277,7 @@ describe('official management release contracts', () => {
     expect(manager.installBundle).toHaveBeenCalledWith('skin@1.0.0', { enabled: false, requestId: 'request', ...(exact ? { saveExact: true } : {}) })
   })
 
-  it.each(['0.1.6-alpha.1', '0.1.5-rc.3', '0.3.0', '0.1.7-alpha.3', '0.2.1-alpha.4', null])('does not mutate an unaudited runtime %s', async version => {
+  it.each(['0.1.6-alpha.1', '0.1.5-rc.3', '0.2.0-rc.3', '0.1.7-alpha.3', '0.2.1-alpha.4', null])('does not mutate an unaudited runtime %s', async version => {
     const manager = fullManager()
     const runner = officialDesktopRunner(() => manager, runtime(version))
     const caps = runner.management!.capabilities()

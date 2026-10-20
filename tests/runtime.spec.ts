@@ -37,7 +37,7 @@ describe('DSH runtime capabilities', () => {
     expect(runtimeCapabilities('0.1.6-alpha.1')).toContain('slot:keyed:settings.plugin.item')
   })
 
-  it.each(['0.1.6-alpha.2', '0.1.7-alpha.1', '0.2.0-rc.2', '0.2.1-alpha.2', '0.2.1-rc.1', '0.2.1-rc.1+build.1'])('recognizes new plugin configuration slots in %s without resurrecting the removed slot', version => {
+  it.each(['0.1.6-alpha.2', '0.1.7-alpha.1', '0.2.0-rc.2', '0.2.1-alpha.2', '0.2.1-rc.1', '0.2.1-rc.1+build.1', '0.2.1-rc.2', '0.3.0', '1.0.0'])('recognizes new plugin configuration slots in %s without resurrecting the removed slot', version => {
     const capabilities = runtimeCapabilities(version)
     expect(capabilities).toContain('slot:list:settings.section')
     expect(capabilities).toContain('slot:keyed:plugins.bundle.config')
@@ -45,7 +45,7 @@ describe('DSH runtime capabilities', () => {
     expect(capabilities).not.toContain('slot:keyed:settings.plugin.item')
   })
 
-  it.each([null, 'nonsense', '0.2.1-alpha.3', '0.2.1-alpha.4', '0.2.1-rc.2', '0.3.0', '1.0.0'])('makes no slot claims for an unknown or unaudited version %s', version => {
+  it.each([null, 'nonsense', '0.2.1-alpha.3', '0.2.1-alpha.4'])('makes no slot claims for an unknown or unaudited version %s', version => {
     expect(runtimeCapabilities(version)).toEqual([])
   })
 

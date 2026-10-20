@@ -1,15 +1,18 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { parseVersion, satisfiesVersionRange } from './semver.ts'
+import { compareVersions, parseVersion, satisfiesVersionRange } from './semver.ts'
 import type { DshRuntime } from './types.ts'
 
 export const KEYED_SLOT_CAPABILITY_PREFIX = 'slot:keyed:'
 export const LIST_SLOT_CAPABILITY_PREFIX = 'slot:list:'
 export const LEGACY_KEYED_SETTINGS_RANGE = '>=0.1.0-rc.7 <0.1.6-alpha.2'
 const AUDITED_RUNTIME_RANGE = '>=0.1.0-rc.6 <=0.2.1-alpha.2'
-// Later snapshots are checked individually, without extending support to
-// intervening or future prereleases that have not been inspected.
-const AUDITED_MODERN_SLOT_VERSIONS = new Set(['0.2.1-rc.1'])
+// The rc.1 package introduced these slots. Later releases keep them until a
+// host change says otherwise; gaps below this floor stay unaudited.
+const MODERN_SLOT_VERSION = '0.2.1-rc.1'
+function hasModernSlots(version: string): boolean {
+  return compareVersions(version.trim().replace(/\+.*/, ''), MODERN_SLOT_VERSION) >= 0
+}
 
 interface RuntimeManifest { name?: unknown; version?: unknown }
 
@@ -69,7 +72,7 @@ function dshPackageVersion(): string | null {
 
 export function runtimeCapabilities(version: string | null): string[] {
   if (version === null || validVersion(version) === null) return []
-  const auditedModernSlots = AUDITED_MODERN_SLOT_VERSIONS.has(version.trim().replace(/\+.*/, ''))
+  const auditedModernSlots = hasModernSlots(version)
   if (!auditedModernSlots && !satisfiesVersionRange(version, AUDITED_RUNTIME_RANGE)) return []
   const capabilities: string[] = [`${LIST_SLOT_CAPABILITY_PREFIX}settings.section`]
   // The published rc.6 package declares a list. The first available rc.7 tag

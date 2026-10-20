@@ -91,11 +91,17 @@ const CORE_VERSION = '0.1.6-alpha.2'
 const RECOVERY_VERSION = '0.1.7-alpha.1'
 const RESOLUTION_REFRESH_VERSION = '0.2.1-alpha.1'
 const EXACT_VERSION = '0.2.1-alpha.2'
-// Published snapshots, not a promise that future or untagged releases share the contract.
+// Snapshots below this floor stay exact: those releases changed the call shape.
+// This floor and every newer version reuse the audited 0.2.1-rc.1 contract while
+// the methods are still present. A host error, not a missing tag, is the backstop.
+const STABLE_CONTRACT_VERSION = '0.2.1-rc.1'
 const AUDITED_VERSIONS = new Set([
   CORE_VERSION, '0.1.7-alpha.1', '0.1.7-alpha.2', '0.1.7-rc.1', '0.1.7-rc.2',
-  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION, '0.2.1-alpha.3', '0.2.1-rc.1',
+  '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', EXACT_VERSION, '0.2.1-alpha.3', STABLE_CONTRACT_VERSION,
 ])
+function recognizedHostVersion(version: string | null): boolean {
+  return version !== null && (AUDITED_VERSIONS.has(version) || compareVersions(version, STABLE_CONTRACT_VERSION) >= 0)
+}
 type RecordLike = Record<string, unknown>
 
 function asRecord(value: unknown): RecordLike | undefined {
@@ -263,8 +269,8 @@ export function officialDesktopRunner(
   events?: OfficialManagementEvents,
 ): PluginRunner {
   const version = runtime?.version?.trim().replace(/\+.*/, '') ?? null
-  const coreVersion = version === null ? runtime === undefined : AUDITED_VERSIONS.has(version)
-  const versionAtLeast = (minimum: string): boolean => version !== null && AUDITED_VERSIONS.has(version) && compareVersions(version, minimum) >= 0
+  const coreVersion = version === null ? runtime === undefined : recognizedHostVersion(version)
+  const versionAtLeast = (minimum: string): boolean => recognizedHostVersion(version) && compareVersions(version!, minimum) >= 0
   const versionReason = version === null ? '未能识别官方 DSH 版本'
     : `当前皮肤市场尚未适配 DSH ${version}，请更新皮肤市场后重试`
   const capabilities = (): OfficialManagementCapabilities => {
