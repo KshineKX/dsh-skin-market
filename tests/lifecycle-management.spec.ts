@@ -186,7 +186,7 @@ function fixture(catalog: SkinEntry[], options: { lifecycleWaitMs?: number; host
 }
 
 describe('official plugin manager lifecycle', () => {
-  it('keeps the pinned Aqua GitHub peer refusal blocked even when the Host offers exemptions', async () => {
+  it.each(['0.2.0-rc.2', '0.2.1-rc.2'])('keeps the pinned Aqua peer refusal blocked on %s even when the Host offers exemptions', async hostVersion => {
     const item = skin('aqua-host-refusal', '1.3.0')
     item.package = '@deepseek-ai/dsh-client-ui-aqua'
     item.rowId = 'ui-aqua'
@@ -196,10 +196,10 @@ describe('official plugin manager lifecycle', () => {
     item.install.npm = undefined
     item.install.desktop = { mode: 'manual-only', reason: 'npm-package-not-found' }
     item.compatibility.dsh = '^0.1.0-rc.5'
-    const host = fixture([item], { hostVersion: '0.2.0-rc.2' })
+    const host = fixture([item], { hostVersion })
     const setVersionExemption = vi.fn()
     Object.assign(host.manager, { setVersionExemption })
-    const incompatible = [{ name: item.package, version: '1.3.0', runtimeVersion: '0.2.0-rc.2', peers: { '@deepseek-ai/dsh-client-runtime': '^0.1.0-rc.5' } }]
+    const incompatible = [{ name: item.package, version: '1.3.0', runtimeVersion: hostVersion, peers: { '@deepseek-ai/dsh-client-runtime': '^0.1.0-rc.5' } }]
     host.manager.installBundle.mockResolvedValueOnce({ application: 'failed', changed: false,
       error: { code: 'incompatible-version', incompatible }, packageResult: { exitCode: 1, incompatible } })
     const failed = await finished(host.lifecycle.begin('install', item.id))
@@ -716,9 +716,9 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
   })
 
-  it('reads component states on DSH rc.1 without reporting a missing plugin inventory', async () => {
+  it.each(['0.2.1-rc.1', '0.2.1-rc.2'])('reads component states on DSH %s without reporting a missing plugin inventory', async hostVersion => {
     const active = skin('rc1-active'), inactive = skin('rc1-inactive')
-    const host = fixture([active, inactive], { hostVersion: '0.2.1-rc.1' })
+    const host = fixture([active, inactive], { hostVersion })
     host.materialize(active); host.materialize(inactive); host.select(active.package, true)
     writeMarketState(host.directory, { version: 1, activeSkinId: active.id, pinnedSkinIds: [], disabledSkinIds: [inactive.id] })
     const before = [join(host.directory, 'package.json'), join(host.directory, 'pnpm-lock.yaml'), profilePatchFile(host.directory)].map(path => readFileSync(path, 'utf8'))
@@ -1195,10 +1195,10 @@ describe('official plugin manager lifecycle', () => {
     expect(() => host.lifecycle.begin(kind, item.id)).toThrow('请在兼容性提示中确认后继续')
   })
 
-  it('keeps a host compatibility refusal after the user accepted the author-range warning', async () => {
+  it.each(['0.2.0-rc.2', '0.2.1-rc.2'])('keeps a host compatibility refusal on %s after the author-range warning was accepted', async hostVersion => {
     const item = skin('host-refusal')
     item.compatibility.dsh = '0.1.0-rc.6'
-    const host = fixture([item])
+    const host = fixture([item], { hostVersion })
     host.manager.installBundle.mockResolvedValue({ application: 'failed', changed: false, error: { code: 'incompatible-version', message: 'host peer version mismatch' } })
     const operation = await finished(host.lifecycle.begin('install', item.id, undefined, true, compatibilityContext(item, host.runtime)))
     expect(operation).toMatchObject({ phase: 'failed', failure: { kind: 'compatibility' } })
