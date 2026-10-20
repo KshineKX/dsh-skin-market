@@ -72,6 +72,17 @@ export function readMarketState(profileDir: string): PersistedMarketState {
       ...(typeof pending.id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(pending.id) ? { id: pending.id } : {}),
       ...(isRecord(pending.inferredInstalls) && Object.entries(pending.inferredInstalls).every(([id, hash]) => pending.skinIds.includes(id) && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash))
         ? { inferredInstalls: { ...pending.inferredInstalls } as Record<string, string> } : {}),
+      // Invalid or mixed provenance stays a hard restart receipt. Never make
+      // a first-install artifact requirement dismissible by a browser toggle.
+      ...(Array.isArray(pending.selectionChanges) && pending.selectionChanges.length > 0
+        && pending.selectionChanges.every(id => typeof id === 'string' && pending.skinIds.includes(id)
+          && !(isRecord(pending.inferredInstalls) && id in pending.inferredInstalls))
+        ? { selectionChanges: [...new Set(pending.selectionChanges as string[])] } : {}),
+      ...(isRecord(pending.selectionArtifacts) && Array.isArray(pending.selectionChanges)
+        && Object.entries(pending.selectionArtifacts).every(([id, hash]) => pending.skinIds.includes(id)
+          && (pending.selectionChanges as string[]).includes(id) && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)
+          && !(isRecord(pending.inferredInstalls) && id in pending.inferredInstalls))
+        ? { selectionArtifacts: { ...pending.selectionArtifacts } as Record<string, string> } : {}),
     }
   }
   return value

@@ -85,6 +85,17 @@ const guardedRequests = [
   ...['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'migrate', 'uninstall', 'restart'].map(action => [`/dsh-skin-market/${action}`, 'POST'] as const),
 ] as const
 
+it('reports the running host environment independently of the browser user agent', async () => {
+  const fixture = admissionFixture()
+  const result = await fixture.request('/dsh-skin-market/state', 'GET', { 'user-agent': 'Windows browser on a different computer' })
+  expect(result.status).toBe(200)
+  const environment = JSON.parse(result.body).installEnvironment
+  expect(environment.platform).toBe(['win32', 'darwin', 'linux'].includes(process.platform) ? process.platform : 'unknown')
+  expect(environment.profile).toBe('test')
+  expect(environment.profileDir).toContain('market-route-admission-')
+  expect(environment.cliAvailable).toBe(false)
+})
+
 describe('host admission for every market route', () => {
   it.each([401, 403, 'throw'] as const)('refuses all exact and prefix read/mutation paths when host admission returns %s', rejection => {
     const gate = vi.fn(() => { if (rejection === 'throw') throw new Error('host admission unavailable'); return rejection })

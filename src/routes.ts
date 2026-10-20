@@ -9,6 +9,7 @@ import type { DshRuntime, MarketHostKind, Operation, OperationKind } from './typ
 import type { RestartScheduler } from './restart.ts'
 import { createMarketUpdater, packageVersion, type MarketUpdater } from './self-update.ts'
 import { exportLogs } from './log.ts'
+import { getInstallEnvironment } from './install-environment.ts'
 
 export interface WebServerService {
   register(route: {
@@ -213,6 +214,7 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
       try {
         sendJson(response, 200, {
           hostKind,
+          installEnvironment: getInstallEnvironment(options.profile, profileDir),
           selectionPlanAvailable: options.runner.management !== undefined,
           management: options.runner.management === undefined ? undefined : { official: true, installRequiresRestart: options.runner.management.installRequiresRestart, capabilities: options.runner.management.capabilities() },
           profileBusy: lifecycle.waitingReason ?? updaterBusy(),

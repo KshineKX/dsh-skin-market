@@ -7,7 +7,7 @@ import { parse, stringify } from 'yaml'
 import { maxParallelDownloads, SkinLifecycle } from '../src/lifecycle.ts'
 import { atomicWriteJson, atomicWriteText, compatibilityPatchFile, ensurePatchedDependency, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readDependencies, readMarketState, writeMarketState } from '../src/profile.ts'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from '../src/commands.ts'
-import type { LoaderEntry, Operation } from '../src/types.ts'
+import type { LoaderEntry, Operation, SkinEntry } from '../src/types.ts'
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), 'skin-lifecycle-'))
@@ -83,6 +83,38 @@ function syncPatchLockfile(dir: string): void {
     lockfileVersion: '9.0',
     ...(Object.keys(patchedDependencies).length === 0 ? {} : { patchedDependencies }),
   }, { lineWidth: 0 }))
+}
+
+function webSelectionFixture() {
+  const dir = fixture()
+  const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+  const base = firstInstallable(probe)
+  const skins: SkinEntry[] = ['one', 'two', 'pinned'].map(name => ({ ...base,
+    id: `selection.${name}`, package: `@example/selection-${name}`, rowId: `selection-${name}`,
+  }))
+  atomicWriteJson(join(dir, 'package.json'), { dependencies: Object.fromEntries(skins.map(skin => [skin.package, skin.install.target])) })
+  const updates: string[] = []
+  const entries = new Map<string, LoaderEntry>()
+  const addEntry = (skin: { rowId: string; package: string }, enabled: boolean) => {
+    const entry: LoaderEntry = {
+      options: { id: skin.rowId, name: skin.package, disabled: enabled ? null : true },
+      fiber: enabled ? { state: 2 } : undefined,
+      update: async value => {
+        updates.push(`${skin.rowId}:${String(value.disabled)}`)
+        entry.options.disabled = value.disabled
+        entry.fiber = value.disabled ? undefined : { state: 2 }
+      },
+    }
+    entries.set(skin.rowId, entry)
+    return entry
+  }
+  for (const [index, skin] of skins.entries()) {
+    writeBundleRows(dir, skin, [{ id: skin.rowId, name: skin.package }])
+    addEntry(skin, index === 0)
+  }
+  writeMarketState(dir, { version: 1, activeSkinId: skins[0].id, disabledSkinIds: skins.slice(1).map(skin => skin.id), pinnedSkinIds: [] })
+  const lifecycle = new SkinLifecycle({ loader: { entries: () => entries.values() } }, { profile: 'test', profileDir: dir, runner: async () => success() }, skins)
+  return { dir, skins, entries, updates, addEntry, lifecycle }
 }
 
 describe('parallel download budget', () => {
@@ -797,7 +829,7 @@ describe('skin lifecycle', () => {
       return success()
     }
     const runtimeEntry: LoaderEntry = {
-      options: { id: skin.rowId, name: skin.rowId },
+      options: { id: skin.rowId, name: skin.package },
       fiber: {},
       update: async value => { runtimeEntry.options.disabled = value.disabled },
     }
@@ -1012,7 +1044,7 @@ describe('skin lifecycle', () => {
         const targetDir = args.includes('--dir') ? args[args.indexOf('--dir') + 1]! : dir
         materializeReviewedSkin(targetDir, skin)
         if (!args.includes('--dir')) {
-          entries.set(skin.rowId, { options: { id: skin.rowId, name: skin.rowId, disabled: true }, update: async function (value) { updates.push(`${skin.rowId}:${String(value.disabled)}`); this.options.disabled = value.disabled; this.fiber = value.disabled ? undefined : {} } })
+          entries.set(skin.rowId, { options: { id: skin.rowId, name: skin.package, disabled: true }, update: async function (value) { updates.push(`${skin.rowId}:${String(value.disabled)}`); this.options.disabled = value.disabled; this.fiber = value.disabled ? undefined : {} } })
         }
       }
       if (args[0] === 'remove' && skin !== undefined) {
@@ -1066,7 +1098,7 @@ describe('skin lifecycle', () => {
         materializeReviewedSkin(targetDir, skin)
         if (!args.includes('--dir')) {
           entries.set(skin.rowId, {
-            options: { id: skin.rowId, name: skin.rowId, disabled: true },
+            options: { id: skin.rowId, name: skin.package, disabled: true },
             update: async function (value) {
               updates.push(`${skin.rowId}:${String(value.disabled)}`)
               this.options.disabled = value.disabled
@@ -1110,7 +1142,7 @@ describe('skin lifecycle', () => {
     atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.target } })
     writeBundlePackage(dir, skin)
     const entry: LoaderEntry = {
-      options: { id: skin.rowId, name: skin.rowId },
+      options: { id: skin.rowId, name: skin.package },
       fiber: {},
       update: async value => { entry.options.disabled = value.disabled },
     }
@@ -1125,7 +1157,7 @@ describe('skin lifecycle', () => {
     expect(entry.options.disabled).not.toBe(true)
   })
 
-  it('does not hot-toggle web client skins because DSH reloads the client graph on restart', async () => {
+  it('hot-toggles both sides of a Web selection while retaining a browser-local verification receipt', async () => {
     const dir = fixture()
     const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
     const first = firstInstallable(probe)
@@ -1143,11 +1175,11 @@ describe('skin lifecycle', () => {
     const updates: string[] = []
     const entries = [first, second].map(skin => {
       const entry: LoaderEntry = {
-        options: { id: skin.rowId, name: skin.rowId, disabled: true },
+        options: { id: skin.rowId, name: skin.package, disabled: true },
         update: async value => {
           updates.push(`${skin.rowId}:${String(value.disabled)}`)
           entry.options.disabled = value.disabled
-          entry.fiber = value.disabled ? undefined : {}
+          entry.fiber = value.disabled ? undefined : { state: 2 }
         },
       }
       return entry
@@ -1155,13 +1187,280 @@ describe('skin lifecycle', () => {
     const lifecycle = new SkinLifecycle({ loader: { entries: () => entries } }, { profile: 'test', profileDir: dir, runner: async () => success() })
 
     expect((await finished(lifecycle.begin('activate', first.id))).phase).toBe('done')
-    expect(updates).toEqual([])
-    expect(lifecycle.states().find(state => state.skinId === first.id)).toMatchObject({ activation: 'restart-required' })
+    expect(updates).toEqual([`${first.rowId}:null`])
+    expect(lifecycle.states().find(state => state.skinId === first.id)).toMatchObject({ activation: 'restart-required', restartSource: 'selection', selectionHostApplied: true })
 
     expect((await finished(lifecycle.begin('activate', second.id))).phase).toBe('done')
-    expect(updates).toEqual([])
+    expect(updates).toEqual([`${first.rowId}:null`, `${first.rowId}:true`, `${second.rowId}:null`])
     expect(readMarketState(dir).activeSkinId).toBe(second.id)
-    expect(lifecycle.states().find(state => state.skinId === second.id)).toMatchObject({ activation: 'restart-required' })
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toEqual([first.id, second.id])
+    for (const skin of [first, second]) expect(lifecycle.states().find(state => state.skinId === skin.id))
+      .toMatchObject({ activation: 'restart-required', restartSource: 'selection', selectionHostApplied: true })
+  })
+
+  it('keeps pinned Web skins live and does not invent a receipt when removing the current primary pin', async () => {
+    const { dir, skins: [one, two, pinned], entries, lifecycle, updates } = webSelectionFixture()
+    await finished(lifecycle.begin('pin', pinned.id))
+    updates.length = 0
+    await finished(lifecycle.begin('activate', two.id))
+    expect(updates).toEqual([`${one.rowId}:true`, `${two.rowId}:null`])
+    expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
+    expect(lifecycle.states().find(state => state.skinId === two.id)).toMatchObject({ restartSource: 'selection', selectionHostApplied: true })
+    // A pin changes metadata only when the same skin remains primary.
+    writeMarketState(dir, { ...readMarketState(dir), pendingRestart: undefined, pinnedSkinIds: [two.id, pinned.id] })
+    updates.length = 0
+    await finished(lifecycle.begin('unpin', two.id))
+    expect(readMarketState(dir).pendingRestart).toBeUndefined()
+    expect(updates).toEqual([])
+    expect(entries.get(two.rowId)?.fiber).toEqual({ state: 2 })
+  })
+
+  it('reports the complete browser selection on ordinary runtime rows and treats unknown managed package identities conservatively', () => {
+    const { dir, skins: [one, two, pinned], lifecycle } = webSelectionFixture()
+    expect(lifecycle.states().find(state => state.skinId === one.id)).toMatchObject({ activation: 'active', selectionHostApplied: true,
+      selectionClientTargets: [{ package: one.package, active: true }, { package: two.package, active: false }, { package: pinned.package, active: false }] })
+    writeMarketState(dir, { ...readMarketState(dir), managedLoaders: { unknown: { id: 'unknown', ownerSkinIds: [one.id] } } })
+    expect(lifecycle.states().find(state => state.skinId === one.id)?.selectionClientTargets).toBeUndefined()
+  })
+
+  it('returns an explicit empty browser selection for a known Host-only skin graph', () => {
+    const dir = fixture()
+    const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+    const skin = firstInstallable(probe)
+    materializeReviewedSkin(dir, skin)
+    writeMarketState(dir, { version: 1, activeSkinId: skin.id, disabledSkinIds: [] })
+    const entry: LoaderEntry = { options: { id: skin.rowId, name: skin.package }, fiber: { state: 2 }, update: async () => undefined }
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => [entry] } }, { profile: 'test', profileDir: dir, runner: async () => success() }, [skin])
+    expect(lifecycle.states()[0]).toMatchObject({ selectionHostApplied: true, selectionClientTargets: [] })
+  })
+
+  it.each([
+    ['deactivate', 'companion'], ['unpin', 'companion'], ['deactivate', 'managed'], ['unpin', 'managed'],
+  ] as const)('keeps a restartable soft receipt when %s disables a Host-only skin with a Web %s', async (kind, source) => {
+    const { dir, skins: [one, two], entries, lifecycle, addEntry } = webSelectionFixture()
+    writeBundlePackage(dir, one)
+    const browser = { package: '@example/selection-browser-child', rowId: 'selection-browser-child',
+      target: one.install.target, version: one.install.version, commit: one.install.commit }
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { ...readDependencies(dir), [browser.package]: browser.target } })
+    writeBundleRows(dir, { ...browser, install: { version: browser.version } }, [{ id: browser.rowId, name: browser.package }])
+    const browserEntry = addEntry(browser, true)
+    if (source === 'companion') one.install = { ...one.install, companions: [browser] }
+    writeMarketState(dir, { ...readMarketState(dir),
+      ...(source === 'companion'
+        ? { managedCompanions: { [browser.package]: { ownerSkinIds: [one.id], installedByMarket: false } } }
+        : { managedLoaders: { [browser.rowId]: { id: browser.rowId, name: browser.package, packageName: browser.package, ownerSkinIds: [one.id] } } }),
+      ...(kind === 'unpin' ? { activeSkinId: two.id, pinnedSkinIds: [one.id], disabledSkinIds: [] } : {}),
+    })
+    if (kind === 'unpin') {
+      entries.get(two.rowId)!.options.disabled = null
+      entries.get(two.rowId)!.fiber = { state: 2 }
+    }
+    expect(await finished(lifecycle.begin(kind, one.id))).toMatchObject({ phase: 'done' })
+    expect(browserEntry.options.disabled).toBe(true)
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toContain(one.id)
+    const state = lifecycle.states().find(state => state.skinId === one.id)!
+    // The raw state remains an eligible /restart target for this browser-only
+    // change even though its owning Host skin is now inactive.
+    expect(state).toMatchObject({ activation: 'restart-required', restartSource: 'selection', primary: false, pinned: false,
+      selectionHostStatus: 'applied', selectionHostApplied: true })
+    expect(state.clientModule).toBeUndefined()
+    expect(state.selectionClientTargets).toContainEqual({ package: browser.package, active: false })
+  })
+
+  it('includes a Host-only destination in the soft receipt when switching away from a Web skin', async () => {
+    const { dir, skins: [one, two], lifecycle } = webSelectionFixture()
+    writeBundlePackage(dir, two)
+    expect((await finished(lifecycle.begin('activate', two.id))).phase).toBe('done')
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toEqual([one.id, two.id])
+    const state = lifecycle.states().find(state => state.skinId === two.id)!
+    expect(state).toMatchObject({ activation: 'restart-required', restartSource: 'selection', selectionHostStatus: 'applied' })
+    expect(state.clientModule).toBeUndefined()
+    expect(state.selectionClientTargets).toContainEqual({ package: one.package, active: false })
+  })
+
+  it('uses a new notice generation only for a new pure selection change', async () => {
+    const { dir, skins: [one, two], lifecycle } = webSelectionFixture()
+    await finished(lifecycle.begin('activate', two.id))
+    const first = readMarketState(dir).pendingRestart?.id
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBe('selection')
+    expect(readMarketState(dir).pendingRestart?.id).toBe(first)
+    await finished(lifecycle.begin('pin', two.id))
+    expect(readMarketState(dir).pendingRestart?.id).toBe(first)
+    await finished(lifecycle.begin('activate', one.id))
+    expect(readMarketState(dir).pendingRestart?.id).not.toBe(first)
+  })
+
+  it.each(['legacy', 'update', 'first-install'] as const)('never downgrades or clears a %s hard receipt during ordinary Web selections', async reason => {
+    const { dir, skins: [one, two], lifecycle } = webSelectionFixture()
+    const pendingRestart = { pid: process.pid, skinIds: [two.id], id: `hard-${reason}`,
+      ...(reason === 'first-install' ? { inferredInstalls: { [two.id]: 'a'.repeat(64) } } : {}) }
+    writeMarketState(dir, { ...readMarketState(dir), pendingRestart })
+    const activation = await finished(lifecycle.begin('activate', two.id))
+    expect(activation).toMatchObject({ phase: 'done', restartRequired: true })
+    expect(readMarketState(dir).pendingRestart).toMatchObject({ ...pendingRestart, skinIds: expect.arrayContaining(pendingRestart.skinIds) })
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toEqual([one.id])
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBeUndefined()
+    await finished(lifecycle.begin('deactivate', two.id))
+    expect(readMarketState(dir).pendingRestart?.skinIds).toContain(two.id)
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).not.toContain(two.id)
+    if (reason === 'first-install') expect(readMarketState(dir).pendingRestart?.inferredInstalls).toEqual(pendingRestart.inferredInstalls)
+  })
+
+  it('promotes an existing Web selection receipt to a hard requirement after replacing package bytes', async () => {
+    const { dir, skins, entries, lifecycle } = webSelectionFixture()
+    const two = skins[1]
+    await finished(lifecycle.begin('activate', two.id))
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toContain(two.id)
+    const runner: PluginRunner = async (_profile, args) => {
+      if (args[0] === 'add') {
+        const targetDir = args.includes('--dir') ? args[args.indexOf('--dir') + 1]! : dir
+        materializeReviewedSkin(targetDir, two)
+        writeBundleRows(targetDir, two, [{ id: two.rowId, name: two.package }])
+      }
+      return success()
+    }
+    const replacing = new SkinLifecycle({ loader: { entries: () => entries.values() } }, { profile: 'test', profileDir: dir, runner }, skins)
+    expect(await finished(replacing.begin('update', two.id))).toMatchObject({ phase: 'done', restartRequired: true })
+    expect(readMarketState(dir).pendingRestart?.skinIds).toContain(two.id)
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).not.toContain(two.id)
+    expect(replacing.states().find(state => state.skinId === two.id)?.restartSource).toBeUndefined()
+    await finished(replacing.begin('activate', two.id))
+    expect(replacing.states().find(state => state.skinId === two.id)).toMatchObject({ activation: 'restart-required' })
+    expect(replacing.states().find(state => state.skinId === two.id)?.restartSource).toBeUndefined()
+  })
+
+  it.each(['main', 'companion', 'managed'] as const)('protects a soft receipt after an external same-version %s artifact replacement', async source => {
+    const { dir, skins: [one, two], lifecycle, addEntry } = webSelectionFixture()
+    let replacedPackage = two.package
+    if (source !== 'main') {
+      const browser = { package: '@example/external-browser-child', rowId: 'external-browser-child',
+        target: two.install.target, version: two.install.version, commit: two.install.commit }
+      atomicWriteJson(join(dir, 'package.json'), { dependencies: { ...readDependencies(dir), [browser.package]: browser.target } })
+      writeBundleRows(dir, { ...browser, install: { version: browser.version } }, [{ id: browser.rowId, name: browser.package }])
+      addEntry(browser, false)
+      if (source === 'companion') two.install = { ...two.install, companions: [browser] }
+      writeMarketState(dir, { ...readMarketState(dir), ...(source === 'companion'
+        ? { managedCompanions: { [browser.package]: { ownerSkinIds: [two.id], installedByMarket: false } } }
+        : { managedLoaders: { [browser.rowId]: { id: browser.rowId, name: browser.package, packageName: browser.package, ownerSkinIds: [two.id] } } }),
+      })
+      replacedPackage = browser.package
+    }
+    await finished(lifecycle.begin('activate', two.id))
+    const original = readMarketState(dir).pendingRestart?.selectionArtifacts?.[two.id]
+    expect(original).toMatch(/^[a-f0-9]{64}$/)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBe('selection')
+    // Version and live fibers remain unchanged; only the installed bytes differ.
+    atomicWriteText(join(dir, 'node_modules', ...replacedPackage.split('/'), 'client.js'), 'export const externalReplacement = true\n')
+    expect(lifecycle.states().find(state => state.skinId === two.id)).toMatchObject({ activation: 'restart-required' })
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBeUndefined()
+    expect(readMarketState(dir).pendingRestart?.selectionArtifacts?.[two.id]).toBe(original)
+    await finished(lifecycle.begin('deactivate', two.id))
+    expect(readMarketState(dir).pendingRestart?.skinIds).toContain(two.id)
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).not.toContain(two.id)
+    expect(readMarketState(dir).pendingRestart?.selectionArtifacts?.[two.id]).toBeUndefined()
+    await finished(lifecycle.begin('activate', one.id))
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBeUndefined()
+  })
+
+  it('does not promote a valid soft receipt when an independent installed skin changes bytes', async () => {
+    const { dir, skins: [one, two], lifecycle } = webSelectionFixture()
+    await finished(lifecycle.begin('activate', two.id))
+    const original = readMarketState(dir).pendingRestart?.selectionArtifacts?.[two.id]
+    atomicWriteText(join(dir, 'node_modules', ...one.package.split('/'), 'client.js'), 'export const unrelatedReplacement = true\n')
+    expect(lifecycle.states().find(state => state.skinId === one.id)?.restartSource).toBeUndefined()
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBe('selection')
+    await finished(lifecycle.begin('pin', two.id))
+    expect(readMarketState(dir).pendingRestart?.selectionChanges).toContain(two.id)
+    expect(readMarketState(dir).pendingRestart?.selectionArtifacts?.[two.id]).toBe(original)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.restartSource).toBe('selection')
+  })
+
+  it.each(['missing', 'loading', 'pending', 'unloading', 'failed', 'unknown', 'old-still-active'] as const)('does not confirm the complete Host selection when a row is %s', async phase => {
+    const { skins: [one, two], entries, lifecycle } = webSelectionFixture()
+    if (phase === 'missing') entries.delete(two.rowId)
+    else if (phase === 'old-still-active') {
+      entries.get(one.rowId)!.update = async value => { entries.get(one.rowId)!.options.disabled = value.disabled }
+    } else {
+      const entry = entries.get(two.rowId)!
+      entry.update = async value => {
+        entry.options.disabled = value.disabled
+        entry.fiber = phase === 'unknown' ? {} : { state: phase === 'loading' ? 1 : phase === 'pending' ? 0 : phase === 'unloading' ? 5 : 3 }
+      }
+    }
+    expect((await finished(lifecycle.begin('activate', two.id))).phase).toBe('done')
+    const status = phase === 'missing' ? 'restart-required' : phase === 'failed' || phase === 'unknown' ? 'unavailable' : 'switching'
+    expect(lifecycle.states().find(state => state.skinId === two.id)).toMatchObject({ restartSource: 'selection', selectionHostApplied: false, selectionHostStatus: status })
+    if (phase !== 'old-still-active') {
+      const entry = entries.get(two.rowId)
+      if (entry !== undefined) {
+        entry.fiber = { state: 2 }
+        expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostApplied).toBe(true)
+      }
+    }
+  })
+
+  it('waits for disabled Host effects to drain and prioritizes loading and errors across the complete selection', async () => {
+    const { skins: [one, two, pinned], entries, lifecycle } = webSelectionFixture()
+    await finished(lifecycle.begin('activate', two.id))
+    const old = entries.get(one.rowId)!
+    const current = entries.get(two.rowId)!
+    const other = entries.get(pinned.rowId)!
+    old.fiber = { state: 5 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('switching')
+    old.fiber = { state: 0 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('switching')
+    old.fiber = { state: 4 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)).toMatchObject({ selectionHostStatus: 'applied', selectionHostApplied: true })
+    // A saved disable that the Host did not apply needs a real restart hint.
+    old.options.disabled = null
+    old.fiber = { state: 2 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('restart-required')
+    current.fiber = { state: 1 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('switching')
+    other.fiber = { state: 3 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('unavailable')
+    other.fiber = undefined
+    current.fiber = { state: 2 }
+    old.options.disabled = true
+    old.fiber = undefined
+    entries.set('duplicate', { ...current, options: { ...current.options } })
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostStatus).toBe('unavailable')
+  })
+
+  it('verifies shared companions and managed rows without disabling a companion still owned by a pinned Web skin', async () => {
+    const { dir, skins: [one, two, pinned], lifecycle, addEntry, entries } = webSelectionFixture()
+    const companion = { package: '@example/shared-companion', rowId: 'shared-companion', target: one.install.target,
+      version: one.install.version, commit: one.install.commit }
+    one.install = { ...one.install, companions: [companion] }
+    pinned.install = { ...pinned.install, companions: [companion] }
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { ...readDependencies(dir), [companion.package]: companion.target } })
+    writeBundleRows(dir, { ...companion, install: { version: companion.version } }, [{ id: companion.rowId, name: companion.package }])
+    const companionEntry = addEntry(companion, true)
+    const child = { package: '@example/managed-settings', rowId: 'managed-settings' }
+    atomicWriteJson(join(dir, 'package.json'), { dependencies: { ...readDependencies(dir), [child.package]: one.install.target } })
+    writeBundleRows(dir, { ...child, install: { version: one.install.version } }, [{ id: child.rowId, name: child.package }])
+    const childEntry = addEntry(child, true)
+    writeMarketState(dir, { ...readMarketState(dir),
+      managedCompanions: { [companion.package]: { ownerSkinIds: [one.id, pinned.id], installedByMarket: false } },
+      managedLoaders: { [child.rowId]: { id: child.rowId, name: child.package, packageName: child.package, ownerSkinIds: [one.id] } },
+    })
+    await finished(lifecycle.begin('pin', pinned.id))
+    await finished(lifecycle.begin('activate', two.id))
+    expect(companionEntry.options.disabled).not.toBe(true)
+    expect(childEntry.options.disabled).toBe(true)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostApplied).toBe(true)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionClientTargets).toEqual([
+      { package: one.package, active: false }, { package: two.package, active: true }, { package: pinned.package, active: true },
+      { package: companion.package, active: true }, { package: child.package, active: false },
+    ])
+    companionEntry.fiber = { state: 1 }
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostApplied).toBe(false)
+    companionEntry.fiber = { state: 2 }
+    await finished(lifecycle.begin('unpin', pinned.id))
+    expect(companionEntry.options.disabled).toBe(true)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostApplied).toBe(true)
+    entries.delete(two.rowId)
+    expect(lifecycle.states().find(state => state.skinId === two.id)?.selectionHostApplied).toBe(false)
   })
 
   it('enables an installed inactive skin as pinned without replacing the current primary skin', async () => {
@@ -1174,7 +1473,7 @@ describe('skin lifecycle', () => {
     writeBundlePackage(dir, pinned)
     const entries = [primary, pinned].map(skin => {
       const entry: LoaderEntry = {
-        options: { id: skin.rowId, name: skin.rowId, disabled: true },
+        options: { id: skin.rowId, name: skin.package, disabled: true },
         update: async value => {
           entry.options.disabled = value.disabled
           entry.fiber = value.disabled ? undefined : {}

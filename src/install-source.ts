@@ -11,3 +11,13 @@ export function npmInstallTarget(skin: InstallSourceSkin): string | null {
 export function preferredInstallTarget(skin: InstallSourceSkin): string {
   return npmInstallTarget(skin) ?? skin.install.target
 }
+
+/** Manual copy fields follow the npm default tag; managed operations stay pinned. */
+export function manualInstallTarget(skin: InstallSourceSkin): string {
+  return skin.install.npm?.name ?? unversionedNpmTarget(skin.install.target)
+}
+
+export function unversionedNpmTarget(target: string): string {
+  const match = /^((?:@[a-z0-9._-]+\/)?[a-z0-9._-]+)(?:@[^/]+)?$/i.exec(target)
+  return match?.[1] ?? target
+}

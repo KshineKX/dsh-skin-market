@@ -17,15 +17,16 @@ import { generatedMediaFor, generatedMediaManifestUrl, generatedMediaUrl, parseG
 import { useLazyMedia } from '../media-visibility.ts'
 import { browserCatalogCache, type CatalogCache } from './catalog-cache.ts'
 import { createFailureRepairPrompt, interceptNotice, isInterceptFailure, marketUpdateNotice } from './failure-help.ts'
-import { CLI_INSTALL_WARNING, createSkinInstallCommand, createSkinInstallCommandGroups, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
-import { switchClientSkin, type ClientSkinRuntime } from './index.ts'
+import { CLI_INSTALL_WARNING, createSkinInstallCommandGroups, createSkinInstallCommands, createSkinInstallInputs, createSkinInstallPrompt, createSubmissionPrompt, REGISTRY_REPOSITORY } from './submission.ts'
+import { probeClientSkinSelection, switchClientSkin, type ClientSkinExpectation, type ClientSkinRuntime, type ClientSkinSelectionStatus } from './index.ts'
 import { displayTitle, githubRepoLabel } from '../display-title.ts'
 import { assessCompatibility, compatibilityContext as skinCompatibilityContext, type CompatibilityAssessment } from '../compatibility.ts'
 import { matchesCatalogSearch } from '../catalog-search.ts'
 import { desktopInstallPlan } from '../desktop-install.ts'
-import type { DesktopPluginPanel } from './desktop-plugin-panel.ts'
+import type { DesktopActivationIntent, DesktopPluginPanel } from './desktop-plugin-panel.ts'
 import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin } from './types.ts'
 import type { ConfigurationOverrideBatchPlan } from '../configuration-override-types.ts'
+import type { InstallCommandContext, InstallEnvironment } from '../install-command.ts'
 
 export { interceptNotice, isInterceptFailure, marketUpdateNotice }
 export type { InterceptNotice } from './failure-help.ts'
@@ -120,6 +121,8 @@ interface SkinOperationOptions {
   configurationContext?: string
   sourceContext?: string
   installAndUse?: boolean
+  cancelled?: () => boolean
+  onHandled?: () => void
 }
 
 interface CatalogResponse {
@@ -157,6 +160,7 @@ interface MarketStateResponse {
   restartNoticeId?: string
   marketUpdateNoticeId?: string
   hostKind?: MarketHostKind
+  installEnvironment?: InstallEnvironment
   runtime?: DshRuntime
   restartAvailable?: boolean
   selectionPlanAvailable?: boolean
@@ -196,6 +200,20 @@ const phases: Record<Operation['phase'], string> = {
 }
 
 const DESKTOP_INSTALL_RESTART_GUIDANCE = '安装并切换完成后，请手动重启 Desktop App。'
+export const WEB_CLIENT_SETTLE_MS = 1500
+
+function webClientSelectionError(status: ClientSkinSelectionStatus): string | undefined {
+  if (status.status === 'applied') return undefined
+  if (status.status === 'switching') return status.activity === 'pending'
+    ? '皮肤的界面模块正在等待所需服务，请在插件页检查。'
+    : '皮肤的界面模块正在加载，请稍候。'
+  if (status.status === 'unavailable') return status.activity === 'failed'
+    ? '皮肤的界面模块加载失败，请在插件页查看错误。'
+    : '暂时无法确认皮肤界面模块的运行状态，请在插件页检查。'
+  return status.activity === 'active'
+    ? '旧皮肤的界面模块仍在运行，重启后完成切换。'
+    : '皮肤的界面模块尚未加载，重启后生效。'
+}
 
 function pendingRestartTitle(title: string, restartAvailable: boolean): string {
   return `${title}，${restartAvailable ? '待重启生效' : '请手动重启 Desktop App 后生效'}`
@@ -414,7 +432,8 @@ function clientFailureId(scope: string): string {
 
 function restartPromptKey(state: MarketStateResponse, target: RestartTarget): string {
   return target.kind === 'skin'
-    ? JSON.stringify([target.kind, target.skinId, state.restartNoticeId ?? 'legacy', runtimeFor(state.skins, target.skinId).installedVersion])
+    ? JSON.stringify([target.kind, target.skinId, state.restartNoticeId ?? 'legacy', runtimeFor(state.skins, target.skinId).installedVersion,
+      runtimeFor(state.skins, target.skinId).restartSource ?? 'protected'])
     : JSON.stringify([target.kind, '', state.marketUpdateNoticeId ?? 'legacy'])
 }
 export const CATALOG_BATCH_SIZE = 20
@@ -671,6 +690,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [skins, setSkins] = useState<CatalogSkin[]>([])
   const [states, setStates] = useState<RuntimeSkin[]>([])
   const [hostKind, setHostKind] = useState<MarketHostKind>('dsh')
+  const [installEnvironment, setInstallEnvironment] = useState<MarketStateResponse['installEnvironment']>()
+  const [windowsTerminal, setWindowsTerminal] = useState<'powershell' | 'cmd'>('powershell')
+  useEffect(() => { setWindowsTerminal('powershell') }, [installEnvironment?.platform])
   const [runtime, setRuntime] = useState<DshRuntime | null>(null)
   const [management, setManagement] = useState<MarketStateResponse['management']>()
   const [selectionPlanAvailable, setSelectionPlanAvailable] = useState(false)
@@ -737,6 +759,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [marketUpdating, setMarketUpdating] = useState(false)
   const [restartTarget, setRestartTarget] = useState<RestartTarget | null>(null)
   const [pendingRestart, setPendingRestart] = useState<PendingRestartNotice | null>(null)
+  const [webClientRetryAt, setWebClientRetryAt] = useState<number | null>(null)
   const [completedUninstall, setCompletedUninstall] = useState<{ skinId: string; title: string; startedAt: string } | null>(null)
   const [compatibilityConfirmation, setCompatibilityConfirmation] = useState<CompatibilityConfirmation | null>(null)
   const compatibilityConsentResolver = useRef<((context: UseConsentContext | null) => void) | null>(null)
@@ -756,6 +779,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const dismissedRestartBanners = useRef(new Set<string>())
   const restartNoticeHistory = useRef(new Map<string, PendingRestartNotice>())
   const latestMarketState = useRef<MarketStateResponse | null>(null)
+  const latestHostMarketState = useRef<MarketStateResponse | null>(null)
+  const webClientPackages = useRef(new Map<string, string[]>())
+  const webSelectionSkinIds = useRef(new Set<string>())
+  const webClientGrace = useRef<{ key: string; startedAt: number } | null>(null)
+  const webHostReview = useRef<{ key: string; attempts: number; nextAt: number } | null>(null)
+  const webClientResult = useRef('')
+  const hostStateRead = useRef<Promise<void> | null>(null)
   const pendingRestartRef = useRef<PendingRestartNotice | null>(null)
   const clientRestartNotices = useRef(new Map<string, PendingRestartNotice>())
   const restartTargetRef = useRef<RestartTarget | null>(null)
@@ -826,7 +856,109 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     setConfirmRestart(true)
   }, [])
 
+  const reconcileWebClients = useCallback((state: MarketStateResponse): MarketStateResponse => {
+    if (state.hostKind === 'desktop' || clientRuntime === undefined) {
+      setWebClientRetryAt(null)
+      return state
+    }
+    const selected = new Set(state.skins.filter(item => item.primary === true || item.pinned === true
+      || item.primary === undefined && item.pinned === undefined && item.activation === 'active').map(item => item.skinId))
+    const installedClients = new Set((state.installedClientPlugins ?? []).map(item => item.package))
+    for (const item of state.skins) {
+      if (item.installation !== 'installed') { webClientPackages.current.delete(item.skinId); webSelectionSkinIds.current.delete(item.skinId); continue }
+      if (!selected.has(item.skinId) && item.restartSource !== 'selection' && !clientRestartNotices.current.has(item.skinId)) continue
+      webSelectionSkinIds.current.add(item.skinId)
+      const skin = skinsRef.current.find(skin => skin.id === item.skinId)
+      if (skin === undefined) continue
+      const packages = new Set(webClientPackages.current.get(item.skinId))
+      if (item.clientModule === true || clientRestartNotices.current.has(item.skinId)) packages.add(skin.package)
+      for (const companion of skin.install.companions ?? []) if (installedClients.has(companion.package)) packages.add(companion.package)
+      if (packages.size > 0) webClientPackages.current.set(item.skinId, [...packages])
+    }
+    const completeTargets = state.skins.find(item => item.selectionClientTargets !== undefined)?.selectionClientTargets
+    const hasCompleteTargets = completeTargets !== undefined
+    const fallbackTargets = new Map<string, boolean>()
+    for (const [skinId, packages] of webClientPackages.current) {
+      for (const packageName of packages) fallbackTargets.set(packageName, fallbackTargets.get(packageName) === true || selected.has(skinId))
+    }
+    const expected: ClientSkinExpectation[] = completeTargets !== undefined ? completeTargets
+      : [...fallbackTargets].map(([packageName, active]) => ({ package: packageName, active }))
+    const result = probeClientSkinSelection(clientRuntime, expected)
+    webClientResult.current = JSON.stringify(result)
+    const softSelections = state.skins.filter(item => item.restartSource === 'selection' && item.activation === 'restart-required')
+    const hostSelections = state.skins.filter(item => softSelections.includes(item) || hasCompleteTargets
+      && webSelectionSkinIds.current.has(item.skinId) && item.activation !== 'restart-required' && item.selectionHostStatus !== undefined)
+    const hostPending = hostSelections.some(item => item.selectionHostApplied !== true)
+    const selectionKey = JSON.stringify([state.instanceId, state.restartNoticeId, [...expected].sort((a, b) => a.package.localeCompare(b.package))])
+    let visibleResult = result
+    let retryAt: number | null = null
+    let hostError: string | undefined
+    if (hostSelections.length > 0) {
+      if (!hasCompleteTargets || hostSelections.some(item => item.selectionHostStatus === 'unavailable'
+        || item.selectionHostApplied !== true && item.selectionHostStatus === undefined)) {
+        visibleResult = { status: 'unavailable', activity: 'unknown' }
+        hostError = !hasCompleteTargets ? '无法完整核对皮肤的界面模块，请在插件页检查。' : '无法确认皮肤宿主组件的运行状态，请在插件页检查。'
+      } else if (visibleResult.status !== 'unavailable' && hostSelections.some(item => item.selectionHostStatus === 'switching')) {
+        visibleResult = { status: 'switching', activity: 'loading' }
+        hostError = '皮肤的宿主组件正在加载，请稍候。'
+      } else if (visibleResult.status !== 'unavailable' && visibleResult.status !== 'switching' && hostSelections.some(item => item.selectionHostApplied !== true)) {
+        visibleResult = { status: 'restart-required', activity: 'missing' }
+        hostError = '皮肤的宿主组件尚未完成启停，重启后生效。'
+      }
+    }
+    if (hostPending) {
+      if (webHostReview.current?.key !== selectionKey) webHostReview.current = { key: selectionKey, attempts: 0, nextAt: Date.now() + WEB_CLIENT_SETTLE_MS }
+      if (webHostReview.current.attempts < 5) retryAt = webHostReview.current.nextAt
+    } else webHostReview.current = null
+    if (visibleResult.status === 'restart-required') {
+      if (webClientGrace.current?.key !== selectionKey) webClientGrace.current = { key: selectionKey, startedAt: Date.now() }
+      const deadline = webClientGrace.current.startedAt + WEB_CLIENT_SETTLE_MS
+      if (Date.now() < deadline) {
+        retryAt = Math.min(retryAt ?? deadline, deadline)
+        visibleResult = { ...visibleResult, status: 'switching' }
+        hostError = undefined
+      }
+    } else webClientGrace.current = null
+    setWebClientRetryAt(retryAt)
+    const skins = state.skins.map<RuntimeSkin>(item => {
+      const softSelection = item.activation === 'restart-required' && item.restartSource === 'selection'
+      // An active old module cannot confirm an installation, update or an
+      // explicit Host restart requirement. Those receipts stay authoritative.
+      if (item.activation === 'restart-required' && !softSelection) return item
+      if (item.activation !== 'active' && item.activation !== 'inactive' && !softSelection) return item
+      const packages = webClientPackages.current.get(item.skinId) ?? []
+      if (!softSelection && packages.length === 0 && !(hasCompleteTargets && webSelectionSkinIds.current.has(item.skinId))) return item
+      let status = visibleResult
+      if (!hasCompleteTargets && !softSelection && !selected.has(item.skinId)) {
+        const ownTargets = expected.filter(target => packages.includes(target.package))
+        const ownResult = probeClientSkinSelection(clientRuntime, ownTargets)
+        status = ownResult.status === 'restart-required' && visibleResult.status === 'switching' ? { ...ownResult, status: 'switching' } : ownResult
+      }
+      // The browser state now owns this tab's client-only reminder, including
+      // asynchronous recovery after an earlier missing-entry observation.
+      if (clientRuntime.probeActive !== undefined) clientRestartNotices.current.delete(item.skinId)
+      if (status.status === 'applied') return softSelection && item.selectionHostApplied === true && hasCompleteTargets
+        ? { ...item, activation: selected.has(item.skinId) ? 'active' : 'inactive', error: undefined } : item
+      return { ...item, activation: status.status === 'unavailable' ? 'unavailable' : status.status, error: hostError ?? webClientSelectionError(status) }
+    })
+    return { ...state, skins }
+  }, [clientRuntime])
+
   const applyMarketState = useCallback((state: MarketStateResponse, preferredNotice?: PendingRestartNotice, autoRestartPrompt = true) => {
+    latestHostMarketState.current = state
+    state = reconcileWebClients(state)
+    if (state.hostKind === 'desktop' && state.management?.official === true && clientRuntime?.probeActive !== undefined) {
+      state = { ...state, skins: state.skins.map(item => {
+        if (item.installation !== 'installed' || item.activation !== 'active' || item.clientModule !== true) return item
+        const target = skinsRef.current.find(skin => skin.id === item.skinId)
+        if (target === undefined) return item
+        const phase = clientRuntime.probeActive!(target.package)
+        if (phase === 'active') return item
+        if (phase === 'missing' || phase === 'disabled') return { ...item, activation: 'restart-required', error: '皮肤的界面模块尚未加载，请完全退出并重新打开 Desktop App。' }
+        if (phase === 'loading' || phase === 'pending') return { ...item, activation: 'switching', error: phase === 'loading' ? '皮肤的界面模块正在加载，请稍候。' : '皮肤的界面模块正在等待所需服务，请在官方插件页检查。' }
+        return { ...item, activation: 'unavailable', error: phase === 'failed' ? '皮肤的界面模块加载失败，请在官方插件页查看错误。' : '暂时无法确认皮肤界面模块的运行状态，请在官方插件页检查。' }
+      }) }
+    }
     latestMarketState.current = state
     statesRef.current = state.skins
     runtimeRef.current = state.runtime ?? null
@@ -838,6 +970,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       return skinState.installation === 'missing' && skinState.activation !== 'restart-required' ? current : null
     })
     setHostKind(state.hostKind ?? 'dsh')
+    setInstallEnvironment(state.installEnvironment)
     setRuntime(state.runtime ?? null)
     setManagement(state.management)
     setSelectionPlanAvailable(state.selectionPlanAvailable === true)
@@ -935,7 +1068,52 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         return next
       })
     }
-  }, [presentRestartNotice])
+    return state
+  }, [clientRuntime, presentRestartNotice, reconcileWebClients])
+
+  const reviewHostState = useCallback(async () => {
+    if (hostStateRead.current !== null) return hostStateRead.current
+    const previous = latestHostMarketState.current
+    const read = (async () => {
+      try {
+        const state = await json<MarketStateResponse>('/dsh-skin-market/state')
+        if (mounted.current && latestHostMarketState.current === previous && inflightSkinIds.current.size === 0 && continuingInstallActivation.current.size === 0) applyMarketState(state)
+      } catch {
+        if (mounted.current && latestHostMarketState.current === previous && previous !== null && inflightSkinIds.current.size === 0 && continuingInstallActivation.current.size === 0) applyMarketState(previous)
+      }
+    })()
+    hostStateRead.current = read
+    try { await read } finally { if (hostStateRead.current === read) hostStateRead.current = null }
+  }, [applyMarketState])
+
+  useEffect(() => {
+    if (webClientRetryAt === null) return
+    const timer = window.setTimeout(() => {
+      if (!mounted.current) return
+      const review = webHostReview.current
+      if (review !== null) {
+        review.attempts += 1
+        review.nextAt = Date.now() + WEB_CLIENT_SETTLE_MS * 2 ** review.attempts
+      }
+      void reviewHostState()
+    }, Math.max(0, webClientRetryAt - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [reviewHostState, webClientRetryAt])
+
+  useEffect(() => {
+    if (hostKind === 'desktop' || clientRuntime?.observe === undefined) return
+    let recheck: ReturnType<typeof window.setTimeout> | undefined
+    const unsubscribe = clientRuntime.observe(() => {
+      const state = latestHostMarketState.current
+      if (!mounted.current || state === null || state.hostKind === 'desktop') return
+      const previous = webClientResult.current
+      applyMarketState(state)
+      if (previous !== webClientResult.current && webHostReview.current !== null && recheck === undefined) {
+        recheck = window.setTimeout(() => { recheck = undefined; void reviewHostState() }, 100)
+      }
+    })
+    return () => { unsubscribe(); if (recheck !== undefined) window.clearTimeout(recheck) }
+  }, [applyMarketState, clientRuntime, hostKind, reviewHostState])
 
   const finishInstalledLoading = useCallback((showLoading: boolean) => {
     if (!showLoading) return
@@ -968,8 +1146,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         return state
       })
       const [, state] = await Promise.all([catalogRequest, stateRequest])
-      if (restartNotice !== undefined) applyMarketState(state, restartNotice, autoRestartPrompt)
-      return state
+      // The catalog may settle after the first state read. Recheck browser
+      // modules with its package identities before reporting runtime success.
+      return applyMarketState(state, restartNotice, autoRestartPrompt)
     } finally {
       if (showLoading) {
         catalogSettledRef.current = true
@@ -1205,9 +1384,19 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     ? manualInstallNotice
     : '该仓库距离市场的一键安装规范还差少量信息；可参考右侧仓库健康建议完善，当前请按维护者说明安装。'
   const autoInstallable = !manualOnly
-  const manualInstallKeyword = selected === undefined ? '' : createSkinInstallSearchKeyword(selected)
-  const installCommandGroups = selected === undefined ? [] : createSkinInstallCommandGroups(selected)
-  const installPrompt = selected === undefined ? '' : createSkinInstallPrompt(selected, hostKind)
+  const reportedInstallPlatform = installEnvironment?.platform
+  const installPlatformUnknown = reportedInstallPlatform === undefined || reportedInstallPlatform === 'unknown'
+  const installPlatform = reportedInstallPlatform
+  const installShell = installPlatform === 'win32' ? windowsTerminal : 'posix'
+  const installInputs = selected === undefined ? [] : createSkinInstallInputs(selected)
+  const installCommandContext: InstallCommandContext = { ...installEnvironment, shell: installShell }
+  const installCommandGroups = selected === undefined || hostKind === 'desktop'
+    ? [] : createSkinInstallCommandGroups(selected, installPlatformUnknown ? installEnvironment : installCommandContext)
+  const installCommands = installCommandGroups.flatMap(group => group.commands)
+  const canUsePowerShell = selected !== undefined && installShell === 'cmd' && installCommands.length === 0
+    && createSkinInstallCommands(selected, { ...installEnvironment, shell: 'powershell' }).length > 0
+  const installPrompt = selected === undefined ? '' : createSkinInstallPrompt(selected, hostKind,
+    hostKind === 'desktop' || installPlatformUnknown ? undefined : installCommandContext)
   const filtered = useMemo(() => skins.filter(skin => {
     if (!matchesCatalogSearch(skin, query)) return false
     if (filter === 'installed') return runtimeFor(states, skin.id).installation !== 'missing'
@@ -1408,7 +1597,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     return plan.status === 'repairable' ? plan : undefined
   }, [management, selectionPlanAvailable])
 
-  const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, _installAndUse = false, changed = false, configurationPlan?: ConfigurationOverrideBatchPlan): Promise<CompatibilityConsent> => {
+  const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, _installAndUse = false, changed = false, configurationPlan?: ConfigurationOverrideBatchPlan, onCancel?: () => void): Promise<CompatibilityConsent> => {
     const use = kind === 'activate' || kind === 'pin'
     if (!use && configurationPlan === undefined) return { decision: 'not-required' }
     const target = skinsRef.current.find(item => item.id === skin.id)
@@ -1420,7 +1609,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     const actionLabel = kind === 'pin' ? '常驻使用' : kind === 'deactivate' ? '停用' : kind === 'unpin' ? '取消常驻' : '使用'
     compatibilityConsentResolver.current?.(null)
     const accepted = await new Promise<UseConsentContext | null>(resolve => {
-      compatibilityConsentResolver.current = resolve
+      compatibilityConsentResolver.current = value => {
+        if (value === null && mounted.current) onCancel?.()
+        resolve(value)
+      }
       const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), artifactRisk, firstUse, pin: kind === 'pin', changed, configurationPlan, kind }
       compatibilityConfirmationRef.current = confirmation
       setCompatibilityConfirmation(confirmation)
@@ -1503,15 +1695,15 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         if (reason !== null) { setError(reason); await stopContinuation(); return false }
         const preflight = management?.official === true && selectionPlanAvailable && ['activate', 'deactivate', 'pin', 'unpin'].includes(kind)
         let configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
-        if (!mounted.current) return false
+        if (!mounted.current || options.cancelled?.()) return false
         target = skinsRef.current.find(skin => skin.id === skinId)
         if (target === undefined) { await stopContinuation(); return false }
         let changed = acceptedContext !== undefined
         while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)
           || configurationContext !== configurationPlan?.context
           || (kind === 'activate' || kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, target.id).artifactRisk?.context) {
-          const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, changed, configurationPlan)
-          if (consent.decision === 'cancelled' || !mounted.current) { await stopContinuation(); return false }
+          const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, changed, configurationPlan, options.onHandled)
+          if (consent.decision === 'cancelled' || !mounted.current || options.cancelled?.()) { await stopContinuation(); return false }
           acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
           artifactContext = consent.decision === 'accepted' ? consent.artifactContext : undefined
           configurationContext = consent.decision === 'accepted' ? consent.configurationContext : undefined
@@ -1521,7 +1713,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           // Recheck the whole selection without changing it. A newly discovered
           // shared edit needs another click on the same combined confirmation.
           configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
-          if (!mounted.current) return false
+          if (!mounted.current || options.cancelled?.()) return false
           target = skinsRef.current.find(skin => skin.id === skinId)
           if (target === undefined) { await stopContinuation(); return false }
           changed = true
@@ -1535,6 +1727,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         }
       }
       const targetState = runtimeFor(statesRef.current, target.id)
+      if (!mounted.current || options.cancelled?.()) return false
+      if (hostKind !== 'desktop' && ['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) {
+        webSelectionSkinIds.current.add(target.id)
+        webClientGrace.current = null
+        webHostReview.current = null
+      }
       if (starting && kind === 'migrate' && (targetState.sourceMigration?.kind === 'local' || options.sourceContext !== undefined)) {
         const source = targetState.sourceMigration
         if (source === undefined || targetState.installation !== 'installed') {
@@ -1546,6 +1744,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           return false
         }
       }
+      options.onHandled?.()
       setError(null)
       setCompletedUninstall(current => current?.skinId === skinId ? null : current)
       inflightSkinIds.current.add(target.id)
@@ -1610,14 +1809,16 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               clientRestartNotices.current.delete(target.id)
               await clientRuntime?.setActive(target.package, false)
             } else if (kind === 'pin' && clientRuntime !== undefined) {
-              clientNeedsRestart = !(await clientRuntime.setActive(target.package, true))
+              const accepted = await clientRuntime.setActive(target.package, true)
+              clientNeedsRestart = clientRuntime.probeActive === undefined && !accepted
               restoreMarketStyleOrder()
             } else if (kind === 'activate' && clientRuntime !== undefined) {
               const pinnedPackages = states
                 .filter(item => item.pinned)
                 .map(item => skins.find(skin => skin.id === item.skinId)?.package)
                 .filter((packageName): packageName is string => packageName !== undefined)
-              clientNeedsRestart = !(await switchClientSkin(clientRuntime, skins.map(skin => skin.package), target.package, pinnedPackages))
+              const accepted = await switchClientSkin(clientRuntime, skins.map(skin => skin.package), target.package, pinnedPackages)
+              clientNeedsRestart = clientRuntime.probeActive === undefined && !accepted
               restoreMarketStyleOrder()
             }
             if ((kind === 'activate' || kind === 'pin') && !clientNeedsRestart) clientRestartNotices.current.delete(target.id)
@@ -1697,6 +1898,72 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     pendingInstallActivation.current.delete(skinId)
     void runForSkin(skinId, 'activate', undefined, { compatibilityContext })
   }, [runForSkin])
+
+  const nativeActivation = useRef(runForSkin)
+  nativeActivation.current = runForSkin
+  const nativePanelSync = useRef<(() => void) | undefined>(undefined)
+  useEffect(() => {
+    if (!officialDesktop || desktopPluginPanel?.observe === undefined && clientRuntime?.observe === undefined) return
+    let disposed = false
+    let syncing = false
+    let invalidated = false
+    let claimed: DesktopActivationIntent | undefined
+    let handled = false
+    const sync = async () => {
+      invalidated = true
+      if (syncing) return
+      syncing = true
+      try {
+        do {
+          invalidated = false
+          // A native install may finish while this section is unmounted. Read
+          // both catalog and runtime again before consuming its enable intent.
+          const state = await refresh(false, undefined, false)
+          if (disposed || !mounted.current) return
+          if (invalidated) continue
+          if (currentActionReason.current('activate') !== null) continue
+          const intent = desktopPluginPanel?.takeActivationIntent?.()
+          if (intent === undefined || intent === null) continue
+          const target = skinsRef.current.find(skin => skin.id === intent.skinId)
+          if (target?.package !== intent.packageName || target.install.target !== intent.spec
+            || runtimeFor(state.skins, intent.skinId).installation !== 'installed') {
+            setError('原生安装目标已变化，请重新选择皮肤使用。')
+            continue
+          }
+          userSelectedRef.current = true
+          selectedIdRef.current = target.id
+          setSelectedId(target.id)
+          claimed = intent
+          handled = false
+          await nativeActivation.current(target.id, 'activate', undefined, {
+            cancelled: () => disposed,
+            onHandled: () => { handled = true },
+          })
+          if (!disposed) handled = true
+          claimed = undefined
+        } while (invalidated && !disposed)
+      } catch (reason) {
+        if (!disposed && mounted.current) setError(reason instanceof Error ? reason.message : String(reason))
+      } finally {
+        syncing = false
+      }
+    }
+    const invalidate = () => { void sync() }
+    nativePanelSync.current = invalidate
+    const unsubscribe = desktopPluginPanel?.observe?.(invalidate)
+    const unsubscribeClient = clientRuntime?.observe?.(invalidate)
+    invalidate()
+    return () => {
+      disposed = true
+      if (claimed !== undefined && !handled) desktopPluginPanel?.restoreActivationIntent?.(claimed)
+      if (nativePanelSync.current === invalidate) nativePanelSync.current = undefined
+      unsubscribe?.()
+      unsubscribeClient?.()
+    }
+  }, [clientRuntime, desktopPluginPanel, officialDesktop, refresh])
+  useEffect(() => {
+    if (currentActionReason.current('activate') === null) nativePanelSync.current?.()
+  }, [profileBusy, marketUpdating, marketOperation?.phase])
 
   const retrySkinOperation = useCallback(async (operation: Operation, requestedAction?: NonNullable<Operation['failure']>['action'], combinedConsent?: UseConsentContext) => {
     const action = requestedAction ?? (operation.failure?.action === 'approve-release-age' || operation.failure?.action === 'approve-artifact' ? undefined : operation.failure?.action)
@@ -1823,7 +2090,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     setShowInstallOptions(false)
     closeBrowser()
     try {
-      const result = await desktopPluginPanel.open(target)
+      const result = await desktopPluginPanel.open(target, { skinId: skin.id, packageName: skin.package })
       if (!result.ok && mounted.current) {
         setError(result.reason)
       }
@@ -1873,15 +2140,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     await copyTextToClipboard(submissionPrompt)
     setSubmissionCopied(true)
   }
-  const copyInstallOption = async (method: string, value?: string) => {
+  const copyInstallOption = async (key: string, content: string) => {
     if (selected === undefined) return
-    const content = value ?? (method === 'prompt'
-      ? installPrompt
-      : method === 'command'
-        ? createSkinInstallCommand(selected)
-        : createSkinInstallSearchKeyword(selected))
     await copyTextToClipboard(content)
-    setInstallCopied(`${selected.id}:${method}`)
+    setInstallCopied(`${selected.id}:${key}:${content}`)
   }
   const renderHomeCard = (skin: CatalogSkin, location: 'installed' | 'discover') => {
     const itemState = runtimeFor(states, skin.id)
@@ -2440,29 +2702,63 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         onClose={() => setShowInstallOptions(false)}
         title={`安装 ${selected?.name.zh ?? '皮肤'}`}
         closeLabel="关闭"
-        description={manualOnly ? `${manualInstallNotice}复制提示词，让 Agent 检查冲突并逐步指导；桌面端由你在插件页操作。` : '任选一种，不用都执行。'}
+        className={css.modalSurface}
+        description={manualOnly
+          ? hostKind === 'desktop'
+            ? `${manualInstallNotice}复制提示词，让 Agent 检查冲突并逐步指导；桌面端由你在插件页操作。`
+            : `${manualInstallNotice}可复制提示词让 Agent 检查，或按维护者说明使用下面的命令。`
+          : hostKind === 'desktop'
+            ? '在「插件 → 添加插件」中输入下面的包名。'
+            : '复制命令，在运行 DSH 的电脑上执行。'}
         footer={manualOnly ? undefined : <Button variant="outline" size="sm" onClick={() => setShowInstallOptions(false)}>关闭</Button>}
       >
         <div className={css.installOptions}>
-          <div><strong>{manualOnly ? '让 Agent 检查并指导安装' : '提示词'}</strong><span className={css.copyCapsule}><code title={installPrompt}>{installPrompt}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:prompt` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制提示词" title="复制提示词" onClick={() => void copyInstallOption('prompt')} /></span></div>
-          {manualOnly && selected !== undefined && <div className={css.manualInstallGuide}>
-            <strong>插件包名</strong>
-            <p>也可自行打开「插件 → 添加插件」，输入：</p>
+          <div>
+            <strong>提示词</strong>
             <span className={css.copyCapsule}>
-              <Input className={css.copyCapsuleInput} readOnly value={manualInstallKeyword} aria-label="插件包名" />
-              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected.id}:keyword` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制插件包名" title="复制插件包名" onClick={() => void copyInstallOption('keyword')} />
+              <code title={installPrompt}>{installPrompt}</code>
+              <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected?.id}:prompt:${installPrompt}` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制提示词" title="复制提示词" onClick={() => void copyInstallOption('prompt', installPrompt)} />
             </span>
-          </div>}
-          {!manualOnly && <div><strong>命令</strong>
-            {hostKind === 'desktop' ? <span className={css.copyCapsule}><code title={selected === undefined ? '' : createSkinInstallCommand(selected)}>{selected === undefined ? '' : createSkinInstallCommand(selected)}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:command` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label="复制命令" title="复制命令" onClick={() => void copyInstallOption('command')} /></span> : installCommandGroups.map(group => <div key={group.key} className={css.installCommandGroup} role="group" aria-label={group.label || '安装命令'}>
+          </div>
+          {hostKind === 'desktop' ? <>
+            {manualOnly && <div className={css.manualInstallGuide}><p>打开「插件 → 添加插件」，输入：</p></div>}
+            {installInputs.map(entry => {
+              const label = entry.label
+              const key = `input:${entry.key}`
+              return <div key={key}>
+                <strong>{label}</strong>
+                <span className={css.copyCapsule}>
+                  <Input className={css.copyCapsuleInput} readOnly value={entry.value} aria-label={label} />
+                  <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected?.id}:${key}:${entry.value}` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label={`复制${label}`} title={`复制${label}`} onClick={() => void copyInstallOption(key, entry.value)} />
+                </span>
+              </div>
+            })}
+          </> : <div>
+            <div className={css.installCommandLabel}>
+              <strong>命令</strong>
+              {installPlatform === 'win32' && <div className={css.installSegmented} role="group" aria-label="终端">
+                <button type="button" aria-pressed={windowsTerminal === 'powershell'} onClick={() => { setWindowsTerminal('powershell'); setInstallCopied(null) }}>PowerShell</button>
+                <button type="button" aria-pressed={windowsTerminal === 'cmd'} onClick={() => { setWindowsTerminal('cmd'); setInstallCopied(null) }}>CMD</button>
+              </div>}
+            </div>
+            {installCommandGroups.map(group => <div key={group.key} className={css.installCommandGroup} role="group" aria-label={group.label || '安装命令'}>
               {installCommandGroups.length > 1 && <strong>{group.label}</strong>}
               {group.commands.map(entry => {
                 const label = installCommandGroups.length > 1 ? `${group.label} ${entry.label}` : entry.label
-                const key = installCommandGroups.length > 1 ? `command:${group.key}:${entry.key}` : 'command'
-                return <span key={key} className={css.copyCapsule}><code title={entry.value}>{entry.value}</code><Button className={css.copyCapsuleButton} variant="outline" size="sm" icon={installCopied === `${selected?.id}:${key}` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label={`复制${label}`} title={`复制${label}`} onClick={() => void copyInstallOption(key, entry.value)} /></span>
+                const key = `command:${group.key}:${entry.key}`
+                return <span key={key} className={css.copyCapsule}>
+                    <code title={entry.value}>{entry.value}</code>
+                    <Button className={css.copyCapsuleButton} variant="ghost" size="sm" icon={installCopied === `${selected?.id}:${key}:${entry.value}` ? <IconCheckOutline /> : <IconCopyOutline />} aria-label={`复制${label}`} title={`复制${label}`} onClick={() => void copyInstallOption(key, entry.value)} />
+                </span>
               })}
             </div>)}
-            <small>{CLI_INSTALL_WARNING}</small></div>}
+            {installCommands.length === 0 && <p className={css.notice} role="status">{canUsePowerShell
+              ? '当前安装路径无法用于 CMD，请切换到 PowerShell 后复制命令。'
+              : installEnvironment?.cliAvailable === false
+                ? '当前 DSH 目录无法通过终端准确定位，请在市场内安装，或复制提示词检查安装方式。'
+                : '无法为当前环境生成安装命令，请复制提示词检查安装方式。'}</p>}
+            <small>{CLI_INSTALL_WARNING}</small>
+          </div>}
         </div>
       </Modal>
       <Modal
@@ -2510,6 +2806,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         onClose={() => setShowSubmission(false)}
         title="提交你的皮肤"
         closeLabel="关闭"
+        className={css.modalSurface}
         description="复制下面的提示词交给你的 Agent，它会确认皮肤仓库、完成检查并准备市场 PR。"
         footer={<><Button variant="outline" size="sm" onClick={() => setShowSubmission(false)}>关闭</Button><Button variant="primary" size="sm" icon={submissionCopied ? <IconCheckOutline /> : <IconCopyOutline />} onClick={() => void copySubmissionPrompt()}>复制提示词</Button></>}
       >

@@ -273,6 +273,22 @@ describe('profile state', () => {
     }
   })
 
+  it('preserves only valid selection-only restart provenance without weakening artifact receipts', () => {
+    const dir = fixture()
+    const pendingRestart = { pid: 1234, id: 'selection', skinIds: ['one', 'two'], selectionChanges: ['two', 'two'],
+      selectionArtifacts: { two: 'b'.repeat(64) }, inferredInstalls: { one: 'a'.repeat(64) } }
+    writeMarketState(dir, { version: 1, activeSkinId: 'two', disabledSkinIds: ['one'], pendingRestart })
+    expect(readMarketState(dir).pendingRestart).toEqual({ ...pendingRestart, selectionChanges: ['two'] })
+    for (const selectionChanges of [['unknown'], ['one'], [1], 'two', { two: true }]) {
+      atomicWriteJson(join(dir, '.dsh-skin-market', 'state.json'), { version: 1, activeSkinId: 'two', disabledSkinIds: [], pendingRestart: { ...pendingRestart, selectionChanges } })
+      expect(readMarketState(dir).pendingRestart).toEqual({ pid: 1234, id: 'selection', skinIds: ['one', 'two'], inferredInstalls: { one: 'a'.repeat(64) } })
+    }
+    for (const selectionArtifacts of [{ unknown: 'b'.repeat(64) }, { one: 'b'.repeat(64) }, { two: 1 }, { two: 'invalid' }, ['two']]) {
+      atomicWriteJson(join(dir, '.dsh-skin-market', 'state.json'), { version: 1, activeSkinId: 'two', disabledSkinIds: [], pendingRestart: { ...pendingRestart, selectionArtifacts } })
+      expect(readMarketState(dir).pendingRestart).toEqual({ pid: 1234, id: 'selection', skinIds: ['one', 'two'], selectionChanges: ['two'], inferredInstalls: { one: 'a'.repeat(64) } })
+    }
+  })
+
   it('uses every declared bundle patch in order for validation and skin registration', () => {
     const dir = fixture()
     const skin = loadCatalog().skins[0]

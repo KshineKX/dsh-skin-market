@@ -157,6 +157,18 @@ export interface SkinRuntimeState {
     installedAt: string | null;
     lastOperatedAt: string | null;
     updateAvailable: boolean;
+    clientModule?: boolean;
+    /** A browser-local selection check may refine only this inferred restart reason. */
+    restartSource?: 'selection';
+    /** Every managed Host row matches the current complete enabled selection. */
+    selectionHostApplied?: boolean;
+    /** Complete managed Host selection, including asynchronous apply/dispose phases. */
+    selectionHostStatus?: 'applied' | 'switching' | 'restart-required' | 'unavailable';
+    /** Complete browser selection; absent means its package identities could not be verified. */
+    selectionClientTargets?: Array<{
+        package: string;
+        active: boolean;
+    }>;
     artifactRisk?: SkinArtifactRisk;
     sourceMigration?: SkinSourceMigration;
     error?: string;
@@ -236,6 +248,10 @@ export interface PersistedMarketState {
         id?: string;
         /** First-install artifact hashes; only the same confirmed live build can discharge them. */
         inferredInstalls?: Record<string, string>;
+        /** Skin ids whose only restart reason is an unverified browser selection change. */
+        selectionChanges?: string[];
+        /** Main and owned companion/loader artifacts bound to each selection inference. */
+        selectionArtifacts?: Record<string, string>;
     };
     activity?: Record<string, SkinActivity>;
     /** Companion packages linked to installed owner skins. */

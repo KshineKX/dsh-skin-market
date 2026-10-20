@@ -76,6 +76,7 @@ export declare class SkinLifecycle {
     private unresolvedManager;
     private readonly unverifiedRestartSkinIds;
     private readonly componentUndo;
+    private readonly bundleUndo;
     private readonly legacyBundleUndo;
     private readonly pendingConfigurationRepairs;
     private readonly failedConfigurationBindings;
@@ -87,6 +88,10 @@ export declare class SkinLifecycle {
     private get management();
     private assertSkinLoaderConflicts;
     private legacyBinding;
+    private bundleBinding;
+    /** Undo only native bundle changes made by this operation, using their actual prior choices. */
+    private restoreNativeBundles;
+    /** Inventory is authoritative for whether a reviewed old bundle can be withdrawn. */
     private inspectLegacyBundles;
     private withdrawLegacyBundles;
     /** Called after the ordinary selection rollback, so replay cannot re-enable the target. */
@@ -108,6 +113,7 @@ export declare class SkinLifecycle {
     private acceptManagement;
     private awaitLifecycle;
     private recordRestart;
+    private recordSelectionRestart;
     get restartNoticeId(): string | undefined;
     /** Resolve only the curated main component, using both official inventories. */
     private officialComponent;
@@ -134,7 +140,9 @@ export declare class SkinLifecycle {
     private releaseManagedLoaders;
     private syncManagedLoaders;
     private reconcileDisabledSkinIds;
-    private requiresRestartForTransition;
+    private selectionHostStatus;
+    private selectionClientTargets;
+    private selectionArtifactHash;
     replay(repairComponents?: boolean): Promise<void>;
     private replayLocked;
     states(): SkinRuntimeState[];

@@ -99,6 +99,11 @@ export interface RuntimeSkin {
   installedAt?: string | null
   lastOperatedAt?: string | null
   updateAvailable: boolean
+  clientModule?: boolean
+  restartSource?: 'selection'
+  selectionHostApplied?: boolean
+  selectionHostStatus?: 'applied' | 'switching' | 'restart-required' | 'unavailable'
+  selectionClientTargets?: Array<{ package: string; active: boolean }>
   sourceMigration?: { target: string; currentSource: string } & ({ kind?: undefined } | {
     kind: 'local'
     currentVersion: string

@@ -49,7 +49,8 @@ describe('official Desktop entrypoint', () => {
       expect(state.hostKind).toBe('desktop')
       expect(state.runningAgentCount).toBe(0)
       expect(state.management.capabilities.install).toMatchObject({ available: false, reason: expect.stringContaining('pluginManager') })
-      expect(existsSync(join(desktopDir, '.dsh-skin-market', 'state.json'))).toBe(true)
+      // Automatic Desktop verification preserves native choices without creating selection state.
+      expect(existsSync(join(desktopDir, '.dsh-skin-market', 'state.json'))).toBe(false)
       expect(existsSync(join(profileRoot, 'profiles', 'web', '.dsh-skin-market', 'state.json'))).toBe(false)
 
       const managed = loadCatalog().skins.find(skin => skin.install.desktop?.mode === 'managed')
@@ -108,7 +109,7 @@ describe('official Desktop entrypoint', () => {
       const initial = await state()
       expect(initial.status).toBe(200)
       expect(initial.value.hostKind).toBe(profile === 'desktop' ? 'desktop' : 'dsh')
-      expect(existsSync(join(profileDir, '.dsh-skin-market', 'state.json'))).toBe(true)
+      expect(existsSync(join(profileDir, '.dsh-skin-market', 'state.json'))).toBe(profile === 'web')
       expect(existsSync(join(profileRoot, 'profiles', profile === 'desktop' ? 'web' : 'desktop', '.dsh-skin-market', 'state.json'))).toBe(false)
 
       const requestRejection = vi.fn((): number | undefined => 401)

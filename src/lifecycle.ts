@@ -89,6 +89,12 @@ export interface LifecycleOptions {
   configurationOverride?: ConfigurationOverrideOptions
 }
 
+/** A row id is a routing key, not proof that the market owns that plugin. */
+function matchesLoaderIdentity(options: { id?: string; name?: string }, identity: LoaderIdentity): boolean {
+  return identity.name !== undefined && options.name === identity.name
+    && (identity.id === undefined || options.id === identity.id)
+}
+
 const OPERATION_TIMEOUT_MS = 15 * 60 * 1000
 const RECOVERY_TIMEOUT_MS = 60_000
 const DESKTOP_PARALLEL_DOWNLOADS = 2
@@ -276,6 +282,7 @@ export class SkinLifecycle {
   private unresolvedManager = false
   private readonly unverifiedRestartSkinIds = new Set<string>()
   private readonly componentUndo = new Map<string, Map<string, { skin: SkinEntry; entryId: string; enabled: boolean }>>()
+  private readonly bundleUndo = new Map<string, Map<string, { skin: SkinEntry; enabled: boolean; binding: string }>>()
   private readonly legacyBundleUndo = new Map<string, Map<string, { skin: SkinEntry; packages: string[]; binding: string }>>()
   private readonly pendingConfigurationRepairs = new Map<string, ConfigurationRepairApproval>()
   private readonly failedConfigurationBindings = new Map<string, string>()
@@ -306,6 +313,37 @@ export class SkinLifecycle {
     return JSON.stringify({ skinId: skin.id, packages: packages.map(name => ({ name, spec: dependencies[name], artifact: snapshotInstalledArtifact(this.options.profileDir, name) })) })
   }
 
+  private bundleBinding(skin: SkinEntry): string {
+    return JSON.stringify({ package: skin.package, rowId: skin.rowId,
+      manifest: packageManifest(this.options.profileDir, skin.package),
+      artifact: snapshotInstalledArtifact(this.options.profileDir, skin.package) })
+  }
+
+  /** Undo only native bundle changes made by this operation, using their actual prior choices. */
+  private async restoreNativeBundles(operation: Operation, apply = true): Promise<void> {
+    const changes = [...this.bundleUndo.get(operation.id)?.values() ?? []]
+    if (changes.length === 0 || this.management === undefined) return
+    const inventory = await this.awaitLifecycle(this.management.listBundles())
+    if (!Array.isArray(inventory)) throw new Error('无法确认回退时的组合包清单')
+    for (const { skin, binding } of changes) {
+      const matches = inventory.filter(bundle => bundle?.name === skin.package)
+      if (binding !== this.bundleBinding(skin) || matches.length !== 1 || matches[0].error !== undefined
+        || matches[0].readOnlyReason !== undefined || typeof matches[0].enabled !== 'boolean'
+        || matches[0].enabled !== readProfileBundles(this.options.profileDir).includes(skin.package)) {
+        throw new Error('组合包安装身份或启用状态已变化，无法自动恢复，请在官方插件页核对状态')
+      }
+    }
+    if (!apply) return
+    // Withdraw the rejected target before restoring any formerly selected skin.
+    for (const { skin, enabled, binding } of changes.sort((left, right) => Number(left.enabled) - Number(right.enabled))) {
+      if (binding !== this.bundleBinding(skin)) throw new Error('组合包安装身份已变化，已停止自动恢复')
+      if (readProfileBundles(this.options.profileDir).includes(skin.package) === enabled) continue
+      this.acceptManagement(await this.awaitLifecycle(this.management.setBundleEnabled(skin.package, enabled)), operation, skin)
+      if (readProfileBundles(this.options.profileDir).includes(skin.package) !== enabled) throw new Error('组合包启用选择恢复未完成，请在官方插件页核对状态')
+    }
+  }
+
+  /** Inventory is authoritative for whether a reviewed old bundle can be withdrawn. */
   private async inspectLegacyBundles(skin: SkinEntry): Promise<Array<{ name: string; enabled: boolean }>> {
     if (this.management === undefined) return []
     const names = verifiedDesktopLegacyPackages(this.options.profileDir, skin)
@@ -578,14 +616,78 @@ export class SkinLifecycle {
     const previous = state.pendingRestart?.pid === process.pid ? state.pendingRestart : undefined
     const ids = new Set(previous?.skinIds ?? [])
     const inferredInstalls = new Map(Object.entries(previous?.inferredInstalls ?? {}))
+    const selectionChanges = new Set(previous?.selectionChanges ?? [])
+    const selectionArtifacts = new Map(Object.entries(previous?.selectionArtifacts ?? {}))
     if (required) ids.add(skinId)
-    else if (removed || this.management === undefined) ids.delete(skinId)
+    else if (removed) ids.delete(skinId)
+    // An installation/update or explicit Host result always takes precedence
+    // over a browser selection inference, including an older unknown receipt.
+    if (required || removed) {
+      selectionChanges.delete(skinId)
+      selectionArtifacts.delete(skinId)
+    }
     if (!ids.has(skinId) || required && inferredArtifact === undefined) inferredInstalls.delete(skinId)
     else if (required && inferredArtifact !== undefined) inferredInstalls.set(skinId, inferredArtifact)
     state.pendingRestart = ids.size === 0 ? undefined : {
       pid: process.pid, skinIds: [...ids], id: previous?.id ?? randomUUID(),
       ...(inferredInstalls.size > 0 ? { inferredInstalls: Object.fromEntries(inferredInstalls) } : {}),
+      ...(selectionChanges.size > 0 ? { selectionChanges: [...selectionChanges] } : {}),
+      ...(selectionArtifacts.size > 0 ? { selectionArtifacts: Object.fromEntries(selectionArtifacts) } : {}),
     }
+  }
+
+  private recordSelectionRestart(previous: PersistedMarketState, next: PersistedMarketState, skin: SkinEntry, operation: Operation): void {
+    if (this.management !== undefined || operation.restartRequired === true) {
+      this.recordRestart(next, skin.id, operation.restartRequired === true, false,
+        operation.application !== 'restart-required' ? previous.pendingRestart?.inferredInstalls?.[skin.id] : undefined)
+      return
+    }
+    const pending = next.pendingRestart?.pid === process.pid ? next.pendingRestart : undefined
+    const ids = new Set(pending?.skinIds ?? [])
+    const selectionChanges = new Set(pending?.selectionChanges ?? [])
+    const selectionArtifacts = new Map(Object.entries(pending?.selectionArtifacts ?? {}))
+    // An external plugin-page/CLI replacement may have left an old live
+    // fiber. A later selection must not rebind that receipt to the new bytes.
+    for (const id of selectionChanges) {
+      const artifact = this.selectionArtifactHash(next, id)
+      if (artifact !== undefined && artifact === selectionArtifacts.get(id)) continue
+      selectionChanges.delete(id)
+      selectionArtifacts.delete(id)
+    }
+    let changed = false
+    const before = enabledSkinIds(previous), after = enabledSkinIds(next)
+    const dependencies = readDependencies(this.options.profileDir)
+    const beforeTargets = this.selectionClientTargets(previous), afterTargets = this.selectionClientTargets(next)
+    const targetSelection = (targets: NonNullable<SkinRuntimeState['selectionClientTargets']>) => JSON.stringify(
+      [...targets].sort((left, right) => left.package.localeCompare(right.package)),
+    )
+    // The browser change may belong to a companion or managed bundle row.
+    // Include Host-only participants too: disabling the old browser module
+    // can require restart while the new target has no browser entry itself.
+    const browserChanged = beforeTargets === undefined || afterTargets === undefined
+      || targetSelection(beforeTargets) !== targetSelection(afterTargets)
+    for (const id of new Set([...before, ...after])) {
+      if (!browserChanged || before.has(id) === after.has(id)) continue
+      const item = this.skinById.get(id)
+      if (item === undefined || dependencies[item.package] === undefined) continue
+      if (ids.has(id) && !selectionChanges.has(id)) continue
+      ids.add(id)
+      const artifact = this.selectionArtifactHash(next, id)
+      if (artifact !== undefined) {
+        selectionChanges.add(id)
+        selectionArtifacts.set(id, artifact)
+        changed = true
+      }
+    }
+    if (ids.size > 0) next.pendingRestart = {
+      pid: process.pid, skinIds: [...ids], id: changed && [...ids].every(id => selectionChanges.has(id)) ? randomUUID() : pending?.id ?? randomUUID(),
+      ...(pending?.inferredInstalls === undefined ? {} : { inferredInstalls: pending.inferredInstalls }),
+      ...(selectionChanges.size > 0 ? { selectionChanges: [...selectionChanges] } : {}),
+      ...(selectionArtifacts.size > 0 ? { selectionArtifacts: Object.fromEntries(selectionArtifacts) } : {}),
+    }
+    // This flag remains reserved for actual installation/Host requirements;
+    // selection inferences are verified independently in each browser tab.
+    if (ids.has(skin.id) && !selectionChanges.has(skin.id)) operation.restartRequired = true
   }
 
   get restartNoticeId(): string | undefined {
@@ -631,6 +733,9 @@ export class SkinLifecycle {
 
   private async registerSkin(skin: SkinEntry, disabled = true, repairComponent = true): Promise<boolean> {
     if (this.management === undefined) {
+      if (readDependencies(this.options.profileDir)[skin.package] === undefined) return false
+      this.assertSkinLoaderConflicts(skin)
+      this.assertRuntimeLoaderConflicts(skin, [{ id: skin.rowId, name: skin.package, packageName: skin.package }])
       ensureSkinRegistration(this.options.profileDir, skin, disabled)
       return false
     }
@@ -646,6 +751,11 @@ export class SkinLifecycle {
     if (bundled) {
       const selected = readProfileBundles(this.options.profileDir).includes(skin.package)
       if (selected !== !disabled) {
+        if (operation !== undefined) {
+          const undo = this.bundleUndo.get(operation.id) ?? new Map()
+          if (!undo.has(skin.package)) undo.set(skin.package, { skin, enabled: selected, binding: this.bundleBinding(skin) })
+          this.bundleUndo.set(operation.id, undo)
+        }
         const result = await this.awaitLifecycle(this.management.setBundleEnabled(skin.package, !disabled))
         this.acceptManagement(result, operation, skin)
         restartRequired = result.management?.application === 'restart-required'
@@ -685,6 +795,7 @@ export class SkinLifecycle {
     const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
     if (!artifact.ok) throw new Error(artifact.reason)
     this.assertSkinLoaderConflicts(skin)
+    if (this.management === undefined) this.assertRuntimeLoaderConflicts(skin, [{ id: skin.rowId, name: skin.package, packageName: skin.package }])
     const context = this.artifactContexts.get(operation.id)
     const risk = inspectSkinArtifactRisk(this.options.profileDir, skin, this.hostKind)
     if (context !== undefined) {
@@ -780,11 +891,16 @@ export class SkinLifecycle {
   start(): void {
     if (this.disposed) return
     void this.replay().catch(error => logEvent('error', 'startup-replay', errorMessage(error)))
+    // The official manager owns native-page changes. Do not interpret a new
+    // Host fiber as a request to restore the market's older selection.
+    if (this.management !== undefined) return
     this.disposeEvent = this.host.on?.('internal/plugin', fiber => {
       if (this.disposed || this.profileLockOwner !== null || this.waitingReason !== undefined) return
       const name = fiber.entry?.options?.name
       const id = fiber.entry?.options?.id
-      const skin = this.catalog.find(item => item.rowId === name || item.rowId === id || item.package === name)
+      const dependencies = readDependencies(this.options.profileDir)
+      const skin = this.catalog.find(item => dependencies[item.package] !== undefined
+        && matchesLoaderIdentity({ id, name }, { id: item.rowId, name: item.package }))
       if (skin === undefined) return
       const state = readMarketState(this.options.profileDir)
       const shouldDisable = !enabledSkinIds(state).has(skin.id)
@@ -829,6 +945,7 @@ export class SkinLifecycle {
     this.abortControllers.clear()
     this.executions.clear()
     this.legacyBundleUndo.clear()
+    this.bundleUndo.clear()
   }
 
   skin(id: string): SkinEntry {
@@ -838,11 +955,7 @@ export class SkinLifecycle {
   }
 
   private entriesFor(skin: SkinEntry): LoaderEntry[] {
-    return [...this.host.loader.entries()].filter(entry => {
-      const name = entry.options.name
-      const id = entry.options.id
-      return name === skin.rowId || id === skin.rowId || name === skin.package || id === skin.package
-    })
+    return [...this.host.loader.entries()].filter(entry => matchesLoaderIdentity(entry.options, { id: skin.rowId, name: skin.package }))
   }
 
   private async setEntryDisabled(skin: SkinEntry, disabled: boolean): Promise<{ found: boolean; live: boolean }> {
@@ -850,14 +963,12 @@ export class SkinLifecycle {
       const entries = this.entriesFor(skin)
       return { found: entries.length > 0, live: entries.some(entry => entry.fiber !== undefined && entry.options.disabled !== true) }
     }
+    if (readDependencies(this.options.profileDir)[skin.package] === undefined) return { found: false, live: false }
     return await this.setLoaderDisabled({ id: skin.rowId, name: skin.package }, disabled)
   }
 
   private async setLoaderDisabled(identity: LoaderIdentity, disabled: boolean): Promise<{ found: boolean; live: boolean }> {
-    const entries = [...this.host.loader.entries()].filter(entry =>
-      (identity.id !== undefined && entry.options.id === identity.id)
-      || (identity.name !== undefined && entry.options.name === identity.name),
-    )
+    const entries = [...this.host.loader.entries()].filter(entry => matchesLoaderIdentity(entry.options, identity))
     for (const entry of entries) {
       // Do not rewrite an already-correct loader state during startup. The
       // DSH client module registry builds its browser boot graph while loader
@@ -930,15 +1041,118 @@ export class SkinLifecycle {
     state.disabledSkinIds = this.catalog.filter(skin => !enabled.has(skin.id)).map(skin => skin.id)
   }
 
-  private requiresRestartForTransition(previous: PersistedMarketState, next: PersistedMarketState): boolean {
-    if (this.management !== undefined) return false
-    const before = enabledSkinIds(previous), after = enabledSkinIds(next)
-    const changed = new Set([...before, ...after].filter(id => before.has(id) !== after.has(id)))
+  private selectionHostStatus(state: PersistedMarketState): NonNullable<SkinRuntimeState['selectionHostStatus']> {
+    if (this.management !== undefined) return 'unavailable'
+    const enabled = enabledSkinIds(state)
     const dependencies = readDependencies(this.options.profileDir)
-    return [...changed].some(id => {
-      const skin = this.skinById.get(id)
-      return skin !== undefined && dependencies[skin.package] !== undefined && isWebClientPackage(this.options.profileDir, skin.package)
-    })
+    type Status = NonNullable<SkinRuntimeState['selectionHostStatus']>
+    const priority: Record<Status, number> = { applied: 0, 'restart-required': 1, switching: 2, unavailable: 3 }
+    let status: Status = 'applied'
+    const inspect = (entries: LoaderEntry[], expected: boolean): Status => {
+      if (entries.length === 0) return expected ? 'restart-required' : 'applied'
+      if (entries.length !== 1) return 'unavailable'
+      const entry = entries[0]
+      const phase = typeof entry.fiber === 'object' && entry.fiber !== null
+        ? (entry.fiber as { state?: unknown }).state : undefined
+      if (entry.fiber === undefined) return !expected && entry.options.disabled === true ? 'applied' : 'restart-required'
+      // FAILED and unrecognised fibers require diagnostics, never a claim
+      // that restarting is certain to repair initialization or identity.
+      if (phase === 3 || ![0, 1, 2, 4, 5].includes(phase as number)) return 'unavailable'
+      if (expected) {
+        if (entry.options.disabled === true) return 'restart-required'
+        if (phase === 0 || phase === 1 || phase === 5) return 'switching'
+        return phase === 2 ? 'applied' : 'restart-required'
+      }
+      // Entry.disable() does not await disposal. Even PENDING fibers can own
+      // effects, so wait until their effects have actually drained.
+      if (phase === 0 || phase === 1 || phase === 5 || entry.options.disabled === true && phase === 2) return 'switching'
+      return entry.options.disabled === true && phase === 4 ? 'applied' : 'restart-required'
+    }
+    const include = (entries: LoaderEntry[], expected: boolean): void => {
+      const incoming = inspect(entries, expected)
+      if (priority[incoming] > priority[status]) status = incoming
+    }
+    for (const skin of this.catalog) {
+      if (dependencies[skin.package] !== undefined) include(this.entriesFor(skin), enabled.has(skin.id))
+    }
+    const companions = new Set<string>()
+    for (const skin of this.catalog) for (const companion of skin.install.companions ?? []) {
+      if (companions.has(companion.package) || dependencies[companion.package] === undefined || state.managedCompanions?.[companion.package] === undefined) continue
+      companions.add(companion.package)
+      include(this.entriesFor(companionAsSkin(skin, companion)), this.companionOwnersEnabled(companion.package, state, enabled))
+    }
+    const entries = [...this.host.loader.entries()]
+    for (const identity of Object.values(state.managedLoaders ?? {})) {
+      const matches = entries.filter(entry => matchesLoaderIdentity(entry.options, identity))
+      include(matches, identity.ownerSkinIds.some(id => enabled.has(id)))
+    }
+    return status
+  }
+
+  private selectionClientTargets(state: PersistedMarketState): SkinRuntimeState['selectionClientTargets'] {
+    const enabled = enabledSkinIds(state)
+    const dependencies = readDependencies(this.options.profileDir)
+    const targets = new Map<string, boolean>()
+    const validPackage = (name: string): boolean => /^(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9_~][A-Za-z0-9._~-]*$/.test(name)
+    const add = (packageName: string, active: boolean): boolean => {
+      if (!validPackage(packageName)) return false
+      const manifest = packageManifest(this.options.profileDir, packageName)
+      if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)) return false
+      if (manifest.dsh !== undefined && (typeof manifest.dsh !== 'object' || manifest.dsh === null || Array.isArray(manifest.dsh))) return false
+      const client = (manifest.dsh as { client?: unknown } | undefined)?.client
+      if (client !== undefined && (typeof client !== 'object' || client === null || Array.isArray(client))) return false
+      if (!isWebClientPackage(this.options.profileDir, packageName)) return true
+      if (typeof manifest.name !== 'string' || !validPackage(manifest.name)) return false
+      targets.set(manifest.name, active || targets.get(manifest.name) === true)
+      return true
+    }
+    for (const skin of this.catalog) {
+      if (dependencies[skin.package] !== undefined && !add(skin.package, enabled.has(skin.id))) return undefined
+    }
+    const companions = new Set<string>()
+    for (const skin of this.catalog) for (const companion of skin.install.companions ?? []) {
+      if (companions.has(companion.package) || dependencies[companion.package] === undefined || state.managedCompanions?.[companion.package] === undefined) continue
+      companions.add(companion.package)
+      if (!add(companion.package, this.companionOwnersEnabled(companion.package, state, enabled))) return undefined
+    }
+    for (const identity of Object.values(state.managedLoaders ?? {})) {
+      // A bundle may insert another package or an export of its own package.
+      // Unknown legacy row ownership cannot prove a complete browser graph.
+      const name = identity.name
+      let packageName = name !== undefined && validPackage(name) && packageManifest(this.options.profileDir, name) !== null ? name : undefined
+      if (packageName === undefined && identity.packageName !== undefined
+        && (name === undefined || name === identity.packageName || name.startsWith(`${identity.packageName}/`))) packageName = identity.packageName
+      if (packageName === undefined || !add(packageName, identity.ownerSkinIds.some(id => enabled.has(id)))) return undefined
+    }
+    return [...targets].map(([packageName, active]) => ({ package: packageName, active }))
+  }
+
+  private selectionArtifactHash(state: PersistedMarketState, skinId: string): string | undefined {
+    const skin = this.skinById.get(skinId)
+    if (skin === undefined) return undefined
+    const packages = new Set([skin.package])
+    for (const [packageName, companion] of Object.entries(state.managedCompanions ?? {})) {
+      if (companion.ownerSkinIds.includes(skinId)) packages.add(packageName)
+    }
+    const validPackage = (name: string): boolean => /^(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9_~][A-Za-z0-9._~-]*$/.test(name)
+    for (const identity of Object.values(state.managedLoaders ?? {})) {
+      if (!identity.ownerSkinIds.includes(skinId)) continue
+      const name = identity.name
+      let packageName = name !== undefined && validPackage(name) && packageManifest(this.options.profileDir, name) !== null ? name : undefined
+      if (packageName === undefined && identity.packageName !== undefined
+        && (name === undefined || name === identity.packageName || name.startsWith(`${identity.packageName}/`))) packageName = identity.packageName
+      if (packageName === undefined) return undefined
+      packages.add(packageName)
+    }
+    const artifacts: Array<[string, string]> = []
+    for (const packageName of [...packages].sort()) {
+      const artifact = installedArtifactHash(this.options.profileDir, packageName)
+      if (artifact === undefined) return undefined
+      artifacts.push([packageName, artifact])
+    }
+    // Selection flags deliberately do not enter this identity. Unrelated
+    // installed skins likewise cannot turn a successful toggle into restart.
+    return createHash('sha256').update(JSON.stringify(artifacts)).digest('hex')
   }
 
   async replay(repairComponents = true): Promise<void> {
@@ -956,6 +1170,7 @@ export class SkinLifecycle {
       catch (error) { logEvent('warn', 'release-age-repair', errorMessage(error)) }
     }
     const state = readMarketState(this.options.profileDir)
+    const preserveNativeSelection = this.management !== undefined
     const previousRestart = state.pendingRestart?.pid !== process.pid ? state.pendingRestart : undefined
     const dependencies = readDependencies(this.options.profileDir)
     const installed = this.catalog.filter(skin => dependencies[skin.package] !== undefined)
@@ -966,15 +1181,15 @@ export class SkinLifecycle {
     const normalizedPinned = pinnedSkinIds(state).filter(id => installedIds.has(id))
     const stateChanged = JSON.stringify(state.pinnedSkinIds ?? []) !== JSON.stringify(normalizedPinned)
     state.pinnedSkinIds = normalizedPinned
-    const manuallyActive = state.activeSkinId === null
+    const manuallyActive = !preserveNativeSelection && state.activeSkinId === null
       ? installed.filter(skin => rootBundles.has(skin.package) && !state.disabledSkinIds.includes(skin.id) && !normalizedPinned.includes(skin.id)).at(-1)
       : undefined
     if (manuallyActive !== undefined) {
       state.activeSkinId = manuallyActive.id
     }
     const previousDisabled = JSON.stringify(state.disabledSkinIds)
-    this.reconcileDisabledSkinIds(state)
-    if (stateChanged || manuallyActive !== undefined || previousDisabled !== JSON.stringify(state.disabledSkinIds)) {
+    if (!preserveNativeSelection) this.reconcileDisabledSkinIds(state)
+    if (!preserveNativeSelection && (stateChanged || manuallyActive !== undefined || previousDisabled !== JSON.stringify(state.disabledSkinIds))) {
       writeMarketState(this.options.profileDir, state)
     }
     const enabled = enabledSkinIds(state)
@@ -991,6 +1206,10 @@ export class SkinLifecycle {
       state.pendingRestart = unresolved.length === 0 ? undefined : { ...previousRestart, skinIds: unresolved }
       writeMarketState(this.options.profileDir, state)
     }
+    // Native bundle/component choices are already persisted by the official
+    // manager. Startup and catalog refresh only verify restart receipts; only
+    // an explicit failed market action may restore its saved selection.
+    if (preserveNativeSelection) return
     // Replay also restores failed transitions. Remove the rejected selection
     // before re-enabling the original one so two ordinary skins never overlap.
     let restartChanged = false
@@ -1017,12 +1236,23 @@ export class SkinLifecycle {
 
   states(): SkinRuntimeState[] {
     const state = readMarketState(this.options.profileDir)
+    const pending = state.pendingRestart?.pid === process.pid ? state.pendingRestart : undefined
+    const selectionChanges = this.management === undefined ? (pending?.selectionChanges ?? []).filter(id => {
+      const artifact = this.selectionArtifactHash(state, id)
+      return artifact !== undefined && artifact === pending?.selectionArtifacts?.[id]
+    }) : []
+    const selectionHostStatus = this.management === undefined ? this.selectionHostStatus(state) : undefined
+    const selectionHostApplied = selectionHostStatus === undefined ? undefined : selectionHostStatus === 'applied'
+    const selectionClientTargets = this.management === undefined ? this.selectionClientTargets(state) : undefined
     return this.catalog.map(skin => {
       const entries = this.entriesFor(skin)
       const runtime = runtimeState(this.options.profileDir, skin, state.activeSkinId, entries.some(entry => entry.fiber !== undefined && entry.options.disabled !== true), entries.length > 0, pinnedSkinIds(state), state.activity?.[skin.id], this.hostKind)
+      if (runtime.installation === 'installed' && isWebClientPackage(this.options.profileDir, skin.package)) runtime.clientModule = true
       const sourceMigration = this.hostKind === 'desktop' ? undefined : npmSourceMigration(this.options.profileDir, skin)
       const restartPending = state.pendingRestart?.pid === process.pid && state.pendingRestart.skinIds.includes(skin.id)
-      return { ...runtime, ...(!restartPending && (runtime.primary || runtime.pinned) && entries.length > 0 && entries.every(entry => entry.options.disabled === true) ? { activation: 'unavailable' as const, error: '皮肤组件已关闭；请点击使用以自动启用，或在官方插件页检查覆盖配置' } : {}), ...(!restartPending && (runtime.primary || runtime.pinned) && this.unverifiedRestartSkinIds.has(skin.id) ? { activation: 'unavailable' as const, error: '重启后皮肤仍未生效，请在官方插件页检查组件开关、加载错误或更高优先级的覆盖配置' } : {}), ...(restartPending ? { activation: 'restart-required' as const, error: undefined } : {}), ...(sourceMigration === undefined ? {} : { sourceMigration }) }
+      return { ...runtime, ...(runtime.installation === 'installed' && this.management === undefined ? { selectionHostApplied, selectionHostStatus,
+        ...(selectionClientTargets === undefined ? {} : { selectionClientTargets }) } : {}), ...(!restartPending && (runtime.primary || runtime.pinned) && entries.length > 0 && entries.every(entry => entry.options.disabled === true) ? { activation: 'unavailable' as const, error: '皮肤组件已关闭；请点击使用以自动启用，或在官方插件页检查覆盖配置' } : {}), ...(!restartPending && (runtime.primary || runtime.pinned) && this.unverifiedRestartSkinIds.has(skin.id) ? { activation: 'unavailable' as const, error: '重启后皮肤仍未生效，请在官方插件页检查组件开关、加载错误或更高优先级的覆盖配置' } : {}), ...(restartPending ? { activation: 'restart-required' as const, error: undefined,
+        ...(selectionChanges.includes(skin.id) ? { restartSource: 'selection' as const } : {}) } : {}), ...(sourceMigration === undefined ? {} : { sourceMigration }) }
     })
   }
 
@@ -1046,8 +1276,7 @@ export class SkinLifecycle {
     const saved = readMarketState(this.options.profileDir)
     const inferredInstalls = reconcileInferred && saved.pendingRestart?.pid === process.pid ? saved.pendingRestart.inferredInstalls ?? {} : {}
     const inferredIds = new Set(Object.keys(inferredInstalls))
-    const inspect = current.filter(state => state.installation === 'installed' && (state.primary || state.pinned)
-      && (state.activation !== 'restart-required' || inferredIds.has(state.skinId)))
+    const inspect = current.filter(state => state.installation === 'installed')
     if (inspect.length === 0) return current
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
@@ -1055,21 +1284,38 @@ export class SkinLifecycle {
         const inventory = await management.listPlugins()
         if (!Array.isArray(inventory)) throw new Error('宿主插件清单格式无效')
         let bundlesPromise: Promise<unknown> | undefined
+        const bundleFor = async (name: string): Promise<Record<string, unknown> | undefined> => {
+          const bundles = await (bundlesPromise ??= management.listBundles())
+          if (!Array.isArray(bundles)) throw new Error('宿主组合包清单格式无效')
+          const matches = bundles.filter(item => item?.name === name)
+          return matches.length === 1 ? matches[0] : undefined
+        }
         return await Promise.all(current.map(async state => {
           if (!inspect.includes(state)) return state
+          // A running old fiber cannot discharge the Host's explicit restart
+          // requirement for an update or another unverified replacement.
+          if (state.activation === 'restart-required' && !inferredIds.has(state.skinId)) return state
           const skin = this.skin(state.skinId)
           let matches = inventory.filter(row => row?.patchId === skin.rowId && row.moduleName === skin.package && typeof row.entryId === 'string')
+          let bundle: Record<string, unknown> | undefined
           // Read-only rows may deliberately omit patchId. Bundle declaration
           // can still identify them for diagnostics; it does not grant writes.
           if (matches.length === 0) {
-            const bundles = await (bundlesPromise ??= management.listBundles())
-            const bundle = Array.isArray(bundles) ? bundles.filter(item => item?.name === skin.package) : []
-            const rows = bundle.length === 1 && Array.isArray(bundle[0].rows) ? bundle[0].rows.filter((row: Record<string, unknown>) => row.rowId === skin.rowId && row.moduleName === skin.package && typeof row.entryId === 'string') : []
+            bundle = await bundleFor(skin.package)
+            const rows = Array.isArray(bundle?.rows) ? bundle.rows.filter((row: Record<string, unknown>) => row.rowId === skin.rowId && row.moduleName === skin.package && typeof row.entryId === 'string') : []
             if (rows.length === 1) matches = inventory.filter(row => row?.entryId === rows[0].entryId && row.moduleName === skin.package)
+          }
+          if (matches.length === 0 && !state.primary && !state.pinned && bundle?.enabled !== true) {
+            return { ...state, activation: 'inactive' as const, error: undefined }
           }
           if (matches.length !== 1) return { ...state, activation: 'unavailable' as const, error: '无法确认唯一的皮肤主组件，请在官方插件页检查加载状态' }
           const row = matches[0]
-          if (row.enabled === false) return { ...state, activation: 'unavailable' as const, error: '皮肤组件已关闭；请点击使用以自动启用，或在官方插件页检查覆盖配置' }
+          if (row.enabled === false) {
+            bundle ??= await bundleFor(skin.package)
+            return !state.primary && !state.pinned && bundle?.enabled !== true
+              ? { ...state, activation: 'inactive' as const, error: undefined }
+              : { ...state, activation: 'unavailable' as const, error: '皮肤组件已关闭；请点击使用以自动启用，或在官方插件页检查覆盖配置' }
+          }
           if (row.enabled !== true) return { ...state, activation: 'unavailable' as const, error: '宿主未提供可确认的组件启用状态，请在官方插件页核对' }
           if (row.fiberPhase === 'active') return { ...state, activation: 'active' as const, error: undefined }
           if (row.fiberPhase === 'loading' || row.fiberPhase === 'pending') return { ...state, activation: 'switching' as const, error: row.fiberPhase === 'loading' ? '皮肤组件正在加载，请稍候' : '皮肤组件正在等待所需服务，请在官方插件页查看详情' }
@@ -1079,10 +1325,10 @@ export class SkinLifecycle {
       // This read holds the selection queue only to clean up receipts. A
       // stalled Host must not block later writes or let a late read clear a
       // newer restart requirement after that queue has been released.
-      const inspected = reconcileInferred ? await Promise.race([
+      const inspected = await Promise.race([
         inspectInventory(),
         new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('宿主插件清单读取超时')), this.options.lifecycleWaitMs ?? 10_000) }),
-      ]) : await inspectInventory()
+      ])
       const confirmed = new Set(inspected.filter(state => inferredIds.has(state.skinId) && state.activation === 'active'
         // The official plugin page can replace a package outside our queue.
         // A live old fiber must not discharge a different installed build.
@@ -1099,7 +1345,7 @@ export class SkinLifecycle {
       }
       return inspected.map((state, index) => this.describeRestartVerification(inferredIds.has(state.skinId) && !confirmed.has(state.skinId) ? current[index] : state))
     } catch (error) {
-      return current.map(state => inspect.includes(state) && !inferredIds.has(state.skinId) ? { ...state, activation: 'unavailable' as const, error: `${this.unverifiedRestartSkinIds.has(state.skinId) ? '重启后皮肤仍未生效：' : ''}无法核对皮肤组件运行状态：${errorMessage(error)}` } : state)
+      return current.map(state => inspect.includes(state) && state.activation !== 'restart-required' && !inferredIds.has(state.skinId) ? { ...state, activation: 'unavailable' as const, error: `${this.unverifiedRestartSkinIds.has(state.skinId) ? '重启后皮肤仍未生效：' : ''}无法核对皮肤组件运行状态：${errorMessage(error)}` } : state)
     } finally {
       if (timer !== undefined) clearTimeout(timer)
     }
@@ -1190,6 +1436,7 @@ export class SkinLifecycle {
     void execution.finally(() => {
       if (this.executions.get(operation.id) === execution) this.executions.delete(operation.id)
       this.componentUndo.delete(operation.id)
+      this.bundleUndo.delete(operation.id)
       this.legacyBundleUndo.delete(operation.id)
     }).catch(() => undefined)
     return operation
@@ -1819,6 +2066,9 @@ export class SkinLifecycle {
     if (!liveValidation.ok) throw new Error(liveValidation.reason)
     this.assertReplacementArtifact(this.options.profileDir, skin, operation)
     this.claimManagedLoaders(state, skin, resolved.loaderRows, beforeRows)
+    // Browser imports can still refer to the previous package bytes. Only
+    // selection changes may be confirmed from an already active fiber.
+    if (isWebClientPackage(this.options.profileDir, skin.package)) operation.restartRequired = true
   }
 
   private async installCompanions(skin: SkinEntry, operation: Operation, state: PersistedMarketState): Promise<void> {
@@ -1834,6 +2084,7 @@ export class SkinLifecycle {
         // claiming market ownership / registration.
         const companionValidation = validateInstalledSkin(this.options.profileDir, companionAsSkin(skin, companion), { hostKind: this.hostKind })
         if (!companionValidation.ok) throw new Error(companionValidation.reason)
+        if (isWebClientPackage(this.options.profileDir, companion.package)) operation.restartRequired = true
         this.claimManagedCompanion(state, companion.package, skin.id, true)
       } else if (linked !== undefined) {
         // An existing ownership receipt grants activation linkage, while its
@@ -1926,7 +2177,7 @@ export class SkinLifecycle {
         const currentSkinEntry = incomingRow.packageName === skin.package
           && incomingRow.id === skin.rowId
           && id === skin.rowId
-          && (name === undefined || name === skin.rowId || name === skin.package)
+          && name === skin.package
         if (incomingRow.packageName === existing.packageName || currentSkinEntry
           || id === skin.rowId && name !== undefined && legacyPackages.includes(name)) continue
         conflicts.push({
@@ -2050,7 +2301,7 @@ export class SkinLifecycle {
         this.recordRestart(state, skin.id, operation.restartRequired === true)
         writeMarketState(this.options.profileDir, state)
         operation.message = operation.restartRequired
-          ? '安装构件已修复；请手动重启 Desktop App 完成应用'
+          ? this.hostKind === 'desktop' ? '安装构件已修复；请手动重启 Desktop App 完成应用' : '安装构件已修复；请重启 DSH 完成应用'
           : 'skin was already installed; market state reconciled'
         return
       } catch (error) {
@@ -2092,7 +2343,7 @@ export class SkinLifecycle {
       writeMarketState(this.options.profileDir, state)
       cleanupCompatibilityPatchFiles(detachedPatchFiles.filter(file => file !== compatibilityPatchFile(this.options.profileDir, skin.package, skin.install.version)))
       operation.message = operation.restartRequired
-        ? '安装构件已验证；请手动重启 Desktop App 完成应用'
+        ? this.hostKind === 'desktop' ? '安装构件已验证；请手动重启 Desktop App 完成应用' : '安装构件已验证；请重启 DSH 完成应用'
         : 'installed; choose Use to activate'
     } catch (error) {
       await this.recoverProfile(skin, operation, snapshot, mutationsBefore)
@@ -2113,6 +2364,7 @@ export class SkinLifecycle {
         restoreFile(profilePatchFile(this.options.profileDir), snapshot.patch)
       }
       if (this.management !== undefined && operation !== undefined) {
+        await this.restoreNativeBundles(operation, false)
         for (const { skin, enabled } of this.componentUndo.get(operation.id)?.values() ?? []) {
           const manifest = packageManifest(this.options.profileDir, skin.package)
           const bundled = (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined
@@ -2120,9 +2372,10 @@ export class SkinLifecycle {
           if (component === undefined) throw new Error('回退时皮肤主组件身份已变化，请在官方插件页核对状态')
           if (component.enabled !== enabled) this.acceptManagement(await this.awaitLifecycle(this.management.setPluginEnabled(component.entryId, enabled)), operation, skin)
         }
+        await this.restoreNativeBundles(operation)
       }
       writeMarketState(this.options.profileDir, previous)
-      await this.replayLocked(false)
+      if (this.management === undefined) await this.replayLocked(false)
       if (this.management !== undefined && operation?.restartRequired === true) {
         // Rollback restores the saved selection, but a native no-HMR result
         // cannot confirm that the currently loaded appearance was restored.
@@ -2220,40 +2473,37 @@ export class SkinLifecycle {
     const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: pinnedSkinIds(previous) }
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)
     this.reconcileDisabledSkinIds(next)
-    const requiresRestart = this.requiresRestartForTransition(previous, next)
-    if (requiresRestart) operation.restartRequired = true
     const enabled = enabledSkinIds(next)
+    const dependencies = readDependencies(this.options.profileDir)
+    const installed = this.catalog.filter(item => dependencies[item.package] !== undefined)
     try {
       // Disable the previous ordinary skin before enabling the target. Pinned
       // skins remain part of the enabled union throughout this transition.
-      for (const item of this.catalog) {
-        if (!enabled.has(item.id) && readDependencies(this.options.profileDir)[item.package] !== undefined) await this.registerSkin(item, true)
+      for (const item of installed) {
+        if (!enabled.has(item.id)) await this.registerSkin(item, true)
       }
-      for (const item of this.catalog) {
-        if (enabled.has(item.id) && readDependencies(this.options.profileDir)[item.package] !== undefined) await this.registerSkin(item, false)
+      for (const item of installed) {
+        if (enabled.has(item.id)) await this.registerSkin(item, false)
       }
-      await this.syncInstalledCompanions(next, !requiresRestart)
+      await this.syncInstalledCompanions(next, true)
       let active: { found: boolean; live: boolean } | undefined
-      if (!requiresRestart) {
-        for (const item of this.catalog) {
-          if (!enabled.has(item.id)) await this.setEntryDisabled(item, true)
-        }
-        for (const item of this.catalog) {
-          if (enabled.has(item.id) && readDependencies(this.options.profileDir)[item.package] !== undefined) {
-            await this.setEntryDisabled(item, false)
-          }
-        }
-        active = await this.setEntryDisabled(skin, false)
+      for (const item of installed) {
+        if (!enabled.has(item.id)) await this.setEntryDisabled(item, true)
       }
-      await this.syncManagedLoaders(next, !requiresRestart)
-      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true, false,
-        operation.application !== 'restart-required' ? previous.pendingRestart?.inferredInstalls?.[skin.id] : undefined)
+      for (const item of installed) {
+        if (enabled.has(item.id)) {
+          await this.setEntryDisabled(item, false)
+        }
+      }
+      active = await this.setEntryDisabled(skin, false)
+      await this.syncManagedLoaders(next, true)
+      this.recordSelectionRestart(previous, next, skin, operation)
       writeMarketState(this.options.profileDir, next)
       if (next.pendingRestart?.inferredInstalls?.[skin.id] !== undefined) {
         await this.inspectRuntimeStates(true)
         operation.restartRequired = readMarketState(this.options.profileDir).pendingRestart?.skinIds.includes(skin.id) === true
       }
-      if (requiresRestart || operation.restartRequired === true) {
+      if (operation.restartRequired === true) {
         operation.message = 'activation saved; restart DSH to load this skin'
       } else {
         operation.message = active?.found && active.live ? 'skin is active' : '启用设置已保存，但皮肤组件尚未运行；请在官方插件页检查加载状态'
@@ -2278,16 +2528,14 @@ export class SkinLifecycle {
     state.activeSkinId = state.activeSkinId === skin.id ? null : state.activeSkinId
     state.pinnedSkinIds = state.pinnedSkinIds.filter(id => id !== skin.id)
     this.reconcileDisabledSkinIds(state)
-    const requiresRestart = this.requiresRestartForTransition(previous, state)
-    if (requiresRestart) operation.restartRequired = true
     try {
       await this.registerSkin( skin, true)
-      if (!requiresRestart) await this.setEntryDisabled(skin, true)
-      await this.syncInstalledCompanions(state, !requiresRestart)
-      await this.syncManagedLoaders(state, !requiresRestart)
-      this.recordRestart(state, skin.id, requiresRestart || operation.restartRequired === true)
+      await this.setEntryDisabled(skin, true)
+      await this.syncInstalledCompanions(state, true)
+      await this.syncManagedLoaders(state, true)
+      this.recordSelectionRestart(previous, state, skin, operation)
       writeMarketState(this.options.profileDir, state)
-      operation.message = requiresRestart || operation.restartRequired === true
+      operation.message = operation.restartRequired === true
         ? 'skin disabled; restart DSH to apply the change'
         : enabledSkinIds(state).size === 0 ? 'DSH default appearance restored; package kept installed' : 'skin disabled; other enabled skins were kept active'
     } catch (error) {
@@ -2314,23 +2562,20 @@ export class SkinLifecycle {
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: [...new Set([...pinnedSkinIds(previous), skin.id])] }
     this.reconcileDisabledSkinIds(next)
-    const requiresRestart = this.requiresRestartForTransition(previous, next)
-    if (requiresRestart) operation.restartRequired = true
     try {
       await this.registerSkin( skin, false)
-      await this.syncInstalledCompanions(next, !requiresRestart)
-      await this.syncManagedLoaders(next, !requiresRestart)
-      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true, false,
-        operation.application !== 'restart-required' ? previous.pendingRestart?.inferredInstalls?.[skin.id] : undefined)
+      await this.syncInstalledCompanions(next, true)
+      await this.syncManagedLoaders(next, true)
+      const active = await this.setEntryDisabled(skin, false)
+      this.recordSelectionRestart(previous, next, skin, operation)
       writeMarketState(this.options.profileDir, next)
       if (next.pendingRestart?.inferredInstalls?.[skin.id] !== undefined) {
         await this.inspectRuntimeStates(true)
         operation.restartRequired = readMarketState(this.options.profileDir).pendingRestart?.skinIds.includes(skin.id) === true
       }
-      if (requiresRestart || operation.restartRequired === true) {
+      if (operation.restartRequired === true) {
         operation.message = 'pin saved; restart DSH to load this skin'
       } else {
-        const active = await this.setEntryDisabled(skin, false)
         operation.message = active.found && active.live ? 'skin is pinned and active' : '常驻选择已保存，但皮肤组件尚未运行；请在官方插件页检查加载状态'
       }
     } catch (error) {
@@ -2352,18 +2597,16 @@ export class SkinLifecycle {
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: pinnedSkinIds(previous).filter(id => id !== skin.id) }
     this.reconcileDisabledSkinIds(next)
-    const requiresRestart = this.requiresRestartForTransition(previous, next)
-    if (requiresRestart) operation.restartRequired = true
     try {
       if (next.activeSkinId !== skin.id) {
         await this.registerSkin( skin, true)
-        if (!requiresRestart) await this.setEntryDisabled(skin, true)
+        await this.setEntryDisabled(skin, true)
       }
-      await this.syncInstalledCompanions(next, !requiresRestart)
-      await this.syncManagedLoaders(next, !requiresRestart)
-      this.recordRestart(next, skin.id, requiresRestart || operation.restartRequired === true)
+      await this.syncInstalledCompanions(next, true)
+      await this.syncManagedLoaders(next, true)
+      this.recordSelectionRestart(previous, next, skin, operation)
       writeMarketState(this.options.profileDir, next)
-      operation.message = requiresRestart || operation.restartRequired === true
+      operation.message = operation.restartRequired === true
         ? 'skin is no longer pinned; restart DSH to apply the change'
         : next.activeSkinId === skin.id ? 'skin is no longer pinned and remains the current skin' : 'skin is no longer pinned and was disabled'
     } catch (error) {
@@ -2401,7 +2644,20 @@ export class SkinLifecycle {
         if (readDependencies(this.options.profileDir)[skin.package] !== originalSpec) throw new Error('更新来源在安装准备期间发生变化，请刷新后重试')
       }
       const previousState = readMarketState(this.options.profileDir)
-      const wasActive = enabledSkinIds(previousState).has(skin.id)
+      let wasActive = enabledSkinIds(previousState).has(skin.id)
+      let repairUpdatedComponent = true
+      if (this.management !== undefined) {
+        const manifest = packageManifest(this.options.profileDir, skin.package)
+        const bundled = (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined
+        const selected = bundled && readProfileBundles(this.options.profileDir).includes(skin.package)
+        // A deselected bundle has no effective component to preserve. Its old
+        // declaration may itself be what this package update needs to repair.
+        const component = bundled && !selected ? undefined : await this.officialComponent(skin, bundled)
+        // Preserve the native saved choice even while its client awaits a restart.
+        wasActive = bundled ? selected
+          : component?.enabled === true
+        repairUpdatedComponent = component?.enabled !== false
+      }
       const snapshot = snapshotInstallFiles(this.options.profileDir, skin.package, skin.install.version)
       const mutationsBefore = this.profileMutations.get(operation.id) ?? 0
       const detachedPatchFiles = this.hostKind === 'desktop' ? [] : detachCompatibilityPatches(this.options.profileDir, skin.package)
@@ -2434,7 +2690,7 @@ export class SkinLifecycle {
           previousState.pinnedSkinIds = pinnedSkinIds(previousState).filter(id => id !== skin.id)
           this.reconcileDisabledSkinIds(previousState)
         }
-        await this.registerSkin( skin, !wasActive || needsUseConfirmation)
+        await this.registerSkin( skin, !wasActive || needsUseConfirmation, repairUpdatedComponent)
         await this.syncInstalledCompanions(previousState, false)
         await this.setEntryDisabled(skin, !wasActive || needsUseConfirmation)
         await this.syncManagedLoaders(previousState, false)

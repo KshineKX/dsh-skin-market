@@ -53,10 +53,10 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
 import { HOME_CATALOG_BATCH_SIZE, captureListScroll, compareInstalledSkinOrder, compareSkinOrder, interceptNotice, isInterceptFailure, resolvePrimitiveIcon, restartDocumentProbeUrl, restartReloadUrl, restoreListScroll, restoreMarketStyleOrder, SkinMarketSection, waitForRestartDocument } from '../../src/client/SkinMarketSection.tsx'
 import { MARKET_INSTALL_TROUBLESHOOT_URL } from '../../src/client/failure-help.ts'
 import { apply as applyClient, createClientSkinRuntime, missingPrimitives, switchClientSkin } from '../../src/client/index.ts'
-import { createSkinInstallCommandGroups, createSkinInstallPrompt, createSkinInstallSearchKeyword } from '../../src/client/submission.ts'
+import { createSkinInstallCommandGroups, createSkinInstallCommands, createSkinInstallInputs, createSkinInstallPrompt } from '../../src/client/submission.ts'
 import { setGeneratedMediaSources } from '../../src/media-preview.ts'
 import { compatibilityContext } from '../../src/compatibility.ts'
-import type { CatalogSkin, Operation } from '../../src/client/types.ts'
+import type { CatalogSkin, Operation, RuntimeSkin } from '../../src/client/types.ts'
 
 const skin = {
   id: 'test.skin', name: { zh: '测试皮肤', en: 'Test Skin' }, author: 'author', description: 'description', repo: 'https://github.com/a/b', package: 'skin', rowId: 'skin',
@@ -1898,7 +1898,7 @@ describe('client market', () => {
     expect(screen.queryByRole('dialog', { name: '已拦截安装' })).toBeNull()
   })
 
-  it('opens a concise manual install dialog with prompt and plugin keyword methods', async () => {
+  it('offers a prompt and a single executable command for manual Web installation', async () => {
     const manual = { ...skin, review: { compatibility: 'verified' as const, preview: 'verified' as const, installation: 'manual-only' as const } }
     const writeText = vi.fn(async () => undefined)
     const open = vi.fn()
@@ -1909,18 +1909,18 @@ describe('client market', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '需手动安装' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
-    expect(dialog.textContent).toContain('让 Agent 检查并指导安装')
-    expect(dialog.textContent).toContain('插件包名')
-    expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
+    expect(dialog.textContent).toContain('提示词')
+    expect(dialog.textContent).toContain('命令')
+    expect(dialog.textContent).not.toContain('也可自行打开「插件 → 添加插件」，输入：')
     expect(dialog.textContent).not.toContain('该皮肤需要 Agent 协助安装')
-    expect(screen.queryByRole('button', { name: '复制命令' })).toBeNull()
+    expect(screen.getByRole('button', { name: '复制命令' })).toBeTruthy()
     expect(screen.getAllByRole('button', { name: '复制提示词' })).toHaveLength(1)
     expect(screen.queryByRole('button', { name: '取消' })).toBeNull()
-    expect(screen.getByRole('textbox', { name: '插件包名' })).toHaveProperty('value', createSkinInstallSearchKeyword(manual))
+    expect(screen.queryByRole('textbox', { name: '插件包名' })).toBeNull()
     expect(screen.queryByRole('button', { name: '打开安装页面' })).toBeNull()
     expect(open).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: '复制插件包名' }))
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallSearchKeyword(manual)))
+    fireEvent.click(screen.getByRole('button', { name: '复制命令' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallCommands(manual)[0]!.value))
     const copyPrompt = screen.getAllByRole('button', { name: '复制提示词' }).at(-1)!
     fireEvent.click(copyPrompt)
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(manual, 'dsh')))
@@ -1947,8 +1947,10 @@ describe('client market', () => {
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
     await waitFor(() => expect(dialog.textContent).toContain('无法自动安装：未找到可供 Desktop 安装的 npm 包'))
     expect(dialog.textContent).toContain('插件包名')
-    expect(dialog.textContent).toContain('也可自行打开「插件 → 添加插件」，输入：')
+    expect(dialog.textContent).toContain('打开「插件 → 添加插件」，输入：')
     expect(dialog.textContent).toContain('桌面端由你在插件页操作')
+    expect(screen.getByRole('textbox', { name: '插件包名' })).toHaveProperty('value', createSkinInstallInputs(manual)[0]!.value)
+    expect(screen.queryByRole('button', { name: '复制命令' })).toBeNull()
     expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(manual, 'desktop')])
     expect(dialog.textContent).not.toContain('dsh plugin --profile web')
     fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
@@ -2005,12 +2007,131 @@ describe('client market', () => {
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open }} />)
     fireEvent.click(await screen.findByRole('button', { name: '安装' }))
-    await waitFor(() => expect(open).toHaveBeenCalledWith(target))
+    await waitFor(() => expect(open).toHaveBeenCalledWith(target, { skinId: manual.id, packageName: manual.package }))
     if (outcome === 'unavailable') {
       expect((await screen.findByRole('alert')).textContent).toContain('插件列表加载失败')
     }
     expect(screen.queryByRole('dialog', { name: '安装 测试皮肤' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/install'))).toBe(false)
+  })
+
+  it('refreshes native installation changes without activating an install-only target', async () => {
+    let installed = false
+    let notify!: () => void
+    const takeActivationIntent = vi.fn(() => null)
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [managedDesktopSkin] }
+      : { hostKind: 'desktop', runtime: dshRuntime, management: officialManagement,
+        skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] : [] } }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open: vi.fn(), takeActivationIntent,
+      observe: listener => { notify = listener; return () => undefined } }} />)
+    await screen.findByRole('button', { name: '安装' })
+    installed = true
+    act(() => notify())
+    expect(await screen.findAllByRole('button', { name: '使用' })).not.toHaveLength(0)
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/activate'))).toBe(false)
+  })
+
+  it.each([true, false])('continues a native enable intent after remount through the existing confirmation (accept=%s)', async accept => {
+    window.localStorage.removeItem('dsh-skin-market:activation-warning-accepted')
+    let active = false
+    const intent = { skinId: skin.id, packageName: skin.package, spec: managedDesktopSkin.install.target, requestId: 'native-request' }
+    const takeActivationIntent = vi.fn().mockReturnValueOnce(intent).mockReturnValue(null)
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime: dshRuntime, management: officialManagement,
+        skins: [{ skinId: skin.id, installation: 'installed', activation: active ? 'active' : 'inactive', installedVersion: '1.0.0', updateAvailable: false }] }) }
+      if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') { active = true; return { ok: true, json: async () => ({ operationId: 'native-activate' }) } }
+      if (url.endsWith('/operations/native-activate')) return { ok: true, json: async () => ({ id: 'native-activate', kind: 'activate', skinId: skin.id, phase: 'done' }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    let notify!: () => void
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open: vi.fn(), takeActivationIntent,
+      observe: listener => { notify = listener; return () => undefined } }} />)
+    const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/activate'))).toBe(false)
+    fireEvent.click(within(dialog).getByRole('button', { name: accept ? '确认使用' : '取消' }))
+    if (accept) expect(await screen.findAllByRole('button', { name: '停用' })).not.toHaveLength(0)
+    act(() => notify())
+    await waitFor(() => expect(takeActivationIntent.mock.calls.length).toBeGreaterThan(1))
+    expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toHaveLength(accept ? 1 : 0)
+    expect(screen.queryByRole('dialog', { name: '使用前确认' })).toBeNull()
+  })
+
+  it('returns an unhandled native enable intent when leaving its confirmation', async () => {
+    window.localStorage.removeItem('dsh-skin-market:activation-warning-accepted')
+    const intent = { skinId: skin.id, packageName: skin.package, spec: managedDesktopSkin.install.target, requestId: 'native-unmount' }
+    let pending: typeof intent | null = intent
+    const restoreActivationIntent = vi.fn((value: typeof intent) => { pending = value })
+    const panel = { available: () => true, open: vi.fn(), observe: () => () => undefined,
+      takeActivationIntent: () => { const value = pending; pending = null; return value }, restoreActivationIntent }
+    const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [managedDesktopSkin] }
+      : { hostKind: 'desktop', runtime: dshRuntime, management: officialManagement,
+        skins: [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] } }))
+    vi.stubGlobal('fetch', fetchMock)
+    const first = render(<SkinMarketSection t={key => key} desktopPluginPanel={panel} />)
+    await screen.findByRole('dialog', { name: '使用前确认' })
+    first.unmount()
+    expect(restoreActivationIntent).toHaveBeenCalledOnce()
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={panel} />)
+    fireEvent.click(within(await screen.findByRole('dialog', { name: '使用前确认' })).getByRole('button', { name: '取消' }))
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/activate'))).toBe(false)
+    expect(restoreActivationIntent).toHaveBeenCalledOnce()
+  })
+
+  it('does not consume a new native enable intent with an older pending state response', async () => {
+    const intent = { skinId: skin.id, packageName: skin.package, spec: managedDesktopSkin.install.target, requestId: 'native-race' }
+    let pending: typeof intent | null = null
+    let notify!: () => void
+    let installed = false
+    let hold = false
+    let release!: (value: unknown) => void
+    const state = () => ({ hostKind: 'desktop', runtime: dshRuntime, management: officialManagement,
+      skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: 'inactive', installedVersion: '1.0.0', updateAvailable: false }] : [] })
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [managedDesktopSkin] }) }
+      if (url.endsWith('/state')) {
+        const snapshot = state()
+        if (hold) { hold = false; return await new Promise(resolve => { release = resolve }) }
+        return { ok: true, json: async () => snapshot }
+      }
+      if (url.endsWith('/activate') && init?.method === 'POST') return { ok: true, json: async () => ({ operationId: 'native-race-activate' }) }
+      if (url.endsWith('/operations/native-race-activate')) return { ok: true, json: async () => ({ id: 'native-race-activate', kind: 'activate', skinId: skin.id, phase: 'done' }) }
+      return { ok: true, json: async () => ({ updateAvailable: false }) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const takeActivationIntent = vi.fn(() => { const value = pending; pending = null; return value })
+    render(<SkinMarketSection t={key => key} desktopPluginPanel={{ available: () => true, open: vi.fn(), takeActivationIntent,
+      observe: listener => { notify = listener; return () => undefined } }} />)
+    await screen.findByRole('button', { name: '安装' })
+    await waitFor(() => expect(takeActivationIntent).toHaveBeenCalled())
+    hold = true
+    act(() => notify())
+    await waitFor(() => expect(release).toBeTypeOf('function'))
+    installed = true
+    pending = intent
+    act(() => notify())
+    await act(async () => release({ ok: true, json: async () => ({ ...state(), skins: [] }) }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toHaveLength(1))
+    expect(screen.queryByText('原生安装目标已变化，请重新选择皮肤使用。')).toBeNull()
+  })
+
+  it.each([
+    ['active', '使用中'], ['missing', '待重启'], ['failed', '未生效'],
+  ] as const)('checks the browser client module before displaying a natively active skin (%s)', async (phase, label) => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [managedDesktopSkin] }
+      : { hostKind: 'desktop', restartAvailable: false, runtime: dshRuntime, management: officialManagement,
+        skins: [{ skinId: skin.id, installation: 'installed', activation: 'active', clientModule: true, installedVersion: '1.0.0', updateAvailable: false }] } })))
+    const probeActive = vi.fn(() => phase)
+    render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive }} />)
+    expect(await screen.findAllByText(label, { exact: true })).not.toHaveLength(0)
+    expect(probeActive).toHaveBeenCalledWith(skin.package)
+    if (phase !== 'active') expect(screen.queryByText('使用中', { exact: true })).toBeNull()
   })
 
   it('preserves the original manual Desktop panel without a second installation shortcut', async () => {
@@ -2931,6 +3052,160 @@ describe('client market', () => {
     const override = await screen.findByRole('button', { name: '确认无任务，重启' })
     expect(override.hasAttribute('disabled')).toBe(false)
     expect(screen.getByText('无法确认是否有 Agent 运行。请保存工作，并确认所有任务已结束后再重启。')).toBeTruthy()
+  })
+
+  describe('Web selection runtime convergence', () => {
+    function webSkin(overrides: Partial<RuntimeSkin> = {}): RuntimeSkin {
+      return { skinId: skin.id, installation: 'installed', activation: 'restart-required', primary: true, pinned: false,
+        installedVersion: '1.0.0', updateAvailable: false, clientModule: true, restartSource: 'selection', selectionHostApplied: true,
+        selectionHostStatus: 'applied', selectionClientTargets: [{ package: skin.package, active: true }], ...overrides }
+    }
+
+    function serveWebState(state: () => RuntimeSkin[], catalog: CatalogSkin[] = [skin]) {
+      const fetchMock = vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: catalog }
+        : url.endsWith('/state') ? { instanceId: 'same-web-instance', restartNoticeId: 'same-receipt', hostKind: 'dsh', runtime: dshRuntime, runningAgentCount: 0, skins: state() }
+          : { updateAvailable: false } }))
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('verifies the target, old skin, preserved plugin and managed browser companion together', async () => {
+      const targets = [{ package: skin.package, active: true }, { package: 'previous', active: false },
+        { package: 'pinned', active: true }, { package: 'managed-browser-companion', active: true }]
+      serveWebState(() => [webSkin({ selectionClientTargets: targets })])
+      let pinnedPhase = 'active' as 'active' | 'failed'
+      let notify!: () => void
+      const probeActive = vi.fn((name: string) => name === 'previous' ? 'missing' as const : name === 'pinned' ? pinnedPhase : 'active' as const)
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive, probeSyncing: () => false,
+        observe: listener => { notify = listener; return () => undefined } }} />)
+      expect((await screen.findAllByText('使用中', { exact: true })).length).toBeGreaterThan(0)
+      expect(probeActive.mock.calls.map(([name]) => name)).toEqual(expect.arrayContaining(targets.map(item => item.package)))
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      pinnedPhase = 'failed'
+      act(() => notify())
+      expect(screen.queryByText('使用中', { exact: true })).toBeNull()
+      expect(screen.getAllByText('未生效', { exact: true }).length).toBeGreaterThan(0)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it('waits for graph settlement and clears a real delayed-client reminder in the same tab', async () => {
+      let phase = 'missing' as 'missing' | 'active'
+      let syncing = false
+      let notify!: () => void
+      const fetchMock = serveWebState(() => [webSkin()])
+      const unsubscribe = vi.fn()
+      const view = render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => phase, probeSyncing: () => syncing,
+        observe: listener => { notify = listener; return unsubscribe } }} />)
+      expect((await screen.findAllByText('正在加载', { exact: true })).length).toBeGreaterThan(0)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' }, { timeout: 3000 })
+      phase = 'active'
+      syncing = true
+      act(() => notify())
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      expect(screen.queryByText('使用中', { exact: true })).toBeNull()
+      syncing = false
+      act(() => notify())
+      expect(screen.getAllByText('使用中', { exact: true }).length).toBeGreaterThan(0)
+      expect(screen.queryByText('待重启', { exact: true })).toBeNull()
+      const reads = fetchMock.mock.calls.length
+      act(() => { notify(); notify(); notify() })
+      expect(fetchMock.mock.calls.length).toBe(reads)
+      expect(fetchMock.mock.calls.every(([url]) => !url.endsWith('/restart'))).toBe(true)
+      view.unmount()
+      expect(unsubscribe).toHaveBeenCalledOnce()
+    })
+
+    it.each(['soft receipt', 'already applied receipt'] as const)('rechecks a loading Host with a state-only read before reporting success (%s)', async receipt => {
+      let hostReady = false
+      const fetchMock = serveWebState(() => [webSkin({ selectionHostApplied: hostReady, selectionHostStatus: hostReady ? 'applied' : 'switching',
+        ...(receipt === 'already applied receipt' ? { activation: 'active' as const, restartSource: undefined } : {}) })])
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => 'active', probeSyncing: () => false }} />)
+      expect((await screen.findAllByText('正在加载', { exact: true })).length).toBeGreaterThan(0)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      hostReady = true
+      await waitFor(() => expect(screen.getAllByText('使用中', { exact: true }).length).toBeGreaterThan(0), { timeout: 3000 })
+      expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/catalog'))).toHaveLength(1)
+      expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state'))).toHaveLength(2)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it('uses the actual probe after an activation request whose loader boolean is false', async () => {
+      let activated = false
+      const fetchMock = vi.fn(async (url: string, init?: RequestInit) => ({ ok: true, json: async () => {
+        if (url.endsWith('/catalog')) return { skins: [skin] }
+        if (url.endsWith('/state')) return { instanceId: 'accepted-is-not-applied', hostKind: 'dsh', runtime: dshRuntime,
+          skins: [webSkin({ activation: activated ? 'restart-required' : 'inactive', primary: activated,
+            restartSource: activated ? 'selection' : undefined, selectionClientTargets: [{ package: skin.package, active: activated }] })] }
+        if (url.endsWith('/activate') && init?.method === 'POST') { activated = true; return { operationId: 'activate-client-probe' } }
+        if (url.endsWith('/operations/activate-client-probe')) return { id: 'activate-client-probe', skinId: skin.id, kind: 'activate', phase: 'done' }
+        return { updateAvailable: false }
+      } }))
+      vi.stubGlobal('fetch', fetchMock)
+      const setActive = vi.fn(async () => false)
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive, probeActive: () => activated ? 'active' : 'disabled', probeSyncing: () => false }} />)
+      await openSkinCard()
+      fireEvent.click(screen.getByRole('button', { name: '使用' }))
+      await waitFor(() => expect(screen.getAllByText('正在使用', { exact: true }).length).toBeGreaterThan(0))
+      expect(setActive).toHaveBeenCalledWith(skin.package, true)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it.each(['deactivate', 'unpin'] as const)('waits for a host-only skin browser companion to stop after %s', async kind => {
+      let stopped = false
+      let companionPhase = 'active' as 'active' | 'missing'
+      let notify!: () => void
+      const fetchMock = vi.fn(async (url: string, init?: RequestInit) => ({ ok: true, json: async () => {
+        if (url.endsWith('/catalog')) return { skins: [skin] }
+        if (url.endsWith('/state')) return { instanceId: 'stopping-companion', hostKind: 'dsh', runtime: dshRuntime,
+          skins: [webSkin({ clientModule: undefined, activation: stopped ? 'restart-required' : 'active', primary: !stopped && kind === 'deactivate', pinned: !stopped && kind === 'unpin',
+            restartSource: stopped ? 'selection' : undefined, selectionClientTargets: [{ package: 'extra-browser-companion', active: !stopped }] })] }
+        if (url.endsWith(`/${kind}`) && init?.method === 'POST') { stopped = true; return { operationId: 'stop-browser-companion' } }
+        if (url.endsWith('/operations/stop-browser-companion')) return { id: 'stop-browser-companion', skinId: skin.id, kind, phase: 'done' }
+        return { updateAvailable: false }
+      } }))
+      vi.stubGlobal('fetch', fetchMock)
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(async () => true), probeActive: () => companionPhase, probeSyncing: () => false,
+        observe: listener => { notify = listener; return () => undefined } }} />)
+      await openSkinCard()
+      fireEvent.click(screen.getByRole('button', { name: kind === 'deactivate' ? '停用' : '取消常驻' }))
+      await screen.findAllByText('正在加载', { exact: true })
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      companionPhase = 'missing'
+      act(() => notify())
+      expect(screen.getByRole('button', { name: '使用' })).toBeTruthy()
+      expect(screen.queryByText('待重启', { exact: true })).toBeNull()
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it.each(['unconfirmed Host', 'incomplete browser list', 'missing probe'] as const)('does not confirm a soft selection with %s', async missing => {
+      serveWebState(() => [webSkin({ selectionHostApplied: missing === 'unconfirmed Host' ? false : true,
+        selectionHostStatus: missing === 'unconfirmed Host' ? 'unavailable' : 'applied',
+        selectionClientTargets: missing === 'incomplete browser list' ? undefined : [{ package: skin.package, active: true }] })])
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(),
+        ...(missing === 'missing probe' ? {} : { probeActive: () => 'active' as const }), probeSyncing: () => false }} />)
+      expect((await screen.findAllByText('未生效', { exact: true })).length).toBeGreaterThan(0)
+      expect(screen.queryByText('使用中', { exact: true })).toBeNull()
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it('keeps protected installation, update and legacy receipts despite an active same-name client', async () => {
+      serveWebState(() => [webSkin({ restartSource: undefined })])
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => 'active', probeSyncing: () => false }} />)
+      expect(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
+      expect(screen.queryByText('使用中', { exact: true })).toBeNull()
+    })
+
+    it('rearms a protected same-version receipt after its soft selection reminder was dismissed', async () => {
+      let protectedReceipt = false
+      serveWebState(() => [webSkin({ restartSource: protectedReceipt ? undefined : 'selection' })])
+      render(<SkinMarketSection t={key => key} />)
+      fireEvent.click(within(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).getByRole('button', { name: '取消' }))
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      protectedReceipt = true
+      fireEvent(window, new Event('focus'))
+      expect(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
+    })
   })
 
   it.each(['activate', 'pin'] as const)('preserves a real Web-client failure after %s without fabricating a Host activation state', async kind => {
@@ -3935,7 +4210,7 @@ describe('client market', () => {
     expect(document.querySelector(`img[src="${unverified.screenshots[0]}"]`)).toBeNull()
   })
 
-  it('shows prompt and command as two alternative copy capsules', async () => {
+  it('shows the Agent prompt first and one executable command in single-line capsules', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : { skins: [] } })))
     const writeText = vi.fn(async () => undefined)
     Object.assign(navigator, { clipboard: { writeText } })
@@ -3944,19 +4219,75 @@ describe('client market', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
-    expect(dialog.textContent).toContain('任选一种，不用都执行。')
-    const command = createSkinInstallCommandGroups(skin)[0]!.commands[0]!.value
-    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), command])
+    expect(dialog.textContent).toContain('复制命令，在运行 DSH 的电脑上执行。')
+    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(skin, 'dsh'), createSkinInstallCommands(skin)[0]!.value])
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
     fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(skin, 'dsh')))
     await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="check"]')).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: '复制命令' }))
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(command))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallCommands(skin)[0]!.value))
     await waitFor(() => expect(within(dialog).getByRole('button', { name: '复制命令' }).querySelector('[data-icon="check"]')).toBeTruthy())
     expect(within(dialog).getByRole('button', { name: '复制提示词' }).querySelector('[data-icon="copy"]')).toBeTruthy()
   })
 
-  it('lists one primary command for each terminal without adding companion commands or instructions', async () => {
+  it.each(['darwin', 'linux'] as const)('uses the backend %s environment and actual profile directory for copied Web commands', async platform => {
+    const subdirectorySkin = { ...skin, install: { ...skin.install, target: `${skin.install.target}&path:/packages/skin` } }
+    const installEnvironment = { platform, profile: 'work', profileDir: '/srv/DSH data/profiles/work', dshHome: '/srv/DSH data' }
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => url.endsWith('/catalog') ? { skins: [subdirectorySkin] } : { hostKind: 'dsh', skins: [], installEnvironment },
+    })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制命令' }))
+    const expected = createSkinInstallCommands(subdirectorySkin, { ...installEnvironment, shell: 'posix' })[0]!.value
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expected))
+    expect(expected).toContain(installEnvironment.profileDir)
+    expect(writeText.mock.calls[0]![0]).not.toMatch(/[\r\n]/)
+  })
+
+  it('defaults backend Windows commands to PowerShell and preserves the selected terminal after state refresh', async () => {
+    const subdirectorySkin = { ...skin, install: { ...skin.install, target: `${skin.install.target}&path:/packages/skin` } }
+    const installEnvironment = { platform: 'win32' as const, profile: 'work', profileDir: 'C:\\DSH data\\profiles\\work', dshHome: 'C:\\DSH data' }
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    const fetchMock = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => url.endsWith('/catalog') ? { skins: [subdirectorySkin] } : { hostKind: 'dsh', skins: [], installEnvironment: { ...installEnvironment } },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    const terminals = within(dialog).getByRole('group', { name: '终端' })
+    const powershell = within(terminals).getByRole('button', { name: 'PowerShell' })
+    const cmd = within(terminals).getByRole('button', { name: 'CMD' })
+    expect(powershell.getAttribute('aria-pressed')).toBe('true')
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
+    expect(within(dialog).queryByRole('combobox', { name: '运行 DSH 的系统' })).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制命令' }))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallCommands(subdirectorySkin, { ...installEnvironment, shell: 'powershell' })[0]!.value))
+    fireEvent.click(cmd)
+    const stateReads = fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    fireEvent.focus(window)
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateReads))
+    expect(cmd.getAttribute('aria-pressed')).toBe('true')
+    expect(powershell.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制命令' }))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallCommands(subdirectorySkin, { ...installEnvironment, shell: 'cmd' })[0]!.value))
+    for (const [copied] of writeText.mock.calls) expect(copied).not.toMatch(/[\r\n]/)
+  })
+
+  it('lists one primary command for each terminal when the backend system is unknown', async () => {
     const subdirectorySkin = { ...skin, install: { ...skin.install, target: `${skin.install.target}&path:/packages/skin`, companions: [
       { package: 'skin-manager', rowId: 'skin-manager', target: `${skin.install.target}&path:/packages/manager`, version: '1.2.3', commit: skin.install.commit },
     ] } }
@@ -3966,23 +4297,113 @@ describe('client market', () => {
     render(<SkinMarketSection t={key => key} />)
     await openSkinCard()
     fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
     const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
+    expect(within(dialog).queryByRole('group', { name: '运行 DSH 的系统' })).toBeNull()
+    expect(within(dialog).queryByRole('group', { name: '终端' })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: '复制命令' })).toBeNull()
     expect(within(dialog).queryByText(/按运行 Web 版 DSH 的电脑和终端选择/)).toBeNull()
+    expect(within(dialog).queryByText('此皮肤需按实际环境安装，请复制提示词。')).toBeNull()
     for (const group of createSkinInstallCommandGroups(subdirectorySkin)) {
       const terminal = within(dialog).getByRole('group', { name: group.label })
       expect(terminal.querySelectorAll('code')).toHaveLength(1)
-      const entry = group.commands[0]!
-      fireEvent.click(within(terminal).getByRole('button', { name: `复制${group.label} ${entry.label}` }))
-      await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(entry.value))
+      for (const entry of group.commands) {
+        fireEvent.click(within(terminal).getByRole('button', { name: `复制${group.label} ${entry.label}` }))
+        await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(entry.value))
+      }
     }
     expect(writeText).toHaveBeenCalledTimes(3)
+    for (const [copied] of writeText.mock.calls) expect(copied).not.toMatch(/[\r\n]/)
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(createSkinInstallPrompt(subdirectorySkin, 'dsh')))
+  })
+
+  it('copies only the primary command and retains companion instructions in the Agent prompt', async () => {
+    const companionSkin = { ...skin, install: { ...skin.install, companions: [
+      { package: 'skin-manager', rowId: 'skin-manager', target: 'skin-manager@1.2.3', version: '1.2.3', commit: skin.install.commit },
+    ] } }
+    const installEnvironment = { platform: 'linux' as const, profile: 'web', profileDir: '/srv/dsh/profiles/web' }
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [companionSkin] } : { skins: [], installEnvironment } })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    const commands = createSkinInstallCommands(companionSkin, { ...installEnvironment, shell: 'posix' })
+    for (const entry of commands) {
+      fireEvent.click(within(dialog).getByRole('button', { name: `复制${entry.label}` }))
+      await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(entry.value))
+    }
+    expect(commands).toHaveLength(1)
+    expect(within(dialog).queryByRole('button', { name: '复制配套插件命令' })).toBeNull()
+    expect(writeText).toHaveBeenCalledTimes(1)
     for (const [copied] of writeText.mock.calls) {
       expect(copied).not.toMatch(/[\r\n]/)
-      expect(copied).not.toContain('/packages/manager')
+      expect(copied).not.toContain('请分别')
+      expect(copied).not.toContain('安装皮肤前')
     }
     fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
-    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallPrompt(subdirectorySkin, 'dsh')))
-    expect(writeText.mock.calls.at(-1)![0]).toContain('/packages/manager')
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallPrompt(companionSkin, 'dsh', { ...installEnvironment, shell: 'posix' })))
+    expect(writeText.mock.calls.at(-1)![0]).toContain('skin-manager@1.2.3')
+  })
+
+  it('explains when a custom profile directory cannot be addressed by the install CLI', async () => {
+    const installEnvironment = { platform: 'linux' as const, profile: 'work', profileDir: '/srv/custom-profile', cliAvailable: false }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : { skins: [], installEnvironment } })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).queryByRole('button', { name: '复制命令' })).toBeNull()
+    expect(within(dialog).getByRole('status').textContent).toContain('当前 DSH 目录无法通过终端准确定位')
+    expect(within(dialog).getByRole('button', { name: '复制提示词' })).toBeTruthy()
+  })
+
+  it('suggests PowerShell when CMD cannot represent the actual directory literally', async () => {
+    const subdirectorySkin = { ...skin, install: { ...skin.install, target: `${skin.install.target}&path:/packages/skin` } }
+    const installEnvironment = { platform: 'win32' as const, profile: 'work', profileDir: 'C:\\DSH!data\\profiles\\work' }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [subdirectorySkin] } : { skins: [], installEnvironment } })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    const terminals = within(dialog).getByRole('group', { name: '终端' })
+    fireEvent.click(within(terminals).getByRole('button', { name: 'CMD' }))
+    expect(within(dialog).queryByRole('button', { name: '复制命令' })).toBeNull()
+    expect(within(dialog).getByRole('status').textContent).toContain('请切换到 PowerShell')
+    fireEvent.click(within(terminals).getByRole('button', { name: 'PowerShell' }))
+    expect(within(dialog).getByRole('button', { name: '复制命令' })).toBeTruthy()
+  })
+
+  it('retains the original bare npm copy field for managed Desktop skins', async () => {
+    const npmSkin = { ...managedDesktopSkin, package: '@example/skin', install: { ...managedDesktopSkin.install,
+      npm: { name: '@example/skin', version: '1.0.0', repository: skin.repo, integrity: 'sha512-abc', gitHead: skin.install.commit },
+      desktop: { mode: 'managed' as const, registry: 'npm' as const, packageName: '@example/skin', packageVersion: '1.0.0' },
+    } }
+    const writeText = vi.fn(async (_text: string) => undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [npmSkin] } : { hostKind: 'desktop', skins: [], management: officialManagement } })))
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+    fireEvent.click(await screen.findByRole('button', { name: '其他安装方式' }))
+
+    const dialog = screen.getByRole('dialog', { name: '安装 测试皮肤' })
+    expect(within(dialog).queryByRole('button', { name: '复制命令' })).toBeNull()
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
+    expect([...dialog.querySelectorAll('code')].map(node => node.textContent)).toEqual([createSkinInstallPrompt(npmSkin, 'desktop')])
+    expect(within(dialog).getByRole('textbox', { name: '插件包名' })).toHaveProperty('value', '@example/skin')
+    expect(within(dialog).queryByRole('textbox', { name: '伴生插件包名' })).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制插件包名' }))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith('@example/skin'))
+    expect(within(dialog).queryByRole('button', { name: '复制伴生插件包名' })).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: '复制提示词' }))
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(createSkinInstallPrompt(npmSkin, 'desktop')))
+    expect(within(dialog).queryByRole('button', { name: '打开添加插件' })).toBeNull()
   })
 
   it('replaces a failed verified screenshot instead of retaining stale image pixels', async () => {

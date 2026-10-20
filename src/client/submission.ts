@@ -1,7 +1,7 @@
-import { desktopInstallPlan } from '../desktop-install.ts'
 import { createInstallCommand, type InstallCommandContext } from '../install-command.ts'
 import { effectiveBuildApprovalKey } from '../build-approval.ts'
-import { preferredInstallTarget } from '../install-source.ts'
+import { manualInstallTarget, preferredInstallTarget } from '../install-source.ts'
+import { desktopInstallPlan } from '../desktop-install.ts'
 
 export const REGISTRY_REPOSITORY = 'https://github.com/kingOfSoySauce/dsh-skin-market'
 export const REGISTRY_PATH = 'registry/skins'
@@ -54,7 +54,7 @@ url: https://github.com/<owner>/<repo>
 收录不等于安全认证。不要声称该皮肤已被 DSH 官方、安全团队或市场背书。`
 }
 
-export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHostKind): string {
+export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHostKind, context?: InstallCommandContext): string {
   const target = preferredInstallTarget(skin)
   const buildApprovalKey = skin.install.npm === undefined ? effectiveBuildApprovalKey(skin) : undefined
   const buildApproval = buildApprovalKey === undefined
@@ -65,7 +65,16 @@ export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHost
     ? ''
     : `\n${companions.map(companion => `- 伴生包：${companion.package}（rowId ${companion.rowId}）\n- 伴生安装目标：${companion.target}`).join('\n')}`
   const targets = [...new Set([target, ...companions.map(companion => companion.target)])]
-  const command = targets.map(target => createInstallCommand(target)).join('\n')
+  const renderCommands = (shell: InstallCommandContext['shell']) => {
+    try { return targets.map(target => createInstallCommand(target, context?.profile ?? 'web', { ...context, shell })).join('\n') }
+    catch { return '当前终端无法安全表示安装目录，请切换终端或使用市场内安装。' }
+  }
+  const command = context?.cliAvailable === false
+    ? '当前自定义 profile 目录不支持 CLI 定位，请使用市场内安装，不要改写其他目录。'
+    : context?.shell !== undefined ? renderCommands(context.shell)
+      : targets.some(target => target.includes('&'))
+        ? `只执行实际终端对应的一组，不要把不同终端的命令全部执行。\nmacOS / Linux：\n${renderCommands('posix')}\nWindows PowerShell：\n${renderCommands('powershell')}\nWindows CMD：\n${renderCommands('cmd')}`
+        : renderCommands('posix')
   const packages = [skin.package, ...companions.map(companion => companion.package)].join('、')
   const rowIds = [skin.rowId ?? skin.package, ...companions.map(companion => companion.rowId)].join('、')
   const metadata = `- 仓库：${skin.repo}\n- 固定安装目标：${target}\n- package：${skin.package}\n- loader rowId：${skin.rowId ?? skin.package}${companionLines}\n- 版本：${skin.install.version}\n- commit：${skin.install.commit}`
@@ -84,37 +93,45 @@ export function createSkinInstallPrompt(skin: CatalogSkin, hostKind?: MarketHost
 export interface InstallCopyEntry { key: string; label: string; value: string }
 export interface InstallCommandGroup { key: string; label: string; commands: InstallCopyEntry[] }
 
-/** List the primary command for each applicable terminal. */
-export function createSkinInstallCommandGroups(skin: CatalogSkin, context: InstallCommandContext = {}, target = preferredInstallTarget(skin)): InstallCommandGroup[] {
-  const terminalSpecific = target.includes('&')
-  const shells = context.shell !== undefined ? [context.shell] : terminalSpecific ? ['posix', 'powershell', 'cmd'] as const : ['posix'] as const
-  const labels = { posix: 'macOS / Linux', powershell: 'Windows PowerShell', cmd: 'Windows CMD' }
+export function createSkinInstallInputs(skin: CatalogSkin): InstallCopyEntry[] {
+  return [{ key: 'keyword', label: '插件包名', value: manualInstallTarget(skin) }]
+}
+
+export function createSkinInstallCommands(skin: CatalogSkin, context: InstallCommandContext = {}, target = manualInstallTarget(skin)): InstallCopyEntry[] {
+  const inputs = createSkinInstallInputs(skin).map(entry => ({ ...entry, value: target }))
+  if (context.cliAvailable === false && inputs.some(entry => !entry.value.includes('&'))) return []
   try {
-    return shells.map(shell => ({
-      key: shell, label: terminalSpecific ? labels[shell] : '',
-      commands: [{ key: 'command', label: '命令', value: createInstallCommand(target, 'web', { shell }) }],
+    return inputs.map(entry => ({
+      key: entry.key.replace('keyword', 'command'), label: entry.label === '插件包名' ? '命令' : entry.label.replace('包名', '命令'),
+      value: createInstallCommand(entry.value, context.profile ?? 'web', context),
     }))
   } catch { return [] }
 }
 
-export function createSkinInstallCommand(skin: CatalogSkin): string {
-  const targets = [preferredInstallTarget(skin), ...(skin.install.companions ?? []).map(companion => companion.target)]
-  return [
-    '# Web 版',
-    [...new Set(targets)].map(target => createInstallCommand(target)).join('\n'),
-    '',
-    '# 官方桌面版：不要在终端执行；在「设置 → 皮肤市场」中打开该皮肤并安装',
-  ].join('\n')
+/** List the primary command for each applicable terminal. */
+export function createSkinInstallCommandGroups(skin: CatalogSkin, context: InstallCommandContext = {}, target = manualInstallTarget(skin)): InstallCommandGroup[] {
+  const terminalSpecific = target.includes('&') || context.dshHome !== undefined
+  const shells = context.shell !== undefined ? [context.shell] : terminalSpecific ? ['posix', 'powershell', 'cmd'] as const : ['posix'] as const
+  const labels = { posix: 'macOS / Linux', powershell: 'Windows PowerShell', cmd: 'Windows CMD' }
+  return shells.flatMap(shell => {
+    const commands = createSkinInstallCommands(skin, { ...context, shell }, target)
+    return commands.length === 0 ? [] : [{ key: shell, label: terminalSpecific ? labels[shell] : '', commands }]
+  })
+}
+
+/** A single primary command. Companion installation stays in the Agent prompt. */
+export function createSkinInstallCommand(skin: CatalogSkin, context: InstallCommandContext = {}): string {
+  return createSkinInstallCommands(skin, context)[0]?.value ?? ''
 }
 
 /**
- * The exact spec users can paste into the official Desktop plugin page.
+ * The spec users can paste into the official Desktop plugin page.
  *
  * Desktop accepts both npm and Git specs. A manual-only monorepo entry often
  * has no published npm package, so its package name would just fail the same
  * lookup that caused the manual fallback in the first place.
  */
 export function createSkinInstallSearchKeyword(skin: CatalogSkin): string {
-  return preferredInstallTarget(skin)
+  return manualInstallTarget(skin)
 }
 import type { CatalogSkin, MarketHostKind } from './types.ts'

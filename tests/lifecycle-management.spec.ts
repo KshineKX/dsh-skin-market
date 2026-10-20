@@ -563,7 +563,7 @@ describe('official plugin manager lifecycle', () => {
     expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
   })
 
-  it('repairs a disabled selected component when no prior restart attempt has failed', async () => {
+  it('preserves a natively disabled component during automatic replay despite the saved market selection', async () => {
     const target = skin('component-restart')
     const host = fixture([target], { hostVersion: '0.2.0-rc.2' })
     host.materialize(target)
@@ -574,9 +574,9 @@ describe('official plugin manager lifecycle', () => {
     expect(host.lifecycle.states().find(state => state.skinId === target.id)).toMatchObject({ activation: 'unavailable', error: expect.stringContaining('组件已关闭') })
     await host.lifecycle.replay()
     expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
-    expect(host.manager.setPluginEnabled).toHaveBeenCalledExactlyOnceWith(host.entryId(target.package), true)
+    expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
     expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
-    expect(host.lifecycle.states().find(state => state.skinId === target.id)).toMatchObject({ activation: 'active' })
+    expect((await host.lifecycle.runtimeStates()).find(state => state.skinId === target.id)).toMatchObject({ activation: 'unavailable', error: expect.stringContaining('组件已关闭') })
   })
 
   it.each(['duplicate-plugin', 'duplicate-bundle-row', 'mismatched-entry', 'read-only'] as const)('fails closed for %s instead of guessing a component identity', async ambiguity => {
@@ -640,13 +640,16 @@ describe('official plugin manager lifecycle', () => {
     expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
   })
 
-  it('persists an explicit component restart requirement discovered during startup replay', async () => {
+  it('records a component restart requirement only after an explicit use action, not startup replay', async () => {
     const target = skin('component-startup-restart')
     const host = fixture([target])
     host.materialize(target); host.componentEnabled.set(target.package, false); host.select(target.package, true)
     writeMarketState(host.directory, { version: 1, activeSkinId: target.id, disabledSkinIds: [] })
     host.manager.setPluginEnabled.mockImplementationOnce(async (entryId, enabled) => ({ ...host.applyComponentEnable(entryId, enabled), application: 'restart-required' }))
     await host.lifecycle.replay()
+    expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(await finished(host.lifecycle.begin('activate', target.id))).toMatchObject({ phase: 'done', restartRequired: true })
     expect(readMarketState(host.directory).pendingRestart).toMatchObject({ pid: process.pid, skinIds: [target.id] })
     expect(host.lifecycle.states().find(state => state.skinId === target.id)).toMatchObject({ activation: 'restart-required', error: undefined })
   })
@@ -798,7 +801,7 @@ describe('official plugin manager lifecycle', () => {
     host.materialize(target); host.componentEnabled.set(target.package, false); host.select(target.package, true)
     writeMarketState(host.directory, { version: 1, activeSkinId: target.id, disabledSkinIds: [] })
     host.manager.setPluginEnabled.mockImplementation(async (entryId, enabled) => ({ ...host.applyComponentEnable(entryId, enabled), application: 'restart-required' }))
-    await host.lifecycle.replay()
+    await finished(host.lifecycle.begin('activate', target.id))
     const firstId = host.lifecycle.restartNoticeId
     expect(firstId).toEqual(expect.any(String))
     await host.lifecycle.replay()
@@ -810,8 +813,32 @@ describe('official plugin manager lifecycle', () => {
     expect(host.lifecycle.restartNoticeId).toBeUndefined()
     host.componentEnabled.set(target.package, false); host.select(target.package, true)
     await host.lifecycle.replay()
+    expect(host.lifecycle.restartNoticeId).toBeUndefined()
+    await finished(host.lifecycle.begin('activate', target.id))
     expect(host.lifecycle.restartNoticeId).toEqual(expect.any(String))
     expect(host.lifecycle.restartNoticeId).not.toBe(firstId)
+  })
+
+  it('clears inactive skin restart receipts after a full host restart without reissuing saved toggles', async () => {
+    const first = skin('inactive-restart-first'), second = skin('inactive-restart-second')
+    const host = fixture([first, second], { hostVersion: '0.2.0-rc.2' })
+    host.materialize(first); host.materialize(second)
+    writeMarketState(host.directory, {
+      version: 1, activeSkinId: null, pinnedSkinIds: [], disabledSkinIds: [first.id, second.id],
+      pendingRestart: { pid: process.pid, skinIds: [first.id, second.id], id: 'saved-disable-notice' },
+    })
+    // Reopening the market keeps a pending Host transaction in the same process.
+    await host.lifecycle.replay()
+    expect(host.lifecycle.restartNoticeId).toBe('saved-disable-notice')
+    const previous = readMarketState(host.directory)
+    writeMarketState(host.directory, { ...previous, pendingRestart: { ...previous.pendingRestart!, pid: process.pid - 1 } })
+    await host.lifecycle.replay()
+    await host.lifecycle.replay()
+    expect(readMarketState(host.directory).pendingRestart).toBeUndefined()
+    expect(host.lifecycle.restartNoticeId).toBeUndefined()
+    expect((await host.lifecycle.runtimeStates()).map(item => item.activation)).toEqual(['inactive', 'inactive'])
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
   })
 
   it.each(['disabled', 'failed', 'inventory-error'] as const)('keeps a failed restart verification receipt for %s without issuing another startup restart', async outcome => {

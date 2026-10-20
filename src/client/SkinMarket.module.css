@@ -183,6 +183,29 @@
 .homeLoadMore span:last-child { width: 46%; }
 .homeError { margin-top: 12px; padding: 10px 12px; color: var(--dsw-alias-state-error-primary); border-radius: var(--dsw-radius-sm); background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, transparent); font-size: var(--dsw-font-xxs-12-font-size); line-height: var(--dsw-font-xxs-12-line-height); }
 
+/* Keep the host dialog fill on its own plane so nested overlays do not gain
+   a filtered ancestor or a new fixed-position containing block. */
+.browserModal,
+.warningModal,
+.modalSurface {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+.browserModal::before,
+.warningModal::before,
+.modalSurface::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--dsw-alias-bg-layer-2);
+  -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter, none);
+  backdrop-filter: var(--dsw-menu-backdrop-filter, none);
+}
+
 .browserModal {
   box-sizing: border-box;
   width: min(1080px, calc(100vw - 48px));
@@ -424,18 +447,25 @@
 .actionRow { order: 2; display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 4px 12px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); flex-wrap: wrap; }
 .pinWarning { margin: 12px 0 0; color: var(--dsw-alias-label-secondary); line-height: 1.6; }
 .pinWarning a { color: var(--dsw-alias-link); text-decoration: underline; text-underline-offset: 2px; }
-.installOptions { display: grid; gap: 12px; }
-.installOptions > div { display: grid; gap: 6px; }
-.installOptions strong { font-size: 12px; font-weight: 550; }
+.installOptions { display: grid; min-width: 0; gap: 16px; }
+.installOptions > div { display: grid; min-width: 0; gap: 7px; }
+.installOptions strong { font-size: 12px; font-weight: 550; line-height: 18px; }
 .installOptions small { color: var(--dsw-alias-label-caption); font-size: 11px; line-height: 17px; }
-.installCommandGroup { display: grid; min-width: 0; gap: 8px; }
 .installOptions > .manualInstallGuide { display: grid; gap: 7px; }
 .manualInstallGuide p { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 18px; }
-.copyCapsule { display: flex; min-width: 0; align-items: center; padding-left: 12px; border: 0.5px solid var(--dsw-alias-border-l2); border-radius: 999px; corner-shape: round; background: var(--dsw-alias-bg-layer-1); }
-.copyCapsule code { min-width: 0; flex: 1; overflow: hidden; color: var(--dsw-alias-label-secondary); font: 11px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }
-.copyCapsuleInput { display: block; min-width: 0; flex: 1; overflow: hidden; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.copyCapsuleInput input { width: 100%; min-width: 0; overflow: hidden; border: 0; outline: none; background: transparent; color: var(--dsw-alias-label-secondary); font: 11px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }
-.copyCapsule .copyCapsuleButton { flex: none; }
+.installCommandLabel { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; }
+.installCommandGroup { display: grid; min-width: 0; gap: 8px; }
+.installSegmented { display: inline-flex; flex: none; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; background: var(--dsw-alias-bg-layer-1); }
+.installSegmented button { min-width: 0; min-height: 26px; height: auto; padding: 4px 9px; cursor: pointer; border: 0; border-radius: 6px; color: var(--dsw-alias-label-caption); background: var(--dsw-alias-bg-layer-1); font: inherit; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; transition: color var(--ds-transition-duration), background var(--ds-transition-duration); }
+.installSegmented button[aria-pressed="true"] { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); box-shadow: 0 1px 3px rgb(0 0 0 / 9%); }
+.installSegmented button:hover { color: var(--dsw-alias-label-primary); }
+.copyCapsule { display: flex; min-width: 0; height: 36px; align-items: center; gap: 8px; padding: 0 0 0 12px; border: 0.5px solid var(--dsw-alias-border-l2); border-radius: 999px; background: var(--dsw-alias-bg-layer-1); }
+.copyCapsule code { min-width: 0; flex: 1; overflow: hidden; color: var(--dsw-alias-label-secondary); font: 12px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }
+.copyCapsuleInput { display: block; min-width: 0; flex: 1; overflow: hidden; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--dsw-alias-label-secondary); font: 12px/32px var(--ds-font-family-code); text-overflow: ellipsis; }
+.copyCapsuleInput input { width: 100%; min-width: 0; overflow: hidden; padding: 0; border: 0; outline: none; background: transparent; color: var(--dsw-alias-label-secondary); font: 12px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }
+.copyCapsule .copyCapsuleButton { display: inline-flex; flex: none; width: 36px; min-width: 36px; height: 34px; min-height: 34px; align-items: center; justify-content: center; padding: 0; cursor: pointer; border: 0; border-left: 0.5px solid var(--dsw-alias-border-l2); border-radius: 0 999px 999px 0; color: var(--dsw-alias-label-secondary); background: transparent; }
+.copyCapsule .copyCapsuleButton:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.installSegmented button:focus-visible, .copyCapsuleButton:focus-visible { outline: 2px solid var(--dsw-alias-link); outline-offset: 2px; }
 .stars { display: inline-flex; flex: none; align-items: center; gap: 5px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 20px; white-space: nowrap; }
 .actionDivider { width: 0.5px; height: 22px; margin: 0 3px; background: var(--dsw-alias-border-l2); }
 .repoMeta { display: flex; min-width: 0; flex: 1 1 220px; align-items: center; gap: 10px; }

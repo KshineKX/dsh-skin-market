@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createSkinInstallCommand, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, normalizeGitHubRepository, REGISTRY_REPOSITORY } from '../src/client/submission.ts'
+import { createSkinInstallCommand, createSkinInstallCommandGroups, createSkinInstallCommands, createSkinInstallInputs, createSkinInstallPrompt, createSkinInstallSearchKeyword, createSubmissionPrompt, normalizeGitHubRepository, REGISTRY_REPOSITORY } from '../src/client/submission.ts'
 import type { CatalogSkin } from '../src/client/types.ts'
 
 describe('agent-assisted skin submission', () => {
@@ -51,10 +51,10 @@ describe('agent-assisted skin submission', () => {
     expect(prompt).toContain('未经我确认不得修改任何 profile 文件，也不得执行安装')
     const webPrompt = createSkinInstallPrompt(skin, 'dsh')
     expect(webPrompt.indexOf('必须先完成只读冲突检查')).toBeLessThan(webPrompt.indexOf('dsh plugin --profile web add'))
-    expect(createSkinInstallCommand(skin)).toBe(`# Web 版\ndsh plugin --profile web add "${skin.install.target}"\n\n# 官方桌面版：不要在终端执行；在「设置 → 皮肤市场」中打开该皮肤并安装`)
+    expect(createSkinInstallCommand(skin)).toBe(`dsh plugin --profile web add "${skin.install.target}"`)
   })
 
-  it('copies subdirectory install targets as pnpm add so Windows cmd does not split on &', () => {
+  it('lists one primary subdirectory command per terminal and keeps companions in the Agent prompt', () => {
     const commit = 'a'.repeat(40)
     const skin = {
       id: 'small-tailqwq.maid-atelier',
@@ -71,8 +71,28 @@ describe('agent-assisted skin submission', () => {
     } as CatalogSkin
     const command = createSkinInstallCommand(skin)
     expect(command).toContain(`pnpm add "${skin.install.target}" --dir "$HOME/.dsh/profiles/web"`)
-    expect(command).toContain(`pnpm add "${skin.install.target}" --dir "$env:USERPROFILE\\.dsh\\profiles\\web"`)
-    expect(command).toContain(`pnpm add "${skin.install.companions![0]!.target}" --dir "$HOME/.dsh/profiles/web"`)
+    expect(command).not.toContain('\n')
+    const commands = createSkinInstallCommands(skin, { shell: 'powershell' })
+    expect(commands).toHaveLength(1)
+    expect(commands[0]!.value).toContain('$env:USERPROFILE')
+    expect(commands[0]!.value).not.toContain(skin.install.companions![0]!.target)
+    const groups = createSkinInstallCommandGroups(skin)
+    expect(groups.map(group => group.label)).toEqual(['macOS / Linux', 'Windows PowerShell', 'Windows CMD'])
+    for (const group of groups) {
+      expect(group.commands).toHaveLength(1)
+      expect(group.commands[0]!.value).toContain(skin.install.target)
+      expect(group.commands[0]!.value).not.toContain(skin.install.companions![0]!.target)
+      for (const entry of group.commands) expect(entry.value).not.toMatch(/[\r\n]/)
+    }
+    expect(groups[0]!.commands[0]!.value).toContain('$HOME/.dsh/profiles/web')
+    expect(groups[1]!.commands[0]!.value).toContain('$env:USERPROFILE')
+    expect(groups[2]!.commands[0]!.value).toContain('%USERPROFILE%')
+    expect(createSkinInstallCommandGroups(skin, { shell: 'powershell', profile: 'work', profileDir: 'C:\\DSH data\\profiles\\work' })).toEqual([
+      expect.objectContaining({ key: 'powershell', commands: expect.arrayContaining([
+        expect.objectContaining({ value: expect.stringContaining("--dir 'C:\\DSH data\\profiles\\work'") }),
+      ]) }),
+    ])
+    expect(createSkinInstallInputs(skin).map(entry => entry.value)).toEqual([skin.install.target])
     const prompt = createSkinInstallPrompt(skin)
     expect(prompt).toContain('伴生包：@dsh-external/dsh-client-ui-skin-deep-whale-manager')
     expect(prompt).toContain('全部固定安装命令（含伴生包）')
@@ -80,14 +100,29 @@ describe('agent-assisted skin submission', () => {
     expect(createSkinInstallSearchKeyword(skin)).toBe(skin.install.target)
   })
 
-  it('uses the same reviewed npm target in the command and prompt without GitHub build approval', () => {
+  it('keeps a common primary command even when the Agent prompt includes a subdirectory companion', () => {
+    const target = `github:owner/repo#${'a'.repeat(40)}&path:/manager`
+    const skin = { install: { target: 'skin@1.0.0', companions: [{ target }] } } as CatalogSkin
+    const groups = createSkinInstallCommandGroups(skin)
+    expect(groups).toHaveLength(1)
+    for (const group of groups) {
+      expect(group.commands).toHaveLength(1)
+      expect(group.commands[0]!.value).toBe('dsh plugin --profile web add "skin"')
+    }
+    expect(createSkinInstallCommandGroups({ install: { target: 'skin@1.0.0' } } as CatalogSkin)).toEqual([
+      { key: 'posix', label: '', commands: [{ key: 'command', label: '命令', value: 'dsh plugin --profile web add "skin"' }] },
+    ])
+  })
+
+  it('copies a bare npm name while keeping the reviewed target in the Agent prompt', () => {
     const skin = {
       repo: 'https://github.com/example/skin', package: 'example-skin', rowId: 'example-skin',
       install: { target: `github:example/skin#${'a'.repeat(40)}`, commit: 'a'.repeat(40), version: '1.2.3',
         allowBuild: 'github-only-build-key',
         npm: { name: 'example-skin', version: '1.2.3', repository: 'https://github.com/example/skin', integrity: 'sha512-abc', gitHead: 'a'.repeat(40) } },
     } as CatalogSkin
-    expect(createSkinInstallCommand(skin)).toBe('# Web 版\ndsh plugin --profile web add "example-skin@1.2.3" --save-exact\n\n# 官方桌面版：不要在终端执行；在「设置 → 皮肤市场」中打开该皮肤并安装')
+    expect(createSkinInstallCommand(skin)).toBe('dsh plugin --profile web add "example-skin"')
+    expect(createSkinInstallSearchKeyword(skin)).toBe('example-skin')
     const prompt = createSkinInstallPrompt(skin)
     expect(prompt).toContain('固定安装目标：example-skin@1.2.3')
     expect(prompt).not.toContain('github-only-build-key')

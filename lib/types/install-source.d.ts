@@ -10,3 +10,6 @@ export interface InstallSourceSkin {
 }
 export declare function npmInstallTarget(skin: InstallSourceSkin): string | null;
 export declare function preferredInstallTarget(skin: InstallSourceSkin): string;
+/** Manual copy fields follow the npm default tag; managed operations stay pinned. */
+export declare function manualInstallTarget(skin: InstallSourceSkin): string;
+export declare function unversionedNpmTarget(target: string): string;

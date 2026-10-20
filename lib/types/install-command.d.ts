@@ -1,13 +1,20 @@
 export type InstallShell = 'posix' | 'powershell' | 'cmd';
+export interface InstallEnvironment {
+    platform: 'win32' | 'darwin' | 'linux' | 'unknown';
+    profile: string;
+    profileDir: string;
+    dshHome?: string;
+    cliAvailable?: boolean;
+}
 export interface InstallCommandContext {
     shell?: InstallShell;
+    profile?: string;
+    profileDir?: string;
+    dshHome?: string;
+    cliAvailable?: boolean;
 }
-/**
- * Format a DSH plugin install command for cmd.exe, PowerShell, and POSIX
- * shells. Single quotes are literal characters in cmd.exe, while double
- * quotes protect the `&path:` separator in the copied command.
- */
+/** Catalog targets contain no shell expansion, even inside double quotes. */
 export declare function quoteInstallTarget(target: string): string;
-export declare function createDshPluginAddCommand(target: string, profile?: string): string;
-/** Copied `&path:` installs: POSIX and PowerShell profile dirs; `$DSH_HOME` is not a cmd/PowerShell variable. */
+export declare function createDshPluginAddCommand(target: string, profile?: string, context?: InstallCommandContext): string;
+/** One shell-specific executable command; platform descriptions stay in the UI. */
 export declare function createInstallCommand(target: string, profile?: string, context?: InstallCommandContext): string;

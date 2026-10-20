@@ -502,11 +502,18 @@ describe('Desktop reviewed predecessor takeover', () => {
     expect(readMarketState(host.directory).activeSkinId).toBeNull()
   })
 
-  it('replays the saved target by withdrawing its predecessor once, then leaves the completed selection alone', async () => {
+  it('preserves native choices during replay, takes over on explicit activation, then leaves the completed selection alone', async () => {
     const host = installedPair()
     writeMarketState(host.directory, { version: 1, activeSkinId: host.skin.id, disabledSkinIds: [], pinnedSkinIds: [] })
 
     await host.lifecycle.replay()
+
+    expect(host.manager.setBundleEnabled).not.toHaveBeenCalled()
+    expect(host.manager.setPluginEnabled).not.toHaveBeenCalled()
+    expect(readProfileBundles(host.directory)).toEqual([legacyPackage])
+    expect(readMarketState(host.directory).activeSkinId).toBe(host.skin.id)
+
+    expect(await finished(host.lifecycle.begin('activate', host.skin.id))).toMatchObject({ phase: 'done' })
 
     expect(host.manager.setBundleEnabled.mock.calls).toEqual([[legacyPackage, false], [host.skin.package, true]])
     expect(readProfileBundles(host.directory)).toEqual([host.skin.package])
