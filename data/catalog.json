@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-19T22:59:52.707Z",
+  "generatedAt": "2026-10-20T04:45:13.573Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -638,15 +638,15 @@
         "dark"
       ],
       "install": {
-        "target": "github:kingOfSoySauce/dsh-liang-skin#7d1d3742e58ccdedca2bab6e89539ddd98c442cc",
-        "version": "0.1.11",
-        "commit": "7d1d3742e58ccdedca2bab6e89539ddd98c442cc",
+        "target": "github:kingOfSoySauce/dsh-liang-skin#a598702bdcdd51cd201b96bdd60efc89a255c787",
+        "version": "0.1.12",
+        "commit": "a598702bdcdd51cd201b96bdd60efc89a255c787",
         "desktop": {
           "mode": "managed",
           "registry": "npm",
           "packageName": "@leon___/dsh-client-liang-intensity-skin",
-          "packageVersion": "0.1.11",
-          "integrity": "sha512-34YEMEn0y4bGpQGlWzQDS3HySlN2vKM8T1iB2dn6c4nEbZ6Jtk6t0Q4M+hF6MmCKxotU7tdU8bGaDHm8Ly0O0w=="
+          "packageVersion": "0.1.12",
+          "integrity": "sha512-9aBZ1b9do5aadriSEGpkxClyZuQ1M/zJW84+176B/l75sH9nVUHL0fiqw7JwlSZWIcPym0eyvydNzCSkb7IgRA=="
         }
       },
       "compatibility": {
@@ -677,12 +677,12 @@
           "建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。"
         ],
         "scan": {
-          "commit": "7d1d3742e58ccdedca2bab6e89539ddd98c442cc",
-          "packageVersion": "0.1.11",
+          "commit": "a598702bdcdd51cd201b96bdd60efc89a255c787",
+          "packageVersion": "0.1.12",
           "scannerVersion": "static-v2",
           "mode": "static",
           "result": "pass",
-          "checkedAt": "2026-10-18T09:45:04.158Z",
+          "checkedAt": "2026-10-20T04:45:01.744Z",
           "findings": []
         }
       },
@@ -693,10 +693,10 @@
       },
       "featuredRank": 1,
       "starsSnapshot": 259,
-      "releaseUpdatedAt": "2026-10-18T09:45:04.923Z",
-      "metadataUpdatedAt": "2026-10-18T09:45:04.923Z",
+      "releaseUpdatedAt": "2026-10-20T04:45:01.744Z",
+      "metadataUpdatedAt": "2026-10-20T04:45:01.744Z",
       "starsUpdatedAt": "2026-10-19T22:54:15.811Z",
-      "updatedAt": "2026-10-19T22:54:15.811Z",
+      "updatedAt": "2026-10-20T04:45:01.744Z",
       "media": {
         "list": {
           "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/6e737383f9df1a6ea6795390dd111835.preview.webp",
@@ -30381,10 +30381,10 @@
     },
     "king-of-soy-sauce.liang-intensity": {
       "name": "@leon___/dsh-client-liang-intensity-skin",
-      "version": "0.1.11",
-      "integrity": "sha512-34YEMEn0y4bGpQGlWzQDS3HySlN2vKM8T1iB2dn6c4nEbZ6Jtk6t0Q4M+hF6MmCKxotU7tdU8bGaDHm8Ly0O0w==",
+      "version": "0.1.12",
+      "integrity": "sha512-9aBZ1b9do5aadriSEGpkxClyZuQ1M/zJW84+176B/l75sH9nVUHL0fiqw7JwlSZWIcPym0eyvydNzCSkb7IgRA==",
       "repository": "https://github.com/kingOfSoySauce/dsh-liang-skin",
-      "gitHead": "7d1d3742e58ccdedca2bab6e89539ddd98c442cc"
+      "gitHead": "a598702bdcdd51cd201b96bdd60efc89a255c787"
     },
     "lengduan.dsh-815-skin": {
       "name": "@lengduan/dsh-client-ui-skin-815",
