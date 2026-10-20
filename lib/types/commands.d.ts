@@ -97,16 +97,17 @@ export declare function cmdCommandLine(argv: readonly string[]): string;
 export declare function createPnpmProvisioner(execute?: CommandExecutor): (options?: CommandOptions) => Promise<void>;
 export declare const ensurePnpmAvailable: (options?: CommandOptions) => Promise<void>;
 export declare const runPluginCli: PluginRunner;
+interface DesktopOperation {
+    stdout: NodeJS.ReadableStream;
+    stderr: NodeJS.ReadableStream;
+    done: Promise<{
+        exitCode: number | null;
+        signal: NodeJS.Signals | null;
+    }>;
+    cancel(): void;
+}
 export interface DesktopPnpmLike {
-    runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): {
-        stdout: NodeJS.ReadableStream;
-        stderr: NodeJS.ReadableStream;
-        done: Promise<{
-            exitCode: number | null;
-            signal: NodeJS.Signals | null;
-        }>;
-        cancel(): void;
-    };
+    runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): DesktopOperation;
     /** Hosts that still book a recovery receipt. Absent on Anywhere Labs Desktop 2.x. */
     installPlugin?(request: {
         pnpmOptions?: readonly string[];
@@ -117,29 +118,13 @@ export interface DesktopPnpmLike {
             receiptId: string;
         };
         signal?: AbortSignal;
-    }): Promise<{
-        stdout: NodeJS.ReadableStream;
-        stderr: NodeJS.ReadableStream;
-        done: Promise<{
-            exitCode: number | null;
-            signal: NodeJS.Signals | null;
-        }>;
-        cancel(): void;
-    }>;
+    }): Promise<DesktopOperation>;
     /**
      * Anywhere Labs narrow install boundary. Optional: other desktop hosts keep
      * `installPlugin` or only `runPlugin`. Accepts `add`, flag options, and one
      * exact `name@version`. No receipt, snapshot, or rollback.
      */
-    runExternalMarketPluginInstall?(args: readonly string[], invokingDir: string, signal?: AbortSignal): {
-        stdout: NodeJS.ReadableStream;
-        stderr: NodeJS.ReadableStream;
-        done: Promise<{
-            exitCode: number | null;
-            signal: NodeJS.Signals | null;
-        }>;
-        cancel(): void;
-    };
+    runExternalMarketPluginInstall?(args: readonly string[], invokingDir: string, signal?: AbortSignal): DesktopOperation;
 }
 /**
  * Desktop host runner. Managed npm installs use `installPlugin` when the host
@@ -153,3 +138,4 @@ export interface DesktopPnpmLike {
  */
 export declare function desktopRunner(service: DesktopPnpmLike, profileDir: string): PluginRunner;
 export declare function commandError(result: CommandResult): string;
+export {};
