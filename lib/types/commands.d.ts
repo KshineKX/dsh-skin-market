@@ -107,7 +107,8 @@ export interface DesktopPnpmLike {
         }>;
         cancel(): void;
     };
-    installPlugin(request: {
+    /** Hosts that still book a recovery receipt. Absent on Anywhere Labs Desktop 2.x. */
+    installPlugin?(request: {
         pnpmOptions?: readonly string[];
         invokingDir: string;
         recovery: {
@@ -125,10 +126,27 @@ export interface DesktopPnpmLike {
         }>;
         cancel(): void;
     }>;
+    /**
+     * Anywhere Labs narrow install boundary. Optional: other desktop hosts keep
+     * `installPlugin` or only `runPlugin`. Accepts `add`, flag options, and one
+     * exact `name@version`. No receipt, snapshot, or rollback.
+     */
+    runExternalMarketPluginInstall?(args: readonly string[], invokingDir: string, signal?: AbortSignal): {
+        stdout: NodeJS.ReadableStream;
+        stderr: NodeJS.ReadableStream;
+        done: Promise<{
+            exitCode: number | null;
+            signal: NodeJS.Signals | null;
+        }>;
+        cancel(): void;
+    };
 }
 /**
- * Desktop host runner. Managed npm installs stay on the host `installPlugin`
- * / `runPlugin` path and must not be rewritten through `pluginProcess`.
+ * Desktop host runner. Managed npm installs use `installPlugin` when the host
+ * still provides it. Anywhere Labs Desktop 2.x exposes
+ * `runExternalMarketPluginInstall` instead: `add`, the caller's flag options,
+ * and one exact `name@version`, with no receipt. Other commands stay on
+ * `runPlugin`. Neither path is rewritten through `pluginProcess`.
  * GitHub `&path:` one-click harden (direct pnpm + shell:false) applies to the
  * DSH/web `runPluginCli` path; Desktop skins that need `&path:` are typically
  * `manual-only` / not Desktop-managed.

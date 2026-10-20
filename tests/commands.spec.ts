@@ -251,6 +251,104 @@ describe('Desktop pnpm adapter', () => {
     }])
   })
 
+  it('sends an exact npm add through the Anywhere Labs boundary when installPlugin is absent', async () => {
+    const calls: { run: unknown[]; boundary: unknown[] } = { run: [], boundary: [] }
+    const handle = () => ({
+      stdout: new PassThrough(),
+      stderr: new PassThrough(),
+      done: Promise.resolve({ exitCode: 0, signal: null }),
+      cancel: () => undefined,
+    })
+    const service: DesktopPnpmLike = {
+      runPlugin: (...args) => { calls.run.push(args); return handle() },
+      runExternalMarketPluginInstall: (args, invokingDir, signal) => {
+        calls.boundary.push([args, invokingDir, signal])
+        return handle()
+      },
+    }
+    const runner = desktopRunner(service, '/profiles/desktop')
+    const result = await runner.installPlugin!('desktop', {
+      packageName: '@leon___/dsh-client-liang-intensity-skin',
+      packageVersion: '0.1.10',
+      receiptId: 'receipt-ignored',
+      pnpmOptions: ['--prefer-offline', '--reporter=ndjson'],
+    })
+    expect(result).toMatchObject({ exitCode: 0, timedOut: false })
+    expect(calls.run).toEqual([])
+    expect(calls.boundary).toEqual([[
+      ['add', '--prefer-offline', '--reporter=ndjson', '@leon___/dsh-client-liang-intensity-skin@0.1.10'],
+      '/profiles/desktop',
+      expect.any(AbortSignal),
+    ]])
+  })
+
+  it('keeps installPlugin when the host still provides a recovery receipt', async () => {
+    const boundary = vi.fn()
+    const install = vi.fn(async () => ({
+      stdout: new PassThrough(),
+      stderr: new PassThrough(),
+      done: Promise.resolve({ exitCode: 0, signal: null }),
+      cancel: () => undefined,
+    }))
+    const runner = desktopRunner({
+      runPlugin: vi.fn(),
+      installPlugin: install,
+      runExternalMarketPluginInstall: boundary,
+    }, '/profiles/desktop')
+    await runner.installPlugin!('desktop', { packageName: 'example-skin', packageVersion: '1.0.0', receiptId: 'receipt-1' })
+    expect(install).toHaveBeenCalledTimes(1)
+    expect(boundary).not.toHaveBeenCalled()
+  })
+
+  it('does not send a non-npm spec or a non-flag option through the install boundary', async () => {
+    const boundary = vi.fn()
+    const runner = desktopRunner({ runPlugin: vi.fn(), runExternalMarketPluginInstall: boundary }, '/profiles/desktop')
+    const github = await runner.installPlugin!('desktop', {
+      packageName: 'skin',
+      packageVersion: '1.0.0',
+      receiptId: 'git',
+      spec: `github:fixture/skin#${'a'.repeat(40)}`,
+    })
+    const extraTarget = await runner.installPlugin!('desktop', {
+      packageName: 'example-skin',
+      packageVersion: '1.0.0',
+      receiptId: 'flags',
+      pnpmOptions: ['example-skin@9.9.9'],
+    })
+    expect(github).toMatchObject({ exitCode: 1, stderr: expect.stringContaining('npm') })
+    expect(extraTarget).toMatchObject({ exitCode: 1, stderr: expect.stringContaining('npm') })
+    expect(boundary).not.toHaveBeenCalled()
+  })
+
+  it('reports a missing desktop install service instead of throwing', async () => {
+    const runner = desktopRunner({ runPlugin: vi.fn() }, '/profiles/desktop')
+    await expect(runner.installPlugin!('desktop', {
+      packageName: 'example-skin',
+      packageVersion: '1.0.0',
+      receiptId: 'test',
+    })).resolves.toMatchObject({
+      exitCode: 1,
+      stderr: '当前桌面宿主未提供受支持的插件安装服务',
+    })
+  })
+
+  it('leaves remove on runPlugin when the install boundary exists', async () => {
+    const calls = { run: [] as unknown[], boundary: 0 }
+    const handle = () => ({
+      stdout: new PassThrough(),
+      stderr: new PassThrough(),
+      done: Promise.resolve({ exitCode: 0, signal: null }),
+      cancel: () => undefined,
+    })
+    const runner = desktopRunner({
+      runPlugin: (...args) => { calls.run.push(args); return handle() },
+      runExternalMarketPluginInstall: () => { calls.boundary += 1; return handle() },
+    }, '/profiles/desktop')
+    await runner('desktop', ['remove', 'example-skin'])
+    expect(calls.boundary).toBe(0)
+    expect(calls.run).toHaveLength(1)
+  })
+
   it.each(['run', 'install'])('honors the %s timeout and waits for the host to finish cancelling', async mode => {
     vi.useFakeTimers()
     try {

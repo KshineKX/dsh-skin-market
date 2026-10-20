@@ -436,31 +436,48 @@ export const runPluginCli: PluginRunner = (profile, args, options) => runProcess
 )
 runPluginCli.ensurePnpm = ensurePnpmAvailable
 
-export interface DesktopPnpmLike {
-  runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): {
-    stdout: NodeJS.ReadableStream
-    stderr: NodeJS.ReadableStream
-    done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>
-    cancel(): void
-  }
-  installPlugin(request: {
-    pnpmOptions?: readonly string[]
-    invokingDir: string
-    recovery: { packageName: string; packageVersion: string; receiptId: string }
-    signal?: AbortSignal
-  }): Promise<{
-    stdout: NodeJS.ReadableStream
-    stderr: NodeJS.ReadableStream
-    done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>
-    cancel(): void
-  }>
-}
-
 interface DesktopOperation {
   stdout: NodeJS.ReadableStream
   stderr: NodeJS.ReadableStream
   done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>
   cancel(): void
+}
+
+export interface DesktopPnpmLike {
+  runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): DesktopOperation
+  /** Hosts that still book a recovery receipt. Absent on Anywhere Labs Desktop 2.x. */
+  installPlugin?(request: {
+    pnpmOptions?: readonly string[]
+    invokingDir: string
+    recovery: { packageName: string; packageVersion: string; receiptId: string }
+    signal?: AbortSignal
+  }): Promise<DesktopOperation>
+  /**
+   * Anywhere Labs narrow install boundary. Optional: other desktop hosts keep
+   * `installPlugin` or only `runPlugin`. Accepts `add`, flag options, and one
+   * exact `name@version`. No receipt, snapshot, or rollback.
+   */
+  runExternalMarketPluginInstall?(
+    args: readonly string[],
+    invokingDir: string,
+    signal?: AbortSignal,
+  ): DesktopOperation
+}
+
+const NPM_PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u
+const NPM_EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u
+const DESKTOP_NPM_ONLY = '当前桌面宿主仅支持已验证的 npm 安装包'
+const DESKTOP_INSTALL_UNAVAILABLE = '当前桌面宿主未提供受支持的插件安装服务'
+
+function externalMarketInstallArgv(request: PluginInstallRequest): readonly string[] | undefined {
+  if (!NPM_PACKAGE_NAME.test(request.packageName) || !NPM_EXACT_VERSION.test(request.packageVersion)) return undefined
+  const flags = request.pnpmOptions ?? []
+  if (flags.some(flag => !flag.startsWith('-') || flag.includes('\0'))) return undefined
+  return ['add', ...flags, `${request.packageName}@${request.packageVersion}`]
+}
+
+function desktopInstallRejected(stderr: string): Promise<CommandResult> {
+  return Promise.resolve({ exitCode: 1, stdout: '', stderr, timedOut: false })
 }
 
 async function collectDesktopOperation(
@@ -531,8 +548,11 @@ async function runDesktopOperation(
 }
 
 /**
- * Desktop host runner. Managed npm installs stay on the host `installPlugin`
- * / `runPlugin` path and must not be rewritten through `pluginProcess`.
+ * Desktop host runner. Managed npm installs use `installPlugin` when the host
+ * still provides it. Anywhere Labs Desktop 2.x exposes
+ * `runExternalMarketPluginInstall` instead: `add`, the caller's flag options,
+ * and one exact `name@version`, with no receipt. Other commands stay on
+ * `runPlugin`. Neither path is rewritten through `pluginProcess`.
  * GitHub `&path:` one-click harden (direct pnpm + shell:false) applies to the
  * DSH/web `runPluginCli` path; Desktop skins that need `&path:` are typically
  * `manual-only` / not Desktop-managed.
@@ -545,21 +565,28 @@ export function desktopRunner(service: DesktopPnpmLike, profileDir: string): Plu
   runner.hostKind = 'desktop'
   runner.installPlugin = (_profile, request, options) => {
     if (request.spec !== undefined && request.spec !== `${request.packageName}@${request.packageVersion}`) {
-      return Promise.resolve({ exitCode: 1, stdout: '', stderr: '当前桌面宿主仅支持已验证的 npm 安装包', timedOut: false })
+      return desktopInstallRejected(DESKTOP_NPM_ONLY)
     }
-    return runDesktopOperation(
-      signal => service.installPlugin({
-        pnpmOptions: request.pnpmOptions,
-        invokingDir: profileDir,
-        recovery: {
-          packageName: request.packageName,
-          packageVersion: request.packageVersion,
-          receiptId: request.receiptId,
-        },
-        signal,
-      }),
-      options,
-    )
+    if (typeof service.installPlugin === 'function') {
+      return runDesktopOperation(
+        signal => service.installPlugin!({
+          pnpmOptions: request.pnpmOptions,
+          invokingDir: profileDir,
+          recovery: {
+            packageName: request.packageName,
+            packageVersion: request.packageVersion,
+            receiptId: request.receiptId,
+          },
+          signal,
+        }),
+        options,
+      )
+    }
+    const boundary = service.runExternalMarketPluginInstall
+    if (typeof boundary !== 'function') return desktopInstallRejected(DESKTOP_INSTALL_UNAVAILABLE)
+    const argv = externalMarketInstallArgv(request)
+    if (argv === undefined) return desktopInstallRejected(DESKTOP_NPM_ONLY)
+    return runDesktopOperation(signal => boundary(argv, profileDir, signal), options)
   }
   return runner
 }
