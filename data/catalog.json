@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-21T22:21:23.743Z",
+  "generatedAt": "2026-10-22T01:37:31.254Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -19840,6 +19840,87 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/52171dd8167e00e46a93517f8d970f34.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/52171dd8167e00e46a93517f8d970f34.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tszmzz1026.dsh.glass.theme",
+      "name": {
+        "zh": "dsh-glass-theme",
+        "en": "dsh-glass-theme"
+      },
+      "author": "tszmzz1026",
+      "description": "原创金紫液态玻璃主题：纯 CSS 渐变、金色输入、代码配色、助手标记和卡片主页，不包含游戏素材。",
+      "repo": "https://github.com/tszmzz1026/dsh-epindel-boot-animation",
+      "subpath": "packages/dsh-glass-theme",
+      "package": "dsh-glass-theme",
+      "rowId": "glass-theme",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:tszmzz1026/dsh-epindel-boot-animation#b899b5182370956c2cc3512f371caf9131ae4e47&path:/packages/dsh-glass-theme",
+        "version": "1.0.0",
+        "commit": "b899b5182370956c2cc3512f371caf9131ae4e47"
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/tszmzz1026/dsh-epindel-boot-animation/main/docs/overview.png",
+        "https://raw.githubusercontent.com/tszmzz1026/dsh-epindel-boot-animation/main/docs/avatar-settings.png"
+      ],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "improve",
+          "installation": "pass",
+          "installCommand": "pass",
+          "topic": "improve"
+        },
+        "suggestions": [
+          "建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。",
+          "建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。"
+        ]
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 1000,
+      "starsSnapshot": 1,
+      "releaseUpdatedAt": "2026-10-22T01:37:30.100Z",
+      "metadataUpdatedAt": "2026-10-22T01:37:30.100Z",
+      "starsUpdatedAt": "2026-10-22T01:37:30.100Z",
+      "updatedAt": "2026-10-22T01:37:30.100Z",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/09ee9b03258f892fdbf0175515598fe8.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/09ee9b03258f892fdbf0175515598fe8.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/09ee9b03258f892fdbf0175515598fe8.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/09ee9b03258f892fdbf0175515598fe8.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/98bf846d8c0ae9e446992f520ff1209f.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/98bf846d8c0ae9e446992f520ff1209f.full.webp"
           }
         ]
       }
