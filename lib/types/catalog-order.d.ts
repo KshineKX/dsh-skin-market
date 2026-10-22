@@ -16,4 +16,5 @@ export declare function getCatalogScreenshotUrls(entry: PreviewableCatalogEntry)
 export declare function getCatalogListScreenshot(entry: PreviewableCatalogEntry): string | undefined;
 /** Keep entries with real UI imagery ahead of repository-only placeholders. */
 export declare function hasCatalogPreview(entry: PreviewableCatalogEntry): boolean;
-export declare function compareCatalogOrder<T extends PreviewableCatalogEntry>(a: T, b: T, sortBy: 'stars' | 'latest', starsFor: (entry: T) => number, updatedAtFor: (entry: T) => string): number;
+export type CatalogSort = 'heat' | 'stars' | 'latest';
+export declare function compareCatalogOrder<T extends PreviewableCatalogEntry>(a: T, b: T, sortBy: CatalogSort, starsFor: (entry: T) => number, updatedAtFor: (entry: T) => string, heatFor?: (entry: T) => number): number;

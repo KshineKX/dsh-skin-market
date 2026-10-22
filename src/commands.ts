@@ -582,7 +582,9 @@ export function desktopRunner(service: DesktopPnpmLike, profileDir: string): Plu
         options,
       )
     }
-    const boundary = service.runExternalMarketPluginInstall
+    const boundary = typeof service.runExternalMarketPluginInstall === 'function'
+      ? service.runExternalMarketPluginInstall.bind(service)
+      : undefined
     if (typeof boundary !== 'function') return desktopInstallRejected(DESKTOP_INSTALL_UNAVAILABLE)
     const argv = externalMarketInstallArgv(request)
     if (argv === undefined) return desktopInstallRejected(DESKTOP_NPM_ONLY)

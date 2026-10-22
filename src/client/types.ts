@@ -77,6 +77,19 @@ export interface CatalogSkin {
   releaseUpdatedAt: string
   metadataUpdatedAt: string
   updatedAt: string
+  heat?: SkinHeat
+}
+
+/** Heat is normalized by the skin's own observed age, not DSH's age. */
+export interface SkinHeat {
+  ageDays: number
+  starsPerDay: number
+  starGrowthPerDay: number
+  commitsPerDay: number
+  pullsPerDay: number
+  issuesPerDay: number
+  score: number
+  asOf: string
 }
 
 export interface CatalogImageMedia {

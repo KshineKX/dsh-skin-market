@@ -1,4 +1,5 @@
 import { decodeCatalogWire } from '../src/catalog-wire.ts'
+import type { SkinHeat } from '../src/types.ts'
 
 interface CatalogResponse {
   ok: boolean
@@ -21,7 +22,14 @@ export async function fetchLiveCatalog<T>(url: string, fetcher: CatalogFetcher =
   const catalog = value as { schemaVersion?: unknown; skins?: unknown }
   if (catalog.schemaVersion !== 1) throw new Error('目录版本不受支持')
   if (!Array.isArray(catalog.skins)) throw new Error('目录缺少皮肤列表')
-  return decodeCatalogWire(value).skins as T[]
+  const decoded = decodeCatalogWire(value)
+  // Momentum rides beside skins[], outside the per-skin schema shared with
+  // installed clients. Attach it for the page's sorting and badges.
+  for (const skin of decoded.skins) {
+    const heat = decoded.heat?.[skin.id]
+    if (heat !== undefined) (skin as typeof skin & { heat?: SkinHeat }).heat = heat
+  }
+  return decoded.skins as T[]
 }
 
 export async function fetchLiveCatalogWithFallback<T>(remoteUrl: string, fallbackUrl: string, fetcher: CatalogFetcher = fetch): Promise<T[]> {

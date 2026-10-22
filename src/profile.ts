@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
 import { parse, stringify } from 'yaml'
 import { effectiveBuildApprovalKey } from './build-approval.ts'
+import { cordisYamlOptions } from './cordis-yaml.ts'
 import { normalizeGithubSubpath, npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError, type GithubTargetParts } from './install-resolution.ts'
 import { parseInsertedLoaderRows, primaryLoaderCandidates, sharedLoaderIdentifiers, type LoaderIdentity } from './loader-ownership.ts'
 import { compareVersions, isVersionRange, parseVersion, satisfiesVersionRange } from './semver.ts'
@@ -434,7 +435,7 @@ export function snapshotInstalledArtifact(profileDir: string, packageName: strin
       if (targets === null) throw new Error(`bundle patch declaration invalid for ${packageName}`)
       for (const target of targets) {
         add('bundle', target)
-        if (!Array.isArray(parse(readFileSync(resolve(directory, target), 'utf8')))) throw new Error(`bundle patch invalid for ${packageName}`)
+        if (!Array.isArray(parse(readFileSync(resolve(directory, target), 'utf8'), cordisYamlOptions()))) throw new Error(`bundle patch invalid for ${packageName}`)
       }
     }
     if (snapshot.files.length === 0) throw new Error(`no executable artifact declared by ${packageName}`)
@@ -1003,7 +1004,7 @@ function bundlePatchOperationsAt(packageDirectory: string, packageName: string):
     const physicalFile = realpathSync(file)
     if (!physicalFile.startsWith(`${realpathSync(directory)}${sep}`)
       || physicalFile.split(/[\\/]/).some(part => part === '.env' || part.startsWith('.env.'))) throw new Error(`${packageName} bundle patch path is unsafe`)
-    const value = parse(readFileSync(file, 'utf8')) as unknown
+    const value = parse(readFileSync(file, 'utf8'), cordisYamlOptions()) as unknown
     if (!Array.isArray(value)) throw new Error(`${packageName} cordis.patch.yml must contain a YAML sequence`)
     return value as PatchOperation[]
   })

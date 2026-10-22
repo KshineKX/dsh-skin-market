@@ -96,6 +96,13 @@ describe('trusted shared configuration override plans', () => {
     expect(parse(readFileSync(file, 'utf8'))).toEqual([{ id: 'skin-main', name: '@example/skin', config: { accent: 'blue' } }])
   })
 
+  it('accepts Cordis !!js expressions as opaque configuration values', () => {
+    const source = '- id: skin-main\n  name: "@example/skin"\n  disabled: true\n  config:\n    expression: !!js dshHomePath("x")\n'
+    const { file, options, plan } = approved(source)
+    applyConfigurationOverride(options, target, plan.context!)
+    expect(readFileSync(file, 'utf8')).toBe('- id: skin-main\n  name: "@example/skin"\n  config:\n    expression: !!js dshHomePath("x")\n')
+  })
+
   it('promotes the next key when disabled is the first field of a rich row', () => {
     const { file, options, plan } = approved('- disabled: true # reason\n  # next key\n  id: skin-main\n  name: "@example/skin"\n  config: { color: blue }\n')
     applyConfigurationOverride(options, target, plan.context!)

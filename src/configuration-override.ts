@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { closeSync, constants, fchmodSync, fstatSync, fsyncSync, lstatSync, openSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync, type BigIntStats } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { isAlias, isMap, isScalar, isSeq, parseDocument, visit, type Scalar, type YAMLMap } from 'yaml'
+import { CORDIS_JS_TAG, cordisYamlOptions } from './cordis-yaml.ts'
 import type { ConfigurationOverrideBatchPlan, ConfigurationOverridePlan } from './configuration-override-types.ts'
 export type { ConfigurationOverrideBatchPlan, ConfigurationOverridePlan } from './configuration-override-types.ts'
 
@@ -111,13 +112,15 @@ function unchanged(source: Source): void {
 }
 
 function parseSafe(contents: string) {
-  const document = parseDocument(contents, { keepSourceTokens: true, uniqueKeys: true })
+  const document = parseDocument(contents, { keepSourceTokens: true, uniqueKeys: true, ...cordisYamlOptions() })
   if (document.errors.length > 0 || document.warnings.length > 0 || !isSeq(document.contents)
     || document.directives?.docEnd === true || document.contents.flow === true && document.contents.items.length > 0) throw new ConfigurationOverrideError('unsafe')
   let unsafe = false
   visit(document, (_key, node) => {
-    if (isAlias(node) || node !== null && typeof node === 'object'
-      && ('anchor' in node && node.anchor !== undefined || 'tag' in node && node.tag !== undefined)) unsafe = true
+    const tagged = node !== null && typeof node === 'object' && 'tag' in node && node.tag !== undefined
+    const allowedCordisExpression = isScalar(node) && node.tag === CORDIS_JS_TAG && typeof node.value === 'string'
+    if (isAlias(node) || tagged && !allowedCordisExpression || node !== null && typeof node === 'object'
+      && 'anchor' in node && node.anchor !== undefined) unsafe = true
     if (isMap(node)) {
       if (node.items.some(pair => !isScalar(pair.key) || typeof pair.key.value !== 'string' || pair.key.value === '<<')) unsafe = true
     }

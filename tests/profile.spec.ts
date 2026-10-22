@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { parse } from 'yaml'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from '../src/build-approval.ts'
-import { acknowledgeSkinArtifactRisk, assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, inspectSkinArtifactRisk, InstallConflictError, installedClientPlugins, installedSpecMatches, isSkinArtifactRiskAcknowledged, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
+import { acknowledgeSkinArtifactRisk, assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, inspectSkinArtifactRisk, InstallConflictError, installedClientPlugins, installedSpecMatches, isSkinArtifactRiskAcknowledged, packageLoaderOwnershipAt, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
 import { loadCatalog } from '../src/catalog.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-profile-')) }
@@ -304,6 +304,21 @@ describe('profile state', () => {
     expect(manifest.dsh.profile.bundles).toEqual([skin.package])
     const rows = parse(readFileSync(profilePatchFile(dir), 'utf8')) as Array<{ insert?: unknown[] }>
     expect(rows.flatMap(row => row.insert ?? [])).toHaveLength(0)
+  })
+
+  it('reads Cordis !!js expressions in bundle patches without emitting YAML warnings', () => {
+    const dir = fixture()
+    const name = '@example/js-bundle'
+    const directory = join(dir, 'node_modules', name)
+    atomicWriteJson(join(directory, 'package.json'), { name, version: '1.0.0', dsh: { bundle: { patch: './bundle.yml' } } })
+    atomicWriteText(join(directory, 'bundle.yml'), '- insert:\n    - id: js-row\n      name: "@example/js-bundle"\n      config:\n        expression: !!js dshHomePath("x")\n')
+    const warning = vi.spyOn(process, 'emitWarning')
+    try {
+      expect(packageLoaderOwnershipAt(directory, name).rows).toEqual([{ id: 'js-row', name, packageName: name }])
+      expect(warning).not.toHaveBeenCalled()
+    } finally {
+      warning.mockRestore()
+    }
   })
   it('checks declared executable files and frozen bytes, rather than a surviving manifest alone', () => {
     const dir = fixture()

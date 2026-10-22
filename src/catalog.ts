@@ -200,5 +200,6 @@ export async function catalogWithStars(_profileDir: string, catalog = loadCatalo
     githubStars: skin.starsSnapshot,
     starsStale: false,
     recommendations: recommend(skin, catalog.skins, starMap),
+    ...(catalog.heat?.[skin.id] === undefined ? {} : { heat: catalog.heat[skin.id] }),
   }))
 }

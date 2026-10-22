@@ -53,6 +53,29 @@ test('sorts skins by rank then id and npm sources by id independent of input ord
   assert.equal(JSON.stringify(buildCatalogWire([...entries].reverse(), { generatedAt: firstTime })), JSON.stringify(catalog))
 })
 
+test('keeps momentum outside skins and invalidates the timestamp when it changes', () => {
+  const entries = [skin()]
+  const heat = { 'owner.theme': { ageDays: 3, starsPerDay: 2, starGrowthPerDay: 1, commitsPerDay: 0.5, pullsPerDay: 0, issuesPerDay: 0, score: 4.5, asOf: '2026-10-22' } }
+  const previous = buildCatalogWire(entries, { generatedAt: firstTime })
+  const catalog = buildCatalogWire(entries, { previous, heat, generatedAt: nextTime })
+  assert.deepEqual(catalog.heat, heat)
+  assert.equal(JSON.stringify(catalog.skins).includes('score'), false)
+  assert.equal(catalog.generatedAt, nextTime)
+  const stable = buildCatalogWire(entries, { previous: catalog, heat: structuredClone(heat), generatedAt: '2026-09-09T00:00:00.000Z' })
+  assert.equal(stable.generatedAt, nextTime)
+  assert.equal(JSON.stringify(stable), JSON.stringify(catalog))
+})
+
+test('drops heat for ids that are not catalogued', () => {
+  const entries = [skin()]
+  const validHeat = { ageDays: 3, starsPerDay: 1, starGrowthPerDay: 1, commitsPerDay: 0, pullsPerDay: 0, issuesPerDay: 0, score: 1, asOf: '2026-10-22' }
+  const catalog = buildCatalogWire(entries, {
+    generatedAt: firstTime,
+    heat: { 'owner.theme': validHeat, 'gone.theme': validHeat },
+  })
+  assert.deepEqual(Object.keys(catalog.heat), ['owner.theme'])
+})
+
 test('omits an empty npm source map and keeps a legacy GitHub-only catalog timestamp', () => {
   const entries = [skin('owner.theme', null)]
   const previous = { schemaVersion: 1, generatedAt: firstTime, skins: entries }

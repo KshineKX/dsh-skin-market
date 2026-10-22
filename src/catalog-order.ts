@@ -83,16 +83,20 @@ export function hasCatalogPreview(entry: PreviewableCatalogEntry): boolean {
   return hasUsableUpstream || hasMarketScreenshots
 }
 
+export type CatalogSort = 'heat' | 'stars' | 'latest'
+
 export function compareCatalogOrder<T extends PreviewableCatalogEntry>(
   a: T,
   b: T,
-  sortBy: 'stars' | 'latest',
+  sortBy: CatalogSort,
   starsFor: (entry: T) => number,
   updatedAtFor: (entry: T) => string,
+  heatFor: (entry: T) => number = () => 0,
 ): number {
   const aHasPreview = hasCatalogPreview(a)
   const bHasPreview = hasCatalogPreview(b)
   if (aHasPreview !== bHasPreview) return aHasPreview ? -1 : 1
+  if (sortBy === 'heat') return heatFor(b) - heatFor(a) || starsFor(b) - starsFor(a)
   return sortBy === 'latest'
     ? Date.parse(updatedAtFor(b)) - Date.parse(updatedAtFor(a))
     : starsFor(b) - starsFor(a)

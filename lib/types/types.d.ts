@@ -124,12 +124,29 @@ export interface CatalogFile {
     schemaVersion: number;
     generatedAt: string;
     skins: SkinEntry[];
+    /** Continuous per-skin-age heat data; kept outside entries for old-client compatibility. */
+    heat?: Record<string, SkinHeat>;
+}
+/**
+ * Continuous momentum normalized by the skin's own observed age. `asOf` is
+ * the UTC day of the catalog build.
+ */
+export interface SkinHeat {
+    ageDays: number;
+    starsPerDay: number;
+    starGrowthPerDay: number;
+    commitsPerDay: number;
+    pullsPerDay: number;
+    issuesPerDay: number;
+    score: number;
+    asOf: string;
 }
 export interface CatalogSkin extends SkinEntry {
     githubStars: number;
     starsStale: boolean;
     starsUpdatedAt: string;
     recommendations: string[];
+    heat?: SkinHeat;
 }
 export type InstallationState = 'missing' | 'installed' | 'updating' | 'broken';
 export type ActivationState = 'inactive' | 'active' | 'switching' | 'restart-required' | 'unavailable';

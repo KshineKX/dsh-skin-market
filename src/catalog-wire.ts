@@ -9,11 +9,40 @@ export interface CatalogWireFile extends Omit<CatalogFile, 'skins'> {
 }
 
 const npmFields = ['name', 'version', 'integrity', 'repository', 'gitHead'] as const
+const heatFields = ['ageDays', 'starsPerDay', 'starGrowthPerDay', 'commitsPerDay', 'pullsPerDay', 'issuesPerDay', 'score', 'asOf'] as const
+const heatRates = ['starsPerDay', 'starGrowthPerDay', 'commitsPerDay', 'pullsPerDay', 'issuesPerDay', 'score'] as const
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   const prototype = Object.getPrototypeOf(value)
   return prototype === Object.prototype || prototype === null
+}
+
+/** Unknown envelope fields are shared with older clients, but a heat entry we
+ * do read must be complete: ranking on a half-understood score is worse than
+ * falling back to stars. */
+function heatSource(value: unknown, id: string) {
+  if (!isRecord(value)) throw new Error(`invalid heat for ${id}: must be an object`)
+  if (Object.keys(value).some(key => !heatFields.includes(key as typeof heatFields[number]))) {
+    throw new Error(`invalid heat for ${id}: unexpected field`)
+  }
+  const ageDays = value.ageDays
+  if (typeof ageDays !== 'number' || !Number.isInteger(ageDays) || ageDays < 1) throw new Error(`invalid heat ageDays for ${id}`)
+  for (const field of heatRates) {
+    const rate = value[field]
+    if (typeof rate !== 'number' || !Number.isFinite(rate) || rate < 0) throw new Error(`invalid heat ${field} for ${id}`)
+  }
+  if (typeof value.asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value.asOf)) throw new Error(`invalid heat asOf for ${id}`)
+  return {
+    ageDays,
+    starsPerDay: value.starsPerDay as number,
+    starGrowthPerDay: value.starGrowthPerDay as number,
+    commitsPerDay: value.commitsPerDay as number,
+    pullsPerDay: value.pullsPerDay as number,
+    issuesPerDay: value.issuesPerDay as number,
+    score: value.score as number,
+    asOf: value.asOf,
+  }
 }
 
 function npmSource(value: unknown, skin: SkinEntry): NpmInstallSource {
@@ -52,13 +81,19 @@ export function decodeCatalogWire(value: unknown): CatalogFile {
   if (typeof value.generatedAt !== 'string' || !Number.isFinite(Date.parse(value.generatedAt))) throw new Error('catalog generatedAt is invalid')
   if (!Array.isArray(value.skins) || value.skins.length > 5000) throw new Error('catalog skins must be an array of at most 5000 entries')
 
-  const { npmSources, ...catalog } = value
+  const { npmSources, heat, ...catalog } = value
   if (Object.hasOwn(value, 'npmSources') && !isRecord(npmSources)) throw new Error('catalog npmSources must be an object')
   const sources = npmSources as Record<string, unknown> | undefined
   const ids = new Set(value.skins.map(skin => isRecord(skin) ? skin.id : undefined))
   for (const id of Object.keys(sources ?? {})) {
     if (!ids.has(id)) throw new Error(`npm source references unknown skin: ${id}`)
   }
+  if (Object.hasOwn(value, 'heat') && !isRecord(heat)) throw new Error('catalog heat must be an object')
+  // Entries are filtered against the published skins (a sliced or partially
+  // published catalog can carry strays); a score we do read must be complete.
+  const heatEntries = Object.entries((heat ?? {}) as Record<string, unknown>)
+    .filter(([id]) => ids.has(id))
+    .map(([id, entry]) => [id, heatSource(entry, id)] as const)
 
   const skins = value.skins.map(candidate => {
     if (!isRecord(candidate) || !isRecord(candidate.install)) throw new Error('invalid skin entry: install must be an object')
@@ -71,7 +106,11 @@ export function decodeCatalogWire(value: unknown): CatalogFile {
     const npm = mapped ?? inline
     return { ...skin, install: { ...skin.install, ...(npm === undefined ? {} : { npm }) } }
   })
-  return { ...catalog, skins } as CatalogFile
+  return {
+    ...catalog,
+    skins,
+    ...(heatEntries.length === 0 ? {} : { heat: Object.fromEntries(heatEntries) }),
+  } as CatalogFile
 }
 
 /** Always serialize npm metadata outside skins[].install, including shared caches. */

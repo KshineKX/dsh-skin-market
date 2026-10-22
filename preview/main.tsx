@@ -10,7 +10,7 @@ import { decodeCatalogWire } from '../src/catalog-wire.ts'
 import './preview.css'
 
 const catalog = decodeCatalogWire(catalogWire)
-const skins = catalog.skins.map(skin => ({ ...skin, githubStars: skin.starsSnapshot, starsStale: false, recommendations: catalog.skins.filter(item => item.id !== skin.id).map(item => item.id) }))
+const skins = catalog.skins.map(skin => ({ ...skin, githubStars: skin.starsSnapshot, starsStale: false, recommendations: catalog.skins.filter(item => item.id !== skin.id).map(item => item.id), ...(catalog.heat?.[skin.id] === undefined ? {} : { heat: catalog.heat[skin.id] }) }))
 const runtime = new Map<string, RuntimeSkin>(skins.map((skin, index) => [skin.id, index === 0
   ? { skinId: skin.id, installation: 'installed', activation: 'active', primary: true, pinned: false, installedVersion: skin.install.version, updateAvailable: true }
   : { skinId: skin.id, installation: index === 1 ? 'installed' : 'missing', activation: 'inactive', primary: false, pinned: false, installedVersion: index === 1 ? skin.install.version : null, updateAvailable: index === 1 }]))

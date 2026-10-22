@@ -22,6 +22,21 @@ describe('public catalog order', () => {
     expect(shouldRenderPublicPreview(supplemented, supplemented.marketScreenshots[0], true)).toBe(false)
   })
 
+  it('orders by momentum and falls back to lifetime stars on a tie', () => {
+    const flatButPopular = { ...previewed, starsSnapshot: 1600, heat: { score: 0 } }
+    const smallMover = { ...previewed, starsSnapshot: 6, heat: { score: 4.8 } }
+    const quietSmall = { ...previewed, starsSnapshot: 10, heat: { score: 0 } }
+
+    expect([flatButPopular, smallMover].sort((a, b) => comparePublicCatalogOrder(a, b, 'heat'))).toEqual([smallMover, flatButPopular])
+    expect([quietSmall, flatButPopular].sort((a, b) => comparePublicCatalogOrder(a, b, 'heat'))).toEqual([flatButPopular, quietSmall])
+  })
+
+  it('treats catalogs without momentum as a zero score rather than failing', () => {
+    const legacy = { ...previewed, starsSnapshot: 50 }
+    const newer = { ...previewed, starsSnapshot: 5, heat: { score: 1 } }
+    expect([legacy, newer].sort((a, b) => comparePublicCatalogOrder(a, b, 'heat'))).toEqual([newer, legacy])
+  })
+
   it('keeps entries without a usable preview last before applying the selected sort', () => {
     const placeholder = {
       ...previewed,

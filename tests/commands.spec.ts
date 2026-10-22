@@ -259,11 +259,12 @@ describe('Desktop pnpm adapter', () => {
       done: Promise.resolve({ exitCode: 0, signal: null }),
       cancel: () => undefined,
     })
-    const service: DesktopPnpmLike = {
+    const service: DesktopPnpmLike & { startPlugin: () => ReturnType<typeof handle> } = {
       runPlugin: (...args) => { calls.run.push(args); return handle() },
-      runExternalMarketPluginInstall: (args, invokingDir, signal) => {
+      startPlugin: () => handle(),
+      runExternalMarketPluginInstall(args, invokingDir, signal) {
         calls.boundary.push([args, invokingDir, signal])
-        return handle()
+        return this.startPlugin()
       },
     }
     const runner = desktopRunner(service, '/profiles/desktop')
