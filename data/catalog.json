@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-22T16:19:51.160Z",
+  "generatedAt": "2026-10-22T16:34:35.237Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -35043,6 +35043,16 @@
       "pullsPerDay": 0.2053,
       "issuesPerDay": 0.2347,
       "score": 6.769,
+      "asOf": "2026-10-22"
+    },
+    "yoimiya.lover.0621.01.himeko.starry.night": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-22"
     },
     "yoli-mi.dsh-client-ui-custom": {
