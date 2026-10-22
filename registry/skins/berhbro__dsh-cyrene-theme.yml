@@ -1,0 +1,68 @@
+id: berhbro.dsh-cyrene-theme
+name:
+  zh: dsh-cyrene-theme
+  en: dsh-cyrene-theme
+author: berhbro
+description: dsh-cyrene-theme · 昔涟主题
+repo: https://github.com/berhbro/dsh-cyrene-theme
+package: dsh-cyrene-theme
+rowId: ui-cyrene-theme
+category: theme
+tags:
+  - wallpaper
+  - glass
+  - pastel
+  - motion
+  - token-theme
+  - light-dark
+modes:
+  - light
+  - dark
+install:
+  target: github:berhbro/dsh-cyrene-theme#6f2e3ad4b4a28379b1d1932feb330f79213273cd
+  version: 0.1.1
+  commit: 6f2e3ad4b4a28379b1d1932feb330f79213273cd
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/DarkTheme.png
+  - https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/LightTheme.png
+  - https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/PersonalityManager.png
+  - https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/BackgroundPanel.png
+listScreenshot: https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/DarkTheme.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 6f2e3ad4b4a28379b1d1932feb330f79213273cd
+    packageVersion: 0.1.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-21T22:17:10.360Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1109
+starsSnapshot: 28
+releaseUpdatedAt: 2026-10-22T06:40:00.000Z
+metadataUpdatedAt: 2026-10-22T06:40:00.000Z
+starsUpdatedAt: 2026-10-22T06:40:00.000Z
+updatedAt: 2026-10-22T06:40:00.000Z

@@ -1,0 +1,72 @@
+id: zkforge.dsh-claude-desktop-theme
+name:
+  zh: dsh-claude-desktop-theme
+  en: dsh-claude-desktop-theme
+author: zkforge
+description: 为 DeepSeek Harness（DSH）Desktop 换上 Claude Code Desktop 外观
+repo: https://github.com/zkforge/dsh-claude-desktop-theme
+package: dsh-claude-desktop-theme
+rowId: ui-skin-ccd-style
+category: theme
+tags:
+  - token-theme
+  - light-dark
+modes:
+  - light
+  - dark
+install:
+  target: github:zkforge/dsh-claude-desktop-theme#e6131a700142a3d003e1539219a2b6193220b476
+  version: 0.4.6
+  commit: e6131a700142a3d003e1539219a2b6193220b476
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/fullscreen-light.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/fullscreen-dark.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/chat-light.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/chat-dark.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/model-menu-fullscreen-light.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/model-menu-fullscreen-dark.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/settings-light.webp
+  - https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/settings-dark.webp
+listScreenshot: https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/fullscreen-light.webp
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: improve
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议补全稳定的 package 名称、dsh.client Web 声明、row ID 和已构建客户端入口，以符合 dsh 插件要求并获得更顺畅的一键安装体验。
+    - 固定版本静态扫描无法完成，市场暂不提供该版本的一键安装。
+  scan:
+    commit: e6131a700142a3d003e1539219a2b6193220b476
+    packageVersion: 0.4.6
+    scannerVersion: static-v2
+    dshVersion: 0.2.0-rc.2
+    mode: static
+    result: unknown
+    checkedAt: 2026-10-21T22:17:18.807Z
+    findings:
+      - code: client-source-unavailable
+        message: 无法读取固定版本的 client 入口，静态扫描结果未知。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1113
+starsSnapshot: 11
+releaseUpdatedAt: 2026-10-22T06:40:00.000Z
+metadataUpdatedAt: 2026-10-22T06:40:00.000Z
+starsUpdatedAt: 2026-10-22T06:40:00.000Z
+updatedAt: 2026-10-22T06:40:00.000Z

@@ -1,0 +1,71 @@
+id: gqqqq-q.ascii-ocean
+name:
+  zh: ASCII 海洋
+  en: ASCII Ocean
+author: GqqQq-Q
+description: 用 ASCII 字符画出的鲨鱼与鱼群，在新会话首屏背后持续游动。纯浏览器端装饰，宿主侧没有逻辑。
+repo: https://github.com/GqqQq-Q/ASCII-ocean-DSHplugin
+subpath: DshASCiiOcean/ascii-ocean
+package: dsh-ascii-ocean
+rowId: ascii-ocean
+category: theme
+tags:
+  - appearance
+  - ascii-art
+  - animation
+  - background
+modes:
+  - light
+  - dark
+install:
+  target: github:GqqQq-Q/ASCII-ocean-DSHplugin#f29de0458dce9d476dbf8e69a6817c588fa1c90f&path:/DshASCiiOcean/ascii-ocean
+  version: 0.1.0
+  commit: f29de0458dce9d476dbf8e69a6817c588fa1c90f
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/home.png
+  - skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/conversation.png
+  - skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/settings.png
+screenshots:
+  - skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/home.gif
+listScreenshot: skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/home.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: improve
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: f29de0458dce9d476dbf8e69a6817c588fa1c90f
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: "2026-10-22T05:29:19.533Z"
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1108
+starsSnapshot: 4
+releaseUpdatedAt: "2026-10-22T06:20:00.000Z"
+metadataUpdatedAt: "2026-10-22T06:20:00.000Z"
+starsUpdatedAt: "2026-10-22T06:20:00.000Z"
+updatedAt: "2026-10-22T06:20:00.000Z"

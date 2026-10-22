@@ -1,9 +1,153 @@
 # 近期收录
 
-这里记录审核后新增的社区主题与外观扩展，按进入市场主分支的日期倒序排列。批量收录保留完整名单；已有条目的版本变更在“自动同步更新”中单独记录，单纯补录截图不重复计为新增。
+这里记录审核后新增的社区主题与外观扩展，按进入市场主分支的日期倒序排列，一条皮肤一节。已有条目的版本变更在“自动同步更新”中单独记录，单纯补录截图不重复计为新增。
 
 安装版本固定到对应收录 commit；预览图使用 registry 中记录的仓库素材。收录市场不等于 DSH 官方、安全团队或市场对皮肤的安全背书；兼容性和素材授权状态请以皮肤仓库说明为准。
 
+
+<a id="recent-2026-10-22"></a>
+
+## 2026-10-22 · Marathon 工业酸
+
+调色板驱动的工业风动效、随机 Max 效果，以及紧凑的工作区切换。作者声明适配 DSH 0.2，不是本机 `0.1.7-rc.2` 上跑过的结果。预览图是仓库素材。
+
+- GitHub：[yasneg616/marathon-like-deepseek-harness-skin](https://github.com/yasneg616/marathon-like-deepseek-harness-skin)
+- 收录版本：`2.4.3`
+- 固定 commit：`d95c5e344d223bd7f7a1cef04b8e42202764a1b2`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/yasneg616/marathon-like-deepseek-harness-skin/d95c5e344d223bd7f7a1cef04b8e42202764a1b2/docs/media/overview.jpg" width="60%" alt="Marathon 工业酸">
+
+## 2026-10-22 · 550C
+
+四套磷光配色、扫描线、等宽字体和机器读数栏。作者声明适配 DSH 0.2，不是本机 `0.1.7-rc.2` 上跑过的结果。开机动画 `dsh-550c-boot` 没有一起收录。预览图是仓库素材。
+
+- GitHub：[yannicksong0106/dsh-550c-skin](https://github.com/yannicksong0106/dsh-550c-skin)
+- 收录版本：`0.1.0-beta.1`
+- 固定 commit：`b568ad529cceda4ae57be6f07b722a2d4cd82e20`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/yannicksong0106/dsh-550c-skin/b568ad529cceda4ae57be6f07b722a2d4cd82e20/docs/preview-amber.png" width="60%" alt="550C 琥珀">
+
+## 2026-10-22 · ASCII 海洋
+
+用 ASCII 字符画出的鲨鱼与鱼群，在新会话首屏背后持续游动。可安装单元在仓库子目录，仓库根不是包。预览图是装进隔离 DSH 后录的，包含一段动图。
+
+- GitHub：[GqqQq-Q/ASCII-ocean-DSHplugin](https://github.com/GqqQq-Q/ASCII-ocean-DSHplugin)
+- 收录版本：`0.1.0`
+- 固定 commit：`f29de0458dce9d476dbf8e69a6817c588fa1c90f`
+- 子目录：`DshASCiiOcean/ascii-ocean`
+- 许可：MIT（只在 package.json 声明）
+
+<img src="https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/GqqQq-Q__ASCII-ocean-DSHplugin--DshASCiiOcean--ascii-ocean/f29de0458dce9d476dbf8e69a6817c588fa1c90f/home.gif" width="60%" alt="ASCII 海洋 · 新会话动图">
+
+## 2026-10-22 · 昔涟主题
+
+- GitHub：[berhbro/dsh-cyrene-theme](https://github.com/berhbro/dsh-cyrene-theme)
+- 收录版本：`0.1.1`
+- 固定 commit：`6f2e3ad4b4a28379b1d1932feb330f79213273cd`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/berhbro/dsh-cyrene-theme/6f2e3ad4b4a28379b1d1932feb330f79213273cd/docs/screenshots/DarkTheme.png" width="60%" alt="昔涟主题">
+
+## 2026-10-22 · 按模型换背景
+
+派生自 `Tkingxiao/dsh-any-background`。预览图是仓库素材。
+
+- GitHub：[HarmlessFunny/dsh-background-by-model](https://github.com/HarmlessFunny/dsh-background-by-model)
+- 收录版本：`0.9.1`
+- 固定 commit：`64b196e760c97632f31d03b49ab557668a247bca`
+- 许可：MIT
+
+<img src="https://cdn.jsdelivr.net/gh/HarmlessFunny/assets@v0.1.0/dsh-background-by-model/wallpaper-deepseek.webp" width="60%" alt="按模型换背景">
+
+## 2026-10-22 · 壁纸抽屉
+
+左侧栏换系统预设、纯色、渐变、图片或视频。预览图是仓库素材。
+
+- GitHub：[sz1698/dsh-bg-new](https://github.com/sz1698/dsh-bg-new)
+- 收录版本：`0.7.0`
+- 固定 commit：`329c636efee581f7fa527714cb4fd867135aee82`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/sz1698/dsh-bg-new/329c636efee581f7fa527714cb4fd867135aee82/assets/preview.png" width="60%" alt="壁纸抽屉">
+
+## 2026-10-22 · 鲸鱼娘轻量皮肤
+
+预览图是仓库素材。
+
+- GitHub：[KurosawaGeeker/dsh-moe-lite](https://github.com/KurosawaGeeker/dsh-moe-lite)
+- 收录版本：`0.15.3`
+- 固定 commit：`c72cd1e39b39c1c69d01e29a09748c2c29b824c4`
+- 许可：见仓库 `LICENSE`
+
+<img src="https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/preview-light-80.png" width="60%" alt="鲸鱼娘轻量皮肤">
+
+## 2026-10-22 · Claude Desktop 外观
+
+预览图是仓库素材。
+
+- GitHub：[zkforge/dsh-claude-desktop-theme](https://github.com/zkforge/dsh-claude-desktop-theme)
+- 收录版本：`0.4.6`
+- 固定 commit：`e6131a700142a3d003e1539219a2b6193220b476`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/zkforge/dsh-claude-desktop-theme/e6131a700142a3d003e1539219a2b6193220b476/assets/screenshots/fullscreen-light.webp" width="60%" alt="Claude Desktop 外观">
+
+## 2026-10-22 · Ventus 鲸
+
+作者把它并进了整合包，这里钉的是可单独安装的仓库。预览图是仓库素材。
+
+- GitHub：[meto-ventus/dsh-ventus-whale](https://github.com/meto-ventus/dsh-ventus-whale)
+- 收录版本：`0.1.0`
+- 固定 commit：`c439211835930e9876d8130887543b033ae8f327`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/meto-ventus/dsh-ventus-whale/c439211835930e9876d8130887543b033ae8f327/docs/preview-light.gif" width="60%" alt="Ventus 鲸">
+
+## 2026-10-22 · 动态壁纸背景
+
+预览图是仓库素材。
+
+- GitHub：[nishuoyang/dsh-wallpaper-bg](https://github.com/nishuoyang/dsh-wallpaper-bg)
+- 收录版本：`0.5.16`
+- 固定 commit：`ea350232fbbe01be97bb7fdfe23705bb317eb4e1`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/preview-hero.jpg" width="60%" alt="动态壁纸背景">
+
+## 2026-10-22 · Cyberwhale
+
+预览图是仓库素材。
+
+- GitHub：[CyberWei922/dsh-cyberwhale](https://github.com/CyberWei922/dsh-cyberwhale)
+- 收录版本：`1.0.2`
+- 固定 commit：`f97cbaa7b6f00f05369717c898178d3a774a774f`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/CyberWei922/dsh-cyberwhale/f97cbaa7b6f00f05369717c898178d3a774a774f/docs/images/greeting.gif" width="60%" alt="Cyberwhale">
+
+## 2026-10-22 · 魔法使之夜
+
+可安装单元在子目录 `skin`。预览图是仓库素材。
+
+- GitHub：[AvalonskyAfar/MahoutsukaiNoYoru-DSH-Skin](https://github.com/AvalonskyAfar/MahoutsukaiNoYoru-DSH-Skin)
+- 收录版本：`0.1.1`
+- 固定 commit：`372ce12620f05f30a6e5a5669cba94d8baf7e02c`
+- 许可：MIT
+
+<img src="https://raw.githubusercontent.com/AvalonskyAfar/MahoutsukaiNoYoru-DSH-Skin/372ce12620f05f30a6e5a5669cba94d8baf7e02c/screenshots/01-main-aoko-night.jpg" width="60%" alt="魔法使之夜">
+
+## 2026-10-22 · 深潜
+
+预览图是仓库素材。
+
+- GitHub：[skymecode/dsh-deep-diving](https://github.com/skymecode/dsh-deep-diving)
+- 收录版本：`0.2.1`
+- 固定 commit：`958d691997c07a457796bebe09738df5a0274c31`
+- 许可：见仓库 `LICENSE`
+
+<img src="https://raw.githubusercontent.com/skymecode/dsh-deep-diving/958d691997c07a457796bebe09738df5a0274c31/preview/whale-maid-actions.png" width="60%" alt="深潜">
 
 <a id="recent-2026-10-18"></a>
 
@@ -23,11 +167,7 @@
 
 <a id="recent-since-2026-09-10"></a>
 
-## 2026-09-10 至 2026-10-05 · 新增 7 项
-
-9 月 8 日批量之后新进主分支的社区条目，按进入日期倒序。
-
-### 2026-10-05 · 终末地主题（改版）
+## 2026-10-05 · 终末地主题（改版）
 
 参考《明日方舟：终末地》官网视觉风格的 DSH Web 主题：奶油纸底、信号黄与武陵青强调色、通体直角；在上游基础上增加中央散景。`rowId` 为 `theme-endfield-re`，可与上游终末地主题并存。
 
@@ -38,7 +178,7 @@
 
 <img src="https://raw.githubusercontent.com/SkillyNotFound/dsh-theme-endfield-re/569754230cb05266a7c30f946e579cd04ea4a656/assets/screenshots1.webp" width="60%" alt="终末地主题（改版）预览">
 
-### 2026-10-05 · 千夏 · 绝区零外观主题
+## 2026-10-05 · 千夏 · 绝区零外观主题
 
 绝区零「千夏」主题：立绘 / 影画两套外观、可调图层、可拖动 Q 版挂件与调色画板，支持浅色 / 深色。
 
@@ -49,7 +189,7 @@
 
 <img src="https://raw.githubusercontent.com/xkxkiscoder/dsh-ui-zzz-sunna/5e98100379b9527df5928b797131734d724e614f/docs/preview-portrait-light.webp" width="60%" alt="千夏主题浅色立绘预览">
 
-### 2026-10-02 · 鲸鱼娘动态壁纸
+## 2026-10-02 · 鲸鱼娘动态壁纸
 
 把「DeepSeek 鲸鱼娘」动态壁纸视频设为 DSH Web 全屏背景。
 
@@ -60,7 +200,7 @@
 
 <img src="https://raw.githubusercontent.com/QWEQ-CELL-DEL/dsh-whale-girl-wallpaper/f69490ef6563a481abe8a792c2283657d06e18a8/screenshots/preview-1.png" width="60%" alt="鲸鱼娘动态壁纸预览">
 
-### 2026-09-22 · Kami
+## 2026-09-22 · Kami
 
 纸媒 / editorial 风格：暖羊皮纸画布、墨蓝强调色、衬线排版与发丝线边框，浅色 / 深色双模式。
 
@@ -70,7 +210,7 @@
 
 <img src="https://raw.githubusercontent.com/quaner1234-cmd/DSH-THEME-KAMI/1fb0d23fe019eac6fb03cc3eb2f1b51c35790459/assets/preview-light.png" width="60%" alt="Kami 浅色预览">
 
-### 2026-09-13 · Pip-Boy 终端
+## 2026-09-13 · Pip-Boy 终端
 
 辐射 Pip-Boy 风格绿磷光主题：Vault-Tec 角框、玻璃反光，以及合成终端音效。
 
@@ -80,7 +220,7 @@
 
 <img src="https://raw.githubusercontent.com/laohankk/dsh-crt-skins/60a8bc681342b2676af620d44119167fec6a1d37/packages/skins/pipboy-terminal/preview/preview.png" width="60%" alt="Pip-Boy 终端预览">
 
-### 2026-09-13 · CRT 终端（琥珀）
+## 2026-09-13 · CRT 终端（琥珀）
 
 琥珀磷光 CRT 终端主题：扫描线、曲面暗角、方角面板，以及合成终端音效。
 
@@ -90,7 +230,7 @@
 
 <img src="https://raw.githubusercontent.com/laohankk/dsh-crt-skins/60a8bc681342b2676af620d44119167fec6a1d37/packages/skins/crt-terminal/preview/preview.png" width="60%" alt="CRT 终端琥珀预览">
 
-### 2026-09-10 · dsh-skin-Yumemizuki
+## 2026-09-10 · dsh-skin-Yumemizuki
 
 《原神》梦见月瑞希粉丝主题：暖色纸灯日间与夜樱月夜，分层背景。
 
@@ -102,85 +242,589 @@
 
 <a id="batch-2026-09-08"></a>
 
-## 2026-09-08 · 新增 73 项主题与外观扩展
+## 2026-09-08 · dsh-whale-musume
 
-本批新增 73 项。下面保留每项的仓库、版本、固定提交与预览入口。
+- GitHub：[Sutera-Diffusus/dsh-whale-musume](https://github.com/Sutera-Diffusus/dsh-whale-musume)
+- 收录版本：`2.0.1`
+- 固定 commit：`ba9c69480ec4e606ff654160348eb3682a483dd7`
 
-| 名称 / 仓库 | 版本 | 固定提交 | 预览 |
-| --- | --- | --- | --- |
-| [dsh-whale-musume](https://github.com/Sutera-Diffusus/dsh-whale-musume) · Sutera-Diffusus/dsh-whale-musume | `2.0.1` | [ba9c69480ec4](https://github.com/Sutera-Diffusus/dsh-whale-musume/tree/ba9c69480ec4e606ff654160348eb3682a483dd7) | [查看图片](https://raw.githubusercontent.com/Sutera-Diffusus/dsh-whale-musume/ba9c69480ec4e606ff654160348eb3682a483dd7/docs/images/homepage-promo.png) |
-| [dsh-ux](https://github.com/jiangnanquan/dsh-ux) · jiangnanquan/dsh-ux | `1.0.0` | [9a2a16c57e05](https://github.com/jiangnanquan/dsh-ux/tree/9a2a16c57e05b051fc05ceea26cbcef90af60546) | [查看图片](https://raw.githubusercontent.com/jiangnanquan/dsh-ux/9a2a16c57e05b051fc05ceea26cbcef90af60546/screenshot.png) |
-| [dsh-official-homepage-theme](https://github.com/JohnnyTing/dsh-official-homepage-theme) · JohnnyTing/dsh-official-homepage-theme | `1.0.6` | [3dc1ee72510d](https://github.com/JohnnyTing/dsh-official-homepage-theme/tree/3dc1ee72510db857257ff292d7f3aca1d3f46bb8) | [查看图片](https://raw.githubusercontent.com/JohnnyTing/dsh-official-homepage-theme/3dc1ee72510db857257ff292d7f3aca1d3f46bb8/static/preview.gif) |
-| [dsh-animation-optimization](https://github.com/kelemiao/dsh-animation-optimization) · kelemiao/dsh-animation-optimization | `0.2.0` | [7d3d7dc3a527](https://github.com/kelemiao/dsh-animation-optimization/tree/7d3d7dc3a5272a73f6dc2e403dea02e50c1f89cf) | [查看图片](https://raw.githubusercontent.com/kelemiao/dsh-animation-optimization/7d3d7dc3a5272a73f6dc2e403dea02e50c1f89cf/assets/screenshots/1.png) |
-| [dsh-whale-animation](https://github.com/LeemanCheung/dsh-whale-animation) · LeemanCheung/dsh-whale-animation | `0.8.0` | [d6feab656b27](https://github.com/LeemanCheung/dsh-whale-animation/tree/d6feab656b27e5387daaa1882442ab20af93b1e5) | [查看图片](https://raw.githubusercontent.com/LeemanCheung/dsh-whale-animation/d6feab656b27e5387daaa1882442ab20af93b1e5/docs/four-actions/preview.gif) |
-| [dsh-custom-plugin](https://github.com/AlexPeng07/dsh-custom-plugin) · AlexPeng07/dsh-custom-plugin | `0.4.0` | [1d470dfd6c7d](https://github.com/AlexPeng07/dsh-custom-plugin/tree/1d470dfd6c7d48f1269f80650c473d0e70c769d7) | [查看图片](https://raw.githubusercontent.com/AlexPeng07/dsh-custom-plugin/1d470dfd6c7d48f1269f80650c473d0e70c769d7/docs/overview.png) |
-| [dsh-custom-ui-lsaa4](https://github.com/lsaa4/dsh-custom-ui) · lsaa4/dsh-custom-ui | `0.1.1` | [786b70a5d113](https://github.com/lsaa4/dsh-custom-ui/tree/786b70a5d1133c9daad1009849e63d32fc4981f0) | [查看图片](https://raw.githubusercontent.com/lsaa4/dsh-custom-ui/786b70a5d1133c9daad1009849e63d32fc4981f0/docs/screenshot.png) |
-| [dsh-skin-studio](https://github.com/realMisakaMikoto/dsh-skin-studio) · realMisakaMikoto/dsh-skin-studio | `0.6.0-alpha.1` | [4177dd002cb8](https://github.com/realMisakaMikoto/dsh-skin-studio/tree/4177dd002cb81ef9aecd224acf17f7e503bcdec3) | [查看图片](https://raw.githubusercontent.com/realMisakaMikoto/dsh-skin-studio/4177dd002cb81ef9aecd224acf17f7e503bcdec3/docs/screenshots/skins/ayumu.webp) |
-| [dsh-client-ui-skin-qingxiao](https://github.com/taoser258/dsh-client-ui-skin-qingxiao) · taoser258/dsh-client-ui-skin-qingxiao | `0.1.4` | [38f5bc044ccd](https://github.com/taoser258/dsh-client-ui-skin-qingxiao/tree/38f5bc044ccd562713e28f59f28b54732011f974) | [查看图片](https://raw.githubusercontent.com/taoser258/dsh-client-ui-skin-qingxiao/38f5bc044ccd562713e28f59f28b54732011f974/preview/screen-light.png) |
-| [dsh-whale-aqua-theme](https://github.com/dataizu/dsh-whale-aqua-theme) · dataizu/dsh-whale-aqua-theme | `1.0.0` | [8f4abbbde437](https://github.com/dataizu/dsh-whale-aqua-theme/tree/8f4abbbde43710b26755e192e4b935cfba4fc37a) | [查看图片](https://raw.githubusercontent.com/dataizu/dsh-whale-aqua-theme/8f4abbbde43710b26755e192e4b935cfba4fc37a/screenshots/whale-animation.gif) |
-| [dsh-theme](https://github.com/EternalNight996/dsh-theme) · EternalNight996/dsh-theme | `0.5.1` | [d01383f8d82d](https://github.com/EternalNight996/dsh-theme/tree/d01383f8d82d3020607f16b62a8f6445df9f4978) | [查看图片](https://raw.githubusercontent.com/EternalNight996/dsh-theme/d01383f8d82d3020607f16b62a8f6445df9f4978/assets/screen/dsh-theme.gif) |
-| [dsh-theme-liquid-glass](https://github.com/FAVKTOXIC/dsh-theme-liquid-glass) · FAVKTOXIC/dsh-theme-liquid-glass | `0.4.2` | [d24167a4fbbf](https://github.com/FAVKTOXIC/dsh-theme-liquid-glass/tree/d24167a4fbbfb08c07b60ef64cbbde6a49cecfc1) | [查看图片](https://raw.githubusercontent.com/FAVKTOXIC/dsh-theme-liquid-glass/d24167a4fbbfb08c07b60ef64cbbde6a49cecfc1/assets/screenshots/screenshot-input.png) |
-| [dsh-prompt-vault](https://github.com/Frog755/dsh-prompt-vault) · Frog755/dsh-prompt-vault | `1.0.2` | [714e99396172](https://github.com/Frog755/dsh-prompt-vault/tree/714e9939617270a0f7b3a33b5c4aadcd1a6e8ac3) | [查看图片](https://raw.githubusercontent.com/Frog755/dsh-prompt-vault/714e9939617270a0f7b3a33b5c4aadcd1a6e8ac3/assets/screenshot-panel.png) |
-| [xiao-theme-dsh-ui-plugin](https://github.com/jinxlux/xiao-theme-dsh-ui-plugin) · jinxlux/xiao-theme-dsh-ui-plugin | `0.7.1` | [8397a209b025](https://github.com/jinxlux/xiao-theme-dsh-ui-plugin/tree/8397a209b025f9e6e4a46dd32733e53e6404529c) | [查看图片](https://github.com/user-attachments/assets/3998f58b-53db-4349-80f3-3d993c6ad3c3) |
-| [dsh-bg-image](https://github.com/lyh9712/dsh-bg-image) · lyh9712/dsh-bg-image | `2.0.0` | [3de5438980ee](https://github.com/lyh9712/dsh-bg-image/tree/3de5438980eee8a10844edfa0ac7b9fd7ef7a9d3) | [查看图片](https://raw.githubusercontent.com/lyh9712/dsh-bg-image/3de5438980eee8a10844edfa0ac7b9fd7ef7a9d3/docs/screenshot.png) |
-| [dsh-prism-plugin](https://github.com/mantonlove/dsh-prism-plugin) · mantonlove/dsh-prism-plugin | `1.0.2` | [64c4895dc036](https://github.com/mantonlove/dsh-prism-plugin/tree/64c4895dc036c98ced38d47e34acb15f6545c4ac) | [查看图片](https://raw.githubusercontent.com/mantonlove/dsh-prism-plugin/64c4895dc036c98ced38d47e34acb15f6545c4ac/assets/shot-1.jpg) |
-| [dsh-gbc-ui](https://github.com/U1s1-king/dsh-gbc-ui) · U1s1-king/dsh-gbc-ui | `0.0.1` | [4d3caf852155](https://github.com/U1s1-king/dsh-gbc-ui/tree/4d3caf8521553d744169f14d36ee346092dcab3e) | [查看图片](https://raw.githubusercontent.com/U1s1-king/dsh-gbc-ui/4d3caf8521553d744169f14d36ee346092dcab3e/preview/light.webp) |
-| [dsh-skin-mari](https://github.com/unpain/dsh-skin-mari) · unpain/dsh-skin-mari | `0.1.1` | [c414995fa639](https://github.com/unpain/dsh-skin-mari/tree/c414995fa639d52dbb4e4ed2c582d29e0bab5c45) | [查看图片](https://raw.githubusercontent.com/unpain/dsh-skin-mari/c414995fa639d52dbb4e4ed2c582d29e0bab5c45/preview/dark.webp) |
-| [ncm-player](https://github.com/WolfGenerals/ncm-player) · WolfGenerals/ncm-player | `1.2.0` | [f40f98271512](https://github.com/WolfGenerals/ncm-player/tree/f40f982715128d2f4d7928012b6cebf86af4d40e) | [查看图片](https://raw.githubusercontent.com/WolfGenerals/ncm-player/f40f982715128d2f4d7928012b6cebf86af4d40e/doc/screenshot-1.png) |
-| [dsh-eyecare](https://github.com/Yummyxl/dsh-eyecare) · Yummyxl/dsh-eyecare | `1.1.0` | [efeb92e1bcfe](https://github.com/Yummyxl/dsh-eyecare/tree/efeb92e1bcfe54369f88b6e8a176ad87f87a17b0) | [查看图片](https://raw.githubusercontent.com/Yummyxl/dsh-eyecare/efeb92e1bcfe54369f88b6e8a176ad87f87a17b0/screenshot.png) |
-| [dsh-pixel-ui](https://github.com/zhang66633/dsh-pixel-ui) · zhang66633/dsh-pixel-ui | `1.3.0` | [44454483bbdb](https://github.com/zhang66633/dsh-pixel-ui/tree/44454483bbdbbba60822bb7a1d2846ff94ed021c) | [查看图片](https://raw.githubusercontent.com/zhang66633/dsh-pixel-ui/44454483bbdbbba60822bb7a1d2846ff94ed021c/assets/screenshot-wood.png) |
-| [dsh-light-theater](https://github.com/AshModeling/dsh-light-theater) · AshModeling/dsh-light-theater | `0.1.0` | [23980ad2b2f3](https://github.com/AshModeling/dsh-light-theater/tree/23980ad2b2f39413863da963a70afd1148b1220d) | [查看图片](https://raw.githubusercontent.com/AshModeling/dsh-light-theater/23980ad2b2f39413863da963a70afd1148b1220d/docs/preview.png) |
-| [code-render](https://github.com/CH4ACKO3/dsh-render-engine) · CH4ACKO3/dsh-render-engine | `0.1.2` | [cca409bdfbcd](https://github.com/CH4ACKO3/dsh-render-engine/tree/cca409bdfbcdb58e20267f970744d9b2918d218a/packages/code-render) | [查看图片](https://raw.githubusercontent.com/CH4ACKO3/dsh-render-engine/cca409bdfbcdb58e20267f970744d9b2918d218a/docs/assets/chatview-rendering-comparison.png) |
-| [dsh-cool-theme](https://github.com/CoolTea001/dsh-cool-theme) · CoolTea001/dsh-cool-theme | `0.4.0` | [74a04f390a49](https://github.com/CoolTea001/dsh-cool-theme/tree/74a04f390a49077efb5e312ed927c08b5f83c359) | [查看图片](https://raw.githubusercontent.com/CoolTea001/dsh-cool-theme/74a04f390a49077efb5e312ed927c08b5f83c359/assets/previews/1.png) |
-| [dsh-shunshun-wallpaper](https://github.com/Ddamage/dsh-shunshun-wallpaper) · Ddamage/dsh-shunshun-wallpaper | `1.0.4` | [6f42d12d2b65](https://github.com/Ddamage/dsh-shunshun-wallpaper/tree/6f42d12d2b652b14ddc84a3221ddeef47e066d4a) | [查看图片](https://github.com/Ddamage/dsh-shunshun-wallpaper/releases/download/v1.0.1/rotating_horse_smooth.gif) |
-| [dsh-atom-commune-skin](https://github.com/dingdongji-hub/dsh-atom-commune-skin) · dingdongji-hub/dsh-atom-commune-skin | `0.1.0` | [077fd51794b9](https://github.com/dingdongji-hub/dsh-atom-commune-skin/tree/077fd51794b9a4121e2b0f8d130cbd28dec28b9c) | [查看图片](https://raw.githubusercontent.com/dingdongji-hub/dsh-atom-commune-skin/077fd51794b9a4121e2b0f8d130cbd28dec28b9c/assets/bg.jpg) |
-| [dsh-plugin-ehtools](https://github.com/eh-tools/dsh-plugin) · eh-tools/dsh-plugin | `0.2.0` | [91057764c150](https://github.com/eh-tools/dsh-plugin/tree/91057764c150cc3bd4c783099be4e663ac98d74d/plugins/deepseek-harness) | [查看图片](https://raw.githubusercontent.com/eh-tools/dsh-plugin/91057764c150cc3bd4c783099be4e663ac98d74d/png/%E9%A1%B5%E9%9D%A2%E5%85%A8%E8%A7%88(%E6%96%87%E4%BB%B6%E6%A0%91+git%E6%A0%91+%E4%BD%99%E9%A2%9D+%E7%B2%92%E5%AD%90%E9%B2%B8%E9%B1%BC+%E6%95%B0%E6%8D%AE%E5%BA%93tag+%E6%89%B9%E9%87%8F%E5%BD%92%E6%A1%A3%E6%8C%89%E9%92%AE%E4%BD%8D%E7%BD%AE).png) |
-| [deepseek-whale-wallpaper](https://github.com/HeShen-1/deepseek-whale-wallpaper) · HeShen-1/deepseek-whale-wallpaper | `0.2.0` | [2b629f6bb207](https://github.com/HeShen-1/deepseek-whale-wallpaper/tree/2b629f6bb2072d60b4028773880a52ba2b2f2465) | [查看图片](https://raw.githubusercontent.com/HeShen-1/deepseek-whale-wallpaper/2b629f6bb2072d60b4028773880a52ba2b2f2465/docs/screenshots/harness-ui-light.jpg) |
-| [dsh-ENHANCED](https://github.com/HIT-HTML/dsh-ENHANCED) · HIT-HTML/dsh-ENHANCED | `1.2.2` | [6c4d8025f70e](https://github.com/HIT-HTML/dsh-ENHANCED/tree/6c4d8025f70e9b0a5c4690950548ea8038996548) | [查看图片](https://github.com/user-attachments/assets/f20d6a19-2392-46c3-9a1a-358af8f123bc) |
-| [dsh-web-theme](https://github.com/luckzhangfengbo/dsh-web-theme) · luckzhangfengbo/dsh-web-theme | `0.1.1` | [a49b7d68f31c](https://github.com/luckzhangfengbo/dsh-web-theme/tree/a49b7d68f31cc442ec83fdcfc4803eaa4304d0cd) | [查看图片](https://raw.githubusercontent.com/luckzhangfengbo/dsh-web-theme/a49b7d68f31cc442ec83fdcfc4803eaa4304d0cd/docs/screenshots/pine-hero.png) |
-| [dsh-codex-theme](https://github.com/Lxd-Ashe/dsh-codex-theme) · Lxd-Ashe/dsh-codex-theme | `0.3.0` | [eb4b0b2bb09d](https://github.com/Lxd-Ashe/dsh-codex-theme/tree/eb4b0b2bb09db16b597a51a503fe24d1140b434f) | [查看图片](https://raw.githubusercontent.com/Lxd-Ashe/dsh-codex-theme/eb4b0b2bb09db16b597a51a503fe24d1140b434f/docs/dark-theme.png) |
-| [dsh-theme-tuner](https://github.com/shawnlone/dsh-theme-tuner) · shawnlone/dsh-theme-tuner | `0.1.2` | [2901caaec7a3](https://github.com/shawnlone/dsh-theme-tuner/tree/2901caaec7a33b48c9bad4aa286765bc6f456b71) | [查看图片](https://raw.githubusercontent.com/shawnlone/dsh-theme-tuner/2901caaec7a33b48c9bad4aa286765bc6f456b71/assets/screenshot_01.png) |
-| [dsh-Veneer](https://github.com/swordordead/dsh-Veneer) · swordordead/dsh-Veneer | `0.8.0` | [ad6f6d68b513](https://github.com/swordordead/dsh-Veneer/tree/ad6f6d68b513399103e885863c21546860cd0152) | [查看图片](https://raw.githubusercontent.com/swordordead/dsh-Veneer/ad6f6d68b513399103e885863c21546860cd0152/docs/images/veneer-overview.png) |
-| [claude-style-skin](https://github.com/TaiyakiOffical/claude-style-skin) · TaiyakiOffical/claude-style-skin | `0.1.1` | [09cfe36237b7](https://github.com/TaiyakiOffical/claude-style-skin/tree/09cfe36237b7fa0c4e57141b364b8bf50f084d37) | [查看图片](https://raw.githubusercontent.com/TaiyakiOffical/claude-style-skin/09cfe36237b7fa0c4e57141b364b8bf50f084d37/docs/light.png) |
-| [DSH-Hiyuki-Frost-Sakura](https://github.com/6HOLLIS/DSH-Hiyuki-Frost-Sakura) · 6HOLLIS/DSH-Hiyuki-Frost-Sakura | `0.1.0` | [9f94094e426b](https://github.com/6HOLLIS/DSH-Hiyuki-Frost-Sakura/tree/9f94094e426b5fa62dea20118ef1792125445505) | [查看图片](https://raw.githubusercontent.com/6HOLLIS/DSH-Hiyuki-Frost-Sakura/9f94094e426b5fa62dea20118ef1792125445505/artifacts/qa/dsh-rc2-calm.png) |
-| [Gandalf](https://github.com/A-BigDog/Gandalf) · A-BigDog/Gandalf | `0.1.0` | [0c9a0f6fcc6e](https://github.com/A-BigDog/Gandalf/tree/0c9a0f6fcc6e810afb5a8220c944f08428802102/plugin) | [查看图片](https://raw.githubusercontent.com/A-BigDog/Gandalf/0c9a0f6fcc6e810afb5a8220c944f08428802102/docs/screenshot.jpg) |
-| [dsh-plugin-gemini-theme](https://github.com/dingyi580/dsh-plugin-gemini-theme) · dingyi580/dsh-plugin-gemini-theme | `0.1.0` | [c7c22fe81945](https://github.com/dingyi580/dsh-plugin-gemini-theme/tree/c7c22fe81945cfdd6da91f5175785761e2b086c1) | [查看图片](https://raw.githubusercontent.com/dingyi580/dsh-plugin-gemini-theme/c7c22fe81945cfdd6da91f5175785761e2b086c1/assets/hero-dark.png) |
-| [dsh-theme-eink-retro](https://github.com/exoticknight/dsh-theme-eink-retro) · exoticknight/dsh-theme-eink-retro | `0.2.1` | [c65f58b7d83f](https://github.com/exoticknight/dsh-theme-eink-retro/tree/c65f58b7d83f1ebb8840a25a748ab0fc076f0597) | [查看图片](https://raw.githubusercontent.com/exoticknight/dsh-theme-eink-retro/c65f58b7d83f1ebb8840a25a748ab0fc076f0597/assets/screenshots/balanced-fresh-profile.png) |
-| [dsh-skin-argentina](https://github.com/henrychenhao/dsh-skin-argentina) · henrychenhao/dsh-skin-argentina | `0.1.0` | [bff08a0cda4e](https://github.com/henrychenhao/dsh-skin-argentina/tree/bff08a0cda4ed679b646e9aa32ea5f921b99ad29) | [查看图片](https://raw.githubusercontent.com/henrychenhao/dsh-skin-argentina/bff08a0cda4ed679b646e9aa32ea5f921b99ad29/screenshot-light.png) |
-| [skins](https://github.com/iasiv5/skins) · iasiv5/skins | `1.0.1` | [85a5c3c54417](https://github.com/iasiv5/skins/tree/85a5c3c544175ff8c1e3a820de76902c90407e8c) | [查看图片](https://raw.githubusercontent.com/iasiv5/skins/85a5c3c544175ff8c1e3a820de76902c90407e8c/docs/assets/preview-meirenzhi-1.webp) |
-| [deepseek-harness-swift](https://github.com/krystal-cao/deepseek-harness-swift) · krystal-cao/deepseek-harness-swift | `0.1.0` | [047cc46ae6df](https://github.com/krystal-cao/deepseek-harness-swift/tree/047cc46ae6df75afdd0a0406b7491c4d25dc9279/assets/dsh-desktop-host) | [查看图片](https://raw.githubusercontent.com/krystal-cao/deepseek-harness-swift/047cc46ae6df75afdd0a0406b7491c4d25dc9279/assets/%E4%B8%BB%E7%95%8C%E9%9D%A2.png) |
-| [dsh-raiden-theme](https://github.com/lengzhanbao/dsh-raiden-theme) · lengzhanbao/dsh-raiden-theme | `0.1.1` | [f4b9a1218818](https://github.com/lengzhanbao/dsh-raiden-theme/tree/f4b9a1218818198ba3723df11bb8fd428e2df8c3) | [查看图片](https://raw.githubusercontent.com/lengzhanbao/dsh-raiden-theme/f4b9a1218818198ba3723df11bb8fd428e2df8c3/preview/light.jpg) |
-| [dsh-plugins-linyuana](https://github.com/linyuan-ai1/dsh-plugins) · linyuan-ai1/dsh-plugins | `0.1.1` | [2ea9d87972fb](https://github.com/linyuan-ai1/dsh-plugins/tree/2ea9d87972fbc970cf725f8a7643c738f1196c36/packages/dsh-card-color) | [查看图片](https://raw.githubusercontent.com/linyuan-ai1/dsh-plugins/2ea9d87972fbc970cf725f8a7643c738f1196c36/packages/dsh-card-color/docs/screenshots/screenshot-1.png) |
-| [dsh-whale-purse](https://github.com/liuherong808-dev/dsh-whale-purse) · liuherong808-dev/dsh-whale-purse | `1.1.0` | [6d7b13baaedc](https://github.com/liuherong808-dev/dsh-whale-purse/tree/6d7b13baaedc3d00f8a271904c486a7336fb22c3) | [查看图片](https://raw.githubusercontent.com/liuherong808-dev/dsh-whale-purse/6d7b13baaedc3d00f8a271904c486a7336fb22c3/assets/preview.png) |
-| [dsh-gemini-m3e-theme](https://github.com/makajo/dsh-gemini-m3e-theme) · makajo/dsh-gemini-m3e-theme | `0.1.0` | [e20c8e30d7a4](https://github.com/makajo/dsh-gemini-m3e-theme/tree/e20c8e30d7a4a2952a3a04e494eab414f8e8f818) | [查看图片](https://raw.githubusercontent.com/makajo/dsh-gemini-m3e-theme/e20c8e30d7a4a2952a3a04e494eab414f8e8f818/docs/screenshots/light.png) |
-| [dsh-TheWanderingEarthII](https://github.com/shuaihaoV/dsh-TheWanderingEarthII) · shuaihaoV/dsh-TheWanderingEarthII | `0.0.1` | [48cccf4ad21f](https://github.com/shuaihaoV/dsh-TheWanderingEarthII/tree/48cccf4ad21f594d1e308df5d82cdd5759c02506) | [查看图片](https://raw.githubusercontent.com/shuaihaoV/dsh-TheWanderingEarthII/48cccf4ad21f594d1e308df5d82cdd5759c02506/assets/screenshot.png) |
-| [cloud-smoke-widget](https://github.com/shuigege2025-dev/cloud-smoke-widget) · shuigege2025-dev/cloud-smoke-widget | `1.2.2` | [0576b3cb2db0](https://github.com/shuigege2025-dev/cloud-smoke-widget/tree/0576b3cb2db00b1815a17f2eea110434f3584df4/plugin) | [查看图片](https://raw.githubusercontent.com/shuigege2025-dev/cloud-smoke-widget/0576b3cb2db00b1815a17f2eea110434f3584df4/preview/cloud-smoking.gif) |
-| [sakura-Snow](https://github.com/skadi-0510/sakura-Snow) · skadi-0510/sakura-Snow | `0.0.1` | [eb68d3af37db](https://github.com/skadi-0510/sakura-Snow/tree/eb68d3af37db571b3067cbbb013c3a27612d8999/sakura-snow) | [查看图片](https://raw.githubusercontent.com/skadi-0510/sakura-Snow/eb68d3af37db571b3067cbbb013c3a27612d8999/sakura-snow/preview/light.webp) |
-| [dsh-theme-lab](https://github.com/Slymaster/dsh-theme-lab) · Slymaster/dsh-theme-lab | `1.0.0` | [1859218229c1](https://github.com/Slymaster/dsh-theme-lab/tree/1859218229c16d65a38c73f3c86c80cfb5d6a21f) | [查看图片](https://raw.githubusercontent.com/Slymaster/dsh-theme-lab/1859218229c16d65a38c73f3c86c80cfb5d6a21f/assets/event-horizon.webp) |
-| [dshd](https://github.com/weichi-ai/dshd) · weichi-ai/dshd | `0.1.0` | [d58ba7d34876](https://github.com/weichi-ai/dshd/tree/d58ba7d34876ae4ab7a2267b3f048561054bac49/dsh-skin-pack) | [查看图片](https://raw.githubusercontent.com/weichi-ai/dshd/d58ba7d34876ae4ab7a2267b3f048561054bac49/docs/assets/img/dshd-pics/opt/1.webp) |
-| [dsh-amphoreus](https://github.com/xi-kari/dsh-amphoreus) · xi-kari/dsh-amphoreus | `0.3.0` | [5d454ddaea0a](https://github.com/xi-kari/dsh-amphoreus/tree/5d454ddaea0a3a8b36ac51abf23b2f6dca42516b) | [查看图片](https://raw.githubusercontent.com/xi-kari/dsh-amphoreus/5d454ddaea0a3a8b36ac51abf23b2f6dca42516b/docs/screenshots/portal.png) |
-| [one-dark-pro-dsh-plugin](https://github.com/yudaxia1/one-dark-pro-dsh-plugin) · yudaxia1/one-dark-pro-dsh-plugin | `0.1.0` | [7e218a3a15f4](https://github.com/yudaxia1/one-dark-pro-dsh-plugin/tree/7e218a3a15f46b0079d7b92a7169a03329fca4fa) | [查看图片](https://raw.githubusercontent.com/yudaxia1/one-dark-pro-dsh-plugin/7e218a3a15f46b0079d7b92a7169a03329fca4fa/docs/screenshots/light-theme.png) |
-| [dsh-Fonts](https://github.com/zhijun-dai/dsh-Fonts) · zhijun-dai/dsh-Fonts | `0.1.0` | [46014ec56634](https://github.com/zhijun-dai/dsh-Fonts/tree/46014ec5663435bdd39acee2e77c3979810b1967) | [查看图片](https://raw.githubusercontent.com/zhijun-dai/dsh-Fonts/46014ec5663435bdd39acee2e77c3979810b1967/assets/fonts-settings.webp) |
-| [dsh-plugins-ztutz](https://github.com/ZTuTZ/dsh-plugins) · ZTuTZ/dsh-plugins | `0.1.0` | [747b6471108b](https://github.com/ZTuTZ/dsh-plugins/tree/747b6471108bbc78a4de6af46e0904b4dccbfff9/packages/dsh-skin-spiderman) | [查看图片](https://raw.githubusercontent.com/ZTuTZ/dsh-plugins/747b6471108bbc78a4de6af46e0904b4dccbfff9/%E7%B4%A0%E6%9D%90/spidey/poses-preview.jpeg) |
-| [totoTheCat](https://github.com/ZutoMayoo/totoTheCat) · ZutoMayoo/totoTheCat | `1.0.1` | [dec5e6b5da34](https://github.com/ZutoMayoo/totoTheCat/tree/dec5e6b5da34dde07fa62d4dff9bac7169c8adf8) | [查看图片](https://raw.githubusercontent.com/ZutoMayoo/totoTheCat/dec5e6b5da34dde07fa62d4dff9bac7169c8adf8/assets/screenshot.png) |
-| [dsh-sakura-theme](https://github.com/a1303845406/dsh-sakura-theme) · a1303845406/dsh-sakura-theme | `0.3.0` | [7ba982803424](https://github.com/a1303845406/dsh-sakura-theme/tree/7ba9828034244b9dd276227ff523b93861860a73) | [查看图片](https://raw.githubusercontent.com/a1303845406/dsh-sakura-theme/7ba9828034244b9dd276227ff523b93861860a73/docs/screenshots/sakura-theme-light.png) |
-| [dsh-panel-tint](https://github.com/abbccdd/dsh-panel-tint) · abbccdd/dsh-panel-tint | `0.6.2` | [1d2cf639218e](https://github.com/abbccdd/dsh-panel-tint/tree/1d2cf639218e91d2d54a3446369cfa7c2745afb7) | [查看图片](https://raw.githubusercontent.com/abbccdd/dsh-panel-tint/1d2cf639218e91d2d54a3446369cfa7c2745afb7/assets/screenshot-panel-tint-blue.png) |
-| [dsh-theme-prts](https://github.com/ash-qw/dsh-theme-prts) · ash-qw/dsh-theme-prts | `0.1.96` | [45daae7ff26f](https://github.com/ash-qw/dsh-theme-prts/tree/45daae7ff26f1d31111bc08f6d79c3224d74d5aa) | [查看图片](https://raw.githubusercontent.com/ash-qw/dsh-theme-prts/45daae7ff26f1d31111bc08f6d79c3224d74d5aa/docs/screenshots/prts-new-conversation-dark.png) |
-| [dsh-pixel-office](https://github.com/Doozqoo/dsh-pixel-office) · Doozqoo/dsh-pixel-office | `0.1.0` | [a9e801c6dc04](https://github.com/Doozqoo/dsh-pixel-office/tree/a9e801c6dc0484cc57bb0dd20baf1c85d8d5566e) | [查看图片](https://raw.githubusercontent.com/Doozqoo/dsh-pixel-office/a9e801c6dc0484cc57bb0dd20baf1c85d8d5566e/assets/top-view.jpeg) |
-| [dsh-theme-win98](https://github.com/FourTow/dsh-theme-win98) · FourTow/dsh-theme-win98 | `1.0.0` | [3d10ec0a2c86](https://github.com/FourTow/dsh-theme-win98/tree/3d10ec0a2c86583fa96f3554fc3a14b87c59a1d7) | [查看图片](https://raw.githubusercontent.com/FourTow/dsh-theme-win98/3d10ec0a2c86583fa96f3554fc3a14b87c59a1d7/assets/screenshot.png) |
-| [dsh-stardew-theme](https://github.com/JefferyShaw/dsh-stardew-theme) · JefferyShaw/dsh-stardew-theme | `0.1.0` | [2ef3df563303](https://github.com/JefferyShaw/dsh-stardew-theme/tree/2ef3df5633035c527a7dbecb7aed2b0151ea8ac5) | [查看图片](https://raw.githubusercontent.com/JefferyShaw/dsh-stardew-theme/2ef3df5633035c527a7dbecb7aed2b0151ea8ac5/assets/preview-1.png) |
-| [dsh-skin-koi-pond](https://github.com/Kogisune/dsh-skin-koi-pond) · Kogisune/dsh-skin-koi-pond | `0.1.0` | [654aa8c7de44](https://github.com/Kogisune/dsh-skin-koi-pond/tree/654aa8c7de44e9e4cd20a86f0b7a6cc048d33f71) | [查看图片](https://raw.githubusercontent.com/Kogisune/dsh-skin-koi-pond/654aa8c7de44e9e4cd20a86f0b7a6cc048d33f71/preview/dark.png) |
-| [ds-hentai](https://github.com/lisongxuan/ds-hentai) · lisongxuan/ds-hentai | `0.6.0` | [ce8442c8c113](https://github.com/lisongxuan/ds-hentai/tree/ce8442c8c113a3dcebe80449628724799fba2e1c) | [查看图片](https://raw.githubusercontent.com/lisongxuan/ds-hentai/ce8442c8c113a3dcebe80449628724799fba2e1c/docs/preview.png) |
-| [dsh-glass-ui-theme](https://github.com/lkdxzhxi/dsh-glass-ui-theme) · lkdxzhxi/dsh-glass-ui-theme | `0.2.5` | [ef35fd6ed5c8](https://github.com/lkdxzhxi/dsh-glass-ui-theme/tree/ef35fd6ed5c8821c1e79ee804e7384a206915c3f) | [查看图片](https://raw.githubusercontent.com/lkdxzhxi/dsh-glass-ui-theme/ef35fd6ed5c8821c1e79ee804e7384a206915c3f/docs/screenshot.png) |
-| [dsh-doc-rail](https://github.com/ShineFree7/dsh-doc-rail) · ShineFree7/dsh-doc-rail | `0.1.0` | [b667d299a3fe](https://github.com/ShineFree7/dsh-doc-rail/tree/b667d299a3fe4a574879f2de336c2ae589484f3a) | [查看图片](https://raw.githubusercontent.com/ShineFree7/dsh-doc-rail/b667d299a3fe4a574879f2de336c2ae589484f3a/assets/preview-light.png) |
-| [dsh-skin-lab](https://github.com/soarGuo/dsh-skin-lab) · soarGuo/dsh-skin-lab | `1.0.3` | [c63d42d4f400](https://github.com/soarGuo/dsh-skin-lab/tree/c63d42d4f4002036b23f6ef31a83f121f76f0293) | [查看图片](https://cdn.jsdelivr.net/npm/dsh-skin-lab@1.0.2/docs/screenshots/skin1.png) |
-| [dsh-customizations](https://github.com/trees163/dsh-customizations) · trees163/dsh-customizations | `0.1.1` | [daf212a6b2d6](https://github.com/trees163/dsh-customizations/tree/daf212a6b2d666bb06ec93aedab7d1bf2a822983/packages/dsh-client-ui-beauty) | [查看图片](https://raw.githubusercontent.com/trees163/dsh-customizations/daf212a6b2d666bb06ec93aedab7d1bf2a822983/images/settings-dark.png) |
-| [dsh-tool-highlight](https://github.com/vollegrewar/dsh-tool-highlight) · vollegrewar/dsh-tool-highlight | `0.2.6` | [f5f0e89101de](https://github.com/vollegrewar/dsh-tool-highlight/tree/f5f0e89101de1b24972f94ab0baf8cc0891f1baf) | [查看图片](https://raw.githubusercontent.com/vollegrewar/dsh-tool-highlight/f5f0e89101de1b24972f94ab0baf8cc0891f1baf/docs/preview.png) |
-| [dsh-theme-black-hole](https://github.com/wxj783428795/dsh-plugins) · wxj783428795/dsh-plugins | `0.1.0` | [bee231c7443e](https://github.com/wxj783428795/dsh-plugins/tree/bee231c7443ee8bc2305e941a3a609dafe8f6035/dsh-theme-black-hole) | [查看图片](https://raw.githubusercontent.com/wxj783428795/dsh-plugins/bee231c7443ee8bc2305e941a3a609dafe8f6035/dsh-theme-black-hole/assets/black-hole-hero.png) |
-| [dsh-lego-plugin](https://github.com/XIAOke8698/dsh-lego-plugin) · XIAOke8698/dsh-lego-plugin | `0.2.0` | [92de57cce80f](https://github.com/XIAOke8698/dsh-lego-plugin/tree/92de57cce80ffb969f23a7d35f7ee9b02a337944) | [查看图片](https://raw.githubusercontent.com/XIAOke8698/dsh-lego-plugin/92de57cce80ffb969f23a7d35f7ee9b02a337944/docs/banner.jpg) |
-| [DeepSeek-Harness-Bocchi-UI](https://github.com/xjg12345/DeepSeek-Harness-Bocchi-UI) · xjg12345/DeepSeek-Harness-Bocchi-UI | `0.1.0` | [8db16c00422d](https://github.com/xjg12345/DeepSeek-Harness-Bocchi-UI/tree/8db16c00422d89451a045b6887c9bffa75ba5743/packages/dsh-client-ui-bocchi) | [查看图片](https://raw.githubusercontent.com/xjg12345/DeepSeek-Harness-Bocchi-UI/8db16c00422d89451a045b6887c9bffa75ba5743/assets/image-20260816193230630.png) |
-| [dsh-change-review](https://github.com/xwh5/dsh-change-review) · xwh5/dsh-change-review | `1.0.3` | [13935b310bf0](https://github.com/xwh5/dsh-change-review/tree/13935b310bf01f6003a84dade5f7e50f8dc69b0e) | [查看图片](https://raw.githubusercontent.com/xwh5/dsh-change-review/13935b310bf01f6003a84dade5f7e50f8dc69b0e/docs/screenshots/screenshot-1.png) |
-| [dsh-asuka-school-theme](https://github.com/Yyyyyylor/dsh-asuka-school-theme) · Yyyyyylor/dsh-asuka-school-theme | `2.2.1` | [905423054241](https://github.com/Yyyyyylor/dsh-asuka-school-theme/tree/905423054241cd3c5200b23387f9f7d4b7314d9d) | [查看图片](https://raw.githubusercontent.com/Yyyyyylor/dsh-asuka-school-theme/905423054241cd3c5200b23387f9f7d4b7314d9d/docs/images/theme-asuka-preview.png) |
+<img src="https://raw.githubusercontent.com/Sutera-Diffusus/dsh-whale-musume/ba9c69480ec4e606ff654160348eb3682a483dd7/docs/images/homepage-promo.png" width="60%" alt="dsh-whale-musume">
+
+## 2026-09-08 · dsh-ux
+
+- GitHub：[jiangnanquan/dsh-ux](https://github.com/jiangnanquan/dsh-ux)
+- 收录版本：`1.0.0`
+- 固定 commit：`9a2a16c57e05b051fc05ceea26cbcef90af60546`
+
+<img src="https://raw.githubusercontent.com/jiangnanquan/dsh-ux/9a2a16c57e05b051fc05ceea26cbcef90af60546/screenshot.png" width="60%" alt="dsh-ux">
+
+## 2026-09-08 · dsh-official-homepage-theme
+
+- GitHub：[JohnnyTing/dsh-official-homepage-theme](https://github.com/JohnnyTing/dsh-official-homepage-theme)
+- 收录版本：`1.0.6`
+- 固定 commit：`3dc1ee72510db857257ff292d7f3aca1d3f46bb8`
+
+<img src="https://raw.githubusercontent.com/JohnnyTing/dsh-official-homepage-theme/3dc1ee72510db857257ff292d7f3aca1d3f46bb8/static/preview.gif" width="60%" alt="dsh-official-homepage-theme">
+
+## 2026-09-08 · dsh-animation-optimization
+
+- GitHub：[kelemiao/dsh-animation-optimization](https://github.com/kelemiao/dsh-animation-optimization)
+- 收录版本：`0.2.0`
+- 固定 commit：`7d3d7dc3a5272a73f6dc2e403dea02e50c1f89cf`
+
+<img src="https://raw.githubusercontent.com/kelemiao/dsh-animation-optimization/7d3d7dc3a5272a73f6dc2e403dea02e50c1f89cf/assets/screenshots/1.png" width="60%" alt="dsh-animation-optimization">
+
+## 2026-09-08 · dsh-whale-animation
+
+- GitHub：[LeemanCheung/dsh-whale-animation](https://github.com/LeemanCheung/dsh-whale-animation)
+- 收录版本：`0.8.0`
+- 固定 commit：`d6feab656b27e5387daaa1882442ab20af93b1e5`
+
+<img src="https://raw.githubusercontent.com/LeemanCheung/dsh-whale-animation/d6feab656b27e5387daaa1882442ab20af93b1e5/docs/four-actions/preview.gif" width="60%" alt="dsh-whale-animation">
+
+## 2026-09-08 · dsh-custom-plugin
+
+- GitHub：[AlexPeng07/dsh-custom-plugin](https://github.com/AlexPeng07/dsh-custom-plugin)
+- 收录版本：`0.4.0`
+- 固定 commit：`1d470dfd6c7d48f1269f80650c473d0e70c769d7`
+
+<img src="https://raw.githubusercontent.com/AlexPeng07/dsh-custom-plugin/1d470dfd6c7d48f1269f80650c473d0e70c769d7/docs/overview.png" width="60%" alt="dsh-custom-plugin">
+
+## 2026-09-08 · dsh-custom-ui-lsaa4
+
+- GitHub：[lsaa4/dsh-custom-ui](https://github.com/lsaa4/dsh-custom-ui)
+- 收录版本：`0.1.1`
+- 固定 commit：`786b70a5d1133c9daad1009849e63d32fc4981f0`
+
+<img src="https://raw.githubusercontent.com/lsaa4/dsh-custom-ui/786b70a5d1133c9daad1009849e63d32fc4981f0/docs/screenshot.png" width="60%" alt="dsh-custom-ui-lsaa4">
+
+## 2026-09-08 · dsh-skin-studio
+
+- GitHub：[realMisakaMikoto/dsh-skin-studio](https://github.com/realMisakaMikoto/dsh-skin-studio)
+- 收录版本：`0.6.0-alpha.1`
+- 固定 commit：`4177dd002cb81ef9aecd224acf17f7e503bcdec3`
+
+<img src="https://raw.githubusercontent.com/realMisakaMikoto/dsh-skin-studio/4177dd002cb81ef9aecd224acf17f7e503bcdec3/docs/screenshots/skins/ayumu.webp" width="60%" alt="dsh-skin-studio">
+
+## 2026-09-08 · dsh-client-ui-skin-qingxiao
+
+- GitHub：[taoser258/dsh-client-ui-skin-qingxiao](https://github.com/taoser258/dsh-client-ui-skin-qingxiao)
+- 收录版本：`0.1.4`
+- 固定 commit：`38f5bc044ccd562713e28f59f28b54732011f974`
+
+<img src="https://raw.githubusercontent.com/taoser258/dsh-client-ui-skin-qingxiao/38f5bc044ccd562713e28f59f28b54732011f974/preview/screen-light.png" width="60%" alt="dsh-client-ui-skin-qingxiao">
+
+## 2026-09-08 · dsh-whale-aqua-theme
+
+- GitHub：[dataizu/dsh-whale-aqua-theme](https://github.com/dataizu/dsh-whale-aqua-theme)
+- 收录版本：`1.0.0`
+- 固定 commit：`8f4abbbde43710b26755e192e4b935cfba4fc37a`
+
+<img src="https://raw.githubusercontent.com/dataizu/dsh-whale-aqua-theme/8f4abbbde43710b26755e192e4b935cfba4fc37a/screenshots/whale-animation.gif" width="60%" alt="dsh-whale-aqua-theme">
+
+## 2026-09-08 · dsh-theme
+
+- GitHub：[EternalNight996/dsh-theme](https://github.com/EternalNight996/dsh-theme)
+- 收录版本：`0.5.1`
+- 固定 commit：`d01383f8d82d3020607f16b62a8f6445df9f4978`
+
+<img src="https://raw.githubusercontent.com/EternalNight996/dsh-theme/d01383f8d82d3020607f16b62a8f6445df9f4978/assets/screen/dsh-theme.gif" width="60%" alt="dsh-theme">
+
+## 2026-09-08 · dsh-theme-liquid-glass
+
+- GitHub：[FAVKTOXIC/dsh-theme-liquid-glass](https://github.com/FAVKTOXIC/dsh-theme-liquid-glass)
+- 收录版本：`0.4.2`
+- 固定 commit：`d24167a4fbbfb08c07b60ef64cbbde6a49cecfc1`
+
+<img src="https://raw.githubusercontent.com/FAVKTOXIC/dsh-theme-liquid-glass/d24167a4fbbfb08c07b60ef64cbbde6a49cecfc1/assets/screenshots/screenshot-input.png" width="60%" alt="dsh-theme-liquid-glass">
+
+## 2026-09-08 · dsh-prompt-vault
+
+- GitHub：[Frog755/dsh-prompt-vault](https://github.com/Frog755/dsh-prompt-vault)
+- 收录版本：`1.0.2`
+- 固定 commit：`714e9939617270a0f7b3a33b5c4aadcd1a6e8ac3`
+
+<img src="https://raw.githubusercontent.com/Frog755/dsh-prompt-vault/714e9939617270a0f7b3a33b5c4aadcd1a6e8ac3/assets/screenshot-panel.png" width="60%" alt="dsh-prompt-vault">
+
+## 2026-09-08 · xiao-theme-dsh-ui-plugin
+
+- GitHub：[jinxlux/xiao-theme-dsh-ui-plugin](https://github.com/jinxlux/xiao-theme-dsh-ui-plugin)
+- 收录版本：`0.7.1`
+- 固定 commit：`8397a209b025f9e6e4a46dd32733e53e6404529c`
+
+<img src="https://github.com/user-attachments/assets/3998f58b-53db-4349-80f3-3d993c6ad3c3" width="60%" alt="xiao-theme-dsh-ui-plugin">
+
+## 2026-09-08 · dsh-bg-image
+
+- GitHub：[lyh9712/dsh-bg-image](https://github.com/lyh9712/dsh-bg-image)
+- 收录版本：`2.0.0`
+- 固定 commit：`3de5438980eee8a10844edfa0ac7b9fd7ef7a9d3`
+
+<img src="https://raw.githubusercontent.com/lyh9712/dsh-bg-image/3de5438980eee8a10844edfa0ac7b9fd7ef7a9d3/docs/screenshot.png" width="60%" alt="dsh-bg-image">
+
+## 2026-09-08 · dsh-prism-plugin
+
+- GitHub：[mantonlove/dsh-prism-plugin](https://github.com/mantonlove/dsh-prism-plugin)
+- 收录版本：`1.0.2`
+- 固定 commit：`64c4895dc036c98ced38d47e34acb15f6545c4ac`
+
+<img src="https://raw.githubusercontent.com/mantonlove/dsh-prism-plugin/64c4895dc036c98ced38d47e34acb15f6545c4ac/assets/shot-1.jpg" width="60%" alt="dsh-prism-plugin">
+
+## 2026-09-08 · dsh-gbc-ui
+
+- GitHub：[U1s1-king/dsh-gbc-ui](https://github.com/U1s1-king/dsh-gbc-ui)
+- 收录版本：`0.0.1`
+- 固定 commit：`4d3caf8521553d744169f14d36ee346092dcab3e`
+
+<img src="https://raw.githubusercontent.com/U1s1-king/dsh-gbc-ui/4d3caf8521553d744169f14d36ee346092dcab3e/preview/light.webp" width="60%" alt="dsh-gbc-ui">
+
+## 2026-09-08 · dsh-skin-mari
+
+- GitHub：[unpain/dsh-skin-mari](https://github.com/unpain/dsh-skin-mari)
+- 收录版本：`0.1.1`
+- 固定 commit：`c414995fa639d52dbb4e4ed2c582d29e0bab5c45`
+
+<img src="https://raw.githubusercontent.com/unpain/dsh-skin-mari/c414995fa639d52dbb4e4ed2c582d29e0bab5c45/preview/dark.webp" width="60%" alt="dsh-skin-mari">
+
+## 2026-09-08 · ncm-player
+
+- GitHub：[WolfGenerals/ncm-player](https://github.com/WolfGenerals/ncm-player)
+- 收录版本：`1.2.0`
+- 固定 commit：`f40f982715128d2f4d7928012b6cebf86af4d40e`
+
+<img src="https://raw.githubusercontent.com/WolfGenerals/ncm-player/f40f982715128d2f4d7928012b6cebf86af4d40e/doc/screenshot-1.png" width="60%" alt="ncm-player">
+
+## 2026-09-08 · dsh-eyecare
+
+- GitHub：[Yummyxl/dsh-eyecare](https://github.com/Yummyxl/dsh-eyecare)
+- 收录版本：`1.1.0`
+- 固定 commit：`efeb92e1bcfe54369f88b6e8a176ad87f87a17b0`
+
+<img src="https://raw.githubusercontent.com/Yummyxl/dsh-eyecare/efeb92e1bcfe54369f88b6e8a176ad87f87a17b0/screenshot.png" width="60%" alt="dsh-eyecare">
+
+## 2026-09-08 · dsh-pixel-ui
+
+- GitHub：[zhang66633/dsh-pixel-ui](https://github.com/zhang66633/dsh-pixel-ui)
+- 收录版本：`1.3.0`
+- 固定 commit：`44454483bbdbbba60822bb7a1d2846ff94ed021c`
+
+<img src="https://raw.githubusercontent.com/zhang66633/dsh-pixel-ui/44454483bbdbbba60822bb7a1d2846ff94ed021c/assets/screenshot-wood.png" width="60%" alt="dsh-pixel-ui">
+
+## 2026-09-08 · dsh-light-theater
+
+- GitHub：[AshModeling/dsh-light-theater](https://github.com/AshModeling/dsh-light-theater)
+- 收录版本：`0.1.0`
+- 固定 commit：`23980ad2b2f39413863da963a70afd1148b1220d`
+
+<img src="https://raw.githubusercontent.com/AshModeling/dsh-light-theater/23980ad2b2f39413863da963a70afd1148b1220d/docs/preview.png" width="60%" alt="dsh-light-theater">
+
+## 2026-09-08 · code-render
+
+- GitHub：[CH4ACKO3/dsh-render-engine](https://github.com/CH4ACKO3/dsh-render-engine)
+- 收录版本：`0.1.2`
+- 固定 commit：`cca409bdfbcdb58e20267f970744d9b2918d218a`
+
+<img src="https://raw.githubusercontent.com/CH4ACKO3/dsh-render-engine/cca409bdfbcdb58e20267f970744d9b2918d218a/docs/assets/chatview-rendering-comparison.png" width="60%" alt="code-render">
+
+## 2026-09-08 · dsh-cool-theme
+
+- GitHub：[CoolTea001/dsh-cool-theme](https://github.com/CoolTea001/dsh-cool-theme)
+- 收录版本：`0.4.0`
+- 固定 commit：`74a04f390a49077efb5e312ed927c08b5f83c359`
+
+<img src="https://raw.githubusercontent.com/CoolTea001/dsh-cool-theme/74a04f390a49077efb5e312ed927c08b5f83c359/assets/previews/1.png" width="60%" alt="dsh-cool-theme">
+
+## 2026-09-08 · dsh-shunshun-wallpaper
+
+- GitHub：[Ddamage/dsh-shunshun-wallpaper](https://github.com/Ddamage/dsh-shunshun-wallpaper)
+- 收录版本：`1.0.4`
+- 固定 commit：`6f42d12d2b652b14ddc84a3221ddeef47e066d4a`
+
+<img src="https://github.com/Ddamage/dsh-shunshun-wallpaper/releases/download/v1.0.1/rotating_horse_smooth.gif" width="60%" alt="dsh-shunshun-wallpaper">
+
+## 2026-09-08 · dsh-atom-commune-skin
+
+- GitHub：[dingdongji-hub/dsh-atom-commune-skin](https://github.com/dingdongji-hub/dsh-atom-commune-skin)
+- 收录版本：`0.1.0`
+- 固定 commit：`077fd51794b9a4121e2b0f8d130cbd28dec28b9c`
+
+<img src="https://raw.githubusercontent.com/dingdongji-hub/dsh-atom-commune-skin/077fd51794b9a4121e2b0f8d130cbd28dec28b9c/assets/bg.jpg" width="60%" alt="dsh-atom-commune-skin">
+
+## 2026-09-08 · dsh-plugin-ehtools
+
+- GitHub：[eh-tools/dsh-plugin](https://github.com/eh-tools/dsh-plugin)
+- 收录版本：`0.2.0`
+- 固定 commit：`91057764c150cc3bd4c783099be4e663ac98d74d`
+
+<img src="https://raw.githubusercontent.com/eh-tools/dsh-plugin/91057764c150cc3bd4c783099be4e663ac98d74d/png/%E9%A1%B5%E9%9D%A2%E5%85%A8%E8%A7%88(%E6%96%87%E4%BB%B6%E6%A0%91+git%E6%A0%91+%E4%BD%99%E9%A2%9D+%E7%B2%92%E5%AD%90%E9%B2%B8%E9%B1%BC+%E6%95%B0%E6%8D%AE%E5%BA%93tag+%E6%89%B9%E9%87%8F%E5%BD%92%E6%A1%A3%E6%8C%89%E9%92%AE%E4%BD%8D%E7%BD%AE).png" width="60%" alt="dsh-plugin-ehtools">
+
+## 2026-09-08 · deepseek-whale-wallpaper
+
+- GitHub：[HeShen-1/deepseek-whale-wallpaper](https://github.com/HeShen-1/deepseek-whale-wallpaper)
+- 收录版本：`0.2.0`
+- 固定 commit：`2b629f6bb2072d60b4028773880a52ba2b2f2465`
+
+<img src="https://raw.githubusercontent.com/HeShen-1/deepseek-whale-wallpaper/2b629f6bb2072d60b4028773880a52ba2b2f2465/docs/screenshots/harness-ui-light.jpg" width="60%" alt="deepseek-whale-wallpaper">
+
+## 2026-09-08 · dsh-ENHANCED
+
+- GitHub：[HIT-HTML/dsh-ENHANCED](https://github.com/HIT-HTML/dsh-ENHANCED)
+- 收录版本：`1.2.2`
+- 固定 commit：`6c4d8025f70e9b0a5c4690950548ea8038996548`
+
+<img src="https://github.com/user-attachments/assets/f20d6a19-2392-46c3-9a1a-358af8f123bc" width="60%" alt="dsh-ENHANCED">
+
+## 2026-09-08 · dsh-web-theme
+
+- GitHub：[luckzhangfengbo/dsh-web-theme](https://github.com/luckzhangfengbo/dsh-web-theme)
+- 收录版本：`0.1.1`
+- 固定 commit：`a49b7d68f31cc442ec83fdcfc4803eaa4304d0cd`
+
+<img src="https://raw.githubusercontent.com/luckzhangfengbo/dsh-web-theme/a49b7d68f31cc442ec83fdcfc4803eaa4304d0cd/docs/screenshots/pine-hero.png" width="60%" alt="dsh-web-theme">
+
+## 2026-09-08 · dsh-codex-theme
+
+- GitHub：[Lxd-Ashe/dsh-codex-theme](https://github.com/Lxd-Ashe/dsh-codex-theme)
+- 收录版本：`0.3.0`
+- 固定 commit：`eb4b0b2bb09db16b597a51a503fe24d1140b434f`
+
+<img src="https://raw.githubusercontent.com/Lxd-Ashe/dsh-codex-theme/eb4b0b2bb09db16b597a51a503fe24d1140b434f/docs/dark-theme.png" width="60%" alt="dsh-codex-theme">
+
+## 2026-09-08 · dsh-theme-tuner
+
+- GitHub：[shawnlone/dsh-theme-tuner](https://github.com/shawnlone/dsh-theme-tuner)
+- 收录版本：`0.1.2`
+- 固定 commit：`2901caaec7a33b48c9bad4aa286765bc6f456b71`
+
+<img src="https://raw.githubusercontent.com/shawnlone/dsh-theme-tuner/2901caaec7a33b48c9bad4aa286765bc6f456b71/assets/screenshot_01.png" width="60%" alt="dsh-theme-tuner">
+
+## 2026-09-08 · dsh-Veneer
+
+- GitHub：[swordordead/dsh-Veneer](https://github.com/swordordead/dsh-Veneer)
+- 收录版本：`0.8.0`
+- 固定 commit：`ad6f6d68b513399103e885863c21546860cd0152`
+
+<img src="https://raw.githubusercontent.com/swordordead/dsh-Veneer/ad6f6d68b513399103e885863c21546860cd0152/docs/images/veneer-overview.png" width="60%" alt="dsh-Veneer">
+
+## 2026-09-08 · claude-style-skin
+
+- GitHub：[TaiyakiOffical/claude-style-skin](https://github.com/TaiyakiOffical/claude-style-skin)
+- 收录版本：`0.1.1`
+- 固定 commit：`09cfe36237b7fa0c4e57141b364b8bf50f084d37`
+
+<img src="https://raw.githubusercontent.com/TaiyakiOffical/claude-style-skin/09cfe36237b7fa0c4e57141b364b8bf50f084d37/docs/light.png" width="60%" alt="claude-style-skin">
+
+## 2026-09-08 · DSH-Hiyuki-Frost-Sakura
+
+- GitHub：[6HOLLIS/DSH-Hiyuki-Frost-Sakura](https://github.com/6HOLLIS/DSH-Hiyuki-Frost-Sakura)
+- 收录版本：`0.1.0`
+- 固定 commit：`9f94094e426b5fa62dea20118ef1792125445505`
+
+<img src="https://raw.githubusercontent.com/6HOLLIS/DSH-Hiyuki-Frost-Sakura/9f94094e426b5fa62dea20118ef1792125445505/artifacts/qa/dsh-rc2-calm.png" width="60%" alt="DSH-Hiyuki-Frost-Sakura">
+
+## 2026-09-08 · Gandalf
+
+- GitHub：[A-BigDog/Gandalf](https://github.com/A-BigDog/Gandalf)
+- 收录版本：`0.1.0`
+- 固定 commit：`0c9a0f6fcc6e810afb5a8220c944f08428802102`
+
+<img src="https://raw.githubusercontent.com/A-BigDog/Gandalf/0c9a0f6fcc6e810afb5a8220c944f08428802102/docs/screenshot.jpg" width="60%" alt="Gandalf">
+
+## 2026-09-08 · dsh-plugin-gemini-theme
+
+- GitHub：[dingyi580/dsh-plugin-gemini-theme](https://github.com/dingyi580/dsh-plugin-gemini-theme)
+- 收录版本：`0.1.0`
+- 固定 commit：`c7c22fe81945cfdd6da91f5175785761e2b086c1`
+
+<img src="https://raw.githubusercontent.com/dingyi580/dsh-plugin-gemini-theme/c7c22fe81945cfdd6da91f5175785761e2b086c1/assets/hero-dark.png" width="60%" alt="dsh-plugin-gemini-theme">
+
+## 2026-09-08 · dsh-theme-eink-retro
+
+- GitHub：[exoticknight/dsh-theme-eink-retro](https://github.com/exoticknight/dsh-theme-eink-retro)
+- 收录版本：`0.2.1`
+- 固定 commit：`c65f58b7d83f1ebb8840a25a748ab0fc076f0597`
+
+<img src="https://raw.githubusercontent.com/exoticknight/dsh-theme-eink-retro/c65f58b7d83f1ebb8840a25a748ab0fc076f0597/assets/screenshots/balanced-fresh-profile.png" width="60%" alt="dsh-theme-eink-retro">
+
+## 2026-09-08 · dsh-skin-argentina
+
+- GitHub：[henrychenhao/dsh-skin-argentina](https://github.com/henrychenhao/dsh-skin-argentina)
+- 收录版本：`0.1.0`
+- 固定 commit：`bff08a0cda4ed679b646e9aa32ea5f921b99ad29`
+
+<img src="https://raw.githubusercontent.com/henrychenhao/dsh-skin-argentina/bff08a0cda4ed679b646e9aa32ea5f921b99ad29/screenshot-light.png" width="60%" alt="dsh-skin-argentina">
+
+## 2026-09-08 · skins
+
+- GitHub：[iasiv5/skins](https://github.com/iasiv5/skins)
+- 收录版本：`1.0.1`
+- 固定 commit：`85a5c3c544175ff8c1e3a820de76902c90407e8c`
+
+<img src="https://raw.githubusercontent.com/iasiv5/skins/85a5c3c544175ff8c1e3a820de76902c90407e8c/docs/assets/preview-meirenzhi-1.webp" width="60%" alt="skins">
+
+## 2026-09-08 · deepseek-harness-swift
+
+- GitHub：[krystal-cao/deepseek-harness-swift](https://github.com/krystal-cao/deepseek-harness-swift)
+- 收录版本：`0.1.0`
+- 固定 commit：`047cc46ae6df75afdd0a0406b7491c4d25dc9279`
+
+<img src="https://raw.githubusercontent.com/krystal-cao/deepseek-harness-swift/047cc46ae6df75afdd0a0406b7491c4d25dc9279/assets/%E4%B8%BB%E7%95%8C%E9%9D%A2.png" width="60%" alt="deepseek-harness-swift">
+
+## 2026-09-08 · dsh-raiden-theme
+
+- GitHub：[lengzhanbao/dsh-raiden-theme](https://github.com/lengzhanbao/dsh-raiden-theme)
+- 收录版本：`0.1.1`
+- 固定 commit：`f4b9a1218818198ba3723df11bb8fd428e2df8c3`
+
+<img src="https://raw.githubusercontent.com/lengzhanbao/dsh-raiden-theme/f4b9a1218818198ba3723df11bb8fd428e2df8c3/preview/light.jpg" width="60%" alt="dsh-raiden-theme">
+
+## 2026-09-08 · dsh-plugins-linyuana
+
+- GitHub：[linyuan-ai1/dsh-plugins](https://github.com/linyuan-ai1/dsh-plugins)
+- 收录版本：`0.1.1`
+- 固定 commit：`2ea9d87972fbc970cf725f8a7643c738f1196c36`
+
+<img src="https://raw.githubusercontent.com/linyuan-ai1/dsh-plugins/2ea9d87972fbc970cf725f8a7643c738f1196c36/packages/dsh-card-color/docs/screenshots/screenshot-1.png" width="60%" alt="dsh-plugins-linyuana">
+
+## 2026-09-08 · dsh-whale-purse
+
+- GitHub：[liuherong808-dev/dsh-whale-purse](https://github.com/liuherong808-dev/dsh-whale-purse)
+- 收录版本：`1.1.0`
+- 固定 commit：`6d7b13baaedc3d00f8a271904c486a7336fb22c3`
+
+<img src="https://raw.githubusercontent.com/liuherong808-dev/dsh-whale-purse/6d7b13baaedc3d00f8a271904c486a7336fb22c3/assets/preview.png" width="60%" alt="dsh-whale-purse">
+
+## 2026-09-08 · dsh-gemini-m3e-theme
+
+- GitHub：[makajo/dsh-gemini-m3e-theme](https://github.com/makajo/dsh-gemini-m3e-theme)
+- 收录版本：`0.1.0`
+- 固定 commit：`e20c8e30d7a4a2952a3a04e494eab414f8e8f818`
+
+<img src="https://raw.githubusercontent.com/makajo/dsh-gemini-m3e-theme/e20c8e30d7a4a2952a3a04e494eab414f8e8f818/docs/screenshots/light.png" width="60%" alt="dsh-gemini-m3e-theme">
+
+## 2026-09-08 · dsh-TheWanderingEarthII
+
+- GitHub：[shuaihaoV/dsh-TheWanderingEarthII](https://github.com/shuaihaoV/dsh-TheWanderingEarthII)
+- 收录版本：`0.0.1`
+- 固定 commit：`48cccf4ad21f594d1e308df5d82cdd5759c02506`
+
+<img src="https://raw.githubusercontent.com/shuaihaoV/dsh-TheWanderingEarthII/48cccf4ad21f594d1e308df5d82cdd5759c02506/assets/screenshot.png" width="60%" alt="dsh-TheWanderingEarthII">
+
+## 2026-09-08 · cloud-smoke-widget
+
+- GitHub：[shuigege2025-dev/cloud-smoke-widget](https://github.com/shuigege2025-dev/cloud-smoke-widget)
+- 收录版本：`1.2.2`
+- 固定 commit：`0576b3cb2db00b1815a17f2eea110434f3584df4`
+
+<img src="https://raw.githubusercontent.com/shuigege2025-dev/cloud-smoke-widget/0576b3cb2db00b1815a17f2eea110434f3584df4/preview/cloud-smoking.gif" width="60%" alt="cloud-smoke-widget">
+
+## 2026-09-08 · sakura-Snow
+
+- GitHub：[skadi-0510/sakura-Snow](https://github.com/skadi-0510/sakura-Snow)
+- 收录版本：`0.0.1`
+- 固定 commit：`eb68d3af37db571b3067cbbb013c3a27612d8999`
+
+<img src="https://raw.githubusercontent.com/skadi-0510/sakura-Snow/eb68d3af37db571b3067cbbb013c3a27612d8999/sakura-snow/preview/light.webp" width="60%" alt="sakura-Snow">
+
+## 2026-09-08 · dsh-theme-lab
+
+- GitHub：[Slymaster/dsh-theme-lab](https://github.com/Slymaster/dsh-theme-lab)
+- 收录版本：`1.0.0`
+- 固定 commit：`1859218229c16d65a38c73f3c86c80cfb5d6a21f`
+
+<img src="https://raw.githubusercontent.com/Slymaster/dsh-theme-lab/1859218229c16d65a38c73f3c86c80cfb5d6a21f/assets/event-horizon.webp" width="60%" alt="dsh-theme-lab">
+
+## 2026-09-08 · dshd
+
+- GitHub：[weichi-ai/dshd](https://github.com/weichi-ai/dshd)
+- 收录版本：`0.1.0`
+- 固定 commit：`d58ba7d34876ae4ab7a2267b3f048561054bac49`
+
+<img src="https://raw.githubusercontent.com/weichi-ai/dshd/d58ba7d34876ae4ab7a2267b3f048561054bac49/docs/assets/img/dshd-pics/opt/1.webp" width="60%" alt="dshd">
+
+## 2026-09-08 · dsh-amphoreus
+
+- GitHub：[xi-kari/dsh-amphoreus](https://github.com/xi-kari/dsh-amphoreus)
+- 收录版本：`0.3.0`
+- 固定 commit：`5d454ddaea0a3a8b36ac51abf23b2f6dca42516b`
+
+<img src="https://raw.githubusercontent.com/xi-kari/dsh-amphoreus/5d454ddaea0a3a8b36ac51abf23b2f6dca42516b/docs/screenshots/portal.png" width="60%" alt="dsh-amphoreus">
+
+## 2026-09-08 · one-dark-pro-dsh-plugin
+
+- GitHub：[yudaxia1/one-dark-pro-dsh-plugin](https://github.com/yudaxia1/one-dark-pro-dsh-plugin)
+- 收录版本：`0.1.0`
+- 固定 commit：`7e218a3a15f46b0079d7b92a7169a03329fca4fa`
+
+<img src="https://raw.githubusercontent.com/yudaxia1/one-dark-pro-dsh-plugin/7e218a3a15f46b0079d7b92a7169a03329fca4fa/docs/screenshots/light-theme.png" width="60%" alt="one-dark-pro-dsh-plugin">
+
+## 2026-09-08 · dsh-Fonts
+
+- GitHub：[zhijun-dai/dsh-Fonts](https://github.com/zhijun-dai/dsh-Fonts)
+- 收录版本：`0.1.0`
+- 固定 commit：`46014ec5663435bdd39acee2e77c3979810b1967`
+
+<img src="https://raw.githubusercontent.com/zhijun-dai/dsh-Fonts/46014ec5663435bdd39acee2e77c3979810b1967/assets/fonts-settings.webp" width="60%" alt="dsh-Fonts">
+
+## 2026-09-08 · dsh-plugins-ztutz
+
+- GitHub：[ZTuTZ/dsh-plugins](https://github.com/ZTuTZ/dsh-plugins)
+- 收录版本：`0.1.0`
+- 固定 commit：`747b6471108bbc78a4de6af46e0904b4dccbfff9`
+
+<img src="https://raw.githubusercontent.com/ZTuTZ/dsh-plugins/747b6471108bbc78a4de6af46e0904b4dccbfff9/%E7%B4%A0%E6%9D%90/spidey/poses-preview.jpeg" width="60%" alt="dsh-plugins-ztutz">
+
+## 2026-09-08 · totoTheCat
+
+- GitHub：[ZutoMayoo/totoTheCat](https://github.com/ZutoMayoo/totoTheCat)
+- 收录版本：`1.0.1`
+- 固定 commit：`dec5e6b5da34dde07fa62d4dff9bac7169c8adf8`
+
+<img src="https://raw.githubusercontent.com/ZutoMayoo/totoTheCat/dec5e6b5da34dde07fa62d4dff9bac7169c8adf8/assets/screenshot.png" width="60%" alt="totoTheCat">
+
+## 2026-09-08 · dsh-sakura-theme
+
+- GitHub：[a1303845406/dsh-sakura-theme](https://github.com/a1303845406/dsh-sakura-theme)
+- 收录版本：`0.3.0`
+- 固定 commit：`7ba9828034244b9dd276227ff523b93861860a73`
+
+<img src="https://raw.githubusercontent.com/a1303845406/dsh-sakura-theme/7ba9828034244b9dd276227ff523b93861860a73/docs/screenshots/sakura-theme-light.png" width="60%" alt="dsh-sakura-theme">
+
+## 2026-09-08 · dsh-panel-tint
+
+- GitHub：[abbccdd/dsh-panel-tint](https://github.com/abbccdd/dsh-panel-tint)
+- 收录版本：`0.6.2`
+- 固定 commit：`1d2cf639218e91d2d54a3446369cfa7c2745afb7`
+
+<img src="https://raw.githubusercontent.com/abbccdd/dsh-panel-tint/1d2cf639218e91d2d54a3446369cfa7c2745afb7/assets/screenshot-panel-tint-blue.png" width="60%" alt="dsh-panel-tint">
+
+## 2026-09-08 · dsh-theme-prts
+
+- GitHub：[ash-qw/dsh-theme-prts](https://github.com/ash-qw/dsh-theme-prts)
+- 收录版本：`0.1.96`
+- 固定 commit：`45daae7ff26f1d31111bc08f6d79c3224d74d5aa`
+
+<img src="https://raw.githubusercontent.com/ash-qw/dsh-theme-prts/45daae7ff26f1d31111bc08f6d79c3224d74d5aa/docs/screenshots/prts-new-conversation-dark.png" width="60%" alt="dsh-theme-prts">
+
+## 2026-09-08 · dsh-pixel-office
+
+- GitHub：[Doozqoo/dsh-pixel-office](https://github.com/Doozqoo/dsh-pixel-office)
+- 收录版本：`0.1.0`
+- 固定 commit：`a9e801c6dc0484cc57bb0dd20baf1c85d8d5566e`
+
+<img src="https://raw.githubusercontent.com/Doozqoo/dsh-pixel-office/a9e801c6dc0484cc57bb0dd20baf1c85d8d5566e/assets/top-view.jpeg" width="60%" alt="dsh-pixel-office">
+
+## 2026-09-08 · dsh-theme-win98
+
+- GitHub：[FourTow/dsh-theme-win98](https://github.com/FourTow/dsh-theme-win98)
+- 收录版本：`1.0.0`
+- 固定 commit：`3d10ec0a2c86583fa96f3554fc3a14b87c59a1d7`
+
+<img src="https://raw.githubusercontent.com/FourTow/dsh-theme-win98/3d10ec0a2c86583fa96f3554fc3a14b87c59a1d7/assets/screenshot.png" width="60%" alt="dsh-theme-win98">
+
+## 2026-09-08 · dsh-stardew-theme
+
+- GitHub：[JefferyShaw/dsh-stardew-theme](https://github.com/JefferyShaw/dsh-stardew-theme)
+- 收录版本：`0.1.0`
+- 固定 commit：`2ef3df5633035c527a7dbecb7aed2b0151ea8ac5`
+
+<img src="https://raw.githubusercontent.com/JefferyShaw/dsh-stardew-theme/2ef3df5633035c527a7dbecb7aed2b0151ea8ac5/assets/preview-1.png" width="60%" alt="dsh-stardew-theme">
+
+## 2026-09-08 · dsh-skin-koi-pond
+
+- GitHub：[Kogisune/dsh-skin-koi-pond](https://github.com/Kogisune/dsh-skin-koi-pond)
+- 收录版本：`0.1.0`
+- 固定 commit：`654aa8c7de44e9e4cd20a86f0b7a6cc048d33f71`
+
+<img src="https://raw.githubusercontent.com/Kogisune/dsh-skin-koi-pond/654aa8c7de44e9e4cd20a86f0b7a6cc048d33f71/preview/dark.png" width="60%" alt="dsh-skin-koi-pond">
+
+## 2026-09-08 · ds-hentai
+
+- GitHub：[lisongxuan/ds-hentai](https://github.com/lisongxuan/ds-hentai)
+- 收录版本：`0.6.0`
+- 固定 commit：`ce8442c8c113a3dcebe80449628724799fba2e1c`
+
+<img src="https://raw.githubusercontent.com/lisongxuan/ds-hentai/ce8442c8c113a3dcebe80449628724799fba2e1c/docs/preview.png" width="60%" alt="ds-hentai">
+
+## 2026-09-08 · dsh-glass-ui-theme
+
+- GitHub：[lkdxzhxi/dsh-glass-ui-theme](https://github.com/lkdxzhxi/dsh-glass-ui-theme)
+- 收录版本：`0.2.5`
+- 固定 commit：`ef35fd6ed5c8821c1e79ee804e7384a206915c3f`
+
+<img src="https://raw.githubusercontent.com/lkdxzhxi/dsh-glass-ui-theme/ef35fd6ed5c8821c1e79ee804e7384a206915c3f/docs/screenshot.png" width="60%" alt="dsh-glass-ui-theme">
+
+## 2026-09-08 · dsh-doc-rail
+
+- GitHub：[ShineFree7/dsh-doc-rail](https://github.com/ShineFree7/dsh-doc-rail)
+- 收录版本：`0.1.0`
+- 固定 commit：`b667d299a3fe4a574879f2de336c2ae589484f3a`
+
+<img src="https://raw.githubusercontent.com/ShineFree7/dsh-doc-rail/b667d299a3fe4a574879f2de336c2ae589484f3a/assets/preview-light.png" width="60%" alt="dsh-doc-rail">
+
+## 2026-09-08 · dsh-skin-lab
+
+- GitHub：[soarGuo/dsh-skin-lab](https://github.com/soarGuo/dsh-skin-lab)
+- 收录版本：`1.0.3`
+- 固定 commit：`c63d42d4f4002036b23f6ef31a83f121f76f0293`
+
+<img src="https://cdn.jsdelivr.net/npm/dsh-skin-lab@1.0.2/docs/screenshots/skin1.png" width="60%" alt="dsh-skin-lab">
+
+## 2026-09-08 · dsh-customizations
+
+- GitHub：[trees163/dsh-customizations](https://github.com/trees163/dsh-customizations)
+- 收录版本：`0.1.1`
+- 固定 commit：`daf212a6b2d666bb06ec93aedab7d1bf2a822983`
+
+<img src="https://raw.githubusercontent.com/trees163/dsh-customizations/daf212a6b2d666bb06ec93aedab7d1bf2a822983/images/settings-dark.png" width="60%" alt="dsh-customizations">
+
+## 2026-09-08 · dsh-tool-highlight
+
+- GitHub：[vollegrewar/dsh-tool-highlight](https://github.com/vollegrewar/dsh-tool-highlight)
+- 收录版本：`0.2.6`
+- 固定 commit：`f5f0e89101de1b24972f94ab0baf8cc0891f1baf`
+
+<img src="https://raw.githubusercontent.com/vollegrewar/dsh-tool-highlight/f5f0e89101de1b24972f94ab0baf8cc0891f1baf/docs/preview.png" width="60%" alt="dsh-tool-highlight">
+
+## 2026-09-08 · dsh-theme-black-hole
+
+- GitHub：[wxj783428795/dsh-plugins](https://github.com/wxj783428795/dsh-plugins)
+- 收录版本：`0.1.0`
+- 固定 commit：`bee231c7443ee8bc2305e941a3a609dafe8f6035`
+
+<img src="https://raw.githubusercontent.com/wxj783428795/dsh-plugins/bee231c7443ee8bc2305e941a3a609dafe8f6035/dsh-theme-black-hole/assets/black-hole-hero.png" width="60%" alt="dsh-theme-black-hole">
+
+## 2026-09-08 · dsh-lego-plugin
+
+- GitHub：[XIAOke8698/dsh-lego-plugin](https://github.com/XIAOke8698/dsh-lego-plugin)
+- 收录版本：`0.2.0`
+- 固定 commit：`92de57cce80ffb969f23a7d35f7ee9b02a337944`
+
+<img src="https://raw.githubusercontent.com/XIAOke8698/dsh-lego-plugin/92de57cce80ffb969f23a7d35f7ee9b02a337944/docs/banner.jpg" width="60%" alt="dsh-lego-plugin">
+
+## 2026-09-08 · DeepSeek-Harness-Bocchi-UI
+
+- GitHub：[xjg12345/DeepSeek-Harness-Bocchi-UI](https://github.com/xjg12345/DeepSeek-Harness-Bocchi-UI)
+- 收录版本：`0.1.0`
+- 固定 commit：`8db16c00422d89451a045b6887c9bffa75ba5743`
+
+<img src="https://raw.githubusercontent.com/xjg12345/DeepSeek-Harness-Bocchi-UI/8db16c00422d89451a045b6887c9bffa75ba5743/assets/image-20260816193230630.png" width="60%" alt="DeepSeek-Harness-Bocchi-UI">
+
+## 2026-09-08 · dsh-change-review
+
+- GitHub：[xwh5/dsh-change-review](https://github.com/xwh5/dsh-change-review)
+- 收录版本：`1.0.3`
+- 固定 commit：`13935b310bf01f6003a84dade5f7e50f8dc69b0e`
+
+<img src="https://raw.githubusercontent.com/xwh5/dsh-change-review/13935b310bf01f6003a84dade5f7e50f8dc69b0e/docs/screenshots/screenshot-1.png" width="60%" alt="dsh-change-review">
+
+## 2026-09-08 · dsh-asuka-school-theme
+
+- GitHub：[Yyyyyylor/dsh-asuka-school-theme](https://github.com/Yyyyyylor/dsh-asuka-school-theme)
+- 收录版本：`2.2.1`
+- 固定 commit：`905423054241cd3c5200b23387f9f7d4b7314d9d`
+
+<img src="https://raw.githubusercontent.com/Yyyyyylor/dsh-asuka-school-theme/905423054241cd3c5200b23387f9f7d4b7314d9d/docs/images/theme-asuka-preview.png" width="60%" alt="dsh-asuka-school-theme">
 
 ## 2026-08-28 · 鎏金 Aurum
 

@@ -1,0 +1,69 @@
+id: nishuoyang.dsh-wallpaper-bg
+name:
+  zh: dsh-wallpaper-bg
+  en: dsh-wallpaper-bg
+author: nishuoyang
+description: 给 DeepSeek Harness（DSH）界面加上一层独立的动态壁纸背景的静态双半插件——dsh web 网页界面和 0.2 桌面端（0.2.1 已复核）都适用：装好（命令行一条命令；桌面端更是只在插件页面里填个包名）、刷新页面，整个界面的底层就变成一张会动的壁纸。背景层与桌面 Wallpaper Engine 完全独立：在 DSH 里换壁纸不会动你的桌面壁纸，反之亦然。
+repo: https://github.com/nishuoyang/dsh-wallpaper-bg
+package: dsh-wallpaper-bg
+rowId: wallpaper-bg
+category: theme
+tags:
+  - wallpaper
+  - token-theme
+  - light-dark
+modes:
+  - light
+  - dark
+install:
+  target: github:nishuoyang/dsh-wallpaper-bg#ea350232fbbe01be97bb7fdfe23705bb317eb4e1
+  version: 0.5.16
+  commit: ea350232fbbe01be97bb7fdfe23705bb317eb4e1
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/preview-hero.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/preview-sources.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/overview-dark.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/overview-native-light.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/settings-panel.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/screenshot-01.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/screenshot-02.jpg
+  - https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/screenshot-03.jpg
+listScreenshot: https://raw.githubusercontent.com/nishuoyang/dsh-wallpaper-bg/ea350232fbbe01be97bb7fdfe23705bb317eb4e1/docs/screenshots/preview-hero.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: ea350232fbbe01be97bb7fdfe23705bb317eb4e1
+    packageVersion: 0.5.16
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-21T22:17:23.433Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1117
+starsSnapshot: 7
+releaseUpdatedAt: 2026-10-22T06:40:00.000Z
+metadataUpdatedAt: 2026-10-22T06:40:00.000Z
+starsUpdatedAt: 2026-10-22T06:40:00.000Z
+updatedAt: 2026-10-22T06:40:00.000Z

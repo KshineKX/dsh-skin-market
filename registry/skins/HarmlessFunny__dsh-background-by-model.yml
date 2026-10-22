@@ -1,0 +1,73 @@
+id: harmlessfunny.dsh-background-by-model
+name:
+  zh: dsh-background-by-model
+  en: dsh-background-by-model
+author: HarmlessFunny
+description: 派生自 Tkingxiao/dsh-any-background，并重命名为 dsh-background-by-model。
+repo: https://github.com/HarmlessFunny/dsh-background-by-model
+package: dsh-background-by-model
+rowId: dsh-background-by-model
+category: theme
+tags:
+  - wallpaper
+  - glass
+  - retro
+  - token-theme
+  - light-dark
+modes:
+  - light
+  - dark
+install:
+  target: github:HarmlessFunny/dsh-background-by-model#64b196e760c97632f31d03b49ab557668a247bca
+  version: 0.9.1
+  commit: 64b196e760c97632f31d03b49ab557668a247bca
+  npm:
+    name: dsh-background-by-model
+    version: 0.9.1
+    integrity: sha512-EFG598J/5eO9PXqjovECfpw3dyigMcR4wQz56RJuvTq6bHJ8qg/tcIoOHGFsxUw4s+CP1sKxAubYJKxmPHaOYg==
+    repository: https://github.com/HarmlessFunny/dsh-background-by-model
+    gitHead: 64b196e760c97632f31d03b49ab557668a247bca
+compatibility:
+  dsh: ">=0.2.1-alpha.2"
+  platform:
+    - web
+screenshots:
+  - https://cdn.jsdelivr.net/gh/HarmlessFunny/assets@v0.1.0/dsh-background-by-model/wallpaper-deepseek.webp
+  - https://cdn.jsdelivr.net/gh/HarmlessFunny/assets@v0.1.0/dsh-background-by-model/wallpaper-kimi.webp
+  - https://cdn.jsdelivr.net/gh/HarmlessFunny/assets@v0.1.0/dsh-background-by-model/rule-editor.webp
+listScreenshot: https://cdn.jsdelivr.net/gh/HarmlessFunny/assets@v0.1.0/dsh-background-by-model/wallpaper-deepseek.webp
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: improve
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议补全稳定的 package 名称、dsh.client Web 声明、row ID 和已构建客户端入口，以符合 dsh 插件要求并获得更顺畅的一键安装体验。
+    - 固定版本静态扫描无法完成，市场暂不提供该版本的一键安装。
+  scan:
+    commit: 64b196e760c97632f31d03b49ab557668a247bca
+    packageVersion: 0.9.1
+    scannerVersion: static-v2
+    dshVersion: ">=0.2.1-alpha.2"
+    mode: static
+    result: unknown
+    checkedAt: 2026-10-21T22:17:10.263Z
+    findings:
+      - code: client-source-unavailable
+        message: 无法读取固定版本的 client 入口，静态扫描结果未知。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1110
+starsSnapshot: 21
+releaseUpdatedAt: 2026-10-22T06:40:00.000Z
+metadataUpdatedAt: 2026-10-22T06:40:00.000Z
+starsUpdatedAt: 2026-10-22T06:40:00.000Z
+updatedAt: 2026-10-22T06:40:00.000Z

@@ -1,0 +1,64 @@
+id: yannicksong0106.dsh-550c-skin
+name:
+  zh: 550C
+  en: 550C
+author: yannicksong0106
+description: 把 DSH 界面换成 550C 控制台：四套磷光配色、扫描线、等宽字体和机器读数栏。与 dsh-550c-boot 是一套视觉、两个独立插件。
+repo: https://github.com/yannicksong0106/dsh-550c-skin
+package: dsh-550c-skin
+rowId: dsh-550c-skin
+category: theme
+tags:
+  - appearance
+  - retro
+  - token-theme
+modes:
+  - dark
+install:
+  target: github:yannicksong0106/dsh-550c-skin#b568ad529cceda4ae57be6f07b722a2d4cd82e20
+  version: 0.1.0-beta.1
+  commit: b568ad529cceda4ae57be6f07b722a2d4cd82e20
+  desktop:
+    mode: manual-only
+    reason: published-npm-gitHead-differs-from-pin
+compatibility:
+  dsh: ">=0.2.0-rc.1"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yannicksong0106/dsh-550c-skin/b568ad529cceda4ae57be6f07b722a2d4cd82e20/docs/preview-amber.png
+  - https://raw.githubusercontent.com/yannicksong0106/dsh-550c-skin/b568ad529cceda4ae57be6f07b722a2d4cd82e20/docs/preview-cyan.png
+listScreenshot: https://raw.githubusercontent.com/yannicksong0106/dsh-550c-skin/b568ad529cceda4ae57be6f07b722a2d4cd82e20/docs/preview-amber.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+    installCommand: improve
+    topic: improve
+  suggestions:
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: b568ad529cceda4ae57be6f07b722a2d4cd82e20
+    packageVersion: 0.1.0-beta.1
+    scannerVersion: static-v2
+    dshVersion: ">=0.2.0-rc.1"
+    mode: static
+    result: pass
+    checkedAt: "2026-10-22T05:40:00.000Z"
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1107
+starsSnapshot: 2
+releaseUpdatedAt: "2026-10-22T06:05:00.000Z"
+metadataUpdatedAt: "2026-10-22T06:05:00.000Z"
+starsUpdatedAt: "2026-10-22T06:05:00.000Z"
+updatedAt: "2026-10-22T06:05:00.000Z"

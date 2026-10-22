@@ -1,0 +1,64 @@
+id: yasneg616.marathon-like-deepseek-harness-skin
+name:
+  zh: Marathon 工业酸
+  en: Marathon Industrial Acid
+author: yasneg616
+description: Marathon 风格的工业风 DSH 皮肤：调色板驱动的动效、随机 Max 效果，以及紧凑的工作区切换。
+repo: https://github.com/yasneg616/marathon-like-deepseek-harness-skin
+package: dsh-industrial-acid-skin
+rowId: industrial-acid-skin
+category: theme
+tags:
+  - appearance
+  - motion
+  - token-theme
+modes:
+  - light
+  - dark
+install:
+  target: github:yasneg616/marathon-like-deepseek-harness-skin#d95c5e344d223bd7f7a1cef04b8e42202764a1b2
+  version: 2.4.3
+  commit: d95c5e344d223bd7f7a1cef04b8e42202764a1b2
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: ">=0.2.0-rc.2 <0.2.2-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yasneg616/marathon-like-deepseek-harness-skin/d95c5e344d223bd7f7a1cef04b8e42202764a1b2/docs/media/overview.jpg
+listScreenshot: https://raw.githubusercontent.com/yasneg616/marathon-like-deepseek-harness-skin/d95c5e344d223bd7f7a1cef04b8e42202764a1b2/docs/media/overview.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+    installCommand: improve
+    topic: improve
+  suggestions:
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: d95c5e344d223bd7f7a1cef04b8e42202764a1b2
+    packageVersion: 2.4.3
+    scannerVersion: static-v2
+    dshVersion: ">=0.2.0-rc.2 <0.2.2-0"
+    mode: static
+    result: pass
+    checkedAt: "2026-10-22T05:40:00.000Z"
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1106
+starsSnapshot: 5
+releaseUpdatedAt: "2026-10-22T06:05:00.000Z"
+metadataUpdatedAt: "2026-10-22T06:05:00.000Z"
+starsUpdatedAt: "2026-10-22T06:05:00.000Z"
+updatedAt: "2026-10-22T06:05:00.000Z"

@@ -1,0 +1,70 @@
+id: kurosawageeker.dsh-moe-lite
+name:
+  zh: dsh-moe-lite
+  en: dsh-moe-lite
+author: KurosawaGeeker
+description: dsh-moe-clean · 鲸鱼娘轻量皮肤
+repo: https://github.com/KurosawaGeeker/dsh-moe-lite
+package: dsh-moe-clean
+rowId: ui-moe-clean
+category: theme
+tags:
+  - wallpaper
+  - glass
+  - anime
+  - motion
+  - token-theme
+  - light-dark
+modes:
+  - light
+  - dark
+install:
+  target: github:KurosawaGeeker/dsh-moe-lite#c72cd1e39b39c1c69d01e29a09748c2c29b824c4
+  version: 0.15.3
+  commit: c72cd1e39b39c1c69d01e29a09748c2c29b824c4
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/preview-light-80.png
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/preview-dark.png
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/settings-chibi.png
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/permission-chibi.png
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/demo-poster.png
+  - https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/icons-hd.png
+listScreenshot: https://raw.githubusercontent.com/KurosawaGeeker/dsh-moe-lite/c72cd1e39b39c1c69d01e29a09748c2c29b824c4/docs/0.15.2/preview-light-80.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: c72cd1e39b39c1c69d01e29a09748c2c29b824c4
+    packageVersion: 0.15.3
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-21T22:17:12.368Z
+    findings: []
+license:
+  code: SEE LICENSE IN LICENSE
+  commercialUse: false
+featuredRank: 1112
+starsSnapshot: 18
+releaseUpdatedAt: 2026-10-22T06:40:00.000Z
+metadataUpdatedAt: 2026-10-22T06:40:00.000Z
+starsUpdatedAt: 2026-10-22T06:40:00.000Z
+updatedAt: 2026-10-22T06:40:00.000Z
