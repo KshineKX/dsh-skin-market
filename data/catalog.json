@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-24T01:48:41.783Z",
+  "generatedAt": "2026-10-24T01:49:47.960Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -19540,11 +19540,11 @@
     {
       "id": "respawn.id.dsh.rhine.splash",
       "name": {
-        "zh": "莱茵生命开屏动画",
-        "en": "Rhine Lab Splash"
+        "zh": "莱茵生命主题",
+        "en": "Rhine Lab Theme"
       },
       "author": "Respawn-ID",
-      "description": "莱茵生命风格的开屏动画、界面配色和品牌标志，另带推理强度滑块、对话费用与余额显示、归档对话管理。",
+      "description": "莱茵生命风格的开屏动画、界面配色和品牌标志，另带即答与立即回答、推理强度滑块、莱茵通知、待办中心、费用页面与账户余额、归档对话管理。",
       "repo": "https://github.com/Respawn-ID/dsh-rhine-splash",
       "package": "dsh-rhine-splash",
       "rowId": "rhine-splash",
@@ -19557,53 +19557,45 @@
         "dark"
       ],
       "install": {
-        "target": "github:Respawn-ID/dsh-rhine-splash#a9e377522e96786d70205af627489de618dd8fb9",
-        "version": "0.2.2",
-        "commit": "a9e377522e96786d70205af627489de618dd8fb9",
+        "target": "github:Respawn-ID/dsh-rhine-splash#100f67eae68f6ba997fe91a325b10ed64351ecde",
+        "version": "0.2.6",
+        "commit": "100f67eae68f6ba997fe91a325b10ed64351ecde",
         "desktop": {
-          "mode": "manual-only",
-          "reason": "npm-package-not-found"
+          "mode": "managed",
+          "registry": "npm",
+          "packageName": "dsh-rhine-splash",
+          "packageVersion": "0.2.6",
+          "integrity": "sha512-hMyza3MgMZdDFezu9qoJulmAnzXpLSq8J/k+TCv8IxysLQsQkyCIObg/N2Pwll905MfTk6rYVWN897bXrJB6vw=="
         }
       },
       "compatibility": {
-        "dsh": "unverified",
+        "dsh": "0.2.1-rc.2",
         "platform": [
           "web"
         ]
       },
       "screenshots": [
-        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/splash-light.png",
-        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/splash-dark.png",
-        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/home-light.png",
-        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/home-dark.png"
+        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/100f67eae68f6ba997fe91a325b10ed64351ecde/screenshots/splash-light.png",
+        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/100f67eae68f6ba997fe91a325b10ed64351ecde/screenshots/splash-dark.png",
+        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/100f67eae68f6ba997fe91a325b10ed64351ecde/screenshots/home-light.png",
+        "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/100f67eae68f6ba997fe91a325b10ed64351ecde/screenshots/home-dark.png"
       ],
-      "listScreenshot": "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/11b858d9f94ae445b9a0e94e5fd6614266eccac1/screenshots/splash-light.png",
+      "listScreenshot": "https://raw.githubusercontent.com/Respawn-ID/dsh-rhine-splash/100f67eae68f6ba997fe91a325b10ed64351ecde/screenshots/splash-light.png",
       "review": {
-        "compatibility": "unverified",
+        "compatibility": "verified",
         "preview": "verified",
         "installation": "verified"
       },
       "health": {
-        "status": "improvements",
+        "status": "healthy",
         "checks": {
           "readmeScreenshots": "pass",
-          "compatibility": "improve",
+          "compatibility": "pass",
           "installation": "pass",
           "installCommand": "pass",
           "topic": "pass"
         },
-        "suggestions": [
-          "建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。"
-        ],
-        "scan": {
-          "commit": "a9e377522e96786d70205af627489de618dd8fb9",
-          "packageVersion": "0.2.2",
-          "scannerVersion": "static-v2",
-          "mode": "static",
-          "result": "pass",
-          "checkedAt": "2026-10-19T22:55:38.994Z",
-          "findings": []
-        }
+        "suggestions": []
       },
       "license": {
         "code": "MIT",
@@ -19611,31 +19603,31 @@
       },
       "featuredRank": 1000,
       "starsSnapshot": 3,
-      "releaseUpdatedAt": "2026-10-19T22:55:40.540Z",
-      "metadataUpdatedAt": "2026-10-19T22:55:40.540Z",
+      "releaseUpdatedAt": "2026-10-23T18:07:31.000Z",
+      "metadataUpdatedAt": "2026-10-23T18:07:31.000Z",
       "starsUpdatedAt": "2026-10-18T21:26:30.671Z",
-      "updatedAt": "2026-10-19T22:55:40.540Z",
+      "updatedAt": "2026-10-23T18:07:31.000Z",
       "media": {
         "list": {
-          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af238d3a7c467f44f1cb3cbef5f15d1f.preview.webp",
-          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af238d3a7c467f44f1cb3cbef5f15d1f.full.webp"
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fa1f54608bf9811bb803b5cea1e9cb53.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fa1f54608bf9811bb803b5cea1e9cb53.full.webp"
         },
         "screenshots": [
           {
-            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af238d3a7c467f44f1cb3cbef5f15d1f.preview.webp",
-            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af238d3a7c467f44f1cb3cbef5f15d1f.full.webp"
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fa1f54608bf9811bb803b5cea1e9cb53.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fa1f54608bf9811bb803b5cea1e9cb53.full.webp"
           },
           {
-            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/71ce44959685a7e2b72d304add32339f.preview.webp",
-            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/71ce44959685a7e2b72d304add32339f.full.webp"
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c028eb8f5dc8488d8d6b97ffe4cffae0.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c028eb8f5dc8488d8d6b97ffe4cffae0.full.webp"
           },
           {
-            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/1448bacd480f3f810b105033490d30d6.preview.webp",
-            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/1448bacd480f3f810b105033490d30d6.full.webp"
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c294c1e75402199caa489295ff529960.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c294c1e75402199caa489295ff529960.full.webp"
           },
           {
-            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/dd6ce5eabe664ab755ef5f1658289ec7.preview.webp",
-            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/dd6ce5eabe664ab755ef5f1658289ec7.full.webp"
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/deaf8ce83be70f1795d997d70030e07f.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/deaf8ce83be70f1795d997d70030e07f.full.webp"
           }
         ]
       }
@@ -31879,6 +31871,13 @@
       "repository": "https://github.com/realMisakaMikoto/dsh-skin-studio",
       "gitHead": "a10dc1b57f2d7b00636eb0ac96536d01128a9e56"
     },
+    "respawn.id.dsh.rhine.splash": {
+      "name": "dsh-rhine-splash",
+      "version": "0.2.6",
+      "integrity": "sha512-hMyza3MgMZdDFezu9qoJulmAnzXpLSq8J/k+TCv8IxysLQsQkyCIObg/N2Pwll905MfTk6rYVWN897bXrJB6vw==",
+      "repository": "https://github.com/Respawn-ID/dsh-rhine-splash",
+      "gitHead": "100f67eae68f6ba997fe91a325b10ed64351ecde"
+    },
     "sakka6868.dsh-skin": {
       "name": "dsh-skin-alphacoders",
       "version": "0.4.3",
@@ -34790,6 +34789,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.012,
+      "asOf": "2026-10-24"
+    },
+    "xiaoyuxixi333.whale.fantasy": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-24"
     },
     "xingyingyuzhui.dsh-liquid-glass": {
