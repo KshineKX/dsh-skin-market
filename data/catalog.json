@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-24T01:47:20.142Z",
+  "generatedAt": "2026-10-24T01:48:41.783Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -19988,6 +19988,87 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/776ce4b35df1aca53d17ca61a6731cae.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/776ce4b35df1aca53d17ca61a6731cae.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "xiaoyuxixi333.whale.fantasy",
+      "name": {
+        "zh": "鲸鱼娘 · 未至之境",
+        "en": "Whale Girl · The Unreached"
+      },
+      "author": "xiaoyuxixi333",
+      "description": "赛博夜雨里的蓝发少女，悬浮全息 HUD 与视频背景的深色 DSH 皮肤",
+      "repo": "https://github.com/xiaoyuxixi333/whale-fantasy",
+      "package": "dsh-skin-whale-fantasy",
+      "rowId": "dsh-skin-whale-fantasy",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:xiaoyuxixi333/whale-fantasy#065113742e98ebb0a6d26be4e6074ee08d10d3c8",
+        "version": "1.0.0",
+        "commit": "065113742e98ebb0a6d26be4e6074ee08d10d3c8"
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/xiaoyuxixi333/whale-fantasy/065113742e98ebb0a6d26be4e6074ee08d10d3c8/preview/light.jpg",
+        "https://raw.githubusercontent.com/xiaoyuxixi333/whale-fantasy/065113742e98ebb0a6d26be4e6074ee08d10d3c8/preview/dark.jpg"
+      ],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "improve",
+          "installation": "pass",
+          "installCommand": "improve",
+          "topic": "improve"
+        },
+        "suggestions": [
+          "建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。",
+          "建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。",
+          "建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。"
+        ]
+      },
+      "license": {
+        "code": "CC-BY-NC-SA-4.0",
+        "commercialUse": false
+      },
+      "featuredRank": 1000,
+      "starsSnapshot": 2,
+      "releaseUpdatedAt": "2026-10-24T01:48:40.595Z",
+      "metadataUpdatedAt": "2026-10-24T01:48:40.595Z",
+      "starsUpdatedAt": "2026-10-24T01:48:40.595Z",
+      "updatedAt": "2026-10-24T01:48:40.595Z",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a359bc125e23b37d43cee06adc8edaae.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a359bc125e23b37d43cee06adc8edaae.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a359bc125e23b37d43cee06adc8edaae.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a359bc125e23b37d43cee06adc8edaae.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/9ec9af9ff393932f699908cf098c04c2.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/9ec9af9ff393932f699908cf098c04c2.full.webp"
           }
         ]
       }
