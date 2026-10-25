@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-25T19:31:31.435Z",
+  "generatedAt": "2026-10-25T19:35:49.624Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -17012,6 +17012,108 @@
       }
     },
     {
+      "id": "jimmy0123-ux.dsh-token-pet",
+      "name": {
+        "zh": "dsh-token-pet",
+        "en": "dsh-token-pet"
+      },
+      "author": "Jimmy0123-ux",
+      "description": "A bilingual floating pet for DeepSeek Harness with runtime status, context and lifetime token usage, trends, and optional completion sounds.",
+      "repo": "https://github.com/Jimmy0123-ux/dsh-token-pet",
+      "package": "dsh-token-pet",
+      "rowId": "token-pet",
+      "category": "theme",
+      "tags": [
+        "pet"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:Jimmy0123-ux/dsh-token-pet#ca315d8b04f70770598d657629641d3437115a46",
+        "version": "0.4.2",
+        "commit": "ca315d8b04f70770598d657629641d3437115a46",
+        "desktop": {
+          "mode": "managed",
+          "registry": "npm",
+          "packageName": "dsh-token-pet",
+          "packageVersion": "0.4.2",
+          "integrity": "sha512-+8eAE8PmjITyPVTY7X0vjvCIc6ct5XfQA7g2kIrByrWNAEx6PVrsrnxQJX4j6yvuVEsC2g5rdUHjkAg4B0Df0Q=="
+        },
+        "allowBuild": "dsh-token-pet@https://codeload.github.com/Jimmy0123-ux/dsh-token-pet/tar.gz/ca315d8b04f70770598d657629641d3437115a46"
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-dark-overview.png",
+        "https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-light-overview.png"
+      ],
+      "listScreenshot": "https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-dark-overview.png",
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "improve",
+          "installation": "pass"
+        },
+        "suggestions": [
+          "支持的DSH版本尚未明确声明，需在目标版本中确认效果。",
+          "此固定版本的构建与客户端兼容检查尚待完成。"
+        ],
+        "scan": {
+          "commit": "ca315d8b04f70770598d657629641d3437115a46",
+          "packageVersion": "0.4.2",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:33:03.691Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 944,
+      "starsSnapshot": 56,
+      "releaseUpdatedAt": "2026-10-25T18:22:32.727Z",
+      "metadataUpdatedAt": "2026-10-25T19:35:19.454Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T19:35:19.454Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/settings.png"
+      ],
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af4950663300694bf8b231f956a69181.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af4950663300694bf8b231f956a69181.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af4950663300694bf8b231f956a69181.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af4950663300694bf8b231f956a69181.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/27ec1dd59f50b0e6146b314236a999c4.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/27ec1dd59f50b0e6146b314236a999c4.full.webp"
+          }
+        ]
+      }
+    },
+    {
       "id": "louke6572.dsh-whale-widget-plus",
       "name": {
         "zh": "dsh-whale-widget-plus",
@@ -19957,6 +20059,91 @@
           }
         ]
       }
+    },
+    {
+      "id": "chael-chael.dsh-ascii-whales",
+      "name": {
+        "zh": "dsh-ascii-whales",
+        "en": "dsh-ascii-whales"
+      },
+      "author": "Chael-Chael",
+      "description": "Let whales drift through the quiet. An ASCII ocean and neutral frosted glass for DeepSeek Harness.",
+      "repo": "https://github.com/Chael-Chael/dsh-ascii-whales",
+      "package": "dsh-ascii-whales",
+      "rowId": "ascii-whales",
+      "category": "theme",
+      "tags": [
+        "appearance",
+        "glass"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:Chael-Chael/dsh-ascii-whales#bb651813fe6379a5ef3535980c4c66df12c91f04",
+        "version": "0.1.5",
+        "commit": "bb651813fe6379a5ef3535980c4c66df12c91f04",
+        "desktop": {
+          "mode": "managed",
+          "registry": "npm",
+          "packageName": "dsh-ascii-whales",
+          "packageVersion": "0.1.5",
+          "integrity": "sha512-UQXy2xtMOJfsnJX8DocAU2AGmvFCLVpuUnuU3UBmqFzVjZgm6JwO/vUE9hX+vwFI4so2zFv9Dx540Vkn2OE/ig=="
+        },
+        "allowBuild": "dsh-ascii-whales@https://codeload.github.com/Chael-Chael/dsh-ascii-whales/tar.gz/bb651813fe6379a5ef3535980c4c66df12c91f04"
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/light.gif",
+        "https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/dark.gif"
+      ],
+      "listScreenshot": "https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/light.gif",
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "improve",
+          "installation": "pass"
+        },
+        "suggestions": [
+          "支持的DSH版本尚未明确声明，需在目标版本中确认效果。",
+          "此固定版本的构建与客户端兼容检查尚待完成。"
+        ],
+        "scan": {
+          "commit": "bb651813fe6379a5ef3535980c4c66df12c91f04",
+          "packageVersion": "0.1.5",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:33:03.691Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 996,
+      "starsSnapshot": 4,
+      "releaseUpdatedAt": "2026-10-25T18:22:32.727Z",
+      "metadataUpdatedAt": "2026-10-25T19:35:19.710Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T19:35:19.710Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/Chael-Chael__dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/home.png"
+      ]
     },
     {
       "id": "haxi8.dsh-jujutsukaisen-rainlove",
@@ -25276,6 +25463,98 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/0e704b8f64c3e6a89541ff134fffdceb.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/0e704b8f64c3e6a89541ff134fffdceb.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "lilycleheart.dsh-liuli-ui-enhance",
+      "name": {
+        "zh": "dsh-liuli-ui-enhance",
+        "en": "dsh-liuli-ui-enhance"
+      },
+      "author": "LilycleHeart",
+      "description": "琉璃主题 —— DSH 界面增强插件：M3 动态取色、壁纸磨砂材质、声纹可视化、日/夜切换",
+      "repo": "https://github.com/LilycleHeart/dsh-liuli-ui-enhance",
+      "package": "dsh-liuli-ui-enhance",
+      "rowId": "dsh-liuli-ui-enhance",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light"
+      ],
+      "install": {
+        "target": "github:LilycleHeart/dsh-liuli-ui-enhance#dfb90448c5fe9bb82d567871538560e57669afd0",
+        "version": "0.1.2-rc.37",
+        "commit": "dfb90448c5fe9bb82d567871538560e57669afd0",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        },
+        "allowBuild": "dsh-liuli-ui-enhance@https://codeload.github.com/LilycleHeart/dsh-liuli-ui-enhance/tar.gz/dfb90448c5fe9bb82d567871538560e57669afd0"
+      },
+      "compatibility": {
+        "dsh": "0.2.1-rc.2",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/LilycleHeart/dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/docs/preview-start-light.png"
+      ],
+      "listScreenshot": "https://raw.githubusercontent.com/LilycleHeart/dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/docs/preview-start-light.png",
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "healthy",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "pass",
+          "installation": "pass"
+        },
+        "suggestions": [
+          "此固定版本的构建与客户端兼容检查尚待完成。"
+        ],
+        "scan": {
+          "commit": "dfb90448c5fe9bb82d567871538560e57669afd0",
+          "packageVersion": "0.1.2-rc.37",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:33:03.691Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 999,
+      "starsSnapshot": 1,
+      "releaseUpdatedAt": "2026-10-25T18:22:32.727Z",
+      "metadataUpdatedAt": "2026-10-25T19:35:19.954Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T19:35:19.954Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/settings.png"
+      ],
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/5b96d18af6bba29e8ba3982d236f1bbb.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/5b96d18af6bba29e8ba3982d236f1bbb.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/5b96d18af6bba29e8ba3982d236f1bbb.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/5b96d18af6bba29e8ba3982d236f1bbb.full.webp"
           }
         ]
       }
@@ -50460,6 +50739,13 @@
       "repository": "https://github.com/CH4ACKO3/dsh-render-engine",
       "gitHead": "15fb33ac4c2bac687bcee99ed2bcaf21d8f473bd"
     },
+    "chael-chael.dsh-ascii-whales": {
+      "name": "dsh-ascii-whales",
+      "version": "0.1.5",
+      "integrity": "sha512-UQXy2xtMOJfsnJX8DocAU2AGmvFCLVpuUnuU3UBmqFzVjZgm6JwO/vUE9hX+vwFI4so2zFv9Dx540Vkn2OE/ig==",
+      "repository": "https://github.com/Chael-Chael/dsh-ascii-whales",
+      "gitHead": "bb651813fe6379a5ef3535980c4c66df12c91f04"
+    },
     "cicero010.dsh-whale-atelier": {
       "name": "dsh-whale-atelier",
       "version": "1.1.0",
@@ -50599,6 +50885,13 @@
       "integrity": "sha512-m5S7ZohVuqu8ypqWrZjm3Jy/HpEj28BuAtFlRBWjVoDTIOE2qA5tYfmVorOALyES0lnZygM2sFai2ROK/TSW4Q==",
       "repository": "https://github.com/ink5897/dsh-theme-kit",
       "gitHead": "94af42b6136e3b82a944bea8b1dc179272931a02"
+    },
+    "jimmy0123-ux.dsh-token-pet": {
+      "name": "dsh-token-pet",
+      "version": "0.4.2",
+      "integrity": "sha512-+8eAE8PmjITyPVTY7X0vjvCIc6ct5XfQA7g2kIrByrWNAEx6PVrsrnxQJX4j6yvuVEsC2g5rdUHjkAg4B0Df0Q==",
+      "repository": "https://github.com/Jimmy0123-ux/dsh-token-pet",
+      "gitHead": "ca315d8b04f70770598d657629641d3437115a46"
     },
     "jinxlux.xiao-theme-dsh-ui-plugin": {
       "name": "xiao-ui-theme-ts",

@@ -1,0 +1,63 @@
+id: lilycleheart.dsh-liuli-ui-enhance
+name:
+  zh: dsh-liuli-ui-enhance
+  en: dsh-liuli-ui-enhance
+author: LilycleHeart
+description: 琉璃主题 —— DSH 界面增强插件：M3 动态取色、壁纸磨砂材质、声纹可视化、日/夜切换
+repo: https://github.com/LilycleHeart/dsh-liuli-ui-enhance
+package: dsh-liuli-ui-enhance
+rowId: dsh-liuli-ui-enhance
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+install:
+  target: github:LilycleHeart/dsh-liuli-ui-enhance#dfb90448c5fe9bb82d567871538560e57669afd0
+  version: 0.1.2-rc.37
+  commit: dfb90448c5fe9bb82d567871538560e57669afd0
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-liuli-ui-enhance@https://codeload.github.com/LilycleHeart/dsh-liuli-ui-enhance/tar.gz/dfb90448c5fe9bb82d567871538560e57669afd0
+compatibility:
+  dsh: 0.2.1-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/LilycleHeart/dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/docs/preview-start-light.png
+listScreenshot: https://raw.githubusercontent.com/LilycleHeart/dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/docs/preview-start-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions:
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: dfb90448c5fe9bb82d567871538560e57669afd0
+    packageVersion: 0.1.2-rc.37
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:33:03.691Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:35:19.954Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:35:19.954Z
+marketScreenshots:
+  - skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/home.png
+  - skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/conversation.png
+  - skin-screenshots/LilycleHeart__dsh-liuli-ui-enhance/dfb90448c5fe9bb82d567871538560e57669afd0/settings.png

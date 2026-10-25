@@ -1,0 +1,74 @@
+id: chael-chael.dsh-ascii-whales
+name:
+  zh: dsh-ascii-whales
+  en: dsh-ascii-whales
+author: Chael-Chael
+description: Let whales drift through the quiet. An ASCII ocean and neutral frosted glass for DeepSeek Harness.
+repo: https://github.com/Chael-Chael/dsh-ascii-whales
+package: dsh-ascii-whales
+rowId: ascii-whales
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:Chael-Chael/dsh-ascii-whales#bb651813fe6379a5ef3535980c4c66df12c91f04
+  version: 0.1.5
+  commit: bb651813fe6379a5ef3535980c4c66df12c91f04
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-ascii-whales
+    packageVersion: 0.1.5
+    integrity: sha512-UQXy2xtMOJfsnJX8DocAU2AGmvFCLVpuUnuU3UBmqFzVjZgm6JwO/vUE9hX+vwFI4so2zFv9Dx540Vkn2OE/ig==
+  allowBuild: dsh-ascii-whales@https://codeload.github.com/Chael-Chael/dsh-ascii-whales/tar.gz/bb651813fe6379a5ef3535980c4c66df12c91f04
+  npm:
+    name: dsh-ascii-whales
+    version: 0.1.5
+    integrity: sha512-UQXy2xtMOJfsnJX8DocAU2AGmvFCLVpuUnuU3UBmqFzVjZgm6JwO/vUE9hX+vwFI4so2zFv9Dx540Vkn2OE/ig==
+    repository: https://github.com/Chael-Chael/dsh-ascii-whales
+    gitHead: bb651813fe6379a5ef3535980c4c66df12c91f04
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/light.gif
+  - https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/dark.gif
+listScreenshot: https://raw.githubusercontent.com/Chael-Chael/dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/docs/media/light.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: bb651813fe6379a5ef3535980c4c66df12c91f04
+    packageVersion: 0.1.5
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:33:03.691Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 996
+starsSnapshot: 4
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:35:19.710Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:35:19.710Z
+marketScreenshots:
+  - skin-screenshots/Chael-Chael__dsh-ascii-whales/bb651813fe6379a5ef3535980c4c66df12c91f04/home.png
