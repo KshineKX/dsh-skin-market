@@ -1,0 +1,58 @@
+id: lh15626127422-cloud.dsh-cp2077-theme
+name:
+  zh: dsh-cp2077-theme
+  en: dsh-cp2077-theme
+author: lh15626127422-cloud
+description: Cyberpunk 2077 themed UI for the DeepSeek Harness Web GUI
+repo: https://github.com/lh15626127422-cloud/dsh-cp2077-theme
+package: "@local/cp2077-theme"
+rowId: cp2077-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:lh15626127422-cloud/dsh-cp2077-theme#be416f72b5355b1ebfc1dd5eebe790203332a809
+  version: 2.0.0
+  commit: be416f72b5355b1ebfc1dd5eebe790203332a809
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/dark.jpg
+  - https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/light.jpg
+listScreenshot: https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/dark.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: be416f72b5355b1ebfc1dd5eebe790203332a809
+    packageVersion: 2.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:33.171Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

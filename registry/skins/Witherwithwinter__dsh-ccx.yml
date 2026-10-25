@@ -1,0 +1,60 @@
+id: witherwithwinter.dsh-ccx
+name:
+  zh: dsh-ccx
+  en: dsh-ccx
+author: Witherwithwinter
+description: DSH 桌面版背景主题插件：给 DeepSeek Harness 换上动态背景——10 种原版场景渲染器（银河 / 辉光地平线 / 层峦 / 云穹 / 极光电离层 / 黑洞 / 云列车 / 粒子成像 / 像素雕塑 / 闪烁方块）、壁纸视频素材库、UI 表面分区透明，以及逐像素复刻的 Appearance 设置面板。
+repo: https://github.com/Witherwithwinter/dsh-ccx
+package: dsh-ccx
+rowId: dsh-ccx
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:Witherwithwinter/dsh-ccx#8fcf6b4edc4b146378b48cd56ccafd3ea141604a
+  version: 0.8.9
+  commit: 8fcf6b4edc4b146378b48cd56ccafd3ea141604a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Witherwithwinter/dsh-ccx/8fcf6b4edc4b146378b48cd56ccafd3ea141604a/assets/preview-home.png
+  - https://raw.githubusercontent.com/Witherwithwinter/dsh-ccx/8fcf6b4edc4b146378b48cd56ccafd3ea141604a/assets/preview-mountain.png
+listScreenshot: https://raw.githubusercontent.com/Witherwithwinter/dsh-ccx/8fcf6b4edc4b146378b48cd56ccafd3ea141604a/assets/preview-home.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 8fcf6b4edc4b146378b48cd56ccafd3ea141604a
+    packageVersion: 0.8.9
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:59.077Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

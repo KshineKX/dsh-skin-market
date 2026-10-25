@@ -1,0 +1,57 @@
+id: saknutella.dsh-thinking-quips
+name:
+  zh: dsh-thinking-quips
+  en: dsh-thinking-quips
+author: Saknutella
+description: "Lightweight personalisation for the DeepSeek Harness running-turn status line: rotating bilingual quips, sixteen configurable loading icons, one-click colour presets and theme-colour matching (both reaching 4.5:1 contrast), and an optional elapsed-time readout. A drop-in DSH web client plugin (bundle) with no dependencies and no build step."
+repo: https://github.com/Saknutella/dsh-thinking-quips
+package: dsh-thinking-quips
+rowId: thinking-quips
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Saknutella/dsh-thinking-quips#87d6b4d33a0adf5f31d1bf3b3d173ef6a5ee840d
+  version: 0.11.5
+  commit: 87d6b4d33a0adf5f31d1bf3b3d173ef6a5ee840d
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Saknutella/dsh-thinking-quips/87d6b4d33a0adf5f31d1bf3b3d173ef6a5ee840d/assets/screenshot-1.png
+listScreenshot: https://raw.githubusercontent.com/Saknutella/dsh-thinking-quips/87d6b4d33a0adf5f31d1bf3b3d173ef6a5ee840d/assets/screenshot-1.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 87d6b4d33a0adf5f31d1bf3b3d173ef6a5ee840d
+    packageVersion: 0.11.5
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:11.413Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

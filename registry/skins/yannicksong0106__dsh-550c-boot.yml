@@ -1,0 +1,58 @@
+id: yannicksong0106.dsh-550c-boot
+name:
+  zh: dsh-550c-boot
+  en: dsh-550c-boot
+author: yannicksong0106
+description: 550C 开机动画 + 登录授权界面：启动时播放 550C 片头，之后可走一段可交互的访问授权（UEG 联合政府 / 550C 控制终端两套主题），点击或 Enter 推进、Esc 跳过；通用设置里可切换或关闭。
+repo: https://github.com/yannicksong0106/dsh-550c-boot
+package: dsh-550c-boot
+rowId: boot-550c
+category: theme
+tags:
+  - boot
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:yannicksong0106/dsh-550c-boot#df7d202f62088897f476961ef87f408fb525b1ac
+  version: 0.5.2
+  commit: df7d202f62088897f476961ef87f408fb525b1ac
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yannicksong0106/dsh-550c-boot/df7d202f62088897f476961ef87f408fb525b1ac/docs/preview-full.png
+listScreenshot: https://raw.githubusercontent.com/yannicksong0106/dsh-550c-boot/df7d202f62088897f476961ef87f408fb525b1ac/docs/preview-full.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: df7d202f62088897f476961ef87f408fb525b1ac
+    packageVersion: 0.5.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:30:57.644Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 817
+starsSnapshot: 183
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

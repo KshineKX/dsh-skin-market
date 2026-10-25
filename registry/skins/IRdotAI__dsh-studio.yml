@@ -1,0 +1,59 @@
+id: irdotai.dsh-studio-irdotai
+name:
+  zh: dsh-studio-irdotai
+  en: dsh-studio-irdotai
+author: IRdotAI
+description: "Themes and personalisation for DeepSeek Harness: 18 themes, a theme editor (moods, one colour, any word or any image; locks, fine-tune sliders, variations, undo, colour-blindness preview), a theme per workspace, a community gallery of themes and prompt packs, liquid-glass panels, wallpapers (Bing daily, slideshow, video), fonts, saved looks on a time or sunrise/sunset schedule, Windows accent colours, layout and focus mode, AI modes, task-finished alerts, a usage and cost dashboard with spending alerts, chat export to Markdown and PDF, accessibility options, smarter saved prompts, settings sync via a private GitHub Gist, a Ctrl+K quick switcher, and 19 languages"
+repo: https://github.com/IRdotAI/dsh-studio
+package: dsh-studio
+rowId: studio
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:IRdotAI/dsh-studio#539588ef2bf731df51f34a4f80b685491e4720c4
+  version: 2.3.0
+  commit: 539588ef2bf731df51f34a4f80b685491e4720c4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/IRdotAI/dsh-studio/539588ef2bf731df51f34a4f80b685491e4720c4/docs/screenshots/greeting.jpg
+listScreenshot: https://raw.githubusercontent.com/IRdotAI/dsh-studio/539588ef2bf731df51f34a4f80b685491e4720c4/docs/screenshots/greeting.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 539588ef2bf731df51f34a4f80b685491e4720c4
+    packageVersion: 2.3.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:04.724Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

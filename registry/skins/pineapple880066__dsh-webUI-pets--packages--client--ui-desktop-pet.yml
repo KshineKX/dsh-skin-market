@@ -1,0 +1,60 @@
+id: pineapple880066.dsh-webui-pets
+name:
+  zh: dsh-webUI-pets
+  en: dsh-webUI-pets
+author: pineapple880066
+description: Codex-style draggable desktop pets for the DeepSeek Harness Web UI / 类似 Codex 的 DeepSeek Harness Web UI 可拖拽桌宠
+repo: https://github.com/pineapple880066/dsh-webUI-pets
+subpath: packages/client/ui-desktop-pet
+package: "@dsh-external/dsh-webui-pets"
+rowId: dsh-desktop-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:pineapple880066/dsh-webUI-pets#71bb3a99f2bd04e0e5139a2d3dcbc591ada703fc&path:/packages/client/ui-desktop-pet
+  version: 0.1.0-rc.7
+  commit: 71bb3a99f2bd04e0e5139a2d3dcbc591ada703fc
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/pineapple880066/dsh-webUI-pets/71bb3a99f2bd04e0e5139a2d3dcbc591ada703fc/assets/webui-preview.png
+listScreenshot: https://raw.githubusercontent.com/pineapple880066/dsh-webUI-pets/71bb3a99f2bd04e0e5139a2d3dcbc591ada703fc/assets/webui-preview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 71bb3a99f2bd04e0e5139a2d3dcbc591ada703fc
+    packageVersion: 0.1.0-rc.7
+    scannerVersion: static-v2
+    dshVersion: 0.1.0-rc.7
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:10.815Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,58 @@
+id: yaanlaan.deepseek-colorful
+name:
+  zh: deepseek-colorful
+  en: deepseek-colorful
+author: yaanlaan
+description: DeepSeek Colorful - A comprehensive UI theme and customizer plugin for DeepSeek Harness (Custom theme palettes, frosted glass & live video/wallpapers)
+repo: https://github.com/yaanlaan/deepseek-colorful
+package: deepseek-colorful
+rowId: deepseek-colorful
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:yaanlaan/deepseek-colorful#e8f0172d212a1d705d8a5090bbbc08b134f34513
+  version: 1.0.0
+  commit: e8f0172d212a1d705d8a5090bbbc08b134f34513
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yaanlaan/deepseek-colorful/e8f0172d212a1d705d8a5090bbbc08b134f34513/assets/screenshots/preview-lonely-cat.png
+listScreenshot: https://raw.githubusercontent.com/yaanlaan/deepseek-colorful/e8f0172d212a1d705d8a5090bbbc08b134f34513/assets/screenshots/preview-lonely-cat.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: e8f0172d212a1d705d8a5090bbbc08b134f34513
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:34:08.999Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

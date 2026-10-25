@@ -1,0 +1,60 @@
+id: liushuchang-2012.dsh-skin-liquid-glass
+name:
+  zh: dsh-skin-liquid-glass
+  en: dsh-skin-liquid-glass
+author: liushuchang-2012
+description: "iOS 26 Liquid Glass skin for DeepSeek Harness: one shared white-grey-blue fog, a single 40px frost over the whole window, a floating glass sidebar and reply bubbles."
+repo: https://github.com/liushuchang-2012/dsh-skin-liquid-glass
+package: dsh-skin-liquid-glass
+rowId: dsh-skin-liquid-glass
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:liushuchang-2012/dsh-skin-liquid-glass#398c5611e8c0537d434272deba17c98a8454c995
+  version: 0.2.8
+  commit: 398c5611e8c0537d434272deba17c98a8454c995
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/liushuchang-2012/dsh-skin-liquid-glass/398c5611e8c0537d434272deba17c98a8454c995/preview/light.jpg
+  - https://raw.githubusercontent.com/liushuchang-2012/dsh-skin-liquid-glass/398c5611e8c0537d434272deba17c98a8454c995/preview/dark.jpg
+listScreenshot: https://raw.githubusercontent.com/liushuchang-2012/dsh-skin-liquid-glass/398c5611e8c0537d434272deba17c98a8454c995/preview/light.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 398c5611e8c0537d434272deba17c98a8454c995
+    packageVersion: 0.2.8
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:41.051Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,58 @@
+id: badai147.dsh-leafy-skin
+name:
+  zh: dsh-leafy-skin
+  en: dsh-leafy-skin
+author: badai147
+description: Leafy — an eye-friendly green skin that folds the DSH Web GUI's --dsw-* palette into leafy greens (light + dark).
+repo: https://github.com/badai147/dsh-leafy-skin
+package: dsh-leafy-skin
+rowId: leafy-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:badai147/dsh-leafy-skin#a39351594036567f4c0013448a9756d090a2ad1a
+  version: 0.2.1
+  commit: a39351594036567f4c0013448a9756d090a2ad1a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/badai147/dsh-leafy-skin/a39351594036567f4c0013448a9756d090a2ad1a/show.png
+listScreenshot: https://raw.githubusercontent.com/badai147/dsh-leafy-skin/a39351594036567f4c0013448a9756d090a2ad1a/show.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: a39351594036567f4c0013448a9756d090a2ad1a
+    packageVersion: 0.2.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:11.438Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

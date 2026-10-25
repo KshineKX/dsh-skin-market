@@ -1,0 +1,68 @@
+id: kviiinh.dsh-whale-particles-bg
+name:
+  zh: dsh-whale-particles-bg
+  en: dsh-whale-particles-bg
+author: kviiinh
+description: "Animated whale particle background for the DeepSeek Harness (dsh) Web UI: the WHALE-silhouette particle field with pointer repulsion plus the official dot-grid layer, registered into the frame-wide shell.overlay seat."
+repo: https://github.com/kviiinh/dsh-whale-particles-bg
+package: dsh-whale-particles-bg
+rowId: whale-particles-bg
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:kviiinh/dsh-whale-particles-bg#3322ee6323c6cd262c34c3b8b514c7c15c2badd2
+  version: 1.0.0
+  commit: 3322ee6323c6cd262c34c3b8b514c7c15c2badd2
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-whale-particles-bg
+    packageVersion: 1.0.0
+    integrity: sha512-6JcTmDzvPFMtxbrwD90Y2toR6L2Wb5fFaPheF0Xt+P+wK6q1RC6odzDwPaCvCeamsBzX3zw9y8OvXx7JSXdxJQ==
+  npm:
+    name: dsh-whale-particles-bg
+    version: 1.0.0
+    integrity: sha512-6JcTmDzvPFMtxbrwD90Y2toR6L2Wb5fFaPheF0Xt+P+wK6q1RC6odzDwPaCvCeamsBzX3zw9y8OvXx7JSXdxJQ==
+    repository: https://github.com/kviiinh/dsh-whale-particles-bg
+    gitHead: 3322ee6323c6cd262c34c3b8b514c7c15c2badd2
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/kviiinh/dsh-whale-particles-bg/3322ee6323c6cd262c34c3b8b514c7c15c2badd2/assets/screenshot-1.png
+listScreenshot: https://raw.githubusercontent.com/kviiinh/dsh-whale-particles-bg/3322ee6323c6cd262c34c3b8b514c7c15c2badd2/assets/screenshot-1.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 3322ee6323c6cd262c34c3b8b514c7c15c2badd2
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:30.960Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

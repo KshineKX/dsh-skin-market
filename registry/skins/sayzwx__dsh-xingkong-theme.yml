@@ -1,0 +1,59 @@
+id: sayzwx.dsh-xingkong-theme
+name:
+  zh: dsh-xingkong-theme
+  en: dsh-xingkong-theme
+author: sayzwx
+description: "Nebula Core: a deep-space observatory theme for the DeepSeek Harness Web GUI — same-direction cross-dissolve wallpaper loops (never a reversing ping-pong) behind a fully clear, un-veiled conversation pane, white-ink-on-photograph typography with soft blurred shadows (never a glyph outline), Montserrat + Noto Sans SC on a real variable-weight axis, and a 74-token light/dark palette. v1.13 adds a built-in model probe service: see which configured models actually answer, plus their real context window."
+repo: https://github.com/sayzwx/dsh-xingkong-theme
+package: dsh-xingkong-theme
+rowId: xingkong-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:sayzwx/dsh-xingkong-theme#3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e
+  version: 1.13.0
+  commit: 3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/sayzwx/dsh-xingkong-theme/3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e/docs/screenshots/light.jpg
+  - https://raw.githubusercontent.com/sayzwx/dsh-xingkong-theme/3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e/docs/screenshots/dark.jpg
+listScreenshot: https://raw.githubusercontent.com/sayzwx/dsh-xingkong-theme/3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e/docs/screenshots/light.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 3e3cbf28014926aa38a55c6cc9a1b7d4b15b075e
+    packageVersion: 1.13.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:54.062Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

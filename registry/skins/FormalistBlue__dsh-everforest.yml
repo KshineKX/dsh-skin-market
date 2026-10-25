@@ -1,0 +1,59 @@
+id: formalistblue.dsh-everforest
+name:
+  zh: dsh-everforest
+  en: dsh-everforest
+author: FormalistBlue
+description: Everforest color themes (Dark/Light × Hard/Medium/Soft) for DeepSeek Harness Web/Desktop.
+repo: https://github.com/FormalistBlue/dsh-everforest
+package: dsh-everforest
+rowId: everforest
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:FormalistBlue/dsh-everforest#c71f1d8a2b942ced11b7a51d22971471a25e35bc
+  version: 1.0.0
+  commit: c71f1d8a2b942ced11b7a51d22971471a25e35bc
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-everforest@https://codeload.github.com/FormalistBlue/dsh-everforest/tar.gz/c71f1d8a2b942ced11b7a51d22971471a25e35bc
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-dark-soft.png
+  - https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-light-hard.png
+listScreenshot: https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-dark-soft.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: c71f1d8a2b942ced11b7a51d22971471a25e35bc
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:02.084Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

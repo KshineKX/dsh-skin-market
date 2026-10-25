@@ -1,0 +1,68 @@
+id: potoior.dsh-bull-bear
+name:
+  zh: dsh-bull-bear
+  en: dsh-bull-bear
+author: potoior
+description: 牛熊行情宠物 — DeepSeek Harness 实时行情桌宠：由自选组合平均涨跌驱动，越接近收益 20% 跑得越猛；可拖动、自选面板、行情赛跑。免费新浪实时行情，免登录。
+repo: https://github.com/potoior/dsh-bull-bear
+package: dsh-bull-bear
+rowId: bull-bear
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:potoior/dsh-bull-bear#3f6e032b8bab9df4b9b23110716cd9fc399eeb39
+  version: 0.1.2
+  commit: 3f6e032b8bab9df4b9b23110716cd9fc399eeb39
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-bull-bear
+    packageVersion: 0.1.2
+    integrity: sha512-SRaErikNu+a6BDKWSbtbmMiwcUeYnIFIn3xVQWwrH0grzj8WJA+sWDA6R2E2+pJlh5BjFjbD12QTdOJtryL7SA==
+  npm:
+    name: dsh-bull-bear
+    version: 0.1.2
+    integrity: sha512-SRaErikNu+a6BDKWSbtbmMiwcUeYnIFIn3xVQWwrH0grzj8WJA+sWDA6R2E2+pJlh5BjFjbD12QTdOJtryL7SA==
+    repository: https://github.com/potoior/dsh-bull-bear
+    gitHead: 3f6e032b8bab9df4b9b23110716cd9fc399eeb39
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/potoior/dsh-bull-bear/3f6e032b8bab9df4b9b23110716cd9fc399eeb39/assets/screenshot-overview.png
+listScreenshot: https://raw.githubusercontent.com/potoior/dsh-bull-bear/3f6e032b8bab9df4b9b23110716cd9fc399eeb39/assets/screenshot-overview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 3f6e032b8bab9df4b9b23110716cd9fc399eeb39
+    packageVersion: 0.1.2
+    scannerVersion: static-v2
+    dshVersion: ^0.1.0-rc.6
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:43.621Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,70 @@
+id: cosmosail.dsh-bloomglass
+name:
+  zh: dsh-bloomglass
+  en: dsh-bloomglass
+author: CosmoSail
+description: "A DeepSeek Harness Web theme: ten OKLCH Chinese-traditional-colour palettes that adapt to light and dark, plus an optional uploaded wallpaper rendered behind frosted glass panels; tailored for the DS Bot (bot team) interface — sidebars, bot and group conversations, message bubbles, panels and popovers. / 十套 OKLCH 中国传统色配色，明暗自适应；可选上传壁纸铺满窗口、界面以磨砂玻璃叠上去；已适配 DS Bot（Bot 团队）界面：侧边栏、Bot / 群聊会话、消息气泡、面板与弹层。"
+repo: https://github.com/CosmoSail/dsh-bloomglass
+package: dsh-bloomglass
+rowId: dsh-bloomglass
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:CosmoSail/dsh-bloomglass#bf7fd55f4f261d9ff1ef6754ad6764bd9849891f
+  version: 1.0.3
+  commit: bf7fd55f4f261d9ff1ef6754ad6764bd9849891f
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-bloomglass
+    packageVersion: 1.0.3
+    integrity: sha512-Q9pu7mx/tFz8P3aD3SZ4ge0sthvnn1ekI3O2YMxp7z/dB0IZ5Ztm3MYSNRVNRd6OcdsT4Mo0FwE78gtNNVrwGQ==
+  npm:
+    name: dsh-bloomglass
+    version: 1.0.3
+    integrity: sha512-Q9pu7mx/tFz8P3aD3SZ4ge0sthvnn1ekI3O2YMxp7z/dB0IZ5Ztm3MYSNRVNRd6OcdsT4Mo0FwE78gtNNVrwGQ==
+    repository: https://github.com/CosmoSail/dsh-bloomglass
+    gitHead: bf7fd55f4f261d9ff1ef6754ad6764bd9849891f
+  allowBuild: dsh-bloomglass@https://codeload.github.com/CosmoSail/dsh-bloomglass/tar.gz/bf7fd55f4f261d9ff1ef6754ad6764bd9849891f
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/CosmoSail/dsh-bloomglass/bf7fd55f4f261d9ff1ef6754ad6764bd9849891f/docs/showcase/ui-mist-light.png
+  - https://raw.githubusercontent.com/CosmoSail/dsh-bloomglass/bf7fd55f4f261d9ff1ef6754ad6764bd9849891f/docs/showcase/bot-ui-light.png
+listScreenshot: https://raw.githubusercontent.com/CosmoSail/dsh-bloomglass/bf7fd55f4f261d9ff1ef6754ad6764bd9849891f/docs/showcase/ui-mist-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: bf7fd55f4f261d9ff1ef6754ad6764bd9849891f
+    packageVersion: 1.0.3
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:25.282Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

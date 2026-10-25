@@ -1,0 +1,59 @@
+id: luongthimydieu.dsh-client-ui-skin-kitty
+name:
+  zh: dsh-client-ui-skin-kitty
+  en: dsh-client-ui-skin-kitty
+author: luongthimydieu
+description: "Hello Kitty (凯蒂猫) theme skin for the DeepSeek Harness (DSH) Web UI — pink alias-token palette with a custom wallpaper. Static profile plugin: the theme and wallpaper restore automatically on every Harness start."
+repo: https://github.com/luongthimydieu/dsh-client-ui-skin-kitty
+package: dsh-client-ui-skin-kitty
+rowId: dsh-client-ui-skin-kitty
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:luongthimydieu/dsh-client-ui-skin-kitty#0c5966ccc810cd9d7b7b55aabb4a0527b8053f76
+  version: 1.0.0
+  commit: 0c5966ccc810cd9d7b7b55aabb4a0527b8053f76
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://github.com/user-attachments/assets/0fe98ec1-cf49-4e0f-9214-1ef8bd460e62
+listScreenshot: https://github.com/user-attachments/assets/0fe98ec1-cf49-4e0f-9214-1ef8bd460e62
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 0c5966ccc810cd9d7b7b55aabb4a0527b8053f76
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    dshVersion: ">=0.1.2-alpha.1 <0.2.0-0 || >=0.2.1-rc.1 <0.3.0-0"
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:35.780Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

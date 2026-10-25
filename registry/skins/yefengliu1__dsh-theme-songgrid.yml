@@ -1,0 +1,59 @@
+id: yefengliu1.dsh-theme-songgrid
+name:
+  zh: dsh-theme-songgrid
+  en: dsh-theme-songgrid
+author: yefengliu1
+description: 宋律 Songgrid —— 宋代美学 × 瑞士国际主义设计语言的 DeepSeek Harness Web 主题：宣纸/夜墨双变体、汝窑天青功能色、青绿山水背景。Not affiliated with DeepSeek.
+repo: https://github.com/yefengliu1/dsh-theme-songgrid
+package: dsh-theme-songgrid
+rowId: song-grid-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:yefengliu1/dsh-theme-songgrid#bdb2cda5c4d186eaf1539dc18deb676a102ed3e3
+  version: 0.1.7
+  commit: bdb2cda5c4d186eaf1539dc18deb676a102ed3e3
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yefengliu1/dsh-theme-songgrid/bdb2cda5c4d186eaf1539dc18deb676a102ed3e3/docs/xuanzhi.png
+  - https://raw.githubusercontent.com/yefengliu1/dsh-theme-songgrid/bdb2cda5c4d186eaf1539dc18deb676a102ed3e3/docs/yemo.png
+listScreenshot: https://raw.githubusercontent.com/yefengliu1/dsh-theme-songgrid/bdb2cda5c4d186eaf1539dc18deb676a102ed3e3/docs/xuanzhi.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: bdb2cda5c4d186eaf1539dc18deb676a102ed3e3
+    packageVersion: 0.1.7
+    scannerVersion: static-v2
+    dshVersion: ^0.2.0-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:56.066Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,58 @@
+id: oliveryfaso.dsh-pet-company
+name:
+  zh: dsh-pet-company
+  en: dsh-pet-company
+author: Oliveryfaso
+description: 安静一点的桌面陪伴：三套内置角色、云朵与关怀，也可连接原版 dsh-pet。
+repo: https://github.com/Oliveryfaso/dsh-pet-company
+package: dsh-pet-company
+rowId: dsh-pet-company
+category: theme
+tags:
+  - pet
+modes:
+  - light
+install:
+  target: github:Oliveryfaso/dsh-pet-company#77e94a950a20b78ea029907aae248dfeb5d7b1d4
+  version: 0.2.0
+  commit: 77e94a950a20b78ea029907aae248dfeb5d7b1d4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Oliveryfaso/dsh-pet-company/77e94a950a20b78ea029907aae248dfeb5d7b1d4/docs/screenshots/pet-tide-bubble.png
+listScreenshot: https://raw.githubusercontent.com/Oliveryfaso/dsh-pet-company/77e94a950a20b78ea029907aae248dfeb5d7b1d4/docs/screenshots/pet-tide-bubble.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 77e94a950a20b78ea029907aae248dfeb5d7b1d4
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    dshVersion: ^0.2.0-rc.1
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:42.211Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: false
+  notice: 代码MIT；默认角色及其衍生图集CC BY-NC 4.0，须署名且仅限非商业用途。
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

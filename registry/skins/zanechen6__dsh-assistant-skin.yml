@@ -1,0 +1,58 @@
+id: zanechen6.dsh-assistant-skin
+name:
+  zh: dsh-assistant-skin
+  en: dsh-assistant-skin
+author: zanechen6
+description: 为 DSH Web GUI 换上一套「助理皮肤」：黑蓝暗调主题 + 会话区形象（静图/循环片段）+ 形象切换 + 常驻与稀有触发的动作调度。不改 DSH 源码，卸载即还原。
+repo: https://github.com/zanechen6/dsh-assistant-skin
+package: dsh-assistant-skin
+rowId: assistant-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:zanechen6/dsh-assistant-skin#59e58aa20d76996062a76f7e6af603309db57c28
+  version: 0.1.0
+  commit: 59e58aa20d76996062a76f7e6af603309db57c28
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/zanechen6/dsh-assistant-skin/59e58aa20d76996062a76f7e6af603309db57c28/preview/preview-01.png
+  - https://raw.githubusercontent.com/zanechen6/dsh-assistant-skin/59e58aa20d76996062a76f7e6af603309db57c28/preview/preview-02.png
+listScreenshot: https://raw.githubusercontent.com/zanechen6/dsh-assistant-skin/59e58aa20d76996062a76f7e6af603309db57c28/preview/preview-01.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 59e58aa20d76996062a76f7e6af603309db57c28
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:03.874Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,56 @@
+id: aimer779.dsh-xiaoyaoyou
+name:
+  zh: dsh-xiaoyaoyou
+  en: dsh-xiaoyaoyou
+author: Aimer779
+description: Xiaoyaoyou glyph water, exclusively on the new conversation screen.
+repo: https://github.com/Aimer779/dsh-xiaoyaoyou
+package: "@local/dsh-xiaoyaoyou"
+rowId: xiaoyaoyou
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:Aimer779/dsh-xiaoyaoyou#bd32051905b371f4e4a124bb79ba67284b9376f8
+  version: 0.1.0
+  commit: bd32051905b371f4e4a124bb79ba67284b9376f8
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.1-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Aimer779/dsh-xiaoyaoyou/bd32051905b371f4e4a124bb79ba67284b9376f8/docs/images/preview.gif
+listScreenshot: https://raw.githubusercontent.com/Aimer779/dsh-xiaoyaoyou/bd32051905b371f4e4a124bb79ba67284b9376f8/docs/images/preview.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: bd32051905b371f4e4a124bb79ba67284b9376f8
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:09.262Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

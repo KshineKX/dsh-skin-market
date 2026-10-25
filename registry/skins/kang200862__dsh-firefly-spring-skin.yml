@@ -1,0 +1,61 @@
+id: kang200862.dsh-firefly-spring-skin
+name:
+  zh: dsh-firefly-spring-skin
+  en: dsh-firefly-spring-skin
+author: kang200862
+description: '流萤「春日手信」主题皮肤 for DeepSeek Harness — Firefly "Spring Missive" theme skin: 春草绿配色 + 玻璃面板 + 桌面立绘 + 春日橱窗背景'
+repo: https://github.com/kang200862/dsh-firefly-spring-skin
+package: dsh-firefly-spring-skin
+rowId: firefly-spring-skin
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:kang200862/dsh-firefly-spring-skin#f0a85dc29b60e09179d6768c7f64952663be187f
+  version: 0.1.0
+  commit: f0a85dc29b60e09179d6768c7f64952663be187f
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/kang200862/dsh-firefly-spring-skin/f0a85dc29b60e09179d6768c7f64952663be187f/preview/live-light.png
+  - https://raw.githubusercontent.com/kang200862/dsh-firefly-spring-skin/f0a85dc29b60e09179d6768c7f64952663be187f/preview/live-dark.png
+listScreenshot: https://raw.githubusercontent.com/kang200862/dsh-firefly-spring-skin/f0a85dc29b60e09179d6768c7f64952663be187f/preview/live-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: f0a85dc29b60e09179d6768c7f64952663be187f
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:30.498Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: false
+  notice: 代码与原创SVG场景MIT；角色图仅限署名的非商业同人分享，须保留NOTICE，不得拆作素材库或商业使用。
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

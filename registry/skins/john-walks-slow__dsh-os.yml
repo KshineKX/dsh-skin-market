@@ -1,0 +1,60 @@
+id: john-walks-slow.dsh-os
+name:
+  zh: dsh-os
+  en: dsh-os
+author: john-walks-slow
+description: "DeepSeek Harness OS: a whole-GUI theme for the DSH Web interface — conversation flow, sidebar, code blocks, tool cards, dialogs and composer repainted in light and dark through the official theme-token layer, plus a home terminal desktop (ASCII field, boot self-test, live host/harness HUD with a real per-model token ledger) and an in-session telemetry strip. dsh-os：覆盖整个 DSH Web GUI 的主题——会话流、侧边栏、代码块、工具卡、弹窗与输入框用官方 token 层换墨（深浅两套），首页则是一台赛博终端桌面（ASCII 字符场、开机自检、真实系统与会话 Token 账本 HUD），会话内另有遥测条。"
+repo: https://github.com/john-walks-slow/dsh-os
+package: dsh-os
+rowId: dsh-os
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:john-walks-slow/dsh-os#9c2817a3d2733974ffc7fce51651bfc66352924b
+  version: 0.3.0
+  commit: 9c2817a3d2733974ffc7fce51651bfc66352924b
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-os@https://codeload.github.com/john-walks-slow/dsh-os/tar.gz/9c2817a3d2733974ffc7fce51651bfc66352924b
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/john-walks-slow/dsh-os/9c2817a3d2733974ffc7fce51651bfc66352924b/screenshots/session-dark.png
+  - https://raw.githubusercontent.com/john-walks-slow/dsh-os/9c2817a3d2733974ffc7fce51651bfc66352924b/screenshots/session-light.png
+listScreenshot: https://raw.githubusercontent.com/john-walks-slow/dsh-os/9c2817a3d2733974ffc7fce51651bfc66352924b/screenshots/session-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 9c2817a3d2733974ffc7fce51651bfc66352924b
+    packageVersion: 0.3.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:29.664Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

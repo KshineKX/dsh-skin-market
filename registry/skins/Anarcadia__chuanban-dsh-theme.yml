@@ -1,0 +1,58 @@
+id: anarcadia.chuanban-dsh-theme
+name:
+  zh: chuanban-dsh-theme
+  en: chuanban-dsh-theme
+author: Anarcadia
+description: DSH 暖纸外观皮肤插件：Claude Desktop 暖白纸配色 + 更纱黑体两层字体（D143 absoulutely-chuanban 的 DSH 原生插件版，D148 Phase 1）
+repo: https://github.com/Anarcadia/chuanban-dsh-theme
+package: chuanban-dsh-theme
+rowId: chuanban-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Anarcadia/chuanban-dsh-theme#7efbc191275183937b531f2762282dd5a3dab7bb
+  version: 0.1.0
+  commit: 7efbc191275183937b531f2762282dd5a3dab7bb
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Anarcadia/chuanban-dsh-theme/7efbc191275183937b531f2762282dd5a3dab7bb/docs/screenshot-preview.png
+listScreenshot: https://raw.githubusercontent.com/Anarcadia/chuanban-dsh-theme/7efbc191275183937b531f2762282dd5a3dab7bb/docs/screenshot-preview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 7efbc191275183937b531f2762282dd5a3dab7bb
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:10.363Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

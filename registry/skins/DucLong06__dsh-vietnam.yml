@@ -1,0 +1,59 @@
+id: duclong06.dsh-vietnam
+name:
+  zh: dsh-vietnam
+  en: dsh-vietnam
+author: DucLong06
+description: DSH Việt Nam — Vietnamese locale, Vietnamese palettes and a rotating Vietnam-landscape backdrop for DeepSeek Harness
+repo: https://github.com/DucLong06/dsh-vietnam
+package: dsh-vietnam
+rowId: dsh-vietnam
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:DucLong06/dsh-vietnam#6d6aa42e00d6f5014954571a107ce353a6631534
+  version: 0.1.0
+  commit: 6d6aa42e00d6f5014954571a107ce353a6631534
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/DucLong06/dsh-vietnam/6d6aa42e00d6f5014954571a107ce353a6631534/docs/screenshots/vivid-sonmai-dark.jpg
+  - https://raw.githubusercontent.com/DucLong06/dsh-vietnam/6d6aa42e00d6f5014954571a107ce353a6631534/docs/screenshots/vivid-halong-light.jpg
+listScreenshot: https://raw.githubusercontent.com/DucLong06/dsh-vietnam/6d6aa42e00d6f5014954571a107ce353a6631534/docs/screenshots/vivid-sonmai-dark.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 6d6aa42e00d6f5014954571a107ce353a6631534
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    dshVersion: 0.2.0-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:19.815Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

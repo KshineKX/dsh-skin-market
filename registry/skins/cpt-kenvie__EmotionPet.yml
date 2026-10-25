@@ -1,0 +1,69 @@
+id: cpt-kenvie.emotionpet
+name:
+  zh: EmotionPet
+  en: EmotionPet
+author: cpt-kenvie
+description: Emotion Ball pet dock for the DeepSeek Harness Web composer
+repo: https://github.com/cpt-kenvie/EmotionPet
+package: dsh-emotion-pet
+rowId: emotion-pet
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:cpt-kenvie/EmotionPet#2cd085879f2820a00adcf03cf5b7769aae34c928
+  version: 0.1.4
+  commit: 2cd085879f2820a00adcf03cf5b7769aae34c928
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-emotion-pet
+    packageVersion: 0.1.4
+    integrity: sha512-UczNdpSfU7d5Q11oe5P2pUP+7VQK+7BzdGTslfSr4TXS9592B1WMaLPqyf3XTEWQVBYmQhdGI1OerrHEJ05q7g==
+  npm:
+    name: dsh-emotion-pet
+    version: 0.1.4
+    integrity: sha512-UczNdpSfU7d5Q11oe5P2pUP+7VQK+7BzdGTslfSr4TXS9592B1WMaLPqyf3XTEWQVBYmQhdGI1OerrHEJ05q7g==
+    repository: https://github.com/cpt-kenvie/EmotionPet
+    gitHead: 2cd085879f2820a00adcf03cf5b7769aae34c928
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/cpt-kenvie/EmotionPet/2cd085879f2820a00adcf03cf5b7769aae34c928/assets/emotion-pet-demo.gif
+listScreenshot: https://raw.githubusercontent.com/cpt-kenvie/EmotionPet/2cd085879f2820a00adcf03cf5b7769aae34c928/assets/emotion-pet-demo.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 2cd085879f2820a00adcf03cf5b7769aae34c928
+    packageVersion: 0.1.4
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:47.112Z
+    findings: []
+license:
+  code: Learning & Exchange License (Non-Commercial)
+  commercialUse: false
+  notice: 免费非商业运行、修改及分享须注明出处并保留版权和许可；商业集成、推广或授权须另获许可。
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

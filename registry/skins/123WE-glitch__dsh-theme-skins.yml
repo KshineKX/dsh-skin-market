@@ -1,0 +1,58 @@
+id: 123we-glitch.dsh-theme-skins
+name:
+  zh: dsh-theme-skins
+  en: dsh-theme-skins
+author: 123WE-glitch
+description: Four curated color skins for the DeepSeek Harness Web UI — Aurora, Night Flight, Nordfjord and Sakura — switchable in Settings › General.
+repo: https://github.com/123WE-glitch/dsh-theme-skins
+package: "@local/dsh-theme-skins"
+rowId: theme-skins
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:123WE-glitch/dsh-theme-skins#5ef145d61e7745eb51e8078c41b35c28c4df4c53
+  version: 1.1.0
+  commit: 5ef145d61e7745eb51e8078c41b35c28c4df4c53
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/123WE-glitch/dsh-theme-skins/5ef145d61e7745eb51e8078c41b35c28c4df4c53/docs/aurora-light.png
+  - https://raw.githubusercontent.com/123WE-glitch/dsh-theme-skins/5ef145d61e7745eb51e8078c41b35c28c4df4c53/docs/aurora-dark.png
+listScreenshot: https://raw.githubusercontent.com/123WE-glitch/dsh-theme-skins/5ef145d61e7745eb51e8078c41b35c28c4df4c53/docs/aurora-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 5ef145d61e7745eb51e8078c41b35c28c4df4c53
+    packageVersion: 1.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:07.265Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

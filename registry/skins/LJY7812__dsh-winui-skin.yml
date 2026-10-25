@@ -1,0 +1,59 @@
+id: ljy7812.dsh-winui-skin
+name:
+  zh: dsh-winui-skin
+  en: dsh-winui-skin
+author: LJY7812
+description: DeepSeek Harness 皮肤插件：把 Web/Desktop 客户端改造成 Windows 11 WinUI 3 / Fluent 外观（Segoe UI Variable、Mica 底色、亚克力菜单、Fluent 圆角与语义色），并跟随系统强调色。
+repo: https://github.com/LJY7812/dsh-winui-skin
+package: dsh-winui-skin
+rowId: winui-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:LJY7812/dsh-winui-skin#1a336785265242a9fce7216a4e0920db886a1bb2
+  version: 0.2.0
+  commit: 1a336785265242a9fce7216a4e0920db886a1bb2
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/LJY7812/dsh-winui-skin/1a336785265242a9fce7216a4e0920db886a1bb2/docs/preview/04-app-light.png
+  - https://raw.githubusercontent.com/LJY7812/dsh-winui-skin/1a336785265242a9fce7216a4e0920db886a1bb2/docs/preview/03-app-dark.png
+listScreenshot: https://raw.githubusercontent.com/LJY7812/dsh-winui-skin/1a336785265242a9fce7216a4e0920db886a1bb2/docs/preview/04-app-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 1a336785265242a9fce7216a4e0920db886a1bb2
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:41.102Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,59 @@
+id: erbsen16.dsh-client-ui-dracula
+name:
+  zh: dsh-client-ui-dracula
+  en: dsh-client-ui-dracula
+author: Erbsen16
+description: Dracula dark theme for the DeepSeek Harness Web GUI — the VS Code vampire palette plus programmer-oriented typography tuning. DSH Web GUI 的 Dracula 深色主题（含排版调优）。
+repo: https://github.com/Erbsen16/dsh-client-ui-dracula
+package: dsh-client-ui-dracula
+rowId: ui-dracula
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Erbsen16/dsh-client-ui-dracula#dde48b1d8038d35520acb4d1e5e5724985bb11cc
+  version: 1.0.0
+  commit: dde48b1d8038d35520acb4d1e5e5724985bb11cc
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Erbsen16/dsh-client-ui-dracula/dde48b1d8038d35520acb4d1e5e5724985bb11cc/docs/00-chat.webp
+  - https://raw.githubusercontent.com/Erbsen16/dsh-client-ui-dracula/dde48b1d8038d35520acb4d1e5e5724985bb11cc/docs/01-home.webp
+listScreenshot: https://raw.githubusercontent.com/Erbsen16/dsh-client-ui-dracula/dde48b1d8038d35520acb4d1e5e5724985bb11cc/docs/00-chat.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: dde48b1d8038d35520acb4d1e5e5724985bb11cc
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:29.088Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

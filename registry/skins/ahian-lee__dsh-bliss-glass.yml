@@ -1,0 +1,60 @@
+id: ahian-lee.dsh-bliss-glass
+name:
+  zh: dsh-bliss-glass
+  en: dsh-bliss-glass
+author: ahian-lee
+description: Windows XP-era scenery wallpapers paired with a modern frosted-glass UI for the DeepSeek Harness web surface. Desktop and mobile.
+repo: https://github.com/ahian-lee/dsh-bliss-glass
+package: dsh-bliss-glass
+rowId: bliss-glass
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:ahian-lee/dsh-bliss-glass#c64b37a3cb75dced8a41eac1c965d350c23e8145
+  version: 1.0.0
+  commit: c64b37a3cb75dced8a41eac1c965d350c23e8145
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/ahian-lee/dsh-bliss-glass/c64b37a3cb75dced8a41eac1c965d350c23e8145/assets/screenshot-light.png
+  - https://raw.githubusercontent.com/ahian-lee/dsh-bliss-glass/c64b37a3cb75dced8a41eac1c965d350c23e8145/assets/screenshot-dark.png
+listScreenshot: https://raw.githubusercontent.com/ahian-lee/dsh-bliss-glass/c64b37a3cb75dced8a41eac1c965d350c23e8145/assets/screenshot-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: c64b37a3cb75dced8a41eac1c965d350c23e8145
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:20.961Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,58 @@
+id: fl0-0wer.dsh-wallpaper
+name:
+  zh: dsh-wallpaper
+  en: dsh-wallpaper
+author: fl0-0wer
+description: "Photo wallpaper for the DeepSeek Harness web GUI: serves ~/.dsh/wallpaper as a full-window background and makes the theme surfaces translucent."
+repo: https://github.com/fl0-0wer/dsh-wallpaper
+package: dsh-wallpaper
+rowId: dsh-wallpaper
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:fl0-0wer/dsh-wallpaper#b270667b8a4e77cbe69c0584835915a2709bb868
+  version: 1.1.0
+  commit: b270667b8a4e77cbe69c0584835915a2709bb868
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/fl0-0wer/dsh-wallpaper/b270667b8a4e77cbe69c0584835915a2709bb868/preview.jpg
+listScreenshot: https://raw.githubusercontent.com/fl0-0wer/dsh-wallpaper/b270667b8a4e77cbe69c0584835915a2709bb868/preview.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: b270667b8a4e77cbe69c0584835915a2709bb868
+    packageVersion: 1.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:21.870Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z
