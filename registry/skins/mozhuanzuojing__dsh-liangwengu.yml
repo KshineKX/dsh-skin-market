@@ -1,0 +1,59 @@
+id: mozhuanzuojing.dsh-liangwengu
+name:
+  zh: dsh-liangwengu
+  en: dsh-liangwengu
+author: mozhuanzuojing
+description: 修仙风格的常驻状态挂件，包含九境HUD、卡通人物和煮水血条。
+repo: https://github.com/mozhuanzuojing/dsh-liangwengu
+package: dsh-liangwengu
+rowId: liangwengu
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+install:
+  target: github:mozhuanzuojing/dsh-liangwengu#033aee2e90274006b0d00e1640caf96df51b9901
+  version: 0.7.1
+  commit: 033aee2e90274006b0d00e1640caf96df51b9901
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.1.2-rc.1
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 033aee2e90274006b0d00e1640caf96df51b9901
+    packageVersion: 0.7.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T20:00:15.248Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T19:54:21.217Z
+metadataUpdatedAt: 2026-10-25T20:05:53.216Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T20:05:53.216Z
+marketScreenshots:
+  - skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/home.png
+  - skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/conversation.png
+  - skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/settings.png

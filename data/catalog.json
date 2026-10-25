@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-25T19:36:51.893Z",
+  "generatedAt": "2026-10-25T20:06:57.089Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -19777,6 +19777,95 @@
       }
     },
     {
+      "id": "chuantianml.dsh-chat-tidy",
+      "name": {
+        "zh": "dsh-chat-tidy",
+        "en": "dsh-chat-tidy"
+      },
+      "author": "ChuanTianML",
+      "description": "调整DSH对话的字体、段落节奏和表格样式，附工作过程折叠与计时显示。",
+      "repo": "https://github.com/ChuanTianML/dsh-chat-tidy",
+      "package": "dsh-chat-tidy",
+      "rowId": "dsh-chat-tidy",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:ChuanTianML/dsh-chat-tidy#a22a7c973ecc8fbf33265c1e919d8445a2aff0da",
+        "version": "0.4.1",
+        "commit": "a22a7c973ecc8fbf33265c1e919d8445a2aff0da",
+        "desktop": {
+          "mode": "managed",
+          "registry": "npm",
+          "packageName": "dsh-chat-tidy",
+          "packageVersion": "0.4.1",
+          "integrity": "sha512-ifQfLX0c39EPo59wRrCuSFmBy4CTRv4iCStCTlYw0pBlKug1BSBSlY7k9735aIEZWp/ymConLE0aNJsuJ74s2g=="
+        }
+      },
+      "compatibility": {
+        "dsh": ">=0.1.0-rc.6",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "pass",
+          "installation": "pass"
+        },
+        "suggestions": [],
+        "scan": {
+          "commit": "a22a7c973ecc8fbf33265c1e919d8445a2aff0da",
+          "packageVersion": "0.4.1",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:49:32.696Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 995,
+      "starsSnapshot": 5,
+      "releaseUpdatedAt": "2026-10-25T19:44:52.681Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:52.471Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:52.471Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/ChuanTianML__dsh-chat-tidy/a22a7c973ecc8fbf33265c1e919d8445a2aff0da/conversation.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/ChuanTianML__dsh-chat-tidy/a22a7c973ecc8fbf33265c1e919d8445a2aff0da/conversation.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/df335a42a4fb36f0f254aa3b4f5a5420.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/df335a42a4fb36f0f254aa3b4f5a5420.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/df335a42a4fb36f0f254aa3b4f5a5420.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/df335a42a4fb36f0f254aa3b4f5a5420.full.webp"
+          }
+        ]
+      }
+    },
+    {
       "id": "opensetk.dsh-xiaohei",
       "name": {
         "zh": "dsh-xiaohei",
@@ -22221,6 +22310,101 @@
       }
     },
     {
+      "id": "mozhuanzuojing.dsh-liangwengu",
+      "name": {
+        "zh": "dsh-liangwengu",
+        "en": "dsh-liangwengu"
+      },
+      "author": "mozhuanzuojing",
+      "description": "修仙风格的常驻状态挂件，包含九境HUD、卡通人物和煮水血条。",
+      "repo": "https://github.com/mozhuanzuojing/dsh-liangwengu",
+      "package": "dsh-liangwengu",
+      "rowId": "liangwengu",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light"
+      ],
+      "install": {
+        "target": "github:mozhuanzuojing/dsh-liangwengu#033aee2e90274006b0d00e1640caf96df51b9901",
+        "version": "0.7.1",
+        "commit": "033aee2e90274006b0d00e1640caf96df51b9901",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        }
+      },
+      "compatibility": {
+        "dsh": "0.1.2-rc.1",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "pass",
+          "installation": "pass"
+        },
+        "suggestions": [],
+        "scan": {
+          "commit": "033aee2e90274006b0d00e1640caf96df51b9901",
+          "packageVersion": "0.7.1",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T20:00:15.248Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 998,
+      "starsSnapshot": 2,
+      "releaseUpdatedAt": "2026-10-25T19:54:21.217Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:53.216Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:53.216Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/settings.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/mozhuanzuojing__dsh-liangwengu/033aee2e90274006b0d00e1640caf96df51b9901/home.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b06ba5cffb0e4187a91c715c90042c42.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b06ba5cffb0e4187a91c715c90042c42.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b06ba5cffb0e4187a91c715c90042c42.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/b06ba5cffb0e4187a91c715c90042c42.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/62c9176c7b9a59b110a487bad6b9a88b.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/62c9176c7b9a59b110a487bad6b9a88b.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/24be3f81c9a56fa35ee471d488861049.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/24be3f81c9a56fa35ee471d488861049.full.webp"
+          }
+        ]
+      }
+    },
+    {
       "id": "pineapple880066.dsh-webui-pets",
       "name": {
         "zh": "dsh-webUI-pets",
@@ -24323,6 +24507,102 @@
       }
     },
     {
+      "id": "eternalnight996.dsh-ui-three-body",
+      "name": {
+        "zh": "dsh-ui-three-body",
+        "en": "dsh-ui-three-body"
+      },
+      "author": "EternalNight996",
+      "description": "常驻智子眼球桌宠，提供11款动态眼睛皮肤，支持拖拽和关闭AI模式。",
+      "repo": "https://github.com/EternalNight996/dsh-ui-three-body",
+      "package": "dsh-ui-three-body",
+      "rowId": "beast-tamer",
+      "category": "theme",
+      "tags": [
+        "pet"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:EternalNight996/dsh-ui-three-body#d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4",
+        "version": "0.3.0-rc.2",
+        "commit": "d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        }
+      },
+      "compatibility": {
+        "dsh": ">=0.1.5-alpha.2 <0.3.0",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "pass",
+          "installation": "pass"
+        },
+        "suggestions": [],
+        "scan": {
+          "commit": "d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4",
+          "packageVersion": "0.3.0-rc.2",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:42:28.888Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 999,
+      "starsSnapshot": 1,
+      "releaseUpdatedAt": "2026-10-25T19:39:23.689Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:52.217Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:52.217Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/settings.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/home.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/85ac8672f05d1f3551694d59c235059a.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/85ac8672f05d1f3551694d59c235059a.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/85ac8672f05d1f3551694d59c235059a.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/85ac8672f05d1f3551694d59c235059a.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/57d118beb32273992a5ae0b014261bbe.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/57d118beb32273992a5ae0b014261bbe.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/34a0f0319ffda2cea6536f9f2cc7241a.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/34a0f0319ffda2cea6536f9f2cc7241a.full.webp"
+          }
+        ]
+      }
+    },
+    {
       "id": "ethanchen669.dsh-plugin-fly-skins",
       "name": {
         "zh": "dsh-plugin-fly-skins",
@@ -24510,6 +24790,104 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a6e025a3d6812fc8a31c932a6cde3dda.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/a6e025a3d6812fc8a31c932a6cde3dda.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fox4096.dsh-custom-css",
+      "name": {
+        "zh": "dsh-custom-css",
+        "en": "dsh-custom-css"
+      },
+      "author": "FOX4096",
+      "description": "提供Acrylic渐变与半透明材质预设；需在插件设置导入仓库的examples/acrylic.css后启用。",
+      "repo": "https://github.com/FOX4096/dsh-custom-css",
+      "package": "dsh-custom-css",
+      "rowId": "custom-css",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "dark"
+      ],
+      "install": {
+        "target": "github:FOX4096/dsh-custom-css#69c0f7fe7f77b86aa57192abda5cf75c5263fc02",
+        "version": "0.11.1",
+        "commit": "69c0f7fe7f77b86aa57192abda5cf75c5263fc02",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        }
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "improve",
+          "installation": "pass"
+        },
+        "suggestions": [
+          "支持的DSH版本尚未明确声明，需在目标版本中确认效果。",
+          "此固定版本的构建与客户端兼容检查尚待完成。"
+        ],
+        "scan": {
+          "commit": "69c0f7fe7f77b86aa57192abda5cf75c5263fc02",
+          "packageVersion": "0.11.1",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T20:02:10.058Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 999,
+      "starsSnapshot": 1,
+      "releaseUpdatedAt": "2026-10-25T19:57:56.449Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:53.496Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:53.496Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/FOX4096__dsh-custom-css/69c0f7fe7f77b86aa57192abda5cf75c5263fc02/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/FOX4096__dsh-custom-css/69c0f7fe7f77b86aa57192abda5cf75c5263fc02/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/FOX4096__dsh-custom-css/69c0f7fe7f77b86aa57192abda5cf75c5263fc02/settings.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/FOX4096__dsh-custom-css/69c0f7fe7f77b86aa57192abda5cf75c5263fc02/home.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/72346e95daaff8cb15bb9a84a36e0dfa.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/72346e95daaff8cb15bb9a84a36e0dfa.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/72346e95daaff8cb15bb9a84a36e0dfa.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/72346e95daaff8cb15bb9a84a36e0dfa.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/1096a1da9bcfc03e8ee629077640a878.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/1096a1da9bcfc03e8ee629077640a878.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/49c0b8fab12bc46a48867fde571bd074.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/49c0b8fab12bc46a48867fde571bd074.full.webp"
           }
         ]
       }
@@ -25922,6 +26300,96 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c4612cface3a40c79edf1fc5052ae6ed.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/c4612cface3a40c79edf1fc5052ae6ed.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "loyalchiiina.dsh-todo-float-ball",
+      "name": {
+        "zh": "dsh-todo-float-ball",
+        "en": "dsh-todo-float-ball"
+      },
+      "author": "loyalchiiina",
+      "description": "常驻待办悬浮球，内置128款共享皮肤与6款经典样式。",
+      "repo": "https://github.com/loyalchiiina/dsh-todo-float-ball",
+      "package": "dsh-todo-float-ball",
+      "rowId": "dsh-todo-float-ball",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light"
+      ],
+      "install": {
+        "target": "github:loyalchiiina/dsh-todo-float-ball#693e16b8d3386a3d7b4a6ab12efe1a0b498823ba",
+        "version": "0.14.6",
+        "commit": "693e16b8d3386a3d7b4a6ab12efe1a0b498823ba",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        }
+      },
+      "compatibility": {
+        "dsh": ">=0.1.7-rc.1",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "pass",
+          "installation": "pass"
+        },
+        "suggestions": [],
+        "scan": {
+          "commit": "693e16b8d3386a3d7b4a6ab12efe1a0b498823ba",
+          "packageVersion": "0.14.6",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T19:53:22.089Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 999,
+      "starsSnapshot": 1,
+      "releaseUpdatedAt": "2026-10-25T19:48:50.938Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:52.716Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:52.716Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/loyalchiiina__dsh-todo-float-ball/693e16b8d3386a3d7b4a6ab12efe1a0b498823ba/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/loyalchiiina__dsh-todo-float-ball/693e16b8d3386a3d7b4a6ab12efe1a0b498823ba/conversation.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/loyalchiiina__dsh-todo-float-ball/693e16b8d3386a3d7b4a6ab12efe1a0b498823ba/home.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/cd214c886a8366b896f178fb7833e45d.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/cd214c886a8366b896f178fb7833e45d.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/cd214c886a8366b896f178fb7833e45d.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/cd214c886a8366b896f178fb7833e45d.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/9501a0993d97fd84437f2b8b35750067.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/9501a0993d97fd84437f2b8b35750067.full.webp"
           }
         ]
       }
@@ -29402,6 +29870,104 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/2f5ddf1e498fbd4472e817e014c82cd4.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/2f5ddf1e498fbd4472e817e014c82cd4.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "1739321142.devtools-custom-beautification-plugin-for-deepseekharness-class",
+      "name": {
+        "zh": "dsh-beautify-plugin",
+        "en": "dsh-beautify-plugin"
+      },
+      "author": "1739321142",
+      "description": "内置樱花粉等6套明暗配色，可调整字体、侧栏和聊天区域。",
+      "repo": "https://github.com/1739321142/DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class",
+      "package": "dsh-beautify-plugin",
+      "rowId": "beautify",
+      "category": "theme",
+      "tags": [
+        "appearance"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:1739321142/DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class#fad66134b822194a4da5aff58307a200ed47d8db",
+        "version": "1.0.0",
+        "commit": "fad66134b822194a4da5aff58307a200ed47d8db",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。"
+        }
+      },
+      "compatibility": {
+        "dsh": "unverified",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [],
+      "review": {
+        "compatibility": "unverified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "improvements",
+        "checks": {
+          "readmeScreenshots": "improve",
+          "compatibility": "improve",
+          "installation": "pass"
+        },
+        "suggestions": [
+          "支持的DSH版本尚未明确声明，需在目标版本中确认效果。"
+        ],
+        "scan": {
+          "commit": "fad66134b822194a4da5aff58307a200ed47d8db",
+          "packageVersion": "1.0.0",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-25T20:00:10.591Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 1000,
+      "starsSnapshot": 0,
+      "releaseUpdatedAt": "2026-10-25T19:57:56.449Z",
+      "metadataUpdatedAt": "2026-10-25T20:05:52.965Z",
+      "starsUpdatedAt": "2026-10-24T21:34:17.947Z",
+      "updatedAt": "2026-10-25T20:05:52.965Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/1739321142__DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class/fad66134b822194a4da5aff58307a200ed47d8db/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/1739321142__DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class/fad66134b822194a4da5aff58307a200ed47d8db/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/1739321142__DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class/fad66134b822194a4da5aff58307a200ed47d8db/settings.png"
+      ],
+      "listScreenshot": "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/1739321142__DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class/fad66134b822194a4da5aff58307a200ed47d8db/home.png",
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/15f3bd6b63ff2b0d074de69c1611c4d3.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/15f3bd6b63ff2b0d074de69c1611c4d3.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/15f3bd6b63ff2b0d074de69c1611c4d3.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/15f3bd6b63ff2b0d074de69c1611c4d3.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/62e24bfda976f0239c6001656580da5d.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/62e24bfda976f0239c6001656580da5d.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fef2f13b8ab955da985ca8fdf658a738.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/fef2f13b8ab955da985ca8fdf658a738.full.webp"
           }
         ]
       }
@@ -50745,6 +51311,13 @@
       "integrity": "sha512-UQXy2xtMOJfsnJX8DocAU2AGmvFCLVpuUnuU3UBmqFzVjZgm6JwO/vUE9hX+vwFI4so2zFv9Dx540Vkn2OE/ig==",
       "repository": "https://github.com/Chael-Chael/dsh-ascii-whales",
       "gitHead": "bb651813fe6379a5ef3535980c4c66df12c91f04"
+    },
+    "chuantianml.dsh-chat-tidy": {
+      "name": "dsh-chat-tidy",
+      "version": "0.4.1",
+      "integrity": "sha512-ifQfLX0c39EPo59wRrCuSFmBy4CTRv4iCStCTlYw0pBlKug1BSBSlY7k9735aIEZWp/ymConLE0aNJsuJ74s2g==",
+      "repository": "https://github.com/ChuanTianML/dsh-chat-tidy",
+      "gitHead": "a22a7c973ecc8fbf33265c1e919d8445a2aff0da"
     },
     "cicero010.dsh-whale-atelier": {
       "name": "dsh-whale-atelier",

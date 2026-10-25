@@ -1,0 +1,67 @@
+id: chuantianml.dsh-chat-tidy
+name:
+  zh: dsh-chat-tidy
+  en: dsh-chat-tidy
+author: ChuanTianML
+description: 调整DSH对话的字体、段落节奏和表格样式，附工作过程折叠与计时显示。
+repo: https://github.com/ChuanTianML/dsh-chat-tidy
+package: dsh-chat-tidy
+rowId: dsh-chat-tidy
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:ChuanTianML/dsh-chat-tidy#a22a7c973ecc8fbf33265c1e919d8445a2aff0da
+  version: 0.4.1
+  commit: a22a7c973ecc8fbf33265c1e919d8445a2aff0da
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-chat-tidy
+    packageVersion: 0.4.1
+    integrity: sha512-ifQfLX0c39EPo59wRrCuSFmBy4CTRv4iCStCTlYw0pBlKug1BSBSlY7k9735aIEZWp/ymConLE0aNJsuJ74s2g==
+  npm:
+    name: dsh-chat-tidy
+    version: 0.4.1
+    integrity: sha512-ifQfLX0c39EPo59wRrCuSFmBy4CTRv4iCStCTlYw0pBlKug1BSBSlY7k9735aIEZWp/ymConLE0aNJsuJ74s2g==
+    repository: https://github.com/ChuanTianML/dsh-chat-tidy
+    gitHead: a22a7c973ecc8fbf33265c1e919d8445a2aff0da
+compatibility:
+  dsh: ">=0.1.0-rc.6"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: a22a7c973ecc8fbf33265c1e919d8445a2aff0da
+    packageVersion: 0.4.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:49:32.696Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 995
+starsSnapshot: 5
+releaseUpdatedAt: 2026-10-25T19:44:52.681Z
+metadataUpdatedAt: 2026-10-25T20:05:52.471Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T20:05:52.471Z
+marketScreenshots:
+  - skin-screenshots/ChuanTianML__dsh-chat-tidy/a22a7c973ecc8fbf33265c1e919d8445a2aff0da/conversation.png

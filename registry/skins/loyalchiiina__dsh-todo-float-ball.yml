@@ -1,0 +1,58 @@
+id: loyalchiiina.dsh-todo-float-ball
+name:
+  zh: dsh-todo-float-ball
+  en: dsh-todo-float-ball
+author: loyalchiiina
+description: 常驻待办悬浮球，内置128款共享皮肤与6款经典样式。
+repo: https://github.com/loyalchiiina/dsh-todo-float-ball
+package: dsh-todo-float-ball
+rowId: dsh-todo-float-ball
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+install:
+  target: github:loyalchiiina/dsh-todo-float-ball#693e16b8d3386a3d7b4a6ab12efe1a0b498823ba
+  version: 0.14.6
+  commit: 693e16b8d3386a3d7b4a6ab12efe1a0b498823ba
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.7-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 693e16b8d3386a3d7b4a6ab12efe1a0b498823ba
+    packageVersion: 0.14.6
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:53:22.089Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T19:48:50.938Z
+metadataUpdatedAt: 2026-10-25T20:05:52.716Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T20:05:52.716Z
+marketScreenshots:
+  - skin-screenshots/loyalchiiina__dsh-todo-float-ball/693e16b8d3386a3d7b4a6ab12efe1a0b498823ba/home.png
+  - skin-screenshots/loyalchiiina__dsh-todo-float-ball/693e16b8d3386a3d7b4a6ab12efe1a0b498823ba/conversation.png

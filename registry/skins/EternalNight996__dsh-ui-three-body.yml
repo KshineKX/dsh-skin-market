@@ -1,0 +1,60 @@
+id: eternalnight996.dsh-ui-three-body
+name:
+  zh: dsh-ui-three-body
+  en: dsh-ui-three-body
+author: EternalNight996
+description: 常驻智子眼球桌宠，提供11款动态眼睛皮肤，支持拖拽和关闭AI模式。
+repo: https://github.com/EternalNight996/dsh-ui-three-body
+package: dsh-ui-three-body
+rowId: beast-tamer
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:EternalNight996/dsh-ui-three-body#d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4
+  version: 0.3.0-rc.2
+  commit: d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.5-alpha.2 <0.3.0"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4
+    packageVersion: 0.3.0-rc.2
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:42:28.888Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T19:39:23.689Z
+metadataUpdatedAt: 2026-10-25T20:05:52.217Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T20:05:52.217Z
+marketScreenshots:
+  - skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/home.png
+  - skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/conversation.png
+  - skin-screenshots/EternalNight996__dsh-ui-three-body/d0dd0e2ebc5d2ce08a9bd94093bbea938270abc4/settings.png
