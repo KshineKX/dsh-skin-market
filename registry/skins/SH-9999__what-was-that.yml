@@ -1,0 +1,68 @@
+id: sh-9999.what-was-that
+name:
+  zh: what-was-that
+  en: what-was-that
+author: SH-9999
+description: A tiny octopus desktop pet that explains AI-jargon in plain language for the DeepSeek Harness web GUI.
+repo: https://github.com/SH-9999/what-was-that
+package: what-was-that
+rowId: what-was-that
+category: theme
+tags:
+  - pet
+modes:
+  - light
+install:
+  target: github:SH-9999/what-was-that#c49d76f01a07bef65c40d4d4956fc4968dca8cd2
+  version: 0.1.12
+  commit: c49d76f01a07bef65c40d4d4956fc4968dca8cd2
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: what-was-that
+    packageVersion: 0.1.12
+    integrity: sha512-kLDay7zm5Be1GIp+l2hl29+GvCSejERcMjHNFuCh/8quXn+9Zh+Tb+dcMGeXNDeozddI9Nxfeb9r6ITToFcECg==
+  npm:
+    name: what-was-that
+    version: 0.1.12
+    integrity: sha512-kLDay7zm5Be1GIp+l2hl29+GvCSejERcMjHNFuCh/8quXn+9Zh+Tb+dcMGeXNDeozddI9Nxfeb9r6ITToFcECg==
+    repository: https://github.com/SH-9999/what-was-that
+    gitHead: c49d76f01a07bef65c40d4d4956fc4968dca8cd2
+compatibility:
+  dsh: ">=0.1.6-alpha.2"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: c49d76f01a07bef65c40d4d4956fc4968dca8cd2
+    packageVersion: 0.1.12
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:49:36.018Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:56.071Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:56.071Z
+marketScreenshots:
+  - skin-screenshots/SH-9999__what-was-that/c49d76f01a07bef65c40d4d4956fc4968dca8cd2/home.png
+  - skin-screenshots/SH-9999__what-was-that/c49d76f01a07bef65c40d4d4956fc4968dca8cd2/conversation.png
+  - skin-screenshots/SH-9999__what-was-that/c49d76f01a07bef65c40d4d4956fc4968dca8cd2/settings.png

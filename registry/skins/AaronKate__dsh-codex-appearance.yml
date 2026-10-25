@@ -1,0 +1,61 @@
+id: aaronkate.dsh-codex-appearance
+name:
+  zh: dsh-codex-appearance
+  en: dsh-codex-appearance
+author: AaronKate
+description: "Eye-comfort appearance controls for DeepSeek Harness: five light themes, paper-grain texture, accent and background colours, fonts, type sizes, content width, contrast and motion."
+repo: https://github.com/AaronKate/dsh-codex-appearance
+package: dsh-eye-comfort
+rowId: eye-comfort
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:AaronKate/dsh-codex-appearance#6fd9cc9a339c783a36be13d9a82a98b11e813582
+  version: 0.3.9
+  commit: 6fd9cc9a339c783a36be13d9a82a98b11e813582
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 6fd9cc9a339c783a36be13d9a82a98b11e813582
+    packageVersion: 0.3.9
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:46:17.350Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:48.661Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:48.661Z
+marketScreenshots:
+  - skin-screenshots/AaronKate__dsh-codex-appearance/6fd9cc9a339c783a36be13d9a82a98b11e813582/home.png
+  - skin-screenshots/AaronKate__dsh-codex-appearance/6fd9cc9a339c783a36be13d9a82a98b11e813582/conversation.png
+  - skin-screenshots/AaronKate__dsh-codex-appearance/6fd9cc9a339c783a36be13d9a82a98b11e813582/settings.png

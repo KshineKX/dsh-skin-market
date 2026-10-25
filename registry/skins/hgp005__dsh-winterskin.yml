@@ -1,0 +1,61 @@
+id: hgp005.dsh-winterskin
+name:
+  zh: dsh-winterskin
+  en: dsh-winterskin
+author: hgp005
+description: 雪岭皮肤 Winter Ridge — 把一张照片变成整个 DeepSeek Harness GUI 的底色，并把面板调成配套的玻璃质感主题。宿主半提供图片资源路由，浏览器半注入样式、覆写主题 token，并提供胶囊控制台与设置页。
+repo: https://github.com/hgp005/dsh-winterskin
+package: dsh-winterskin
+rowId: dsh-winterskin
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:hgp005/dsh-winterskin#4a6e1784fbe15f73cdf23650b2498e38548f1aee
+  version: 1.2.0
+  commit: 4a6e1784fbe15f73cdf23650b2498e38548f1aee
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.1.5-rc.2
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 4a6e1784fbe15f73cdf23650b2498e38548f1aee
+    packageVersion: 1.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:09:28.958Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:50.174Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:50.174Z
+marketScreenshots:
+  - skin-screenshots/hgp005__dsh-winterskin/4a6e1784fbe15f73cdf23650b2498e38548f1aee/home.png
+  - skin-screenshots/hgp005__dsh-winterskin/4a6e1784fbe15f73cdf23650b2498e38548f1aee/conversation.png
+  - skin-screenshots/hgp005__dsh-winterskin/4a6e1784fbe15f73cdf23650b2498e38548f1aee/settings.png

@@ -1,0 +1,61 @@
+id: mirrmeur.dsh-workspace-colors
+name:
+  zh: dsh-workspace-colors
+  en: dsh-workspace-colors
+author: MirrMeur
+description: 外观增强：侧边栏工作区专属颜色 + 页面背景 tint（官方 token 覆盖层，含设置页），纯客户端插件
+repo: https://github.com/MirrMeur/dsh-workspace-colors
+package: dsh-workspace-colors
+rowId: dsh-workspace-colors
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:MirrMeur/dsh-workspace-colors#1f8023f22c758902a8bd7f7402767cd340ddca7e
+  version: 0.4.1
+  commit: 1f8023f22c758902a8bd7f7402767cd340ddca7e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 1f8023f22c758902a8bd7f7402767cd340ddca7e
+    packageVersion: 0.4.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:47:09.060Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:56.806Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:56.806Z
+marketScreenshots:
+  - skin-screenshots/MirrMeur__dsh-workspace-colors/1f8023f22c758902a8bd7f7402767cd340ddca7e/home.png
+  - skin-screenshots/MirrMeur__dsh-workspace-colors/1f8023f22c758902a8bd7f7402767cd340ddca7e/conversation.png
+  - skin-screenshots/MirrMeur__dsh-workspace-colors/1f8023f22c758902a8bd7f7402767cd340ddca7e/settings.png

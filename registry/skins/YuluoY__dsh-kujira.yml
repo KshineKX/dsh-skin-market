@@ -1,0 +1,60 @@
+id: yuluoy.dsh-kujira
+name:
+  zh: dsh-kujira
+  en: dsh-kujira
+author: YuluoY
+description: DeepSeek 鲸鱼娘桌宠 —— 独立重写的 DeepSeek Harness Web 插件。零构建依赖：lib/ 里的 JS 就是源码，改完刷新即生效。
+repo: https://github.com/YuluoY/dsh-kujira
+package: dsh-kujira
+rowId: kujira
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:YuluoY/dsh-kujira#9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4
+  version: 0.2.8
+  commit: 9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.1.5-rc.1
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4
+    packageVersion: 0.2.8
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:08:58.628Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 992
+starsSnapshot: 8
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:46.362Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:46.362Z
+marketScreenshots:
+  - skin-screenshots/YuluoY__dsh-kujira/9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4/home.png
+  - skin-screenshots/YuluoY__dsh-kujira/9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4/conversation.png
+  - skin-screenshots/YuluoY__dsh-kujira/9e6b82de8be0a1b9ad4a8f811c0c7a4bc95f15e4/settings.png

@@ -1,0 +1,70 @@
+id: mrmolabs.dsh-yorha-ui
+name:
+  zh: dsh-yorha-ui
+  en: dsh-yorha-ui
+author: MrmoLabs
+description: NieR:Automata (YoRHa) industrial terminal theme plugin for the DeepSeek Harness Web GUI
+repo: https://github.com/MrmoLabs/dsh-yorha-ui
+package: dsh-yorha-ui
+rowId: ui-yorha
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:MrmoLabs/dsh-yorha-ui#6497a671620d101951c2e68dbb6c2084b55db40e
+  version: 0.1.1
+  commit: 6497a671620d101951c2e68dbb6c2084b55db40e
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-yorha-ui
+    packageVersion: 0.1.1
+    integrity: sha512-20fNyY2U3inP37I9QIU+AtwfJ443VrkhxPGKKKJiqza81J3PLnofmrngKorYw1xan2nhWQ+RlAcxPlz241P4ZA==
+  npm:
+    name: dsh-yorha-ui
+    version: 0.1.1
+    integrity: sha512-20fNyY2U3inP37I9QIU+AtwfJ443VrkhxPGKKKJiqza81J3PLnofmrngKorYw1xan2nhWQ+RlAcxPlz241P4ZA==
+    repository: https://github.com/MrmoLabs/dsh-yorha-ui
+    gitHead: 6497a671620d101951c2e68dbb6c2084b55db40e
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 6497a671620d101951c2e68dbb6c2084b55db40e
+    packageVersion: 0.1.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:49:36.018Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:55.498Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:55.498Z
+marketScreenshots:
+  - skin-screenshots/MrmoLabs__dsh-yorha-ui/6497a671620d101951c2e68dbb6c2084b55db40e/home.png
+  - skin-screenshots/MrmoLabs__dsh-yorha-ui/6497a671620d101951c2e68dbb6c2084b55db40e/conversation.png
+  - skin-screenshots/MrmoLabs__dsh-yorha-ui/6497a671620d101951c2e68dbb6c2084b55db40e/settings.png

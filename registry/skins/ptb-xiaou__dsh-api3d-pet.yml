@@ -1,0 +1,59 @@
+id: ptb-xiaou.dsh-api3d-pet
+name:
+  zh: dsh-api3d-pet
+  en: dsh-api3d-pet
+author: ptb-xiaou
+description: API3D（api3d.cn）站点专属的 DSH 桌宠挂件：右下角常驻鲸鱼气泡显示站点余额 / 今日已用 / 每轮消耗，泡泡点击序列、模块化排版、并列加权出泡、随机语句与图片、逐行样式与字体、音效、吸附与翻转都可自定义。站点地址与接口字段已内置，装好后只需填一次 API Key。
+repo: https://github.com/ptb-xiaou/dsh-api3d-pet
+package: dsh-api3d-pet
+rowId: dsh-api3d-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+install:
+  target: github:ptb-xiaou/dsh-api3d-pet#619bdb8cb97941d2a6a9fa1104af83847efdcc8b
+  version: 0.6.10
+  commit: 619bdb8cb97941d2a6a9fa1104af83847efdcc8b
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 619bdb8cb97941d2a6a9fa1104af83847efdcc8b
+    packageVersion: 0.6.10
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:55:54.389Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:49.960Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:49.960Z
+marketScreenshots:
+  - skin-screenshots/ptb-xiaou__dsh-api3d-pet/619bdb8cb97941d2a6a9fa1104af83847efdcc8b/home.png
+  - skin-screenshots/ptb-xiaou__dsh-api3d-pet/619bdb8cb97941d2a6a9fa1104af83847efdcc8b/settings.png

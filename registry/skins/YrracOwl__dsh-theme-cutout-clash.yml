@@ -1,0 +1,60 @@
+id: yrracowl.dsh-theme-cutout-clash
+name:
+  zh: dsh-theme-cutout-clash
+  en: dsh-theme-cutout-clash
+author: YrracOwl
+description: "EN: Selectable neo-brutalist/pop-art themes for DeepSeek Harness Web with calm reading surfaces. 0.5.11 targets the 0.2.1 host line. ZH: 面向 DeepSeek Harness Web、兼顾安静阅读表面的新粗野主义与波普艺术主题。0.5.11 适配 0.2.1 宿主线。"
+repo: https://github.com/YrracOwl/dsh-theme-cutout-clash
+package: dsh-theme-cutout-clash
+rowId: ui-theme-cutout-clash
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:YrracOwl/dsh-theme-cutout-clash#0bb0f15f6848fde5628c9712ac245e7d61b78643
+  version: 0.5.11
+  commit: 0bb0f15f6848fde5628c9712ac245e7d61b78643
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.2-rc.1 <0.3.0-0"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 0bb0f15f6848fde5628c9712ac245e7d61b78643
+    packageVersion: 0.5.11
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:44:57.678Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:29:01.749Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:29:01.749Z
+marketScreenshots:
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/home.png
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/conversation.png
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/settings.png

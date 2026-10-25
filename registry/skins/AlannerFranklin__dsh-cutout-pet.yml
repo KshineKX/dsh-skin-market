@@ -1,0 +1,61 @@
+id: alannerfranklin.dsh-cutout-pet
+name:
+  zh: dsh-cutout-pet
+  en: dsh-cutout-pet
+author: AlannerFranklin
+description: "Turn any picture into a floating desk pet in the Harness Web UI: local background removal, sticker outline, idle animation and a live account-balance bubble."
+repo: https://github.com/AlannerFranklin/dsh-cutout-pet
+package: dsh-cutout-pet
+rowId: cutout-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:AlannerFranklin/dsh-cutout-pet#98b2d7626406230ee9bd01aad029351e693078ed
+  version: 1.0.0
+  commit: 98b2d7626406230ee9bd01aad029351e693078ed
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 98b2d7626406230ee9bd01aad029351e693078ed
+    packageVersion: 1.0.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:49:36.018Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:52.636Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:52.636Z
+marketScreenshots:
+  - skin-screenshots/AlannerFranklin__dsh-cutout-pet/98b2d7626406230ee9bd01aad029351e693078ed/home.png
+  - skin-screenshots/AlannerFranklin__dsh-cutout-pet/98b2d7626406230ee9bd01aad029351e693078ed/conversation.png
+  - skin-screenshots/AlannerFranklin__dsh-cutout-pet/98b2d7626406230ee9bd01aad029351e693078ed/settings.png

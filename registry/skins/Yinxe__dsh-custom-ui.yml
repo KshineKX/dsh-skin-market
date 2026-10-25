@@ -1,0 +1,61 @@
+id: yinxe.dsh-custom-ui
+name:
+  zh: "@dshp-inx/custom-ui"
+  en: "@dshp-inx/custom-ui"
+author: Yinxe
+description: "Custom UI suite for DeepSeek Harness: theme gallery is the first module (23 themes with ~121 full token mappings each); future modules (fonts, layout, interactions) will live here too."
+repo: https://github.com/Yinxe/dsh-custom-ui
+package: "@dshp-inx/custom-ui"
+rowId: dshp-inx-custom-ui
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Yinxe/dsh-custom-ui#b25af4a182c85fd702d18d2e207f4098582f7b5e
+  version: 1.0.0
+  commit: b25af4a182c85fd702d18d2e207f4098582f7b5e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: b25af4a182c85fd702d18d2e207f4098582f7b5e
+    packageVersion: 1.0.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:53:15.255Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:51.894Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:51.894Z
+marketScreenshots:
+  - skin-screenshots/Yinxe__dsh-custom-ui/b25af4a182c85fd702d18d2e207f4098582f7b5e/home.png
+  - skin-screenshots/Yinxe__dsh-custom-ui/b25af4a182c85fd702d18d2e207f4098582f7b5e/conversation.png
+  - skin-screenshots/Yinxe__dsh-custom-ui/b25af4a182c85fd702d18d2e207f4098582f7b5e/settings.png

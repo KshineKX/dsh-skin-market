@@ -1,0 +1,62 @@
+id: wanxi123w.dsh-theme-theresa
+name:
+  zh: "@local/dsh-theme-theresa"
+  en: "@local/dsh-theme-theresa"
+author: wanxi123w
+description: 特蕾西娅主题：象牙白 / 墨 / 淡玫瑰配色，整页背景图 + 毛玻璃 + 飘落花瓣
+repo: https://github.com/wanxi123w/dsh-theme-theresa
+package: "@local/dsh-theme-theresa"
+rowId: theme-theresa
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:wanxi123w/dsh-theme-theresa#4c87cff277af144b3c53d52d6d2720c539c37e48
+  version: 0.2.0
+  commit: 4c87cff277af144b3c53d52d6d2720c539c37e48
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 4c87cff277af144b3c53d52d6d2720c539c37e48
+    packageVersion: 0.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:43:43.683Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:51.156Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:51.156Z
+marketScreenshots:
+  - skin-screenshots/wanxi123w__dsh-theme-theresa/4c87cff277af144b3c53d52d6d2720c539c37e48/home.png
+  - skin-screenshots/wanxi123w__dsh-theme-theresa/4c87cff277af144b3c53d52d6d2720c539c37e48/conversation.png
+  - skin-screenshots/wanxi123w__dsh-theme-theresa/4c87cff277af144b3c53d52d6d2720c539c37e48/settings.png

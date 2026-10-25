@@ -1,0 +1,61 @@
+id: dzy1571315598.dsh-fritia-pet
+name:
+  zh: "@local/dsh-fritia-pet"
+  en: "@local/dsh-fritia-pet"
+author: dzy1571315598
+description: Fritia 桌宠：基于交互素材的 DeepSeek Harness Web 桌面宠物，右下角待机/走路/抓取/情绪/余额面板。
+repo: https://github.com/dzy1571315598/dsh-fritia-pet
+package: "@local/dsh-fritia-pet"
+rowId: dsh-fritia-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:dzy1571315598/dsh-fritia-pet#7f800eb0952cbad949769117ef734efbd5e55499
+  version: 1.0.0
+  commit: 7f800eb0952cbad949769117ef734efbd5e55499
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 7f800eb0952cbad949769117ef734efbd5e55499
+    packageVersion: 1.0.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:49:36.018Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:54.794Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:54.794Z
+marketScreenshots:
+  - skin-screenshots/dzy1571315598__dsh-fritia-pet/7f800eb0952cbad949769117ef734efbd5e55499/home.png
+  - skin-screenshots/dzy1571315598__dsh-fritia-pet/7f800eb0952cbad949769117ef734efbd5e55499/conversation.png
+  - skin-screenshots/dzy1571315598__dsh-fritia-pet/7f800eb0952cbad949769117ef734efbd5e55499/settings.png

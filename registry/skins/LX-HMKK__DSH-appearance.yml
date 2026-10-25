@@ -1,0 +1,69 @@
+id: lx-hmkk.dsh-appearance
+name:
+  zh: DSH-appearance
+  en: DSH-appearance
+author: LX-HMKK
+description: 轻量的 DSH 字体与主题插件：中英文字体分开选（只列本机已安装的），5 套官方色板预设（含代码块语法高亮），零依赖、零构建。
+repo: https://github.com/LX-HMKK/DSH-appearance
+package: "@hmkk/dsh-appearance"
+rowId: dsh-appearance
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:LX-HMKK/DSH-appearance#f81df51c108d855c576c6d721128046de3af0fa3
+  version: 0.1.0
+  commit: f81df51c108d855c576c6d721128046de3af0fa3
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: "@hmkk/dsh-appearance"
+    packageVersion: 0.1.0
+    integrity: sha512-O7rhyZTl+K5c4pIacXxnQMvPLSInOhaCus+mYhni2sMzUsIEtMykw6QP82fhfRQYitAvRjf8eHjo4Hf4K4AHTw==
+  npm:
+    name: "@hmkk/dsh-appearance"
+    version: 0.1.0
+    integrity: sha512-O7rhyZTl+K5c4pIacXxnQMvPLSInOhaCus+mYhni2sMzUsIEtMykw6QP82fhfRQYitAvRjf8eHjo4Hf4K4AHTw==
+    repository: https://github.com/LX-HMKK/DSH-appearance
+    gitHead: f81df51c108d855c576c6d721128046de3af0fa3
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: f81df51c108d855c576c6d721128046de3af0fa3
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:04:08.788Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:46.761Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:46.761Z
+marketScreenshots:
+  - skin-screenshots/LX-HMKK__DSH-appearance/f81df51c108d855c576c6d721128046de3af0fa3/home.png
+  - skin-screenshots/LX-HMKK__DSH-appearance/f81df51c108d855c576c6d721128046de3af0fa3/conversation.png
+  - skin-screenshots/LX-HMKK__DSH-appearance/f81df51c108d855c576c6d721128046de3af0fa3/settings.png

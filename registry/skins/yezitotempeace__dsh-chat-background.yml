@@ -1,0 +1,62 @@
+id: yezitotempeace.dsh-chat-background
+name:
+  zh: dsh-chat-background
+  en: dsh-chat-background
+author: yezitotempeace
+description: 聊天背景美化：自定义本地图片 / 视频、清晰度、透明度、亮度、对比度、饱和度、缩放、遮罩与界面玻璃质感
+repo: https://github.com/yezitotempeace/dsh-chat-background
+package: dsh-chat-background
+rowId: chat-background
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:yezitotempeace/dsh-chat-background#68a68b96e1514e8e8fa9c1454cd2780005ed6a35
+  version: 1.1.0
+  commit: 68a68b96e1514e8e8fa9c1454cd2780005ed6a35
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 68a68b96e1514e8e8fa9c1454cd2780005ed6a35
+    packageVersion: 1.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:44:57.678Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:29:01.129Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:29:01.129Z
+marketScreenshots:
+  - skin-screenshots/yezitotempeace__dsh-chat-background/68a68b96e1514e8e8fa9c1454cd2780005ed6a35/home.png
+  - skin-screenshots/yezitotempeace__dsh-chat-background/68a68b96e1514e8e8fa9c1454cd2780005ed6a35/conversation.png
+  - skin-screenshots/yezitotempeace__dsh-chat-background/68a68b96e1514e8e8fa9c1454cd2780005ed6a35/settings.png

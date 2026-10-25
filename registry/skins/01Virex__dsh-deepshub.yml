@@ -1,0 +1,61 @@
+id: 01virex.dsh-deepshub
+name:
+  zh: dsh-deepshub
+  en: dsh-deepshub
+author: 01Virex
+description: "Pornhub-style parody reskin for the DeepSeek Harness web UI: charcoal-black + orange pill-button theme (follows system light/dark), rounded Baloo-2 'Deephub' wordmark, 18+ entry gag, HD badges, and a 'today's hot pick' sidebar card. 纯整活主题,不含任何露骨内容。"
+repo: https://github.com/01Virex/dsh-deepshub
+package: dsh-deepshub
+rowId: deepshub
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:01Virex/dsh-deepshub#0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7
+  version: 0.3.2
+  commit: 0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7
+    packageVersion: 0.3.2
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:43:43.683Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:52.334Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:52.334Z
+marketScreenshots:
+  - skin-screenshots/01Virex__dsh-deepshub/0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7/home.png
+  - skin-screenshots/01Virex__dsh-deepshub/0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7/conversation.png
+  - skin-screenshots/01Virex__dsh-deepshub/0f95a8cf6eed9bf0357c827759f53e8ce9a9a8e7/settings.png

@@ -1,0 +1,59 @@
+id: vb2250158.dsh-theme-blue
+name:
+  zh: dsh-theme-blue
+  en: dsh-theme-blue
+author: vb2250158
+description: Private blue theme foundation for the DeepSeek Harness web client
+repo: https://github.com/vb2250158/dsh-theme-blue
+package: dsh-theme-blue
+rowId: ui-theme-blue
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:vb2250158/dsh-theme-blue#8c99978daf6ba97314652350802dc3445c265efc
+  version: 0.1.0-rc.8.17
+  commit: 8c99978daf6ba97314652350802dc3445c265efc
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.1-alpha.1
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 8c99978daf6ba97314652350802dc3445c265efc
+    packageVersion: 0.1.0-rc.8.17
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:44:57.678Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:59.699Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:59.699Z
+marketScreenshots:
+  - skin-screenshots/vb2250158__dsh-theme-blue/8c99978daf6ba97314652350802dc3445c265efc/home.png
+  - skin-screenshots/vb2250158__dsh-theme-blue/8c99978daf6ba97314652350802dc3445c265efc/conversation.png
+  - skin-screenshots/vb2250158__dsh-theme-blue/8c99978daf6ba97314652350802dc3445c265efc/settings.png

@@ -1,0 +1,74 @@
+id: raven3005672.dsh-plugin-shell-skin
+name:
+  zh: dsh-plugin-shell-skin
+  en: dsh-plugin-shell-skin
+author: raven3005672
+description: "A skin for DeepSeek Harness: opening animation, custom wallpaper, and panel opacity, applied as you change them."
+repo: https://github.com/raven3005672/dsh-plugin-shell-skin
+package: dsh-plugin-shell-skin
+rowId: dsh-plugin-shell-skin
+category: theme
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:raven3005672/dsh-plugin-shell-skin#12202022425baf954b84ddcbcacc797c898e3d64
+  version: 0.2.1
+  commit: 12202022425baf954b84ddcbcacc797c898e3d64
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-plugin-shell-skin
+    packageVersion: 0.2.1
+    integrity: sha512-xCteMTBMn/+18V5zVs4yTbWLWcBahwF4gOiKk+cVr9x/SdKagSLY/SaW2wYKjuc/a9+1onjtaj+U9GpLEIveUw==
+  npm:
+    name: dsh-plugin-shell-skin
+    version: 0.2.1
+    integrity: sha512-xCteMTBMn/+18V5zVs4yTbWLWcBahwF4gOiKk+cVr9x/SdKagSLY/SaW2wYKjuc/a9+1onjtaj+U9GpLEIveUw==
+    repository: https://github.com/raven3005672/dsh-plugin-shell-skin
+    gitHead: 12202022425baf954b84ddcbcacc797c898e3d64
+  allowBuild: dsh-plugin-shell-skin@https://codeload.github.com/raven3005672/dsh-plugin-shell-skin/tar.gz/12202022425baf954b84ddcbcacc797c898e3d64
+compatibility:
+  dsh: ">=0.2.0 <0.3.0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/home-light.jpg
+  - https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/splash.jpg
+listScreenshot: https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/home-light.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions:
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: 12202022425baf954b84ddcbcacc797c898e3d64
+    packageVersion: 0.2.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:48:40.436Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:49.340Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:49.340Z
+marketScreenshots:
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/home.png
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/conversation.png
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/settings.png

@@ -1,0 +1,61 @@
+id: jryang1997.dsh-ascii-whales
+name:
+  zh: dsh-ascii-whales
+  en: dsh-ascii-whales
+author: jryang1997
+description: Five whale species with shaded cells or ASCII fill; every content card and the input box is frosted glass with whales blurred behind it, plus independent random dives, tail-stroke ripples, optional input-box avoidance, occasional random spouts, drifting ASCII wind and cloud shadows, continuous toroidal swimming, a whale-size slider, and in-place config updates that never restart the school.
+repo: https://github.com/jryang1997/dsh-ascii-whales
+package: "@local/dsh-ascii-ocean"
+rowId: ascii-whale-background
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:jryang1997/dsh-ascii-whales#0be8361fcc5b07e5c009aaa5ea710a6ad5b692c4
+  version: 0.14.0
+  commit: 0be8361fcc5b07e5c009aaa5ea710a6ad5b692c4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 0be8361fcc5b07e5c009aaa5ea710a6ad5b692c4
+    packageVersion: 0.14.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:04:08.788Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:47.803Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:47.803Z
+marketScreenshots:
+  - skin-screenshots/jryang1997__dsh-ascii-whales/0be8361fcc5b07e5c009aaa5ea710a6ad5b692c4/home.png
+  - skin-screenshots/jryang1997__dsh-ascii-whales/0be8361fcc5b07e5c009aaa5ea710a6ad5b692c4/conversation.png

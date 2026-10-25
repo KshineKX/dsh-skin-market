@@ -1,0 +1,64 @@
+id: verdana.dsh-nord
+name:
+  zh: dsh-nord
+  en: dsh-nord
+author: verdana
+description: Nord theme, a settings row, and a DeepSeek balance readout with a detail panel for the dsh Web GUI. Selectable font stacks on dsh before 0.2.1; newer hosts own their font settings and this plugin steps aside.
+repo: https://github.com/verdana/dsh-nord
+package: dsh-nord
+rowId: dsh-nord
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:verdana/dsh-nord#93d86e3c3b85a96bb48f72dd42809af3db11d251
+  version: 0.4.1
+  commit: 93d86e3c3b85a96bb48f72dd42809af3db11d251
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-nord@https://codeload.github.com/verdana/dsh-nord/tar.gz/93d86e3c3b85a96bb48f72dd42809af3db11d251
+compatibility:
+  dsh: ">=0.1.7-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/verdana/dsh-nord/93d86e3c3b85a96bb48f72dd42809af3db11d251/assets/01-theme.png
+listScreenshot: https://raw.githubusercontent.com/verdana/dsh-nord/93d86e3c3b85a96bb48f72dd42809af3db11d251/assets/01-theme.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions:
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: 93d86e3c3b85a96bb48f72dd42809af3db11d251
+    packageVersion: 0.4.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:48:40.436Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:49.545Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:49.545Z
+marketScreenshots:
+  - skin-screenshots/verdana__dsh-nord/93d86e3c3b85a96bb48f72dd42809af3db11d251/home.png
+  - skin-screenshots/verdana__dsh-nord/93d86e3c3b85a96bb48f72dd42809af3db11d251/conversation.png
+  - skin-screenshots/verdana__dsh-nord/93d86e3c3b85a96bb48f72dd42809af3db11d251/settings.png

@@ -1,0 +1,63 @@
+id: haxi8.dsh-jujutsukaisen-rainlove
+name:
+  zh: dsh-JujutsuKaisen-rainlove
+  en: dsh-JujutsuKaisen-rainlove
+author: haxi8
+description: Animated video background for the DeepSeek Harness (DSH) web GUI — a GPU-friendly looping video behind the interface, with a mute toggle, tab-hidden pause, and skin-center occlusion/blur support.
+repo: https://github.com/haxi8/dsh-JujutsuKaisen-rainlove
+package: dsh-video-bg
+rowId: video-bg
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+install:
+  target: github:haxi8/dsh-JujutsuKaisen-rainlove#c233155e2f2a8cc8124b7618168db5e9d803d57d
+  version: 0.1.0
+  commit: c233155e2f2a8cc8124b7618168db5e9d803d57d
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-video-bg@https://codeload.github.com/haxi8/dsh-JujutsuKaisen-rainlove/tar.gz/c233155e2f2a8cc8124b7618168db5e9d803d57d
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: c233155e2f2a8cc8124b7618168db5e9d803d57d
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T19:06:00.816Z
+    findings: []
+license:
+  code: Apache-2.0
+  commercialUse: true
+featuredRank: 996
+starsSnapshot: 4
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:46.561Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:46.561Z
+marketScreenshots:
+  - skin-screenshots/haxi8__dsh-JujutsuKaisen-rainlove/c233155e2f2a8cc8124b7618168db5e9d803d57d/home.png
+  - skin-screenshots/haxi8__dsh-JujutsuKaisen-rainlove/c233155e2f2a8cc8124b7618168db5e9d803d57d/conversation.png
+  - skin-screenshots/haxi8__dsh-JujutsuKaisen-rainlove/c233155e2f2a8cc8124b7618168db5e9d803d57d/settings.png

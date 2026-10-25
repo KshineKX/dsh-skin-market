@@ -1,0 +1,62 @@
+id: shimarin233.dsh-session-hud
+name:
+  zh: dsh-session-hud
+  en: dsh-session-hud
+author: ShiMarin233
+description: "Session-status desktop pet for DeepSeek Harness (dsh): live counts of running, unread-completed, and waiting-for-choice sessions. 会话状态桌宠：右下角角标实时显示「在跑 / 完成未看 / 等你选」三个数字，点击直达对应会话。"
+repo: https://github.com/ShiMarin233/dsh-session-hud
+package: dsh-session-hud
+rowId: session-hud
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:ShiMarin233/dsh-session-hud#094ecb94b30ce1960ba7a1ebda18d23c38ab5aab
+  version: 0.1.0
+  commit: 094ecb94b30ce1960ba7a1ebda18d23c38ab5aab
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+    - 此固定版本的构建与客户端兼容检查尚待完成。
+  scan:
+    commit: 094ecb94b30ce1960ba7a1ebda18d23c38ab5aab
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:44:57.678Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:59.227Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:59.227Z
+marketScreenshots:
+  - skin-screenshots/ShiMarin233__dsh-session-hud/094ecb94b30ce1960ba7a1ebda18d23c38ab5aab/home.png
+  - skin-screenshots/ShiMarin233__dsh-session-hud/094ecb94b30ce1960ba7a1ebda18d23c38ab5aab/conversation.png
+  - skin-screenshots/ShiMarin233__dsh-session-hud/094ecb94b30ce1960ba7a1ebda18d23c38ab5aab/settings.png

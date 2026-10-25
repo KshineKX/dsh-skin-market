@@ -1,0 +1,59 @@
+id: clicgger-types.dsh-piggy
+name:
+  zh: dsh-piggy
+  en: dsh-piggy
+author: CLICGGER-TYPES
+description: 🐖 一只住在 DeepSeek Harness 里的猪：吃你的真实工作长大，会学习、打工、旅行、生病、需要照顾
+repo: https://github.com/CLICGGER-TYPES/dsh-piggy
+package: dsh-piggy
+rowId: dsh-piggy
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:CLICGGER-TYPES/dsh-piggy#52acd2684f4292c052f457f21fab9c1ec8eb8ca1
+  version: 0.37.1
+  commit: 52acd2684f4292c052f457f21fab9c1ec8eb8ca1
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 52acd2684f4292c052f457f21fab9c1ec8eb8ca1
+    packageVersion: 0.37.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:29:51.103Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 969
+starsSnapshot: 31
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:44.975Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:44.975Z
+marketScreenshots:
+  - skin-screenshots/CLICGGER-TYPES__dsh-piggy/52acd2684f4292c052f457f21fab9c1ec8eb8ca1/home.png

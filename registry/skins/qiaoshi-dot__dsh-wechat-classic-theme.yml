@@ -1,0 +1,61 @@
+id: qiaoshi-dot.dsh-wechat-classic-theme
+name:
+  zh: dsh-wechat-classic-theme
+  en: dsh-wechat-classic-theme
+author: qiaoshi-dot
+description: 微信经典绿主题：DeepSeek Harness Desktop 的浅色会话界面。
+repo: https://github.com/qiaoshi-dot/dsh-wechat-classic-theme
+package: dsh-wechat-classic-theme
+rowId: dsh-wechat-classic-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:qiaoshi-dot/dsh-wechat-classic-theme#0792e66cc08a622acd53ca1d570b3f99b8960bc6
+  version: 1.1.4
+  commit: 0792e66cc08a622acd53ca1d570b3f99b8960bc6
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 0792e66cc08a622acd53ca1d570b3f99b8960bc6
+    packageVersion: 1.1.4
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:44:57.678Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:58.282Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:58.282Z
+marketScreenshots:
+  - skin-screenshots/qiaoshi-dot__dsh-wechat-classic-theme/0792e66cc08a622acd53ca1d570b3f99b8960bc6/home.png
+  - skin-screenshots/qiaoshi-dot__dsh-wechat-classic-theme/0792e66cc08a622acd53ca1d570b3f99b8960bc6/conversation.png
+  - skin-screenshots/qiaoshi-dot__dsh-wechat-classic-theme/0792e66cc08a622acd53ca1d570b3f99b8960bc6/settings.png

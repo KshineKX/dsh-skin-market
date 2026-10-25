@@ -1,0 +1,62 @@
+id: elong16.dsh-skin-xuyuanwu
+name:
+  zh: dsh-skin-xuyuanwu
+  en: dsh-skin-xuyuanwu
+author: elong16
+description: 许愿屋主题皮肤插件 for DeepSeek Harness：夜空暖灯小屋品牌槽位（侧栏 logo/字标 + 首屏徽章）+ 灯火琥珀主题令牌 + 活的许愿夜空（星空贴片缓漂/错峰流星/随机天降流星/今日月相月 + 月相呼吸盈亏 + 月亮轨迹规律移动/鼠标许愿星拖尾/闪烁星群鼠标视差/回车许愿流星/楷体标题流光/启动开幕动画/点月亮流星雨彩蛋/悬停点灯徽记；流星 3px 光带 + 辉光 + 每颗随机配色；UI 细节打磨 + 点击星芒按钮碰星；挑灯织光 AI 思考流式共鸣/字落生辉打字萤火/纯原生合成空灵风铃音/现实时辰昼夜联动/有求必应每日许愿签/掌中微光快捷手札面板/智能低电量节能），AI 有求必应，卸载即还原官方外观。
+repo: https://github.com/elong16/dsh-skin-xuyuanwu
+package: dsh-skin-xuyuanwu
+rowId: skin-xuyuanwu
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:elong16/dsh-skin-xuyuanwu#418c54866d1d9861838546746902cc16a7bf9708
+  version: 1.11.0
+  commit: 418c54866d1d9861838546746902cc16a7bf9708
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 418c54866d1d9861838546746902cc16a7bf9708
+    packageVersion: 1.11.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:49:36.018Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:55.759Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:55.759Z
+marketScreenshots:
+  - skin-screenshots/elong16__dsh-skin-xuyuanwu/418c54866d1d9861838546746902cc16a7bf9708/home.png
+  - skin-screenshots/elong16__dsh-skin-xuyuanwu/418c54866d1d9861838546746902cc16a7bf9708/conversation.png
+  - skin-screenshots/elong16__dsh-skin-xuyuanwu/418c54866d1d9861838546746902cc16a7bf9708/settings.png

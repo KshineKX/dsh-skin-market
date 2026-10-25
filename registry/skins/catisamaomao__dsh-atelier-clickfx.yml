@@ -1,0 +1,57 @@
+id: catisamaomao.dsh-atelier-clickfx
+name:
+  zh: dsh-atelier-clickfx
+  en: dsh-atelier-clickfx
+author: catisamaomao
+description: "Five non-repeating, theme-aware click animations for DeepSeek Harness: ripples, lace blooms, comets, orbits and butterflies."
+repo: https://github.com/catisamaomao/dsh-atelier-clickfx
+package: dsh-atelier-clickfx
+rowId: atelier-clickfx
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+install:
+  target: github:catisamaomao/dsh-atelier-clickfx#bc0f5899fbdce53782793460149237ef53ff9d4f
+  version: 1.2.0
+  commit: bc0f5899fbdce53782793460149237ef53ff9d4f
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: bc0f5899fbdce53782793460149237ef53ff9d4f
+    packageVersion: 1.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:56:02.911Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:52.851Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:52.851Z
+marketScreenshots:
+  - skin-screenshots/catisamaomao__dsh-atelier-clickfx/bc0f5899fbdce53782793460149237ef53ff9d4f/home.png
