@@ -7,7 +7,7 @@
 // scoring uses the skin's own age.
 //
 // Usage:
-//   node scripts/record-stars.mjs              # append today's snapshot
+//   node scripts/record-stars.mjs              # merge dated registry observations
 //   node scripts/record-stars.mjs --backfill   # merge git history once
 //
 // The catalog builder reads the file; clients never see it directly.
@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { parse } from 'yaml'
 import { DAY_MS, dayNumber, repoSlug } from './heat.mjs'
+import { earliestObservedDay, latestRepositorySnapshots, mergeStarSamples, parseStarHistoryLog } from './star-history.mjs'
 
 const run = promisify(execFile)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -40,30 +41,12 @@ async function readHistory() {
 
 async function currentSnapshots() {
   const files = (await readdir(registryDir)).filter(file => file.endsWith('.yml')).sort()
-  const snapshots = new Map()
-  const skinIds = new Set()
+  const entries = []
   for (const file of files) {
     const skin = parse(await readFile(join(registryDir, file), 'utf8'))
-    const slug = typeof skin.repo === 'string' ? repoSlug(skin.repo) : ''
-    if (slug === '' || !Number.isInteger(skin.starsSnapshot)) continue
-    skinIds.add(skin.id)
-    // A monorepo can publish several skins; the repository-level star count is
-    // the same for all of them.
-    snapshots.set(slug, skin.starsSnapshot)
+    entries.push({ skin, file })
   }
-  return { snapshots, skinIds }
-}
-
-/** @returns {Array<[number, number]>} ascending [day, stars] pairs */
-function mergeSamples(target, incoming) {
-  const byDay = new Map(target.map(([day, stars]) => [day, stars]))
-  for (const [day, stars] of incoming) {
-    // Later samples win: the caller feeds changes in chronological order.
-    byDay.set(day, stars)
-  }
-  return [...byDay.entries()]
-    .filter(([day]) => day >= today - HISTORY_DAYS && day <= today)
-    .sort((left, right) => left[0] - right[0])
+  return latestRepositorySnapshots(entries)
 }
 
 async function gitBackfill() {
@@ -80,22 +63,11 @@ async function gitBackfill() {
     } catch {
       continue
     }
-    // git prints newest first; replay oldest first so later commits win.
-    const commits = []
-    let stamp
-    for (const line of log.split('\n')) {
-      const head = /^C(\d+)C$/.exec(line)
-      if (head !== null) {
-        stamp = Number(head[1])
-        continue
-      }
-      const added = /^\+starsSnapshot:\s*(\d+)/.exec(line)
-      if (added !== null && stamp !== undefined) commits.push([stamp, Number(added[1])])
-    }
-    if (commits.length === 0) continue
-    const ordered = commits.reverse()
-    history.set(slug, ordered.map(([seconds, stars]) => [dayNumber(seconds * 1000), stars]))
-    skinDays.set(skin.id, dayNumber(ordered[0][0] * 1000))
+    const observations = parseStarHistoryLog(log, today, HISTORY_DAYS)
+    if (observations.length === 0) continue
+    history.set(slug, mergeStarSamples(history.get(slug) ?? [], observations, today, HISTORY_DAYS))
+    const firstSeenDay = observations[0][0]
+    skinDays.set(skin.id, earliestObservedDay(skinDays.get(skin.id), firstSeenDay))
   }
   return { history, skinDays }
 }
@@ -110,9 +82,9 @@ const recordedAt = history.generatedAt
 if (backfill) {
   const seeded = await gitBackfill()
   for (const [slug, samples] of seeded.history) {
-    repos[slug] = mergeSamples(repos[slug] ?? [], samples)
+    repos[slug] = mergeStarSamples(repos[slug] ?? [], samples, today, HISTORY_DAYS)
   }
-  for (const [skinId, firstSeenDay] of seeded.skinDays) skins[skinId] = firstSeenDay
+  for (const [skinId, firstSeenDay] of seeded.skinDays) skins[skinId] = earliestObservedDay(skins[skinId], firstSeenDay)
   console.log(`backfilled ${seeded.history.size} repositories from git history`)
 }
 
@@ -121,9 +93,9 @@ for (const skinId of current.skinIds) {
   // A new registry entry gets a market-observed age on its first daily sample.
   if (!Number.isInteger(skins[skinId])) skins[skinId] = today
 }
-for (const [slug, stars] of current.snapshots) {
-  // Re-running on the same day replaces today's value instead of appending.
-  repos[slug] = mergeSamples(repos[slug] ?? [], [[today, stars]])
+for (const [slug, sample] of current.snapshots) {
+  // Keep the actual observation time and preserve a later same-day observation.
+  repos[slug] = mergeStarSamples(repos[slug] ?? [], [sample], today, HISTORY_DAYS)
 }
 
 for (const slug of Object.keys(repos)) {

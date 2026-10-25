@@ -50,12 +50,14 @@ function round(value, digits = 3) {
   return Math.round(value * factor) / factor
 }
 
-function validSamples(samples, firstSeenDay) {
+function validSamples(samples, firstSeenDay, today) {
   if (!Array.isArray(samples)) return []
   return samples
-    .filter(sample => Array.isArray(sample) && sample.length === 2 && Number.isInteger(sample[0]) && Number.isInteger(sample[1]) && sample[1] >= 0 && sample[0] >= firstSeenDay)
-    .map(([day, stars]) => [day, stars])
-    .sort((left, right) => left[0] - right[0])
+    .filter(sample => Array.isArray(sample) && sample.length >= 2 && Number.isInteger(sample[0]) && Number.isInteger(sample[1]) && sample[1] >= 0 && sample[0] >= firstSeenDay && sample[0] <= today)
+    .map(([day, stars, observedAt], index) => ({ day, stars, observedAt: Number.isFinite(observedAt) ? observedAt : day * DAY_MS, index }))
+    .sort((left, right) => left.day - right.day || left.observedAt - right.observedAt || left.index - right.index)
+    .filter((sample, index, sorted) => index === sorted.length - 1 || sample.day !== sorted[index + 1].day)
+    .map(({ day, stars }) => [day, stars])
 }
 
 export function linearWeight(eventDay, today, skinAgeDays) {
@@ -76,8 +78,8 @@ function weightedPerDay(weightedCount, skinAgeDays) {
 }
 
 /** Turn Star snapshots into positive growth events after the skin was first seen. */
-export function starGrowthEvents(samples, current, today, firstSeenDay) {
-  const valid = validSamples(samples, firstSeenDay)
+export function starGrowthEvents(samples, today, firstSeenDay) {
+  const valid = validSamples(samples, firstSeenDay, today)
   if (valid.length === 0) return []
   const events = []
   let previous = valid[0]
@@ -86,8 +88,6 @@ export function starGrowthEvents(samples, current, today, firstSeenDay) {
     if (delta > 0) events.push({ day: sample[0], amount: delta })
     previous = sample
   }
-  const latest = valid[valid.length - 1]
-  if (today >= latest[0] && current > latest[1]) events.push({ day: today, amount: current - latest[1] })
   return events
 }
 
@@ -96,8 +96,13 @@ function activityStats(activity, today, firstSeenDay, skinAgeDays) {
   if (daily !== undefined && typeof daily === 'object' && daily !== null) {
     const weighted = { commits: 0, pulls: 0, issues: 0 }
     for (const [date, counts] of Object.entries(daily)) {
-      const day = dayNumber(date)
-      if (day < firstSeenDay) continue
+      let day
+      try {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+        day = dayNumber(`${date}T00:00:00Z`)
+        if (new Date(day * DAY_MS).toISOString().slice(0, 10) !== date) continue
+      } catch { continue }
+      if (day < firstSeenDay || day > today) continue
       const weight = linearWeight(day, today, skinAgeDays)
       weighted.commits += nonNegative(counts?.commits) * weight
       weighted.pulls += nonNegative(counts?.pulls) * weight
@@ -125,7 +130,7 @@ function activityStats(activity, today, firstSeenDay, skinAgeDays) {
 export function computeHeat({ samples, current, activity, today, firstSeenDay }) {
   const ageDays = Math.max(1, today - firstSeenDay + 1)
   const stars = nonNegative(current)
-  const growthEvents = starGrowthEvents(samples, stars, today, firstSeenDay)
+  const growthEvents = starGrowthEvents(samples, today, firstSeenDay)
   const weightedGrowth = growthEvents.reduce((total, event) => total + finiteNonNegative(event.amount) * linearWeight(event.day, today, ageDays), 0)
   const starGrowthPerDay = weightedPerDay(weightedGrowth, ageDays)
   const activityPerDay = activityStats(activity, today, firstSeenDay, ageDays)
@@ -154,8 +159,12 @@ export function buildHeatMap({ skins, history, activity, today }) {
     const slug = repoSlug(String(skin.repo))
     const samples = history?.repos?.[slug] ?? []
     const signal = activity?.repos?.[slug]
-    const fallbackDay = samples[0]?.[0] ?? (signal?.createdAt === undefined ? today : dayNumber(signal.createdAt))
-    const firstSeenDay = Number.isInteger(history?.skins?.[skin.id]) ? history.skins[skin.id] : fallbackDay
+    const observedSamples = Array.isArray(samples) ? samples.filter(sample => Array.isArray(sample) && Number.isInteger(sample[0]) && sample[0] <= today).sort((a, b) => a[0] - b[0]) : []
+    let activityCreatedDay = today
+    try { if (signal?.createdAt !== undefined) activityCreatedDay = Math.min(today, dayNumber(signal.createdAt)) } catch { /* Invalid activity metadata cannot move skin age into the future. */ }
+    const fallbackDay = observedSamples[0]?.[0] ?? activityCreatedDay
+    const recordedFirstSeen = history?.skins?.[skin.id]
+    const firstSeenDay = Number.isInteger(recordedFirstSeen) ? Math.min(today, recordedFirstSeen) : fallbackDay
     if (samples.length === 0 && signal === undefined) continue
     heat[skin.id] = computeHeat({
       samples,

@@ -7,11 +7,16 @@ on:
       - 'registry/skins/**'
       - 'registry/skin.schema.json'
       - 'scripts/build-registry.mjs'
+      - 'scripts/catalog-wire.mjs'
+      - 'scripts/heat.mjs'
+      - 'scripts/record-stars.mjs'
+      - 'scripts/star-history.mjs'
       - 'scripts/hydrate-submission.mjs'
       - 'scripts/screenshot-refs.mjs'
       - 'scripts/media.mjs'
       - 'package.json'
       - 'package-lock.json'
+      - 'data/repo-activity.json'
   workflow_dispatch:
 
 permissions:
@@ -39,13 +44,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Record star samples
-        run: node scripts/record-stars.mjs
-
-      - name: Regenerate catalog
+      - name: Hydrate new entries and regenerate catalog
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: npm run registry
+
+      - name: Record observed stars after hydration and rebuild heat
+        run: |
+          node scripts/record-stars.mjs
+          npm run registry
 
       - name: Commit generated catalog when it changed
         run: |

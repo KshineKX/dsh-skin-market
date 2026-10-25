@@ -5,12 +5,184 @@ import { syncBuiltinESMExports } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { parse } from 'yaml'
+import { isScalar, parse, parseDocument, visit } from 'yaml'
 import { buildApprovalKeyForTarget, effectiveBuildApprovalKey } from '../src/build-approval.ts'
-import { acknowledgeSkinArtifactRisk, assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, inspectSkinArtifactRisk, InstallConflictError, installedClientPlugins, installedSpecMatches, isSkinArtifactRiskAcknowledged, packageLoaderOwnershipAt, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
+import { acknowledgeSkinArtifactRisk, assertLoaderMetadata, assertNoLoaderConflicts, atomicWriteJson, atomicWriteText, compareInstalledArtifact, compatibilityPatchFile, ensureBuildAllowed, ensurePatchedDependency, ensureSkinRegistration, inspectSkinArtifactRisk, InstallConflictError, installedClientPlugins, installedSpecMatches, isSkinArtifactRiskAcknowledged, packageLoaderOwnershipAt, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readMarketState, removeCompatibilityPatches, removeProfileBundles, removeSkinRegistration, reviewedInstalledSpecMatches, runtimeState, setManagedLoaderOverride, snapshotInstalledArtifact, validateDesktopArtifact, validateInstalledSkin, validateNpmArtifact, writeMarketState } from '../src/profile.ts'
 import { loadCatalog } from '../src/catalog.ts'
+import { CORDIS_JS_TAG, cordisYamlOptions } from '../src/cordis-yaml.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-profile-')) }
+
+describe('profile patch YAML round trips', () => {
+  const skin = { ...loadCatalog().skins[0]!, id: 'example.skin', package: '@example/skin', rowId: 'example-skin' }
+  // The host expressions from Issue 118 are data for the editor, never executable code.
+  const source = `# shared host settings
+- id: builtin
+  config:
+    bundledSkillDir: !!js process.getBuiltinModule('node:path').join("runtime", "skills") # directory expression
+- id: dsh-better-sidebar
+  disabled: !!js "[...ctx.loader.entries()].some(entry => entry.id === 'sidebar')"
+- id: ptc
+  disabled: &pythonRuntimeOn !!js "(() => { try { return process.platform === 'win32' } catch { return false } })()"
+- id: python-helper
+  disabled: *pythonRuntimeOn
+- id: swarm
+  config: &swarmConfig
+    storageDir: !!js dshHomePath("storages/swarm")
+    literal: 'dshHomePath("storages/swarm")'
+    nested:
+      id: example-skin
+      name: '@example/skin'
+      disabled: !!js globalThis.__dshPatchExecuted = true
+- id: swarm-copy
+  config: *swarmConfig
+- insert:
+    - id: unrelated
+      name: '@example/unrelated' # keep this row
+`
+  const snapshot = (contents: string) => {
+    const document = parseDocument(contents, cordisYamlOptions())
+    expect(document.errors).toEqual([])
+    expect(document.warnings).toEqual([])
+    const expressions: unknown[] = []
+    visit(document, (_key, node) => {
+      if (isScalar(node) && node.tag === CORDIS_JS_TAG) expressions.push({ value: node.value, tag: node.tag, anchor: node.anchor })
+    })
+    return { document, expressions }
+  }
+  const expectPreserved = (file: string) => {
+    const contents = readFileSync(file, 'utf8')
+    const current = snapshot(contents)
+    expect(current.expressions).toEqual(snapshot(source).expressions)
+    expect(current.document.toJS().slice(0, 6)).toEqual(snapshot(source).document.toJS().slice(0, 6))
+    const literal = current.document.getIn([4, 'config', 'literal'], true)
+    expect(isScalar(literal) && literal.tag).toBeUndefined()
+    for (const text of ['# shared host settings', '# directory expression', '# keep this row', '&pythonRuntimeOn', '*pythonRuntimeOn', '&swarmConfig', '*swarmConfig']) expect(contents).toContain(text)
+    expect((globalThis as typeof globalThis & { __dshPatchExecuted?: boolean }).__dshPatchExecuted).toBeUndefined()
+    return current.document.toJS() as Array<{ id?: string; disabled?: boolean; insert?: Array<{ id: string; disabled?: boolean }> }>
+  }
+
+  it('preserves host expressions, comments and aliases when registering, enabling and removing a skin', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    atomicWriteText(file, source)
+    const warning = vi.spyOn(process, 'emitWarning')
+    try {
+      expect(installedClientPlugins(dir, [])).toEqual([])
+      ensureSkinRegistration(dir, skin)
+      expect(expectPreserved(file).flatMap(row => row.insert ?? []).find(row => row.id === skin.rowId)?.disabled).toBe(true)
+      ensureSkinRegistration(dir, skin, false)
+      expect(expectPreserved(file).flatMap(row => row.insert ?? []).find(row => row.id === skin.rowId)?.disabled).toBeUndefined()
+      const enabled = readFileSync(file, 'utf8')
+      ensureSkinRegistration(dir, skin, false)
+      expect(readFileSync(file, 'utf8')).toBe(enabled)
+      removeSkinRegistration(dir, skin)
+      expect(expectPreserved(file).flatMap(row => row.insert ?? []).map(row => row.id)).toEqual(['unrelated'])
+      expect(warning).not.toHaveBeenCalled()
+    } finally { warning.mockRestore() }
+  })
+
+  it('preserves the same host nodes when adding and removing a managed loader override', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    atomicWriteText(file, source)
+    expect(setManagedLoaderOverride(dir, { id: skin.rowId }, true)).toBe(true)
+    expect(expectPreserved(file).find(row => row.id === skin.rowId)).toEqual({ id: skin.rowId, disabled: true })
+    expect(setManagedLoaderOverride(dir, { id: skin.rowId }, false)).toBe(true)
+    expect(expectPreserved(file).some(row => row.id === skin.rowId)).toBe(false)
+    const unchanged = readFileSync(file, 'utf8')
+    expect(setManagedLoaderOverride(dir, { id: 'dsh-better-sidebar' }, false)).toBe(false)
+    expect(readFileSync(file, 'utf8')).toBe(unchanged)
+  })
+
+  it('preserves target configuration expressions when enabling a bundle override', () => {
+    const dir = fixture()
+    const directory = join(dir, 'node_modules', skin.package)
+    atomicWriteJson(join(directory, 'package.json'), { name: skin.package, dsh: { bundle: { patch: './bundle.yml' } } })
+    atomicWriteText(join(directory, 'bundle.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n`)
+    const file = profilePatchFile(dir)
+    atomicWriteText(file, source + `- id: ${skin.rowId}\n  disabled: true\n  config:\n    storageDir: !!js dshHomePath("skin") # target config\n`)
+    ensureSkinRegistration(dir, skin, false)
+    const contents = readFileSync(file, 'utf8')
+    const document = snapshot(contents).document
+    const expression = document.getIn([7, 'config', 'storageDir'], true)
+    expect(isScalar(expression) && expression.tag).toBe(CORDIS_JS_TAG)
+    expect(document.getIn([7, 'disabled'])).toBeUndefined()
+    expect(contents).toContain('# target config')
+  })
+
+  it.each(['enable', 'remove'])('refuses a dynamic target disabled expression before %s writes', action => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    const contents = source + `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n      disabled: !!js chooseEnabled()\n`
+    atomicWriteText(file, contents)
+    expect(() => action === 'enable' ? ensureSkinRegistration(dir, skin, false) : removeSkinRegistration(dir, skin)).toThrow('dynamic or shared loader')
+    expect(readFileSync(file, 'utf8')).toBe(contents)
+  })
+
+  it('refuses removing a target whose configuration anchor is used by another row', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    const contents = `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n      config: &shared { color: blue }\n    - id: keep\n      name: keep\n      config: *shared\n`
+    atomicWriteText(file, contents)
+    expect(() => removeSkinRegistration(dir, skin)).toThrow()
+    expect(readFileSync(file, 'utf8')).toBe(contents)
+  })
+
+  it('refuses an alias silently rebinding to an earlier same-named anchor after removal', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    const contents = `- id: first\n  config: &shared { color: red }\n- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n      config: &shared { color: blue }\n- id: last\n  config: *shared\n`
+    atomicWriteText(file, contents)
+    expect(snapshot(contents).document.toJS()[2].config).toEqual({ color: 'blue' })
+    expect(() => removeSkinRegistration(dir, skin)).toThrow('dynamic or shared loader')
+    expect(readFileSync(file, 'utf8')).toBe(contents)
+  })
+
+  it.each([
+    '- insert:\n    - id: !!js chooseId()\n      name: "@example/skin"\n',
+    '- &shared\n  insert:\n    - id: example-skin\n      name: "@example/skin"\n- id: other\n  config: *shared\n',
+    '- insert: &shared\n    - id: example-skin\n      name: "@example/skin"\n- id: other\n  config: *shared\n',
+  ])('does not edit dynamic identities or shared insertion structures', contents => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    atomicWriteText(file, contents)
+    expect(() => ensureSkinRegistration(dir, skin, false)).toThrow('dynamic or shared loader')
+    expect(() => removeSkinRegistration(dir, skin)).toThrow('dynamic or shared loader')
+    expect(readFileSync(file, 'utf8')).toBe(contents)
+  })
+
+  it('keeps unrelated override fields when the last insertion is removed', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    atomicWriteText(file, `- id: host\n  config:\n    storageDir: !!js dshHomePath("host") # keep override\n  insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n`)
+    removeSkinRegistration(dir, skin)
+    const contents = readFileSync(file, 'utf8')
+    const document = snapshot(contents).document
+    expect(document.getIn([0, 'id'])).toBe('host')
+    expect(document.toJS()[0].insert).toEqual([])
+    const expression = document.getIn([0, 'config', 'storageDir'], true)
+    expect(isScalar(expression) && expression.tag).toBe(CORDIS_JS_TAG)
+    expect(contents).toContain('# keep override')
+  })
+
+  it('adds a separate insertion without changing an unrelated anchored sequence', () => {
+    const dir = fixture()
+    const file = profilePatchFile(dir)
+    const contents = '- insert: &shared\n    - id: other\n      name: other\n- id: host\n  config: *shared\n'
+    atomicWriteText(file, contents)
+    ensureSkinRegistration(dir, skin)
+    const registered = snapshot(readFileSync(file, 'utf8')).document
+    expect(registered.toJS()[0]).toEqual({ insert: [{ id: 'other', name: 'other' }] })
+    expect(registered.toJS()[1]).toEqual({ id: 'host', config: [{ id: 'other', name: 'other' }] })
+    expect(registered.toJS()[2]).toEqual({ insert: [{ id: skin.rowId, name: skin.package, disabled: true }] })
+    removeSkinRegistration(dir, skin)
+    const result = readFileSync(file, 'utf8')
+    expect(result).toContain('&shared')
+    expect(result).toContain('*shared')
+    expect(snapshot(result).document.toJS()).toEqual(snapshot(contents).document.toJS())
+  })
+})
 
 function artifactRiskFixture() {
   const dir = fixture()

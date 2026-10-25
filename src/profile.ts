@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
-import { parse, stringify } from 'yaml'
+import { isAlias, isMap, isScalar, isSeq, parse, parseDocument, stringify, visit, type Alias, type Document, type Node, type YAMLMap, type YAMLSeq } from 'yaml'
 import { effectiveBuildApprovalKey } from './build-approval.ts'
 import { cordisYamlOptions } from './cordis-yaml.ts'
 import { normalizeGithubSubpath, npmInstallTarget, parseGithubTarget, repositoryIdentity, reviewedNpmSourceError, type GithubTargetParts } from './install-resolution.ts'
@@ -803,13 +803,78 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function patchOperations(profileDir: string): PatchOperation[] {
   const file = profilePatchFile(profileDir)
   if (!existsSync(file)) return []
-  const value = parse(readFileSync(file, 'utf8')) as unknown
+  const value = parse(readFileSync(file, 'utf8'), cordisYamlOptions()) as unknown
   if (!Array.isArray(value)) throw new Error('profile cordis.patch.yml must contain a YAML sequence')
   return value as PatchOperation[]
 }
 
-function writePatchOperations(profileDir: string, operations: PatchOperation[]): void {
-  atomicWriteText(profilePatchFile(profileDir), stringify(operations, { lineWidth: 0 }))
+interface ProfilePatch {
+  document: Document
+  operations: YAMLSeq
+  original: string | null
+  aliases: Map<Alias, Node | undefined>
+}
+
+function unsafeProfilePatch(): never {
+  throw new Error('profile cordis.patch.yml contains a dynamic or shared loader structure; edit the target manually')
+}
+
+/** Loader identity must be literal. Plugin configuration remains opaque. */
+function patchRow(value: unknown): YAMLMap {
+  if (!isMap(value) || value.tag !== undefined) return unsafeProfilePatch()
+  for (const pair of value.items) {
+    if (!isScalar(pair.key) || typeof pair.key.value !== 'string'
+      || pair.key.tag !== undefined || pair.key.value === '<<') return unsafeProfilePatch()
+  }
+  for (const key of ['id', 'name']) {
+    const field = value.get(key, true)
+    if (field !== undefined && (!isScalar(field) || typeof field.value !== 'string'
+      || field.tag !== undefined && field.tag !== 'tag:yaml.org,2002:str')) return unsafeProfilePatch()
+  }
+  return value
+}
+
+function insertedRows(row: YAMLMap): YAMLSeq | undefined {
+  const insert = row.get('insert', true)
+  if (insert === undefined) return undefined
+  if (!isSeq(insert) || insert.tag !== undefined) return unsafeProfilePatch()
+  return insert
+}
+
+function editablePatch(profileDir: string): ProfilePatch {
+  const file = profilePatchFile(profileDir)
+  const exists = existsSync(file)
+  const document = parseDocument(exists ? readFileSync(file, 'utf8') : '[]\n', { keepSourceTokens: true, ...cordisYamlOptions() })
+  if (document.errors.length > 0 || document.warnings.length > 0 || !isSeq(document.contents)
+    || document.contents.tag !== undefined || document.contents.anchor !== undefined) return unsafeProfilePatch()
+  const validateRows = (sequence: YAMLSeq): void => {
+    for (const value of sequence.items) {
+      const children = insertedRows(patchRow(value))
+      if (children !== undefined) validateRows(children)
+    }
+  }
+  validateRows(document.contents)
+  const aliases = new Map<Alias, Node | undefined>()
+  visit(document, (_key, node) => { if (isAlias(node)) aliases.set(node, node.resolve(document)) })
+  return { document, operations: document.contents, original: exists ? document.toString({ lineWidth: 0 }) : null, aliases }
+}
+
+/** Keep the original nodes: converting through JS would erase !!js, comments and anchors. */
+function writePatchOperations(profileDir: string, patch: ProfilePatch): void {
+  // Duplicate anchor names are legal. A retained alias must still resolve to the
+  // same node, not silently fall back to an earlier same-named anchor after removal.
+  visit(patch.document, (_key, node) => {
+    if (isAlias(node) && node.resolve(patch.document) !== patch.aliases.get(node)) unsafeProfilePatch()
+  })
+  const contents = patch.document.toString({ lineWidth: 0 })
+  if (contents !== patch.original) atomicWriteText(profilePatchFile(profileDir), contents)
+}
+
+function assertWritablePatchRow(row: YAMLMap): void {
+  const disabled = row.get('disabled', true)
+  if (row.anchor !== undefined || disabled !== undefined && (!isScalar(disabled)
+    || typeof disabled.value !== 'boolean' || disabled.anchor !== undefined
+    || disabled.tag !== undefined && disabled.tag !== 'tag:yaml.org,2002:bool')) unsafeProfilePatch()
 }
 
 function packageManifestAt(packageDirectory: string): Record<string, unknown> | null {
@@ -1034,83 +1099,108 @@ function declaredBundleRows(value: unknown, skin: SkinEntry, rows: PatchRow[] = 
   return rows
 }
 
-function removeInsertedRows(values: unknown[], skin: SkinEntry): unknown[] {
-  return values.flatMap(value => {
-    if (!isRecord(value)) return [value]
-    const row = value as PatchRow
-    if (registrationMatches(row, skin)) {
-      assertRegistrationMatches(row, skin)
-      return []
+function patchRegistration(row: YAMLMap): PatchRow {
+  return { id: row.get('id'), name: row.get('name') }
+}
+
+function removeInsertedRows(sequence: YAMLSeq, skin: SkinEntry, shared = false): void {
+  shared ||= sequence.anchor !== undefined
+  sequence.items = sequence.items.filter(value => {
+    const row = patchRow(value)
+    if (registrationMatches(patchRegistration(row), skin)) {
+      assertRegistrationMatches(patchRegistration(row), skin)
+      if (shared) unsafeProfilePatch()
+      assertWritablePatchRow(row)
+      return false
     }
-    if (Array.isArray(value.insert)) value.insert = removeInsertedRows(value.insert, skin)
-    return [value]
+    const children = insertedRows(row)
+    if (children !== undefined) removeInsertedRows(children, skin, shared || row.anchor !== undefined)
+    return true
   })
 }
 
-function removeProfileInsertedRows(operations: PatchOperation[], skin: SkinEntry): void {
-  for (const operation of operations) {
-    if (Array.isArray(operation.insert)) operation.insert = removeInsertedRows(operation.insert, skin)
+function removeProfileInsertedRows(operations: YAMLSeq, skin: SkinEntry): void {
+  for (const operation of operations.items) {
+    const row = patchRow(operation)
+    const children = insertedRows(row)
+    if (children !== undefined) removeInsertedRows(children, skin, row.anchor !== undefined)
   }
 }
 
-function removeEmptyInsertOperations(operations: PatchOperation[]): void {
-  const next = operations.filter(operation => !Array.isArray(operation.insert) || operation.insert.length > 0)
-  operations.splice(0, operations.length, ...next)
+function removeEmptyInsertOperations(operations: YAMLSeq): void {
+  operations.items = operations.items.filter(operation => {
+    const row = patchRow(operation)
+    const children = insertedRows(row)
+    // A rich operation can carry unrelated overrides even after its last insert is removed.
+    return children === undefined || children.items.length > 0 || row.items.length > 1
+      || row.anchor !== undefined || children.anchor !== undefined
+  })
 }
 
-function ensureInsertedRow(operations: PatchOperation[], skin: SkinEntry, disabled: boolean): void {
+function ensureInsertedRow(patch: ProfilePatch, skin: SkinEntry, disabled: boolean): void {
   let found = false
-  const retain = (values: unknown[]): unknown[] => values.flatMap(value => {
-    if (!isRecord(value)) return [value]
-    const row = value as PatchRow
-    if (registrationMatches(row, skin)) {
-      assertRegistrationMatches(row, skin)
-      if (found) return []
-      found = true
-      if (disabled) row.disabled = true
-      else delete row.disabled
-      return [row]
-    }
-    if (Array.isArray(value.insert)) value.insert = retain(value.insert)
-    return [value]
-  })
+  const retain = (sequence: YAMLSeq, shared = false): void => {
+    shared ||= sequence.anchor !== undefined
+    sequence.items = sequence.items.filter(value => {
+      const row = patchRow(value)
+      if (registrationMatches(patchRegistration(row), skin)) {
+        assertRegistrationMatches(patchRegistration(row), skin)
+        if (shared) unsafeProfilePatch()
+        assertWritablePatchRow(row)
+        if (found) return false
+        found = true
+        if (disabled) row.set('disabled', true)
+        else row.delete('disabled')
+        return true
+      }
+      const children = insertedRows(row)
+      if (children !== undefined) retain(children, shared || row.anchor !== undefined)
+      return true
+    })
+  }
 
-  for (const operation of operations) {
-    if (Array.isArray(operation.insert)) operation.insert = retain(operation.insert)
+  for (const operation of patch.operations.items) {
+    const row = patchRow(operation)
+    const children = insertedRows(row)
+    if (children !== undefined) retain(children, row.anchor !== undefined)
   }
   if (!found) {
-    const operation = operations.find(item => Array.isArray(item.insert))
-    if (operation !== undefined) operation.insert!.push({ id: skin.rowId, name: skin.package, ...(disabled ? { disabled: true } : {}) })
-    else operations.push({ insert: [{ id: skin.rowId, name: skin.package, ...(disabled ? { disabled: true } : {}) }] })
+    const insert = patch.operations.items.map(patchRow).filter(row => row.anchor === undefined)
+      .map(insertedRows).find(value => value !== undefined && value.anchor === undefined)
+    const row = { id: skin.rowId, name: skin.package, ...(disabled ? { disabled: true } : {}) }
+    if (insert !== undefined) insert.items.push(patch.document.createNode(row))
+    else patch.operations.items.push(patch.document.createNode({ insert: [row] }))
   }
 }
 
-function removeProfileOverrides(operations: PatchOperation[], skin: SkinEntry): void {
-  const next = operations.filter(operation => {
-    if (!isRecord(operation) || operation.id !== skin.rowId) return true
-    if (operation.name !== undefined && operation.name !== skin.package) {
-      throw new Error(`loader registration conflicts with ${String(operation.id ?? operation.name)}`)
+function removeProfileOverrides(operations: YAMLSeq, skin: SkinEntry): void {
+  operations.items = operations.items.filter(value => {
+    const row = patchRow(value)
+    if (row.get('id') !== skin.rowId) return true
+    if (row.has('name') && row.get('name') !== skin.package) {
+      throw new Error(`loader registration conflicts with ${String(row.get('id') ?? row.get('name'))}`)
     }
+    assertWritablePatchRow(row)
     return false
   })
-  operations.splice(0, operations.length, ...next)
 }
 
-function ensureProfileOverride(operations: PatchOperation[], skin: SkinEntry, disabled: boolean): void {
+function ensureProfileOverride(patch: ProfilePatch, skin: SkinEntry, disabled: boolean): void {
   let found = false
-  const next = operations.filter(operation => {
-    if (!isRecord(operation) || operation.id !== skin.rowId) return true
-    if (operation.name !== undefined && operation.name !== skin.package) {
-      throw new Error(`loader registration conflicts with ${String(operation.id ?? operation.name)}`)
+  patch.operations.items = patch.operations.items.filter(value => {
+    const row = patchRow(value)
+    if (row.get('id') !== skin.rowId) return true
+    if (row.has('name') && row.get('name') !== skin.package) {
+      throw new Error(`loader registration conflicts with ${String(row.get('id') ?? row.get('name'))}`)
     }
+    assertWritablePatchRow(row)
     if (found) return false
     found = true
-    if (disabled) operation.disabled = true
-    else delete operation.disabled
-    return disabled || Object.keys(operation).some(key => key !== 'id' && key !== 'name')
+    if (disabled) row.set('disabled', true)
+    else row.delete('disabled')
+    return disabled || row.items.some(pair => isScalar(pair.key) && pair.key.value !== 'id' && pair.key.value !== 'name')
   })
-  operations.splice(0, operations.length, ...next)
-  if (!found && disabled) operations.push({ id: skin.rowId, disabled: true })
+  if (!found && disabled) patch.operations.items.push(patch.document.createNode({ id: skin.rowId, disabled: true }))
 }
 
 /** Whether a profile-level row already targets this loader. */
@@ -1130,21 +1220,24 @@ export function hasLoaderOverride(profileDir: string, identity: LoaderIdentity):
  */
 export function setManagedLoaderOverride(profileDir: string, identity: LoaderIdentity, disabled: boolean): boolean {
   if (identity.id === undefined) return false
-  const operations = patchOperations(profileDir)
-  const matching = operations.filter(operation => isRecord(operation) && operation.id === identity.id && !Array.isArray(operation.insert))
+  const patch = editablePatch(profileDir)
+  const matching = patch.operations.items.map(patchRow).filter(row => row.get('id') === identity.id && !row.has('insert'))
   if (matching.length > 1) return false
   const existing = matching[0]
   if (existing !== undefined) {
-    const keys = Object.keys(existing).sort()
-    const marketOwned = keys.length === 2 && keys[0] === 'disabled' && keys[1] === 'id' && existing.disabled === true
+    const keys = existing.items.map(pair => isScalar(pair.key) ? pair.key.value : undefined).sort()
+    const flag = existing.get('disabled', true)
+    const marketOwned = keys.length === 2 && keys[0] === 'disabled' && keys[1] === 'id'
+      && isScalar(flag) && flag.value === true && flag.tag === undefined && flag.anchor === undefined && existing.anchor === undefined
     if (!marketOwned) return false
     if (disabled) return true
-    writePatchOperations(profileDir, operations.filter(operation => operation !== existing))
+    patch.operations.items = patch.operations.items.filter(operation => operation !== existing)
+    writePatchOperations(profileDir, patch)
     return true
   }
   if (!disabled) return true
-  const next = [...operations, { id: identity.id, disabled: true }]
-  writePatchOperations(profileDir, next)
+  patch.operations.items.push(patch.document.createNode({ id: identity.id, disabled: true }))
+  writePatchOperations(profileDir, patch)
   return true
 }
 
@@ -1290,7 +1383,8 @@ export function removeCompatibilityPatches(profileDir: string, packageName: stri
 
 export function ensureSkinRegistration(profileDir: string, skin: SkinEntry, disabled = true): void {
   const bundle = bundlePatchOperations(profileDir, skin.package)
-  const operations = patchOperations(profileDir)
+  const patch = editablePatch(profileDir)
+  const operations = patch.operations
   const selfDeclared = bundle !== null && bundle.some(operation => declaredBundleRows(operation, skin).length > 0)
   if (bundle !== null && disabled) {
     // Disabling only the skin's primary row leaves every other insert/config
@@ -1300,7 +1394,7 @@ export function ensureSkinRegistration(profileDir: string, skin: SkinEntry, disa
     removeProfileInsertedRows(operations, skin)
     removeEmptyInsertOperations(operations)
     removeProfileOverrides(operations, skin)
-    writePatchOperations(profileDir, operations)
+    writePatchOperations(profileDir, patch)
     removeProfileBundles(profileDir, [skin.package])
     return
   }
@@ -1308,14 +1402,14 @@ export function ensureSkinRegistration(profileDir: string, skin: SkinEntry, disa
     // The enabled bundle owns the loader row; no profile override is needed.
     removeProfileInsertedRows(operations, skin)
     removeEmptyInsertOperations(operations)
-    ensureProfileOverride(operations, skin, false)
+    ensureProfileOverride(patch, skin, false)
   } else {
     // Client-only plugins, and bundles that do not declare this row, need a
     // profile-level insert. Remove stale overrides from older market versions.
     removeProfileOverrides(operations, skin)
-    ensureInsertedRow(operations, skin, disabled)
+    ensureInsertedRow(patch, skin, disabled)
   }
-  writePatchOperations(profileDir, operations)
+  writePatchOperations(profileDir, patch)
   if (bundle !== null) ensureProfileBundle(profileDir, skin.package)
   else removeProfileBundles(profileDir, [skin.package])
 }
@@ -1323,11 +1417,12 @@ export function ensureSkinRegistration(profileDir: string, skin: SkinEntry, disa
 export function removeSkinRegistration(profileDir: string, skin: SkinEntry): void {
   const file = profilePatchFile(profileDir)
   if (!existsSync(file)) return
-  const operations = patchOperations(profileDir)
+  const patch = editablePatch(profileDir)
+  const operations = patch.operations
   removeProfileInsertedRows(operations, skin)
   removeEmptyInsertOperations(operations)
   removeProfileOverrides(operations, skin)
-  writePatchOperations(profileDir, operations)
+  writePatchOperations(profileDir, patch)
 }
 
 export function installedClientPlugins(profileDir: string, catalog: SkinEntry[]): InstalledClientPlugin[] {

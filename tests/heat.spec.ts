@@ -13,10 +13,17 @@ describe('continuous skin-age heat', () => {
   })
 
   it('extracts positive Star growth after the skin was first observed', () => {
-    expect(starGrowthEvents([[daysAgo(2), 10], [daysAgo(1), 15], [today, 12]], 18, today, daysAgo(2))).toEqual([
+    expect(starGrowthEvents([[daysAgo(2), 10], [daysAgo(1), 15], [today, 12]], today, daysAgo(2))).toEqual([
       { day: daysAgo(1), amount: 5 },
-      { day: today, amount: 6 },
     ])
+  })
+
+  it('ignores future Star samples and keeps the latest same-day observation', () => {
+    expect(starGrowthEvents([
+      [daysAgo(1), 10, (daysAgo(1) * 86_400_000) + 100],
+      [daysAgo(1), 12, (daysAgo(1) * 86_400_000) + 200],
+      [today + 1, 500, (today + 1) * 86_400_000],
+    ], today, daysAgo(1))).toEqual([])
   })
 
   it('puts equal Stars from a young skin above an old skin', () => {
@@ -75,6 +82,15 @@ describe('continuous skin-age heat', () => {
     expect(heat.commitsPerDay).toBeCloseTo(2 / 3, 4)
     expect(heat.pullsPerDay).toBeCloseTo(2 / 3, 4)
     expect(heat.issuesPerDay).toBeCloseTo(2 / 3, 4)
+  })
+
+  it('ignores malformed and future activity buckets', () => {
+    const heat = computeHeat({
+      samples: [[today, 0]], current: 0,
+      activity: { daily: { 'not-a-date': { commits: 100 }, '2026-10-23': { commits: 100 }, '2026-10-22': { commits: 2 } } },
+      today, firstSeenDay: today,
+    })
+    expect(heat.commitsPerDay).toBe(2)
   })
 
   it('keys each skin independently while sharing repository activity', () => {
