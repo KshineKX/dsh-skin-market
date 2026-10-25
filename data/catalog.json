@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-25T18:22:54.846Z",
+  "generatedAt": "2026-10-25T18:29:53.164Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -38357,6 +38357,16 @@
       "score": 0.004,
       "asOf": "2026-10-25"
     },
+    "123we-glitch.dsh-theme-skins": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "147228.dsh-black-whale": {
       "ageDays": 64,
       "starsPerDay": 0.3594,
@@ -38425,6 +38435,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.033,
+      "asOf": "2026-10-25"
+    },
+    "2754lm.dsh-theme-newsprint": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "54088lp.dsh-kafka-ui": {
@@ -38497,6 +38517,16 @@
       "score": 0,
       "asOf": "2026-10-25"
     },
+    "abyss2021.dsh-glass-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "adaning.dsh-pixel-skin": {
       "ageDays": 71,
       "starsPerDay": 0.0141,
@@ -38505,6 +38535,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.126,
+      "asOf": "2026-10-25"
+    },
+    "ahian-lee.dsh-bliss-glass": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "ai7603.dsh-cyberpunk-theme": {
@@ -38525,6 +38565,26 @@
       "pullsPerDay": 0.0228,
       "issuesPerDay": 0.0054,
       "score": 0.816,
+      "asOf": "2026-10-25"
+    },
+    "aimer779.dsh-xiaoyaoyou": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "air-pixel.air-pixel-liquid-glass": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "aki2253.sidor-ui": {
@@ -38575,6 +38635,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.073,
+      "asOf": "2026-10-25"
+    },
+    "anarcadia.chuanban-dsh-theme": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-25"
     },
     "andy294753951.dsh-plugin-gouden-leeuw-theme": {
@@ -38645,6 +38715,16 @@
       "pullsPerDay": 0.0083,
       "issuesPerDay": 0.0455,
       "score": 5.642,
+      "asOf": "2026-10-25"
+    },
+    "badai147.dsh-leafy-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "baihejiangnan.dsh-custom-wallpaper": {
@@ -38927,6 +39007,16 @@
       "score": 2.611,
       "asOf": "2026-10-25"
     },
+    "cicero010.dsh-whale-atelier": {
+      "ageDays": 1,
+      "starsPerDay": 3,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.327,
+      "asOf": "2026-10-25"
+    },
     "cjz-wr.background-plugin": {
       "ageDays": 67,
       "starsPerDay": 0.0149,
@@ -38947,6 +39037,16 @@
       "score": 0.065,
       "asOf": "2026-10-25"
     },
+    "coldfish486.dsh-anime25d-pets": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "cooltea001.dsh-cool-theme": {
       "ageDays": 48,
       "starsPerDay": 0.125,
@@ -38957,6 +39057,26 @@
       "score": 1.126,
       "asOf": "2026-10-25"
     },
+    "cosmosail.dsh-bloomglass": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
+    "cpt-kenvie.emotionpet": {
+      "ageDays": 1,
+      "starsPerDay": 3,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.327,
+      "asOf": "2026-10-25"
+    },
     "crack-time.dsh-web-ui-skin": {
       "ageDays": 69,
       "starsPerDay": 0,
@@ -38965,6 +39085,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.132,
+      "asOf": "2026-10-25"
+    },
+    "culture-flask.dsh-aemeath-pet": {
+      "ageDays": 1,
+      "starsPerDay": 10,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 5.755,
       "asOf": "2026-10-25"
     },
     "cyberwei922.dsh-cyberwhale": {
@@ -39077,6 +39207,16 @@
       "score": 0.049,
       "asOf": "2026-10-25"
     },
+    "dirtywork22.dsh-client-ui-skin-bayern": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "dlpufan.dsh-theme-cyberpunk": {
       "ageDays": 71,
       "starsPerDay": 0.0141,
@@ -39135,6 +39275,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.039,
+      "asOf": "2026-10-25"
+    },
+    "duclong06.dsh-vietnam": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-25"
     },
     "dviridescent.dafy-whale-theme": {
@@ -39207,6 +39357,16 @@
       "score": 0.008,
       "asOf": "2026-10-25"
     },
+    "erbsen16.dsh-client-ui-dracula": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "estellalee.dsh-outdoor-theme": {
       "ageDays": 71,
       "starsPerDay": 0.0563,
@@ -39225,6 +39385,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.176,
+      "asOf": "2026-10-25"
+    },
+    "ethanchen669.dsh-plugin-fly-skins": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "ewnscat-ya.dsh-client-ui-skin-denia": {
@@ -39295,6 +39465,26 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "fl0-0wer.dsh-wallpaper": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "formalistblue.dsh-everforest": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "fourtow.dsh-theme-win98": {
@@ -39427,6 +39617,16 @@
       "score": 5.993,
       "asOf": "2026-10-25"
     },
+    "harmlessfunny.dsh-pet-in-frame": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "he2way.dsh-task-console": {
       "ageDays": 71,
       "starsPerDay": 0,
@@ -39487,6 +39687,16 @@
       "score": 0.004,
       "asOf": "2026-10-25"
     },
+    "hotsteel2901.dsh-frutiger-aero": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
+      "asOf": "2026-10-25"
+    },
     "huabai-flowerwhite.dsh-ui-skin": {
       "ageDays": 66,
       "starsPerDay": 0.0303,
@@ -39495,6 +39705,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.083,
+      "asOf": "2026-10-25"
+    },
+    "hwfee.cds-theme": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "hyposelen1a.dsh-columbina-theme": {
@@ -39535,6 +39755,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0.0266,
       "score": 0.122,
+      "asOf": "2026-10-25"
+    },
+    "irdotai.dsh-studio-irdotai": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "jack-sun-learner.dsh-image-skin": {
@@ -39617,6 +39847,16 @@
       "score": 0.374,
       "asOf": "2026-10-25"
     },
+    "john-walks-slow.dsh-os": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "johnnyting.dsh-official-homepage-theme": {
       "ageDays": 48,
       "starsPerDay": 0.375,
@@ -39675,6 +39915,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.01,
+      "asOf": "2026-10-25"
+    },
+    "kang200862.dsh-firefly-spring-skin": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-25"
     },
     "kelemiao.dsh-animation-optimization": {
@@ -39767,6 +40017,16 @@
       "score": 5.593,
       "asOf": "2026-10-25"
     },
+    "kviiinh.dsh-whale-particles-bg": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "lan-tina-ws.dsh-gui-customization": {
       "ageDays": 64,
       "starsPerDay": 0.2813,
@@ -39815,6 +40075,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0.0008,
       "score": 1.433,
+      "asOf": "2026-10-25"
+    },
+    "lbunc.dsh-composer-glass": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "le-soleil-se-couche.dsh-skin-claude-code": {
@@ -39897,6 +40167,16 @@
       "score": 0.71,
       "asOf": "2026-10-25"
     },
+    "leolee0097.dsh-desktop-acrylic": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "lesliechowsh.dsh-weniger-theme": {
       "ageDays": 68,
       "starsPerDay": 0.0588,
@@ -39917,6 +40197,16 @@
       "score": 0.01,
       "asOf": "2026-10-25"
     },
+    "lh15626127422-cloud.dsh-cp2077-theme": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "lhy723.dsh-neu-theme": {
       "ageDays": 71,
       "starsPerDay": 0.1127,
@@ -39927,6 +40217,16 @@
       "score": 0.504,
       "asOf": "2026-10-25"
     },
+    "liceses.wallpaper-rotator": {
+      "ageDays": 1,
+      "starsPerDay": 6,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 4.67,
+      "asOf": "2026-10-25"
+    },
     "licheng-ma.dsh-wechat-skin": {
       "ageDays": 71,
       "starsPerDay": 0,
@@ -39935,6 +40235,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.017,
+      "asOf": "2026-10-25"
+    },
+    "lildanger.dsh-skin-win2000": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "lilycleheart.liuli-theme": {
@@ -39997,6 +40307,26 @@
       "score": 0.049,
       "asOf": "2026-10-25"
     },
+    "liushuchang-2012.dsh-skin-liquid-glass": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
+    "ljy7812.dsh-winui-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "lkdx0220.genshin-odette-skin-dsh": {
       "ageDays": 69,
       "starsPerDay": 0.029,
@@ -40015,6 +40345,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.025,
+      "asOf": "2026-10-25"
+    },
+    "longgege-cd.dsh-skin-pixel-anime": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "longyu065.dsh-theme-ti": {
@@ -40057,6 +40397,16 @@
       "score": 0.208,
       "asOf": "2026-10-25"
     },
+    "lucasx001.dsh-skin-claude-code": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
+      "asOf": "2026-10-25"
+    },
     "luckzhangfengbo.dsh-web-theme": {
       "ageDays": 48,
       "starsPerDay": 0.0417,
@@ -40065,6 +40415,26 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.098,
+      "asOf": "2026-10-25"
+    },
+    "luongthimydieu.dsh-client-ui-skin-kitty": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "luweiyabo.dsh-whale-pet": {
+      "ageDays": 1,
+      "starsPerDay": 22,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 7.525,
       "asOf": "2026-10-25"
     },
     "lxd-ashe.dsh-codex-theme": {
@@ -40237,6 +40607,26 @@
       "score": 0.163,
       "asOf": "2026-10-25"
     },
+    "more-nico.dsh-nico-theme": {
+      "ageDays": 1,
+      "starsPerDay": 3,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.327,
+      "asOf": "2026-10-25"
+    },
+    "moshangzhe.dsh-shanqi-theme": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "mtaech.dsh-material-you": {
       "ageDays": 71,
       "starsPerDay": 0.0141,
@@ -40265,6 +40655,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0.0331,
       "score": 9.184,
+      "asOf": "2026-10-25"
+    },
+    "nickfast2025.dsh-sky-window": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "niiang.dsh-kimino-theme": {
@@ -40307,6 +40707,16 @@
       "score": 0.273,
       "asOf": "2026-10-25"
     },
+    "noah-wang.dsh-agent-pet": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "noexcs.dsh-skin-glass": {
       "ageDays": 71,
       "starsPerDay": 0,
@@ -40337,6 +40747,36 @@
       "score": 0.203,
       "asOf": "2026-10-25"
     },
+    "oliveryfaso.dsh-pet-company": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "opensetk.dsh-xiaohei": {
+      "ageDays": 1,
+      "starsPerDay": 5,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 4.3,
+      "asOf": "2026-10-25"
+    },
+    "orxz.deepseek-harness-pets": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "ossfrankfrank.dsh-dracula-theme": {
       "ageDays": 69,
       "starsPerDay": 0.029,
@@ -40355,6 +40795,36 @@
       "pullsPerDay": 0.007,
       "issuesPerDay": 0.0223,
       "score": 0.887,
+      "asOf": "2026-10-25"
+    },
+    "pineapple880066.dsh-webui-pets": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
+      "asOf": "2026-10-25"
+    },
+    "potoior.dsh-bull-bear": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "qin839.dsh-visual-system": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-25"
     },
     "quaner1234.cmd.dsh.theme.kami": {
@@ -40437,6 +40907,16 @@
       "score": 0.131,
       "asOf": "2026-10-25"
     },
+    "renjie2026.dsh-theme-gallery": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "respawn.id.dsh.rhine.splash": {
       "ageDays": 8,
       "starsPerDay": 0.375,
@@ -40467,6 +40947,36 @@
       "score": 3.939,
       "asOf": "2026-10-25"
     },
+    "ronnyjung2021.dsh-mimo-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
+    "ronnyjung2021.dsh-trae-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
+    "ruegg114514.dsh-colorlab": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "sakka6868.dsh-skin": {
       "ageDays": 71,
       "starsPerDay": 0.0282,
@@ -40475,6 +40985,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.115,
+      "asOf": "2026-10-25"
+    },
+    "saknutella.dsh-thinking-quips": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "sakuraaa667.dsh-wallpaper-engine": {
@@ -40495,6 +41015,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0.0023,
       "score": 0.279,
+      "asOf": "2026-10-25"
+    },
+    "sayzwx.dsh-xingkong-theme": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "sddft97.dsh-client-ui-skin-verdandi": {
@@ -40557,6 +41087,16 @@
       "score": 0,
       "asOf": "2026-10-25"
     },
+    "shokoup.dsh-theme-liuguang": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "shuaihaov.dsh-thewanderingearthii": {
       "ageDays": 48,
       "starsPerDay": 0.0208,
@@ -40575,6 +41115,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.049,
+      "asOf": "2026-10-25"
+    },
+    "signalight.dsh-codex-pet": {
+      "ageDays": 1,
+      "starsPerDay": 5,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 4.3,
       "asOf": "2026-10-25"
     },
     "sim-xia.dsh-vscode-theme": {
@@ -40837,6 +41387,16 @@
       "score": 0.214,
       "asOf": "2026-10-25"
     },
+    "tinynian.dsh-harness-os": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "tommy00748.dsh-theme-cyberpunk2077": {
       "ageDays": 71,
       "starsPerDay": 0.507,
@@ -40967,6 +41527,16 @@
       "score": 5.082,
       "asOf": "2026-10-25"
     },
+    "weibaohui.dsh-matrix": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "weichi-ai.dshd": {
       "ageDays": 48,
       "starsPerDay": 0.0208,
@@ -40985,6 +41555,26 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.051,
+      "asOf": "2026-10-25"
+    },
+    "winditer.dsh-temp-chat": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "witherwithwinter.dsh-ccx": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "wolfgenerals.ncm-player": {
@@ -41157,6 +41747,26 @@
       "score": 0.014,
       "asOf": "2026-10-25"
     },
+    "yaanlaan.deepseek-colorful": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
+    "yannicksong0106.dsh-550c-boot": {
+      "ageDays": 1,
+      "starsPerDay": 183,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 12.516,
+      "asOf": "2026-10-25"
+    },
     "yannicksong0106.dsh-550c-skin": {
       "ageDays": 4,
       "starsPerDay": 0.5,
@@ -41187,6 +41797,26 @@
       "score": 0.44,
       "asOf": "2026-10-25"
     },
+    "yefengliu1.dsh-theme-songgrid": {
+      "ageDays": 1,
+      "starsPerDay": 3,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.327,
+      "asOf": "2026-10-25"
+    },
+    "yesang0924-beep.dsh-glass-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "yhprime.dsh-theme-picker": {
       "ageDays": 69,
       "starsPerDay": 0.029,
@@ -41195,6 +41825,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.102,
+      "asOf": "2026-10-25"
+    },
+    "yicun0316.dsh-claude-slider": {
+      "ageDays": 1,
+      "starsPerDay": 2,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 2.637,
       "asOf": "2026-10-25"
     },
     "ylifeonlyonce.dsh-calendar": {
@@ -41277,6 +41917,16 @@
       "score": 0.114,
       "asOf": "2026-10-25"
     },
+    "yunshu-iii.dsh-wallpaper-theme": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
     "yunxiiqwq.maid-whale-webui": {
       "ageDays": 71,
       "starsPerDay": 0.6338,
@@ -41355,6 +42005,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.219,
+      "asOf": "2026-10-25"
+    },
+    "zanechen6.dsh-assistant-skin": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
       "asOf": "2026-10-25"
     },
     "zavang.dsh-diorama": {
@@ -41487,6 +42147,16 @@
       "score": 5.43,
       "asOf": "2026-10-25"
     },
+    "zmm863-commits.dsh-client-ui-paopaocat": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
+      "asOf": "2026-10-25"
+    },
     "znnvsnoou.dsh-skin-tlipoca": {
       "ageDays": 66,
       "starsPerDay": 0,
@@ -41535,6 +42205,16 @@
       "pullsPerDay": 0,
       "issuesPerDay": 0,
       "score": 0.049,
+      "asOf": "2026-10-25"
+    },
+    "zys2026.dsh-theme-tide": {
+      "ageDays": 1,
+      "starsPerDay": 0,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 0,
       "asOf": "2026-10-25"
     }
   }
