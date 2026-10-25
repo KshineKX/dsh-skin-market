@@ -1,0 +1,61 @@
+id: l-vm2k.dsh-ayaka-theme
+name:
+  zh: "@l-vm2k/dsh-ayaka-theme"
+  en: "@l-vm2k/dsh-ayaka-theme"
+author: l-vM2k
+description: Kamisato Ayaka ice-bloom theme + desktop pet for DeepSeek Harness Web Client
+repo: https://github.com/l-vM2k/dsh-ayaka-theme
+package: "@l-vm2k/dsh-ayaka-theme"
+rowId: ui-ayaka-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:l-vM2k/dsh-ayaka-theme#2a1e0143f22f38f7e86c4cdc323e734cf5b028ba
+  version: 0.1.0
+  commit: 2a1e0143f22f38f7e86c4cdc323e734cf5b028ba
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 2a1e0143f22f38f7e86c4cdc323e734cf5b028ba
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:39:49.562Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:41.318Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:41.318Z
+marketScreenshots:
+  - skin-screenshots/l-vM2k__dsh-ayaka-theme/2a1e0143f22f38f7e86c4cdc323e734cf5b028ba/home.png
+  - skin-screenshots/l-vM2k__dsh-ayaka-theme/2a1e0143f22f38f7e86c4cdc323e734cf5b028ba/conversation.png
+  - skin-screenshots/l-vM2k__dsh-ayaka-theme/2a1e0143f22f38f7e86c4cdc323e734cf5b028ba/settings.png

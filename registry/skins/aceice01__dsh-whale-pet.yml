@@ -1,0 +1,63 @@
+id: aceice01.dsh-whale-pet
+name:
+  zh: dsh-whale-pet
+  en: dsh-whale-pet
+author: aceice01
+description: 🐋 DeepSeek 鲸鱼娘桌宠 — 蓝发女仆 + 鲸鱼尾动画 · 晓伊神经网络语音 · 撒娇互动 · 任务完成提醒 · 会话余额徽章（非官方同人项目）
+repo: https://github.com/aceice01/dsh-whale-pet
+package: dsh-whale-pet
+rowId: balance-widget
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:aceice01/dsh-whale-pet#18fec904ec3b4fd3958b6fb8c2fa9c209679328f
+  version: 1.0.0
+  commit: 18fec904ec3b4fd3958b6fb8c2fa9c209679328f
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 18fec904ec3b4fd3958b6fb8c2fa9c209679328f
+    packageVersion: 1.0.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:15:49.083Z
+    findings: []
+license:
+  code: DeepSeek Whale Girl Pet Non-Commercial Use License
+  commercialUse: false
+  notice: 仅限个人学习、研究、娱乐及非商业复制、修改和分发；须保留许可声明与致谢。
+featuredRank: 978
+starsSnapshot: 22
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:33.951Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:33.951Z
+marketScreenshots:
+  - skin-screenshots/aceice01__dsh-whale-pet/18fec904ec3b4fd3958b6fb8c2fa9c209679328f/home.png
+  - skin-screenshots/aceice01__dsh-whale-pet/18fec904ec3b4fd3958b6fb8c2fa9c209679328f/conversation.png
+  - skin-screenshots/aceice01__dsh-whale-pet/18fec904ec3b4fd3958b6fb8c2fa9c209679328f/settings.png

@@ -1,0 +1,61 @@
+id: wawo77.dsh-opencode-go-usage
+name:
+  zh: dsh-opencode-go-usage
+  en: dsh-opencode-go-usage
+author: wawo77
+description: DSH Web 桌宠用量小窗「蓝色大肥鱼」：骨骼动画角色（呼吸 / 蹦跳 / 耳朵抖动 / 尾巴摆动）+ 点击小黄鸭与缩放「啵」音效；按 DSH 配置的套餐自动匹配用量适配器（OpenCode Go / Command Code / DeepSeek 官方），套餐制显示用量百分比、按量计费显示余额，失败时降级到本地统计。
+repo: https://github.com/wawo77/dsh-opencode-go-usage
+package: dsh-opencode-go-usage
+rowId: opencode-go-usage
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:wawo77/dsh-opencode-go-usage#e6a39c3f44a9ca3bde24cb70b51edec818e43ac6
+  version: 0.4.0
+  commit: e6a39c3f44a9ca3bde24cb70b51edec818e43ac6
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.5-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: e6a39c3f44a9ca3bde24cb70b51edec818e43ac6
+    packageVersion: 0.4.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:15:49.083Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 996
+starsSnapshot: 4
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:34.356Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:34.356Z
+marketScreenshots:
+  - skin-screenshots/wawo77__dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/home.png
+  - skin-screenshots/wawo77__dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/conversation.png
+  - skin-screenshots/wawo77__dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/settings.png

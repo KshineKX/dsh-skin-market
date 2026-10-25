@@ -1,0 +1,59 @@
+id: hzhgino.dsh-caonima
+name:
+  zh: dsh-caonima
+  en: dsh-caonima
+author: hzhgino
+description: 核动力草泥马 —— DSH 桌宠插件:Web 右下角的网红草泥马,随 Agent 工作状态散步与互动 (Nuclear Alpaca, a desktop pet plugin for the DeepSeek Harness Web GUI)
+repo: https://github.com/hzhgino/dsh-caonima
+package: dsh-caonima
+rowId: caonima
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:hzhgino/dsh-caonima#c31db47091d45d78f546eefca5a1e557993f75f4
+  version: 0.1.0
+  commit: c31db47091d45d78f546eefca5a1e557993f75f4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: c31db47091d45d78f546eefca5a1e557993f75f4
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:36:00.825Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:36.743Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:36.743Z
+marketScreenshots:
+  - skin-screenshots/hzhgino__dsh-caonima/c31db47091d45d78f546eefca5a1e557993f75f4/home.png

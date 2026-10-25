@@ -1,0 +1,62 @@
+id: lx000166.dsh-aqua-glass
+name:
+  zh: dsh-aqua-glass
+  en: dsh-aqua-glass
+author: lx000166
+description: Aqua 玻璃主题：为 DeepSeek Harness Web GUI 提供磨砂玻璃材质、流体背景与浅深两态适配
+repo: https://github.com/lx000166/dsh-aqua-glass
+package: dsh-aqua-glass
+rowId: aqua-glass
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:lx000166/dsh-aqua-glass#b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec
+  version: 0.1.0
+  commit: b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-aqua-glass@https://codeload.github.com/lx000166/dsh-aqua-glass/tar.gz/b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec
+compatibility:
+  dsh: ">=0.2.0-rc.1 <0.3.0-0"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:38:52.273Z
+    findings: []
+license:
+  code: AGPL-3.0
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:44.348Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:44.348Z
+marketScreenshots:
+  - skin-screenshots/lx000166__dsh-aqua-glass/b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec/home.png
+  - skin-screenshots/lx000166__dsh-aqua-glass/b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec/conversation.png
+  - skin-screenshots/lx000166__dsh-aqua-glass/b333eaefff8f8f4a4cbe87c6da590614fe4ef5ec/settings.png

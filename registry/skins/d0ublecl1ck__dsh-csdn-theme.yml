@@ -1,0 +1,61 @@
+id: d0ublecl1ck.dsh-csdn-theme
+name:
+  zh: dsh-csdn-theme
+  en: dsh-csdn-theme
+author: d0ublecl1ck
+description: CSDN 风格的 DSH Web 主题：CSDN 品牌色与博文正文排版（加粗/下划线/引用/表格/代码等）双层接入，浅色与深色各一套。
+repo: https://github.com/d0ublecl1ck/dsh-csdn-theme
+package: dsh-csdn-theme
+rowId: csdn-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:d0ublecl1ck/dsh-csdn-theme#b1c28da000991b84445b3d599447931da2d6e0ad
+  version: 0.2.3
+  commit: b1c28da000991b84445b3d599447931da2d6e0ad
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: b1c28da000991b84445b3d599447931da2d6e0ad
+    packageVersion: 0.2.3
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:32:39.160Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:35.460Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:35.460Z
+marketScreenshots:
+  - skin-screenshots/d0ublecl1ck__dsh-csdn-theme/b1c28da000991b84445b3d599447931da2d6e0ad/home.png
+  - skin-screenshots/d0ublecl1ck__dsh-csdn-theme/b1c28da000991b84445b3d599447931da2d6e0ad/conversation.png
+  - skin-screenshots/d0ublecl1ck__dsh-csdn-theme/b1c28da000991b84445b3d599447931da2d6e0ad/settings.png

@@ -1,0 +1,61 @@
+id: linkbag.dsh-capyreporter
+name:
+  zh: dsh-capyreporter
+  en: dsh-capyreporter
+author: linkbag
+description: CapyReporter — an always-on-top capybara task reporter for the DeepSeek Harness Web UI. A transparent floating pet that narrates each trajectory step in a speech bubble, tells you which project is reporting, alerts you when a task completes while you are away, and lets you upload your own pet art.
+repo: https://github.com/linkbag/dsh-capyreporter
+package: dsh-capyreporter
+rowId: capyreporter
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:linkbag/dsh-capyreporter#6091699592eaf3e60dd91745a2c1817d923611c2
+  version: 0.1.6
+  commit: 6091699592eaf3e60dd91745a2c1817d923611c2
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-capyreporter@https://codeload.github.com/linkbag/dsh-capyreporter/tar.gz/6091699592eaf3e60dd91745a2c1817d923611c2
+compatibility:
+  dsh: ">=0.1.1-rc.2 <0.2.0-0||>=0.1.2-0"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 6091699592eaf3e60dd91745a2c1817d923611c2
+    packageVersion: 0.1.6
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:38:52.273Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:43.759Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:43.759Z
+marketScreenshots:
+  - skin-screenshots/linkbag__dsh-capyreporter/6091699592eaf3e60dd91745a2c1817d923611c2/home.png
+  - skin-screenshots/linkbag__dsh-capyreporter/6091699592eaf3e60dd91745a2c1817d923611c2/conversation.png
+  - skin-screenshots/linkbag__dsh-capyreporter/6091699592eaf3e60dd91745a2c1817d923611c2/settings.png

@@ -1,0 +1,62 @@
+id: daydreamring.dsh-cho-kaguya-plugin-public
+name:
+  zh: "@dsh-external/dsh-client-ui-skin-cho-kaguya"
+  en: "@dsh-external/dsh-client-ui-skin-cho-kaguya"
+author: DaydreAmRing
+description: "Tsukuyomi: Night & Day - dual-world backdrop skin plugin for the DeepSeek Harness web GUI (Tsukuyomi night water / Tokyo daytime), meteor-shower canvas, FUSHI constellation, lunar UI accents. Standee-free public build: bring your own images via assets/standees/."
+repo: https://github.com/DaydreAmRing/dsh-cho-kaguya-plugin-public
+package: "@dsh-external/dsh-client-ui-skin-cho-kaguya"
+rowId: ui-skin-cho-kaguya
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:DaydreAmRing/dsh-cho-kaguya-plugin-public#37a5c093a021d72492989005d17f7721e4f7b97c
+  version: 0.6.2
+  commit: 37a5c093a021d72492989005d17f7721e4f7b97c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 37a5c093a021d72492989005d17f7721e4f7b97c
+    packageVersion: 0.6.2
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:39:49.562Z
+    findings: []
+license:
+  code: CC-BY-NC-SA-4.0
+  commercialUse: false
+  notice: 代码与原创插画CC BY-NC-SA 4.0，须署名、非商业使用并以相同许可分享改编作品。
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:40.947Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:40.947Z
+marketScreenshots:
+  - skin-screenshots/DaydreAmRing__dsh-cho-kaguya-plugin-public/37a5c093a021d72492989005d17f7721e4f7b97c/home.png
+  - skin-screenshots/DaydreAmRing__dsh-cho-kaguya-plugin-public/37a5c093a021d72492989005d17f7721e4f7b97c/conversation.png
+  - skin-screenshots/DaydreAmRing__dsh-cho-kaguya-plugin-public/37a5c093a021d72492989005d17f7721e4f7b97c/settings.png

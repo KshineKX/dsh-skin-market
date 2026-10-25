@@ -1,0 +1,59 @@
+id: zeheng723.dsh-medic-pet
+name:
+  zh: dsh-medic-pet
+  en: dsh-medic-pet
+author: zeheng723
+description: "Local-usage desk pet for DeepSeek Harness: an original chibi field-medic mascot (hand-drawn SVG, no official assets) that reports per-turn token usage, grows one step per day of real use, and adds local stats, daily goals, badges, sit/water reminders and outfit themes. No network, no credentials."
+repo: https://github.com/zeheng723/dsh-medic-pet
+package: dsh-medic-pet
+rowId: medic-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:zeheng723/dsh-medic-pet#b3c9c841123daa7b0c6846d65005ee1b9f6a97fd
+  version: 1.2.0
+  commit: b3c9c841123daa7b0c6846d65005ee1b9f6a97fd
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: b3c9c841123daa7b0c6846d65005ee1b9f6a97fd
+    packageVersion: 1.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:36:00.825Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:38.158Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:38.158Z
+marketScreenshots:
+  - skin-screenshots/zeheng723__dsh-medic-pet/b3c9c841123daa7b0c6846d65005ee1b9f6a97fd/home.png

@@ -1,0 +1,66 @@
+id: lyx0717.dsh-washer
+name:
+  zh: dsh-washer
+  en: dsh-washer
+author: lyx0717
+description: 滚筒洗衣机 · 用一台洗衣机的运转状态显示 Agent 的工作状态
+repo: https://github.com/lyx0717/dsh-washer
+package: "@lyx0717/dsh-washer"
+rowId: washer
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:lyx0717/dsh-washer#70ad9a1827df37348f6a892b52101163e4c46c36
+  version: 0.3.4
+  commit: 70ad9a1827df37348f6a892b52101163e4c46c36
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: "@lyx0717/dsh-washer"
+    packageVersion: 0.3.4
+    integrity: sha512-xSj8+X2qDnVGGWxwIiT6O2tRc5DxS0wusiSbtdSDs4mINrWx8OEvPYYMBst69JwmbhCNabFzFNg1E6UGXejHgw==
+  npm:
+    name: "@lyx0717/dsh-washer"
+    version: 0.3.4
+    integrity: sha512-xSj8+X2qDnVGGWxwIiT6O2tRc5DxS0wusiSbtdSDs4mINrWx8OEvPYYMBst69JwmbhCNabFzFNg1E6UGXejHgw==
+    repository: https://github.com/lyx0717/dsh-washer
+    gitHead: 70ad9a1827df37348f6a892b52101163e4c46c36
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 70ad9a1827df37348f6a892b52101163e4c46c36
+    packageVersion: 0.3.4
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:38:31.057Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:38.796Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:38.796Z
+marketScreenshots:
+  - skin-screenshots/lyx0717__dsh-washer/70ad9a1827df37348f6a892b52101163e4c46c36/conversation.png

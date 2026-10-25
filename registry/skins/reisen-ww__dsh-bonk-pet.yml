@@ -1,0 +1,59 @@
+id: reisen-ww.dsh-bonk-pet
+name:
+  zh: dsh-bonk-pet
+  en: dsh-bonk-pet
+author: reisen-ww
+description: 敲盆宠物 —— DSH Web GUI 的悬浮小鲸鱼：agent 执行出错时从天上掉钢管砸它，你可以敲它的铁盆，敲完它会去讨白饭吃。
+repo: https://github.com/reisen-ww/dsh-bonk-pet
+package: dsh-bonk-pet
+rowId: bonk-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:reisen-ww/dsh-bonk-pet#e8b7b762efcc43adcb63b487016cc31b08734be5
+  version: 0.12.2
+  commit: e8b7b762efcc43adcb63b487016cc31b08734be5
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: e8b7b762efcc43adcb63b487016cc31b08734be5
+    packageVersion: 0.12.2
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:36:00.825Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:37.457Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:37.457Z
+marketScreenshots:
+  - skin-screenshots/reisen-ww__dsh-bonk-pet/e8b7b762efcc43adcb63b487016cc31b08734be5/home.png

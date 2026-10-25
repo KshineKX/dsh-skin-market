@@ -1,0 +1,61 @@
+id: shinarin.dsh-remielle-pet
+name:
+  zh: dsh-remielle-pet
+  en: dsh-remielle-pet
+author: Shinarin
+description: dsh-remielle-pet（蕾米埃尔桌宠）：DSH 桌宠插件，在 DSH 界面显示跟随会话状态的宠物 GIF，支持 Web UI 与桌面版。
+repo: https://github.com/Shinarin/dsh-remielle-pet
+package: dsh-remielle-pet
+rowId: dsh-remielle-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Shinarin/dsh-remielle-pet#daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb
+  version: 1.1.1
+  commit: daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb
+    packageVersion: 1.1.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:32:39.160Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:36.576Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:36.576Z
+marketScreenshots:
+  - skin-screenshots/Shinarin__dsh-remielle-pet/daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb/home.png
+  - skin-screenshots/Shinarin__dsh-remielle-pet/daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb/conversation.png
+  - skin-screenshots/Shinarin__dsh-remielle-pet/daa0c8d1df4fb3decc75c6a6c1eae6e5299f92cb/settings.png

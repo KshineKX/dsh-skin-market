@@ -1,0 +1,60 @@
+id: yrsxy.dsh-warm-theme
+name:
+  zh: dsh-warm-theme
+  en: dsh-warm-theme
+author: yrsxy
+description: DSH 护眼配色包 —— 5 套低蓝光配色，通过官方 ctx.theme.overrideTokens 扩展点覆盖语义 token，零布局改动、热生效。
+repo: https://github.com/yrsxy/dsh-warm-theme
+package: dsh-warm-theme
+rowId: dsh-warm-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:yrsxy/dsh-warm-theme#8e3e4bbcd66202cd792c832e256397ceb4d651dd
+  version: 0.2.0
+  commit: 8e3e4bbcd66202cd792c832e256397ceb4d651dd
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 8e3e4bbcd66202cd792c832e256397ceb4d651dd
+    packageVersion: 0.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:32:39.160Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:36.096Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:36.096Z
+marketScreenshots:
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/home.png
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/conversation.png
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/settings.png

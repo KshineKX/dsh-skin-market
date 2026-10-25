@@ -1,0 +1,62 @@
+id: kimfischer99.plugins-anthropic-theme
+name:
+  zh: dsh-anthropic-theme
+  en: dsh-anthropic-theme
+author: KimFischer99
+description: Anthropic Codex 配色（miniLV/Anthropic-codex-theme）注入到 DeepSeek Harness Web UI
+repo: https://github.com/KimFischer99/DeepSeek-Harness-Desktop
+subpath: plugins/anthropic-theme
+package: dsh-anthropic-theme
+rowId: anthropic-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:KimFischer99/DeepSeek-Harness-Desktop#15c79c9267c2e5160111e030e49370d2bb3dc41b&path:/plugins/anthropic-theme
+  version: 1.0.4
+  commit: 15c79c9267c2e5160111e030e49370d2bb3dc41b
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 15c79c9267c2e5160111e030e49370d2bb3dc41b
+    packageVersion: 1.0.4
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:37:24.972Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:43.112Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:43.112Z
+marketScreenshots:
+  - skin-screenshots/KimFischer99__DeepSeek-Harness-Desktop--plugins--anthropic-theme/15c79c9267c2e5160111e030e49370d2bb3dc41b/home.png
+  - skin-screenshots/KimFischer99__DeepSeek-Harness-Desktop--plugins--anthropic-theme/15c79c9267c2e5160111e030e49370d2bb3dc41b/conversation.png
+  - skin-screenshots/KimFischer99__DeepSeek-Harness-Desktop--plugins--anthropic-theme/15c79c9267c2e5160111e030e49370d2bb3dc41b/settings.png

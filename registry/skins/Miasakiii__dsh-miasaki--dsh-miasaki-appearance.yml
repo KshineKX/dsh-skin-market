@@ -1,0 +1,62 @@
+id: miasakiii.dsh-miasaki
+name:
+  zh: dsh-miasaki
+  en: dsh-miasaki
+author: Miasakiii
+description: 设置里新增一栏「外观」：主题皮肤 / 壁纸 / 动效 / 会话效果，零 shell 改动、关掉即原生。
+repo: https://github.com/Miasakiii/dsh-miasaki
+subpath: dsh-miasaki-appearance
+package: "@miasaki/dsh-appearance"
+rowId: appearance
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Miasakiii/dsh-miasaki#10373dceaed6481ae446f358b31b70575cb8304d&path:/dsh-miasaki-appearance
+  version: 0.1.0
+  commit: 10373dceaed6481ae446f358b31b70575cb8304d
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: "@miasaki/dsh-appearance@https://codeload.github.com/Miasakiii/dsh-miasaki/tar.gz/10373dceaed6481ae446f358b31b70575cb8304d#path:dsh-miasaki-appearance"
+compatibility:
+  dsh: ">=0.1.7"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 10373dceaed6481ae446f358b31b70575cb8304d
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:41:52.800Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:39.324Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:39.324Z
+marketScreenshots:
+  - skin-screenshots/Miasakiii__dsh-miasaki--dsh-miasaki-appearance/10373dceaed6481ae446f358b31b70575cb8304d/home.png
+  - skin-screenshots/Miasakiii__dsh-miasaki--dsh-miasaki-appearance/10373dceaed6481ae446f358b31b70575cb8304d/conversation.png
+  - skin-screenshots/Miasakiii__dsh-miasaki--dsh-miasaki-appearance/10373dceaed6481ae446f358b31b70575cb8304d/settings.png

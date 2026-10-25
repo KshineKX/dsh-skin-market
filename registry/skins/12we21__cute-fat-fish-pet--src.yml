@@ -1,0 +1,62 @@
+id: 12we21.src
+name:
+  zh: src
+  en: src
+author: 12we21
+description: 「可爱大肥鱼桌宠」的桌宠本体（宿主半侧入口）：待机动画、随机动作、桌面漫步、陪聊与看屏幕。由 Mikolu 独立开发和维护；早期基础架构来自上游 dsh-pet 0.3.0（MIT，作者 PC2005-cloud）。
+repo: https://github.com/12we21/cute-fat-fish-pet
+subpath: src
+package: cute-fat-fish-pet
+rowId: cute-fat-fish-pet
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:12we21/cute-fat-fish-pet#e53f63e67227671aca092e3334c8611e29b880b6&path:/src
+  version: 1.2.3
+  commit: e53f63e67227671aca092e3334c8611e29b880b6
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: e53f63e67227671aca092e3334c8611e29b880b6
+    packageVersion: 1.2.3
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:15:49.083Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 981
+starsSnapshot: 19
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:34.088Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:34.088Z
+marketScreenshots:
+  - skin-screenshots/12we21__cute-fat-fish-pet--src/e53f63e67227671aca092e3334c8611e29b880b6/home.png
+  - skin-screenshots/12we21__cute-fat-fish-pet--src/e53f63e67227671aca092e3334c8611e29b880b6/conversation.png
+  - skin-screenshots/12we21__cute-fat-fish-pet--src/e53f63e67227671aca092e3334c8611e29b880b6/settings.png

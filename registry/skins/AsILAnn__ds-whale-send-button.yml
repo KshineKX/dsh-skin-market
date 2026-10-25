@@ -1,0 +1,61 @@
+id: asilann.ds-whale-send-button
+name:
+  zh: "@dsh-external/ds-whale-send-button"
+  en: "@dsh-external/ds-whale-send-button"
+author: AsILAnn
+description: 把对话输入栏的主发送按钮图标替换为 DeepSeek 官方鲸鱼 logo（CSS mask 覆盖，亮暗主题自适应，不改发送行为）
+repo: https://github.com/AsILAnn/ds-whale-send-button
+package: "@dsh-external/ds-whale-send-button"
+rowId: ds-whale-send-button
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:AsILAnn/ds-whale-send-button#e58dda87ca633e9630da59f5e80711a1aa8ee993
+  version: 0.1.0
+  commit: e58dda87ca633e9630da59f5e80711a1aa8ee993
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: e58dda87ca633e9630da59f5e80711a1aa8ee993
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:39:49.562Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:40.773Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:40.773Z
+marketScreenshots:
+  - skin-screenshots/AsILAnn__ds-whale-send-button/e58dda87ca633e9630da59f5e80711a1aa8ee993/home.png
+  - skin-screenshots/AsILAnn__ds-whale-send-button/e58dda87ca633e9630da59f5e80711a1aa8ee993/conversation.png
+  - skin-screenshots/AsILAnn__ds-whale-send-button/e58dda87ca633e9630da59f5e80711a1aa8ee993/settings.png

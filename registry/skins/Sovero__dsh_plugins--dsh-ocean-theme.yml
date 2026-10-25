@@ -1,0 +1,63 @@
+id: sovero.dsh-ocean-theme
+name:
+  zh: dsh-ocean-theme
+  en: dsh-ocean-theme
+author: Sovero
+description: "Тема «Океан» для DSH / Ocean theme for DSH: animated ocean under the interface, fish schools, whales, sharks, jellyfish, kelp and a wrecked ship; pointer movement disturbs the water surface."
+repo: https://github.com/Sovero/dsh_plugins
+subpath: dsh-ocean-theme
+package: dsh-ocean-theme
+rowId: dsh-ocean-theme
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:Sovero/dsh_plugins#cf4864c10da496272b483e10d51839372c65713d&path:/dsh-ocean-theme
+  version: 1.0.1
+  commit: cf4864c10da496272b483e10d51839372c65713d
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: cf4864c10da496272b483e10d51839372c65713d
+    packageVersion: 1.0.1
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:39:49.562Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:42.314Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:42.314Z
+marketScreenshots:
+  - skin-screenshots/Sovero__dsh_plugins--dsh-ocean-theme/cf4864c10da496272b483e10d51839372c65713d/home.png
+  - skin-screenshots/Sovero__dsh_plugins--dsh-ocean-theme/cf4864c10da496272b483e10d51839372c65713d/conversation.png
+  - skin-screenshots/Sovero__dsh_plugins--dsh-ocean-theme/cf4864c10da496272b483e10d51839372c65713d/settings.png

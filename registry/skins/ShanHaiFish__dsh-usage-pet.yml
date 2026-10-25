@@ -1,0 +1,59 @@
+id: shanhaifish.dsh-usage-pet
+name:
+  zh: dsh-usage-pet
+  en: dsh-usage-pet
+author: ShanHaiFish
+description: DeepSeek Harness 的悬浮鲸鱼娘宠物：跟随会话模型显示 OpenCode Go 三窗口额度、DeepSeek 账户累计消费与余额、DeepSeek 官方 API 余额；凭据只留在 Host。
+repo: https://github.com/ShanHaiFish/dsh-usage-pet
+package: dsh-usage-pet
+rowId: dsh-usage-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:ShanHaiFish/dsh-usage-pet#26e6e9b08411362e54fb69692e6b7f7e4a17f177
+  version: 0.5.0
+  commit: 26e6e9b08411362e54fb69692e6b7f7e4a17f177
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 26e6e9b08411362e54fb69692e6b7f7e4a17f177
+    packageVersion: 0.5.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:38:31.057Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:39.008Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:39.008Z
+marketScreenshots:
+  - skin-screenshots/ShanHaiFish__dsh-usage-pet/26e6e9b08411362e54fb69692e6b7f7e4a17f177/conversation.png

@@ -1,0 +1,60 @@
+id: kjx-talesofai.dsh-plugin-theme-workbench
+name:
+  zh: dsh-plugin-theme-workbench
+  en: dsh-plugin-theme-workbench
+author: kjx-talesofai
+description: Five themes for the DeepSeek Harness Web client. Each ships a light and a dark palette.
+repo: https://github.com/kjx-talesofai/dsh-plugin-theme-workbench
+package: dsh-plugin-theme-workbench
+rowId: theme-workbench
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:kjx-talesofai/dsh-plugin-theme-workbench#1de592b032a4e3800d087e672a2b992b0642385c
+  version: 0.1.4
+  commit: 1de592b032a4e3800d087e672a2b992b0642385c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1 <0.3.0-0"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 1de592b032a4e3800d087e672a2b992b0642385c
+    packageVersion: 0.1.4
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:37:24.972Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:43.297Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:43.297Z
+marketScreenshots:
+  - skin-screenshots/kjx-talesofai__dsh-plugin-theme-workbench/1de592b032a4e3800d087e672a2b992b0642385c/home.png
+  - skin-screenshots/kjx-talesofai__dsh-plugin-theme-workbench/1de592b032a4e3800d087e672a2b992b0642385c/conversation.png
+  - skin-screenshots/kjx-talesofai__dsh-plugin-theme-workbench/1de592b032a4e3800d087e672a2b992b0642385c/settings.png

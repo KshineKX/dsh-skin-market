@@ -1,0 +1,61 @@
+id: la-sandrone.packages-dsh-sandrone-ui-patches
+name:
+  zh: dsh-sandrone-ui-patches
+  en: dsh-sandrone-ui-patches
+author: la-sandrone
+description: 衬线字体方案 + 字号倍率 + 皮肤字族压制。正文字族 Source Serif 4 Display 打头、Times New Roman / 中文仿宋 / 思源宋体兜底；代码字族 Fira Code -> 仿宋 -> serif（与 VSCode 对齐）。字号（2026-10-08 改比例式）：唯一绝对数字交还 ui-theme 的 --dsh-content-font-size（设置面板「字号大小」10..22）——本包不再覆盖它，覆盖会以 !important 压过 body 内联样式，让整个设置面板失效；本包只接管官方那几档硬编码绝对值（code 12px / code-block 11px / banner 11px，它们不参与 delta 链），改为「基准 × 固定倍率」等比跟随（16/18、26/18、24/18、15/18 —— 与 DPI 缩放同构）。倍率按 2026-10-07 在 18px 基准下定稿的绝对值折算，故基准设 18px 时与当时逐像素一致。另用两层通用规则压制皮肤对 code/pre 的组件级直接声明（皮肤会新增，逐皮肤特判必漏）。client 半区注入全局 CSS，与 furina/navia 暗色表格分割线增强、宽 markdown 表格（≥4 列）滚动行为同源。
+repo: https://github.com/la-sandrone/dsh-taller-y-relojeria-de-sandrone
+subpath: packages/dsh-sandrone-ui-patches
+package: dsh-sandrone-ui-patches
+rowId: dsh-sandrone-ui-patches
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:la-sandrone/dsh-taller-y-relojeria-de-sandrone#5cd447a084902e62e639d62497a1a075f4dec2fd&path:/packages/dsh-sandrone-ui-patches
+  version: 0.1.0
+  commit: 5cd447a084902e62e639d62497a1a075f4dec2fd
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.1-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 5cd447a084902e62e639d62497a1a075f4dec2fd
+    packageVersion: 0.1.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:37:24.972Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+  notice: 代码MIT；文档CC BY-SA 4.0；Source Serif 4字体OFL，须保留各自许可与署名。
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:43.478Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:43.478Z
+marketScreenshots:
+  - skin-screenshots/la-sandrone__dsh-taller-y-relojeria-de-sandrone--packages--dsh-sandrone-ui-patches/5cd447a084902e62e639d62497a1a075f4dec2fd/home.png
+  - skin-screenshots/la-sandrone__dsh-taller-y-relojeria-de-sandrone--packages--dsh-sandrone-ui-patches/5cd447a084902e62e639d62497a1a075f4dec2fd/conversation.png
+  - skin-screenshots/la-sandrone__dsh-taller-y-relojeria-de-sandrone--packages--dsh-sandrone-ui-patches/5cd447a084902e62e639d62497a1a075f4dec2fd/settings.png
