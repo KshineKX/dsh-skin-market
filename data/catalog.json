@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-25T19:35:49.624Z",
+  "generatedAt": "2026-10-25T19:36:51.893Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -52058,6 +52058,16 @@
       "score": 0.1,
       "asOf": "2026-10-25"
     },
+    "chael-chael.dsh-ascii-whales": {
+      "ageDays": 1,
+      "starsPerDay": 4,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.863,
+      "asOf": "2026-10-25"
+    },
     "chajiuqqq.dsh-claude-theme": {
       "ageDays": 71,
       "starsPerDay": 0.0141,
@@ -53228,6 +53238,16 @@
       "score": 0.152,
       "asOf": "2026-10-25"
     },
+    "jimmy0123-ux.dsh-token-pet": {
+      "ageDays": 1,
+      "starsPerDay": 56,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 9.703,
+      "asOf": "2026-10-25"
+    },
     "jinxlux.xiao-theme-dsh-ui-plugin": {
       "ageDays": 48,
       "starsPerDay": 0.0625,
@@ -53719,6 +53739,16 @@
       "asOf": "2026-10-25"
     },
     "lildanger.dsh-skin-win2000": {
+      "ageDays": 1,
+      "starsPerDay": 1,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 1.664,
+      "asOf": "2026-10-25"
+    },
+    "lilycleheart.dsh-liuli-ui-enhance": {
       "ageDays": 1,
       "starsPerDay": 1,
       "starGrowthPerDay": 0,
