@@ -190,7 +190,13 @@ export function recommend(current: SkinEntry, catalog: SkinEntry[], stars: Reado
     const recent = Date.now() - Date.parse(candidate.releaseUpdatedAt) <= 30 * 86400000 ? 1 : 0
     return sharedTags * 4 + sharedModes * 2 + Math.log1p(stars.get(candidate.id) ?? candidate.starsSnapshot) + recent - candidate.featuredRank / 100
   }
-  return catalog.filter(item => item.id !== current.id).sort((a, b) => score(b) - score(a)).slice(0, 4).map(item => item.id)
+  // Score once per candidate. Recomputing inside sort makes the all-skin
+  // recommendation pass needlessly expensive as the scheduled catalog grows.
+  return catalog.filter(item => item.id !== current.id)
+    .map(item => ({ item, score: score(item) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(({ item }) => item.id)
 }
 
 export async function catalogWithStars(_profileDir: string, catalog = loadCatalog()): Promise<CatalogSkin[]> {
