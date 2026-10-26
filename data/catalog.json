@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-26T03:58:25.533Z",
+  "generatedAt": "2026-10-26T04:03:58.026Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -56072,6 +56072,16 @@
       "pullsPerDay": 0.2728,
       "issuesPerDay": 0.3699,
       "score": 9.077,
+      "asOf": "2026-10-26"
+    },
+    "rindbeans.codex-ui": {
+      "ageDays": 1,
+      "starsPerDay": 4,
+      "starGrowthPerDay": 0,
+      "commitsPerDay": 0,
+      "pullsPerDay": 0,
+      "issuesPerDay": 0,
+      "score": 3.863,
       "asOf": "2026-10-26"
     },
     "rison114514.dsh-endfield-ui": {
