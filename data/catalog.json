@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-26T01:55:00.246Z",
+  "generatedAt": "2026-10-26T03:58:25.533Z",
   "skins": [
     {
       "id": "carlown.majia7-skin",
@@ -20418,6 +20418,107 @@
           {
             "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/4419b3955a7671ca9b026394eefa66a5.preview.webp",
             "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/4419b3955a7671ca9b026394eefa66a5.full.webp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rindbeans.codex-ui",
+      "name": {
+        "zh": "codex-ui",
+        "en": "codex-ui"
+      },
+      "author": "rinDBeans",
+      "description": "让 DSH Web 呈现 Codex 的外观：窗口边缘、侧栏分界、模型选择器与推理功率轨、输入区、主题色",
+      "repo": "https://github.com/rinDBeans/codex-ui",
+      "package": "codex-ui",
+      "rowId": "codex-ui",
+      "category": "theme",
+      "tags": [
+        "token-theme",
+        "light-dark",
+        "minimal"
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "install": {
+        "target": "github:rinDBeans/codex-ui#b722c3db1e8307ef09f5a6c85fa594039b496b61",
+        "version": "0.7.2",
+        "commit": "b722c3db1e8307ef09f5a6c85fa594039b496b61",
+        "desktop": {
+          "mode": "manual-only",
+          "reason": "尚无与此固定版本对应的经验证npm安装包，请使用GitHub固定版本安装。"
+        }
+      },
+      "compatibility": {
+        "dsh": "0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.1-rc.2",
+        "platform": [
+          "web"
+        ]
+      },
+      "screenshots": [
+        "https://raw.githubusercontent.com/rinDBeans/codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/assets/screenshots/live-gui-rightbar.png",
+        "https://raw.githubusercontent.com/rinDBeans/codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/assets/screenshots/model-picker-live-dark.png"
+      ],
+      "listScreenshot": "https://raw.githubusercontent.com/rinDBeans/codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/assets/screenshots/live-gui-rightbar.png",
+      "review": {
+        "compatibility": "verified",
+        "preview": "verified",
+        "installation": "verified"
+      },
+      "health": {
+        "status": "healthy",
+        "checks": {
+          "readmeScreenshots": "pass",
+          "compatibility": "pass",
+          "installation": "pass",
+          "installCommand": "pass",
+          "topic": "pass"
+        },
+        "suggestions": [
+          "可选“半透明侧栏”开启后，设置页可能出现底层文字透出；上游PR #4尚未合并。默认关闭该项。"
+        ],
+        "scan": {
+          "commit": "b722c3db1e8307ef09f5a6c85fa594039b496b61",
+          "packageVersion": "0.7.2",
+          "scannerVersion": "isolated-capture-v1",
+          "dshVersion": "0.2.1-rc.2",
+          "mode": "runtime",
+          "result": "pass",
+          "checkedAt": "2026-10-26T03:47:07.694Z",
+          "findings": []
+        }
+      },
+      "license": {
+        "code": "MIT",
+        "commercialUse": true
+      },
+      "featuredRank": 996,
+      "starsSnapshot": 4,
+      "releaseUpdatedAt": "2026-10-26T03:49:39.432Z",
+      "metadataUpdatedAt": "2026-10-26T03:57:00.971Z",
+      "starsUpdatedAt": "2026-10-24T21:31:43.332Z",
+      "updatedAt": "2026-10-26T03:57:00.971Z",
+      "marketScreenshots": [
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/rinDBeans__codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/home.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/rinDBeans__codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/conversation.png",
+        "https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/rinDBeans__codex-ui/b722c3db1e8307ef09f5a6c85fa594039b496b61/settings.png"
+      ],
+      "media": {
+        "list": {
+          "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af413c1b2b701eedb1498e9cf5d0b98c.preview.webp",
+          "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af413c1b2b701eedb1498e9cf5d0b98c.full.webp"
+        },
+        "screenshots": [
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af413c1b2b701eedb1498e9cf5d0b98c.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/af413c1b2b701eedb1498e9cf5d0b98c.full.webp"
+          },
+          {
+            "preview": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/6679dc554abdcf165865e37fa3938e7c.preview.webp",
+            "full": "https://kingofsoysauce.github.io/dsh-skin-market/skin-media/v1/6679dc554abdcf165865e37fa3938e7c.full.webp"
           }
         ]
       }

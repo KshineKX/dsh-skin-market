@@ -6,5 +6,8 @@ export interface CatalogSearchEntry {
     author: string;
     description: string;
     tags: string[];
+    repo?: string;
+    package?: string;
+    rowId?: string;
 }
 export declare function matchesCatalogSearch(entry: CatalogSearchEntry, query: string): boolean;
