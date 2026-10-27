@@ -3353,6 +3353,26 @@ describe('client market', () => {
     expect(screen.getByRole('button', { name: /测试皮肤 界面预览/ })).toBeTruthy()
   })
 
+  it('docks the discovery bar into the header and keeps the original space', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : { skins: [] } })))
+    render(<SkinMarketSection t={key => key} layout="embedded" />)
+    const title = (await screen.findByRole('heading', { name: '发现更多' })).parentElement!.parentElement!
+    const header = title.closest('main')!.querySelector('header')!
+    const section = title.parentElement!
+    vi.spyOn(title, 'getBoundingClientRect').mockImplementation(() => ({ top: 240, height: 28, bottom: 268, left: 0, right: 100, width: 100, x: 0, y: 240, toJSON() { return {} } }) as DOMRect)
+    vi.spyOn(header, 'getBoundingClientRect').mockImplementation(() => ({ top: 0, height: 120, bottom: 120, left: 0, right: 100, width: 100, x: 0, y: 0, toJSON() { return {} } }) as DOMRect)
+    fireEvent.scroll(window)
+    expect(header.querySelector('[data-header-discover]')).toBeNull()
+    expect(title.getAttribute('data-docked')).toBeNull()
+
+    vi.spyOn(title, 'getBoundingClientRect').mockImplementation(() => ({ top: 120, height: 28, bottom: 148, left: 0, right: 100, width: 100, x: 0, y: 120, toJSON() { return {} } }) as DOMRect)
+    fireEvent.scroll(window)
+    expect(title.getAttribute('data-docked')).toBe('true')
+    expect(section.contains(title)).toBe(true)
+    expect(header.querySelector('[data-header-discover]')).toBeTruthy()
+    expect(screen.getAllByRole('heading', { name: '发现更多' })).toHaveLength(1)
+  })
+
   it('shows Stars in list rows and marks the selected skin', async () => {
     const secondSkin = { ...skin, id: 'test.second', name: { zh: '第二皮肤', en: 'Second Skin' }, githubStars: 7 }
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin, secondSkin] } : { skins: [] } })))

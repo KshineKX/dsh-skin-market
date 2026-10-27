@@ -27,6 +27,22 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
+describe('public catalog filters', () => {
+  it('shows skins and splash by default and toggles the other categories', () => {
+    const pet = { ...skin, id: 'test.pet', name: { zh: '桌面宠物', en: 'Desk Pet' }, category: 'pet' as const }
+    const player = { ...skin, id: 'test.player', name: { zh: '音乐播放器', en: 'Music Player' }, category: 'player' as const }
+    render(<App skins={[skin, pet, player]} />)
+    const filters = screen.getByRole('group', { name: '分类' })
+    expect(within(filters).getByRole('button', { name: '皮肤' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(filters).getByRole('button', { name: '开屏动画' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(filters).getByRole('button', { name: '桌宠' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByRole('button', { name: /桌面宠物 界面预览/ })).toBeNull()
+    fireEvent.click(within(filters).getByRole('button', { name: '桌宠' }))
+    expect(screen.getByRole('button', { name: /桌面宠物 界面预览/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /音乐播放器 界面预览/ })).toBeNull()
+  })
+})
+
 describe('public install panel', () => {
   it('shows aligned skin and market groups with one package and one common command each', async () => {
     render(<App skins={[{ ...skin, install: { ...skin.install, target: `github:example/skins#${commit}`, desktop: { mode: 'managed', registry: 'npm', packageName: '@example/skin', packageVersion: '1.0.0' } } }]} />)

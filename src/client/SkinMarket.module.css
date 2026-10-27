@@ -117,33 +117,8 @@
 .homeSectionTitle { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
 .homeSectionTitle h3 { font-size: 15px; font-weight: 600; line-height: 22px; }
 .discoverHeading { display: flex; min-width: 0; flex: 1; flex-wrap: wrap; align-items: center; gap: 10px; }
-.categoryFilters { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px; }
-/* The settings dialog scrolls inside .homeContent, so pin the filters there. */
-.root[data-layout="fill"] .discoverTitle {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--dsw-alias-bg-layer-2);
-}
-/* The plugin page scrolls outside this market. Follow the same gate as the
-   market header: stick under it only while that header is allowed to stick. */
-.root[data-layout="embedded"] .homeHeader[data-sticky="true"] ~ .homeContent .discoverTitle {
-  position: sticky;
-  top: var(--market-home-header-height, 0px);
-  z-index: 2;
-}
-.root[data-layout="embedded"] .homeHeader[data-sticky="true"] ~ .homeContent .discoverTitle::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0 0 -8px;
-  pointer-events: none;
-  background: var(--dsw-alias-bg-layer-2);
-  -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter, none);
-  backdrop-filter: var(--dsw-menu-backdrop-filter, none);
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
-}
+.homeHeader > .headerDiscover { grid-column: 1 / -1; margin-bottom: 0; }
+.discoverTitle[data-docked="true"] { visibility: hidden; }
 .installedRow { display: grid; grid-template-columns: repeat(var(--installed-columns), minmax(0, 1fr)); gap: 20px; overflow: hidden; }
 .homeCard {
   box-sizing: border-box;
@@ -335,9 +310,6 @@
 
 .filterBar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .filters { display: flex; flex-wrap: wrap; gap: 4px; }
-.filterPill { flex: none; }
-.sortOptions { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px; }
-.sortPill { flex: none; }
 .skinList { display: flex; height: 0; min-height: 0; flex: 1 1 0; flex-direction: column; gap: 4px; margin: 0; padding: 8px 12px 16px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 
 .skinCard {
@@ -482,6 +454,10 @@
 .manualInstallGuide p { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 18px; }
 .installCommandLabel { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; }
 .installCommandGroup { display: grid; min-width: 0; gap: 8px; }
+.segmented { display: inline-flex; flex: none; align-items: center; gap: 2px; }
+.segmented button { min-width: 0; min-height: 26px; height: auto; padding: 4px 9px; cursor: pointer; border: 0; border-radius: var(--dsw-radius-sm); color: var(--dsw-alias-label-caption); background: transparent; box-shadow: none; font: inherit; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; }
+.segmented button[aria-pressed="true"] { color: var(--dsw-alias-label-primary); background: transparent; box-shadow: none; }
+.segmented button:hover { color: var(--dsw-alias-label-primary); }
 .installSegmented { display: inline-flex; flex: none; align-items: center; gap: 2px; padding: 4px; border-radius: var(--dsw-radius-md); background: var(--dsw-alias-bg-layer-1); }
 .installSegmented button { min-width: 0; min-height: 26px; height: auto; padding: 4px 9px; cursor: pointer; border: 0; border-radius: var(--dsw-radius-sm); color: var(--dsw-alias-label-caption); background: var(--dsw-alias-bg-layer-1); font: inherit; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; transition: color var(--ds-transition-duration), background var(--ds-transition-duration); }
 .installSegmented button[aria-pressed="true"] { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); box-shadow: var(--dsw-elevation-soft); }
@@ -492,7 +468,7 @@
 .copyCapsuleInput input { width: 100%; min-width: 0; overflow: hidden; padding: 0; border: 0; outline: none; background: transparent; color: var(--dsw-alias-label-secondary); font: 12px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }
 .copyCapsule .copyCapsuleButton { display: inline-flex; flex: none; width: 36px; min-width: 36px; height: 34px; min-height: 34px; align-items: center; justify-content: center; padding: 0; cursor: pointer; border: 0; border-left: 0.5px solid var(--dsw-alias-border-l2); border-radius: 0; color: var(--dsw-alias-label-secondary); background: transparent; }
 .copyCapsule .copyCapsuleButton:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover); }
-.installSegmented button:focus-visible, .copyCapsuleButton:focus-visible { outline: 2px solid var(--dsw-alias-link); outline-offset: 2px; }
+.segmented button:focus-visible, .installSegmented button:focus-visible, .copyCapsuleButton:focus-visible { outline: 2px solid var(--dsw-alias-link); outline-offset: 2px; }
 .stars { display: inline-flex; flex: none; align-items: center; gap: 5px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 20px; white-space: nowrap; }
 .actionDivider { width: 0.5px; height: 22px; margin: 0 3px; background: var(--dsw-alias-border-l2); }
 .repoMeta { display: flex; min-width: 0; flex: 1 1 220px; align-items: center; gap: 10px; }

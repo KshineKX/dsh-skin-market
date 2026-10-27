@@ -502,7 +502,7 @@ export async function waitForRestartDocument(input: {
   throw new Error('DeepSeek Harness 重启超时，请手动刷新页面')
 }
 
-export function restoreMarketStyleOrder(root: ParentNode = document, marker = css.filterPill): void {
+export function restoreMarketStyleOrder(root: ParentNode = document, marker = css.segmented): void {
   for (const style of root.querySelectorAll<HTMLStyleElement>('style')) {
     const ownsMarketCss = style.dataset.plugin === 'dsh-skin-market'
       || style.textContent?.includes(`.${marker}`) === true
@@ -632,8 +632,8 @@ export function catalogSortLabel(sort: CatalogSort): string {
 }
 
 function CatalogSortOptions({ value, onChange }: { value: CatalogSort; onChange: (value: CatalogSort) => void }) {
-  return <div className={css.sortOptions} role="group" aria-label="排序方式">
-    {CATALOG_SORTS.map(sort => <Pill key={sort} className={css.sortPill} active={value === sort} aria-pressed={value === sort} onClick={() => onChange(sort)}>{catalogSortLabel(sort)}</Pill>)}
+  return <div className={css.segmented} role="group" aria-label="排序方式">
+    {CATALOG_SORTS.map(sort => <button key={sort} type="button" aria-pressed={value === sort} onClick={() => onChange(sort)}>{catalogSortLabel(sort)}</button>)}
   </div>
 }
 
@@ -709,6 +709,28 @@ const healthLabels = {
   installCommand: '安装命令',
   topic: 'dsh-plugin Topic',
 } as const
+
+function DiscoverToolbar({ className, placeholderRef, docked = false, headingId, label, enabledCategories, onToggleCategory, sortBy, onSortBy }: {
+  className: string
+  placeholderRef?: { current: HTMLDivElement | null }
+  docked?: boolean
+  headingId?: string
+  label: string
+  enabledCategories: ReadonlySet<MarketCategory>
+  onToggleCategory: (category: MarketCategory) => void
+  sortBy: CatalogSort
+  onSortBy: (sort: CatalogSort) => void
+}) {
+  return <div className={`${css.homeSectionTitle} ${className}`} ref={placeholderRef} data-header-discover={placeholderRef === undefined ? '' : undefined} data-docked={docked ? 'true' : undefined} aria-hidden={docked ? true : undefined}>
+    <div className={css.discoverHeading}>
+      <h3 id={headingId}>{label}</h3>
+      <div className={css.segmented} role="group" aria-label="分类">
+        {MARKET_CATEGORIES.map(category => <button key={category} type="button" aria-pressed={enabledCategories.has(category)} onClick={() => onToggleCategory(category)}>{MARKET_CATEGORY_LABELS[category]}</button>)}
+      </div>
+    </div>
+    <CatalogSortOptions value={sortBy} onChange={onSortBy} />
+  </div>
+}
 
 export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCache = browserCatalogCache, desktopPluginPanel }: SkinMarketSectionProps) {
   const mounted = useRef(true)
@@ -794,10 +816,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const compatibilityConfirmationRef = useRef<CompatibilityConfirmation | null>(null)
   const [homeCompact, setHomeCompact] = useState(false)
   const [homeHeaderSticky, setHomeHeaderSticky] = useState(true)
+  const [discoverDocked, setDiscoverDocked] = useState(false)
+  const discoverDockedRef = useRef(false)
   const skinListRef = useRef<HTMLDivElement | null>(null)
   const homeRef = useRef<HTMLDivElement | null>(null)
   const homeHeaderRef = useRef<HTMLElement | null>(null)
   const discoverTitleRef = useRef<HTMLDivElement | null>(null)
+  const syncDiscoverDockRef = useRef<() => void>(() => {})
   const homeLoadMoreRef = useRef<HTMLDivElement | null>(null)
   const thumbnailStripRef = useRef<HTMLDivElement | null>(null)
   const detailRef = useRef<HTMLElement | null>(null)
@@ -1367,6 +1392,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       const viewportTop = viewportScroll ? 0 : scrollHost!.getBoundingClientRect().top + scrollHost!.clientTop
       const scrollOffset = viewportTop - home.getBoundingClientRect().top
       setHomeCompact(current => scrollOffset > (current ? HOME_COMPACT_EXIT_SCROLL : HOME_COMPACT_ENTER_SCROLL))
+      syncDiscoverDockRef.current()
     }
     updateCompact()
     scrollTarget.addEventListener('scroll', updateCompact, { passive: true })
@@ -1380,19 +1406,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     const header = homeHeaderRef.current
     if (layout !== 'embedded' || header === null) return
     // Expanded operation details must leave room to browse the page, without
-    // introducing a second scroll area inside the sticky header.
+    // introducing a second scroll area inside the sticky header. The docked
+    // discovery bar is part of this header, so it does not count against the gate.
     const updateSticky = () => {
-      const headerHeight = header.getBoundingClientRect().height
-      const discoverHeight = discoverTitleRef.current?.getBoundingClientRect().height ?? 0
-      // The plugin page has one scrollport. Both bars stick together, and only
-      // while the pair still leaves half the page free to browse.
-      setHomeHeaderSticky(headerHeight + discoverHeight <= window.innerHeight / 2)
-      header.parentElement?.style.setProperty('--market-home-header-height', `${headerHeight}px`)
+      const copy = header.querySelector<HTMLElement>('[data-header-discover]')
+      const copyHeight = copy?.getBoundingClientRect().height ?? 0
+      const gap = copyHeight > 0 ? Number.parseFloat(getComputedStyle(header).rowGap || '0') || 0 : 0
+      setHomeHeaderSticky(header.getBoundingClientRect().height - copyHeight - gap <= window.innerHeight / 2)
     }
     updateSticky()
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateSticky)
     observer?.observe(header)
-    if (discoverTitleRef.current !== null) observer?.observe(discoverTitleRef.current)
     window.addEventListener('resize', updateSticky)
     return () => { observer?.disconnect(); window.removeEventListener('resize', updateSticky) }
   }, [layout])
@@ -2443,6 +2467,36 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     onDismiss={() => dismissRestartNotice(pendingRestart.target)}
   />
   const marketUpdateActive = marketOperation !== null && !['done', 'failed', 'cancelled'].includes(marketOperation.phase)
+  syncDiscoverDockRef.current = () => {
+    const title = discoverTitleRef.current
+    const header = homeHeaderRef.current
+    if (title === null || header === null) return
+    const titleRect = title.getBoundingClientRect()
+    if (titleRect.height === 0) return
+    const allow = layout === 'fill' || header.dataset.sticky !== 'false'
+    if (!allow) {
+      if (discoverDockedRef.current) {
+        discoverDockedRef.current = false
+        setDiscoverDocked(false)
+      }
+      return
+    }
+    const headerRect = header.getBoundingClientRect()
+    const content = homeRef.current
+    const contentStyle = content === null ? null : getComputedStyle(content)
+    const contentTop = content === null || contentStyle === null
+      ? headerRect.bottom
+      : content.getBoundingClientRect().top + (Number.parseFloat(contentStyle.borderTopWidth) || 0) + (Number.parseFloat(contentStyle.paddingTop) || 0)
+    // Compare against the live header edge. Growing the header pushes the
+    // placeholder by the same amount, so the decision does not flip back.
+    const limit = layout === 'fill' ? contentTop : headerRect.bottom
+    const shouldDock = titleRect.top <= limit + 0.5
+    if (shouldDock !== discoverDockedRef.current) {
+      discoverDockedRef.current = shouldDock
+      setDiscoverDocked(shouldDock)
+    }
+  }
+  useLayoutEffect(() => { syncDiscoverDockRef.current() })
 
   return (
     <section className={css.root} data-dsh-skin-market data-layout={layout} data-detail={showDetail ? 'open' : 'closed'} data-browser-open={browserOpen ? 'true' : 'false'}>
@@ -2474,6 +2528,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           {renderCompletedUninstallBanner(css.homeOperation)}
           {renderPendingRestartBanner(css.homeOperation)}
           {profileBusy !== undefined && <p className={css.notice} role="status">{profileBusy}</p>}
+          {discoverDocked && <DiscoverToolbar className={css.headerDiscover} headingId="discover-skins-title" label={homeQuery.trim() === '' ? '发现更多' : '搜索结果'} enabledCategories={enabledCategories} onToggleCategory={category => setEnabledCategories(current => {
+            const next = new Set(current)
+            if (next.has(category)) next.delete(category)
+            else next.add(category)
+            return next
+          })} sortBy={sortBy} onSortBy={setSortBy} />}
         </header>
 
         <div className={css.homeContent} ref={homeRef} onScroll={event => {
@@ -2485,6 +2545,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           if (discoverySkins.length > homeVisibleCount && home.scrollHeight - home.scrollTop - home.clientHeight < 560) {
             setHomeVisibleCount(value => Math.min(discoverySkins.length, value + HOME_CATALOG_BATCH_SIZE))
           }
+          syncDiscoverDockRef.current()
         }}>
           {homeQuery.trim() === '' && (loading || installedSkins.length > 0) && <section className={css.homeSection} aria-labelledby="installed-skins-title">
             <div className={css.homeSectionTitle}><h3 id="installed-skins-title">已安装</h3></div>
@@ -2495,20 +2556,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           </section>}
 
           <section className={css.homeSection} aria-labelledby="discover-skins-title">
-            <div className={`${css.homeSectionTitle} ${css.discoverTitle}`} ref={discoverTitleRef}>
-              <div className={css.discoverHeading}>
-                <h3 id="discover-skins-title">{homeQuery.trim() === '' ? '发现更多' : '搜索结果'}</h3>
-                <div className={css.categoryFilters} role="group" aria-label="分类">
-                  {MARKET_CATEGORIES.map(category => <Pill key={category} className={css.filterPill} active={enabledCategories.has(category)} aria-pressed={enabledCategories.has(category)} onClick={() => setEnabledCategories(current => {
-                    const next = new Set(current)
-                    if (next.has(category)) next.delete(category)
-                    else next.add(category)
-                    return next
-                  })}>{MARKET_CATEGORY_LABELS[category]}</Pill>)}
-                </div>
-              </div>
-              <CatalogSortOptions value={sortBy} onChange={setSortBy} />
-            </div>
+            <DiscoverToolbar className={css.discoverTitle} placeholderRef={discoverTitleRef} docked={discoverDocked} headingId={discoverDocked ? undefined : 'discover-skins-title'} label={homeQuery.trim() === '' ? '发现更多' : '搜索结果'} enabledCategories={enabledCategories} onToggleCategory={category => setEnabledCategories(current => {
+              const next = new Set(current)
+              if (next.has(category)) next.delete(category)
+              else next.add(category)
+              return next
+            })} sortBy={sortBy} onSortBy={setSortBy} />
             {catalogLoading && skins.length === 0 ? <div className={css.homeLoading}><IconLoadingOutline /> 正在加载皮肤…</div> : visibleDiscoverySkins.length > 0 ? <div className={css.discoveryGrid}>
               {visibleDiscoverySkins.map(skin => renderHomeCard(skin, 'discover'))}
             </div> : <p className={css.empty}>没有匹配的皮肤</p>}
@@ -2525,9 +2578,9 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         <div className={css.catalogHeader}>
           <Input value={query} onChange={event => setQuery(event.currentTarget.value)} icon={<IconSearchOutline />} placeholder={t('search')} aria-label={t('search')} />
           <div className={css.filterBar}>
-            <div className={css.filters}>
-              <Pill className={css.filterPill} active={filter === 'all'} aria-pressed={filter === 'all'} onClick={() => { setFilter('all'); setSortBy('heat') }}>全部</Pill>
-              <Pill className={css.filterPill} active={filter === 'installed'} aria-pressed={filter === 'installed'} onClick={() => setFilter('installed')}>已安装</Pill>
+            <div className={`${css.filters} ${css.segmented}`} role="group" aria-label="列表范围">
+              <button type="button" aria-pressed={filter === 'all'} onClick={() => { setFilter('all'); setSortBy('heat') }}>全部</button>
+              <button type="button" aria-pressed={filter === 'installed'} onClick={() => setFilter('installed')}>已安装</button>
             </div>
             <CatalogSortOptions value={sortBy} onChange={setSortBy} />
           </div>

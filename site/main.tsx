@@ -26,10 +26,38 @@ const GALLERY_INTERVAL_MS = 5600
 const FEED_COMPACT_EXIT_OFFSET = 16
 const CATALOG_SORTS: readonly CatalogSort[] = ['heat', 'stars', 'latest']
 const CATALOG_SORT_LABELS: Record<CatalogSort, string> = { heat: '热度', stars: 'Stars', latest: '最新' }
+const MARKET_CATEGORIES = ['skin', 'pet', 'player', 'splash'] as const
+type MarketCategory = typeof MARKET_CATEGORIES[number]
+const MARKET_CATEGORY_LABELS: Record<MarketCategory, string> = { skin: '皮肤', pet: '桌宠', player: '播放器', splash: '开屏动画' }
+
+function marketCategory(skin: { category?: string }): MarketCategory {
+  return skin.category === 'pet' || skin.category === 'player' || skin.category === 'splash' ? skin.category : 'skin'
+}
 
 function CatalogSortOptions({ value, onChange }: { value: CatalogSort; onChange: (value: CatalogSort) => void }) {
   return <div className="sort-options" role="group" aria-label="排序方式">
     {CATALOG_SORTS.map(sort => <button key={sort} type="button" className="sort-option" aria-pressed={value === sort} onClick={() => onChange(sort)}>{CATALOG_SORT_LABELS[sort]}</button>)}
+  </div>
+}
+
+function DiscoverToolbar({ label, headingId, docked = false, placeholderRef, enabledCategories, onToggleCategory, sort, onSort }: {
+  label: string
+  headingId?: string
+  docked?: boolean
+  placeholderRef?: Ref<HTMLDivElement>
+  enabledCategories: ReadonlySet<MarketCategory>
+  onToggleCategory: (category: MarketCategory) => void
+  sort: CatalogSort
+  onSort: (sort: CatalogSort) => void
+}) {
+  return <div className="feed-section-title" ref={placeholderRef} data-header-discover={placeholderRef === undefined ? '' : undefined} data-docked={docked ? 'true' : undefined} aria-hidden={docked ? true : undefined}>
+    <div className="discover-heading">
+      <h2 id={headingId}>{label}</h2>
+      <div className="filter-options" role="group" aria-label="分类">
+        {MARKET_CATEGORIES.map(category => <button key={category} type="button" className="sort-option" aria-pressed={enabledCategories.has(category)} onClick={() => onToggleCategory(category)}>{MARKET_CATEGORY_LABELS[category]}</button>)}
+      </div>
+    </div>
+    <CatalogSortOptions value={sort} onChange={onSort} />
   </div>
 }
 
@@ -74,6 +102,11 @@ export function App({ skins }: { skins: Skin[] }) {
   const [selectedId, setSelectedId] = useState(skins[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<CatalogSort>('heat')
+  const [enabledCategories, setEnabledCategories] = useState<ReadonlySet<MarketCategory>>(() => new Set<MarketCategory>(['skin', 'splash']))
+  const [discoverDocked, setDiscoverDocked] = useState(false)
+  const discoverDockedRef = useRef(false)
+  const discoverTitleRef = useRef<HTMLDivElement | null>(null)
+  const syncDiscoverDockRef = useRef<() => void>(() => {})
   const [shot, setShot] = useState(0)
   const [galleryPaused, setGalleryPaused] = useState(false)
   const [carouselEpoch, setCarouselEpoch] = useState(0)
@@ -96,8 +129,8 @@ export function App({ skins }: { skins: Skin[] }) {
   const selectedScreenshots = selected === undefined ? [] : getCatalogScreenshotUrls(selected)
   const shotCount = selectedScreenshots.length
   const filtered = useMemo(() => skins
-    .filter(skin => matchesCatalogSearch(skin, query))
-    .sort((a, b) => comparePublicCatalogOrder(a, b, sort)), [query, sort])
+    .filter(skin => matchesCatalogSearch(skin, query) && enabledCategories.has(marketCategory(skin)))
+    .sort((a, b) => comparePublicCatalogOrder(a, b, sort)), [enabledCategories, query, sort])
   const visibleSkins = filtered.slice(0, visibleCount)
 
   const recommendations = selected === undefined
@@ -115,7 +148,17 @@ export function App({ skins }: { skins: Skin[] }) {
     setDetailOpen(true)
   }
 
-  useEffect(() => { setVisibleCount(24) }, [query, sort])
+  useEffect(() => { setVisibleCount(24) }, [enabledCategories, query, sort])
+  useLayoutEffect(() => { syncDiscoverDockRef.current() })
+  useEffect(() => {
+    const update = () => syncDiscoverDockRef.current()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   useEffect(() => {
     const updateFeedHeader = () => {
@@ -143,14 +186,15 @@ export function App({ skins }: { skins: Skin[] }) {
       setSearchStyle({ position: 'absolute', zIndex: 1, visibility: 'visible', top: slotRect.top - shellRect.top, left: slotRect.left - shellRect.left, width: slotRect.width })
       return
     }
-    const topbarRect = topbar.getBoundingClientRect()
+    const row = topbar.querySelector('.topbar-main') ?? topbar
+    const rowRect = row.getBoundingClientRect()
     const brandRect = brand.getBoundingClientRect()
     const actionsRect = actions.getBoundingClientRect()
     const gap = window.matchMedia('(max-width: 820px)').matches ? 10 : 24
     const availableLeft = brandRect.right + gap
     const availableRight = actionsRect.left - gap
     const width = Math.max(0, Math.min(520, availableRight - availableLeft))
-    setSearchStyle({ position: 'fixed', zIndex: 21, visibility: 'visible', top: topbarRect.top + (topbarRect.height - 38) / 2, left: availableRight - width, width, height: 38 })
+    setSearchStyle({ position: 'fixed', zIndex: 21, visibility: 'visible', top: rowRect.top + (rowRect.height - 38) / 2, left: availableRight - width, width, height: 38 })
   }, [feedCompact])
 
   useLayoutEffect(() => {
@@ -221,6 +265,26 @@ export function App({ skins }: { skins: Skin[] }) {
     window.setTimeout(() => setCopied(current => current === key ? null : current), 1800)
   }
 
+  const discoverLabel = query.trim() === '' ? '发现更多' : '搜索结果'
+  const toggleCategory = (category: MarketCategory) => setEnabledCategories(current => {
+    const next = new Set(current)
+    if (next.has(category)) next.delete(category)
+    else next.add(category)
+    return next
+  })
+  syncDiscoverDockRef.current = () => {
+    const title = discoverTitleRef.current
+    const header = topbarRef.current
+    if (title === null || header === null) return
+    const titleRect = title.getBoundingClientRect()
+    if (titleRect.height === 0) return
+    const shouldDock = titleRect.top <= header.getBoundingClientRect().bottom + 0.5
+    if (shouldDock !== discoverDockedRef.current) {
+      discoverDockedRef.current = shouldDock
+      setDiscoverDocked(shouldDock)
+    }
+  }
+
   if (selected === undefined) return <main className="empty-page">目录暂时为空</main>
 
   const verified = selected.review?.compatibility !== 'unverified'
@@ -228,24 +292,27 @@ export function App({ skins }: { skins: Skin[] }) {
   return <div className="page-shell" ref={pageShellRef} data-detail={detailOpen ? 'open' : 'closed'}>
     {detailOpen && <GalleryPreloads skin={selected} screenshots={selectedScreenshots} />}
     <header className="topbar" ref={topbarRef}>
-      <a className="brand" ref={brandRef} href={import.meta.env.BASE_URL}>
-        <span className="brand-mark">DSH</span>
-        <span><strong>皮肤市场</strong><small>dsh-skin-market</small></span>
-      </a>
-      <nav className="top-actions" ref={topActionsRef} aria-label="平台操作">
-        <a className="button outline" href={MARKET_REPOSITORY} target="_blank" rel="noreferrer"><GithubLogo size={17} /> GitHub</a>
-        <button className="button outline" onClick={() => { setCopied(null); setInstallDialog('market') }}><DownloadSimpleIcon size={17} /> 安装皮肤市场</button>
-        <a className="qr-share" href={MARKET_PUBLIC_URL} target="_blank" rel="noreferrer" aria-label="扫描二维码打开 DSH 皮肤市场">
-          <span><strong>扫码打开本页</strong></span>
-          <img src={`${import.meta.env.BASE_URL}market-qr.svg`} alt="DSH 皮肤市场二维码" />
+      <div className="topbar-main">
+        <a className="brand" ref={brandRef} href={import.meta.env.BASE_URL}>
+          <span className="brand-mark">DSH</span>
+          <span><strong>皮肤市场</strong><small>dsh-skin-market</small></span>
         </a>
-      </nav>
+        <nav className="top-actions" ref={topActionsRef} aria-label="平台操作">
+          <a className="button outline" href={MARKET_REPOSITORY} target="_blank" rel="noreferrer"><GithubLogo size={17} /> GitHub</a>
+          <button className="button outline" onClick={() => { setCopied(null); setInstallDialog('market') }}><DownloadSimpleIcon size={17} /> 安装皮肤市场</button>
+          <a className="qr-share" href={MARKET_PUBLIC_URL} target="_blank" rel="noreferrer" aria-label="扫描二维码打开 DSH 皮肤市场">
+            <span><strong>扫码打开本页</strong></span>
+            <img src={`${import.meta.env.BASE_URL}market-qr.svg`} alt="DSH 皮肤市场二维码" />
+          </a>
+        </nav>
+      </div>
+      {discoverDocked && <DiscoverToolbar label={discoverLabel} headingId="discover-title" enabledCategories={enabledCategories} onToggleCategory={toggleCategory} sort={sort} onSort={setSort} />}
     </header>
 
     <main className="feed-page">
       <FeedHeader headerRef={feedHeaderRef} searchSlotRef={feedSearchSlotRef} skinCount={skins.length} />
       <section className="feed-content" aria-labelledby="discover-title">
-        <div className="feed-section-title"><div><h2 id="discover-title">{query.trim() === '' ? '发现更多' : '搜索结果'}</h2><span>{filtered.length} 个结果</span></div><CatalogSortOptions value={sort} onChange={setSort} /></div>
+        <DiscoverToolbar label={discoverLabel} headingId={discoverDocked ? undefined : 'discover-title'} docked={discoverDocked} placeholderRef={discoverTitleRef} enabledCategories={enabledCategories} onToggleCategory={toggleCategory} sort={sort} onSort={setSort} />
         {visibleSkins.length > 0 ? <div className="skin-grid">
           {visibleSkins.map(skin => <CatalogCard key={skin.id} skin={skin} onOpen={() => select(skin.id)} onInstall={() => { setSelectedId(skin.id); setShot(0); setCopied(null); setInstallDialog('skin') }} />)}
         </div> : <p className="no-results feed-empty">没有匹配的皮肤</p>}
@@ -348,7 +415,7 @@ function Site() {
     const controller = new AbortController()
     let disposed = false
     const fallbackUrl = `${import.meta.env.BASE_URL}catalog.json`
-    const useLocalPreviewCatalog = new URLSearchParams(window.location.search).get('dsh-media') === '1'
+    const useLocalPreviewCatalog = import.meta.env.DEV || new URLSearchParams(window.location.search).get('dsh-media') === '1'
     const fetchCatalog = (input: string, init: RequestInit) => fetch(input, { ...init, signal: controller.signal })
     const catalogRequest = useLocalPreviewCatalog
       ? fetchLiveCatalog<Skin>(fallbackUrl, fetchCatalog)
