@@ -1,0 +1,65 @@
+id: mu915275-cmd.dsh-boot-animation
+name:
+  zh: dsh-boot-animation
+  en: dsh-boot-animation
+author: mu915275-cmd
+description: 打开新对话（或你钉住的会话）时，铺满窗口播放一段片头动画；入场动画与工作区壁纸各自独立选段，工作区与侧边栏还能各自设定压在皮肤上的字体颜色。Open a new (or a pinned) DSH conversation and a full-frame intro plays; the intro and the workspace wallpaper are picked independently, and the sidebar and the workspace each get their own text colour over the picture.
+repo: https://github.com/mu915275-cmd/dsh-boot-animation
+package: dsh-boot-animation
+rowId: dsh-boot-animation
+category: theme
+tags:
+  - boot
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:mu915275-cmd/dsh-boot-animation#340087869ca2a40588543b532691c93539fcdcd4
+  version: 1.2.3
+  commit: 340087869ca2a40588543b532691c93539fcdcd4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.5-rc.1"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/mu915275-cmd__dsh-boot-animation/340087869ca2a40588543b532691c93539fcdcd4/home.png
+  - skin-screenshots/mu915275-cmd__dsh-boot-animation/340087869ca2a40588543b532691c93539fcdcd4/conversation.png
+  - skin-screenshots/mu915275-cmd__dsh-boot-animation/340087869ca2a40588543b532691c93539fcdcd4/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: 340087869ca2a40588543b532691c93539fcdcd4
+    packageVersion: 1.2.3
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:02.049Z
+    findings: []
+license:
+  code: BSD-3-Clause
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:02.249Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:02.249Z

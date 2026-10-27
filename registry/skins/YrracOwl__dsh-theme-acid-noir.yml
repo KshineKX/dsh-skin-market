@@ -1,0 +1,68 @@
+id: yrracowl.dsh-theme-acid-noir
+name:
+  zh: dsh-theme-acid-noir
+  en: dsh-theme-acid-noir
+author: YrracOwl
+description: "EN: Usability-first cyber-editorial themes for DeepSeek Harness Web with reversible lifecycle effects. 0.4.7 renames the monospace token to the host-declared --dsw-font-mono. ZH: 面向 DeepSeek Harness Web、重视可用性并支持可逆生命周期效果的赛博编辑主题。0.4.7 把等宽字体 token 改为宿主声明的 --dsw-font-mono。"
+repo: https://github.com/YrracOwl/dsh-theme-acid-noir
+package: dsh-theme-acid-noir
+rowId: ui-theme-acid-noir
+category: theme
+tags:
+  - appearance
+modes:
+  - dark
+install:
+  target: github:YrracOwl/dsh-theme-acid-noir#7a1a770e14438e9c5a5f43894e747a351a00bc39
+  version: 0.4.7
+  commit: 7a1a770e14438e9c5a5f43894e747a351a00bc39
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  npm:
+    name: dsh-theme-acid-noir
+    version: 0.4.7
+    integrity: sha512-gUkRdfMaxmZmS1VmDBiDB5zKZual6DWzsVxbm+k+a9kgpoAR6305fj+XxyW3qjs7ViI/kJe3qfS3vnFiNfaQRA==
+    repository: https://github.com/YrracOwl/dsh-theme-acid-noir
+    gitHead: 7a1a770e14438e9c5a5f43894e747a351a00bc39
+compatibility:
+  dsh: ">=0.1.2-rc.1 <0.3.0-0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/YrracOwl__dsh-theme-acid-noir/7a1a770e14438e9c5a5f43894e747a351a00bc39/home.png
+  - skin-screenshots/YrracOwl__dsh-theme-acid-noir/7a1a770e14438e9c5a5f43894e747a351a00bc39/conversation.png
+  - skin-screenshots/YrracOwl__dsh-theme-acid-noir/7a1a770e14438e9c5a5f43894e747a351a00bc39/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 7a1a770e14438e9c5a5f43894e747a351a00bc39
+    packageVersion: 0.4.7
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:24.536Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:53:24.703Z
+metadataUpdatedAt: 2026-10-26T01:53:24.703Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:24.703Z

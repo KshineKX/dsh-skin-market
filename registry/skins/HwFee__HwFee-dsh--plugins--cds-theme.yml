@@ -1,0 +1,61 @@
+id: hwfee.cds-theme
+name:
+  zh: cds-theme
+  en: cds-theme
+author: HwFee
+description: "DeepSeek Harness 的 Claude Design System 主题插件：把宿主的 --dsw-* 令牌整体重映射到 CDS 的暖灰表面阶梯、陶土橙品牌色、双环焦点与有机动效，并对输入框、侧栏、消息行、代码块做组件级细化。明暗两套配色，配色/圆角/阴影走 ctx.theme.overrideTokens，组件细化走插件自有样式表。 / Claude Design System theme for DeepSeek Harness: remaps the host's --dsw-* tokens onto CDS warm-gray surfaces, clay brand accent, dual-ring focus and organic motion, then refines the composer, sidebar, message rows and code blocks at the component level."
+repo: https://github.com/HwFee/HwFee-dsh
+subpath: plugins/cds-theme
+package: dsh-cds-theme
+rowId: dsh-cds-theme
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:HwFee/HwFee-dsh#681d9190926a13a9a9728d4ac477fa7a2f24aa81&path:/plugins/cds-theme
+  version: 0.1.8
+  commit: 681d9190926a13a9a9728d4ac477fa7a2f24aa81
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/HwFee/HwFee-dsh/681d9190926a13a9a9728d4ac477fa7a2f24aa81/assets/screenshot-home-en.png
+  - https://raw.githubusercontent.com/HwFee/HwFee-dsh/681d9190926a13a9a9728d4ac477fa7a2f24aa81/assets/screenshot-chat-card.png
+listScreenshot: https://raw.githubusercontent.com/HwFee/HwFee-dsh/681d9190926a13a9a9728d4ac477fa7a2f24aa81/assets/screenshot-home-en.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 681d9190926a13a9a9728d4ac477fa7a2f24aa81
+    packageVersion: 0.1.8
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:34.848Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-26T23:11:49.424Z
+updatedAt: 2026-10-26T23:11:49.424Z

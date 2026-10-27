@@ -1,0 +1,65 @@
+id: sundusk.dsh-yu-pet
+name:
+  zh: dsh-yu-pet
+  en: dsh-yu-pet
+author: sundusk
+description: "Xiaoyu floating web pet plugin for the dsh web GUI: 8x8 sprite-sheet frame animation with per-frame timing, drag-to-run, double-click wave, mood follows session activity (thinking / approval / question / done / failed)"
+repo: https://github.com/sundusk/dsh-yu-pet
+package: "@sundusk/dsh-yu-pet"
+rowId: xiaoyu
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:sundusk/dsh-yu-pet#4bf5b8177d509e49161915f8a87267f594581fd7
+  version: 0.1.0
+  commit: 4bf5b8177d509e49161915f8a87267f594581fd7
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/sundusk__dsh-yu-pet/4bf5b8177d509e49161915f8a87267f594581fd7/home.png
+  - skin-screenshots/sundusk__dsh-yu-pet/4bf5b8177d509e49161915f8a87267f594581fd7/conversation.png
+  - skin-screenshots/sundusk__dsh-yu-pet/4bf5b8177d509e49161915f8a87267f594581fd7/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/sundusk/dsh-yu-pet/4bf5b8177d509e49161915f8a87267f594581fd7/docs/poses.png
+listScreenshot: https://raw.githubusercontent.com/sundusk/dsh-yu-pet/4bf5b8177d509e49161915f8a87267f594581fd7/docs/poses.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: 4bf5b8177d509e49161915f8a87267f594581fd7
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:10.091Z
+    findings: []
+license:
+  code: BSD-3-Clause
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:10.309Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:10.309Z

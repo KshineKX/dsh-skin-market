@@ -1,0 +1,61 @@
+id: hotsteel2901.dsh-frutiger-aero
+name:
+  zh: dsh-frutiger-aero
+  en: dsh-frutiger-aero
+author: Hotsteel2901
+description: "Frutiger Aero skin for the DeepSeek Harness Web UI: frosted glass over a living sky-and-water wallpaper, aqua gloss on every control, light and dark schemes built on the product's own token graph — plus a rebuilt narrow-viewport layout with an overlay drawer, a thumb-reachable dock and a keyboard-aware composer."
+repo: https://github.com/Hotsteel2901/dsh-frutiger-aero
+subpath: packages/frutiger-aero
+package: dsh-frutiger-aero
+rowId: frutiger-aero
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:Hotsteel2901/dsh-frutiger-aero#bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c&path:/packages/frutiger-aero
+  version: 1.1.1
+  commit: bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Hotsteel2901/dsh-frutiger-aero/bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c/docs/assets/shot-desktop-light.webp
+  - https://raw.githubusercontent.com/Hotsteel2901/dsh-frutiger-aero/bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c/docs/assets/shot-desktop-dark.webp
+listScreenshot: https://raw.githubusercontent.com/Hotsteel2901/dsh-frutiger-aero/bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c/docs/assets/shot-desktop-light.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: bb6bbd62dcf0bcc87f7cfaaf8cddda86a7c8603c
+    packageVersion: 1.1.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:04.137Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

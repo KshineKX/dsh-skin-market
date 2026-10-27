@@ -1,0 +1,63 @@
+id: zhongjiadeng-cmd.dsh-codex-appearance
+name:
+  zh: dsh-codex-appearance
+  en: dsh-codex-appearance
+author: zhongjiadeng-cmd
+description: Codex-inspired appearance controls for DeepSeek Harness
+repo: https://github.com/zhongjiadeng-cmd/dsh-codex-appearance
+package: dsh-codex-appearance
+rowId: codex-appearance
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:zhongjiadeng-cmd/dsh-codex-appearance#605206aa4686d6b00af41a6307eb1fb2a47a514c
+  version: 0.1.1
+  commit: 605206aa4686d6b00af41a6307eb1fb2a47a514c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/zhongjiadeng-cmd__dsh-codex-appearance/605206aa4686d6b00af41a6307eb1fb2a47a514c/home.png
+  - skin-screenshots/zhongjiadeng-cmd__dsh-codex-appearance/605206aa4686d6b00af41a6307eb1fb2a47a514c/conversation.png
+  - skin-screenshots/zhongjiadeng-cmd__dsh-codex-appearance/605206aa4686d6b00af41a6307eb1fb2a47a514c/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 605206aa4686d6b00af41a6307eb1fb2a47a514c
+    packageVersion: 0.1.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:33.984Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:34.126Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:34.126Z

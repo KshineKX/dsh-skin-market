@@ -80,6 +80,34 @@ describe('catalog', () => {
     expect(result).toHaveLength(Math.min(4, catalog.skins.length - 1))
   })
 
+  it('scores each recommendation candidate once while preserving ranking and stable ties', () => {
+    const seed = loadCatalog().skins[0]
+    const current = { ...seed, id: 'current', tags: ['shared'], modes: ['dark'] } as typeof seed
+    const candidate = (id: string, overrides: Partial<typeof seed> = {}) => ({
+      ...seed, id, tags: [], modes: [], starsSnapshot: 0, featuredRank: 0,
+      releaseUpdatedAt: '2020-01-01T00:00:00.000Z', ...overrides,
+    }) as typeof seed
+    const skins = [
+      current,
+      candidate('shared-tags', { tags: ['shared'] }),
+      candidate('shared-mode', { modes: ['dark'] }),
+      candidate('popular'),
+      candidate('tied-a', { releaseUpdatedAt: '2026-10-25T00:00:00.000Z' }),
+      candidate('tied-b', { releaseUpdatedAt: '2026-10-25T00:00:00.000Z' }),
+    ]
+    const now = vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-26T00:00:00.000Z'))
+    const parse = vi.spyOn(Date, 'parse')
+    try {
+      expect(recommend(current, skins, new Map([['popular', 999]]))).toEqual([
+        'popular', 'shared-tags', 'shared-mode', 'tied-a',
+      ])
+      expect(parse).toHaveBeenCalledTimes(skins.length - 1)
+    } finally {
+      parse.mockRestore()
+      now.mockRestore()
+    }
+  })
+
   it('serves scheduled Stars snapshots without browser-time GitHub requests', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

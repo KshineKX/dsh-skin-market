@@ -1,0 +1,63 @@
+id: upstream196.dsh-label-tune
+name:
+  zh: dsh-label-tune
+  en: dsh-label-tune
+author: Upstream196
+description: "Dim the DSH web GUI's over-bright text: calmer label tokens plus a relaxed bold (weight 500) and heading weight, scoped to the dark theme."
+repo: https://github.com/Upstream196/dsh-label-tune
+package: dsh-label-tune
+rowId: dsh-label-tune
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Upstream196/dsh-label-tune#7f154fb2231c1d6a909501bd1ed256256bcd81cb
+  version: 0.1.0
+  commit: 7f154fb2231c1d6a909501bd1ed256256bcd81cb
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Upstream196__dsh-label-tune/7f154fb2231c1d6a909501bd1ed256256bcd81cb/home.png
+  - skin-screenshots/Upstream196__dsh-label-tune/7f154fb2231c1d6a909501bd1ed256256bcd81cb/conversation.png
+  - skin-screenshots/Upstream196__dsh-label-tune/7f154fb2231c1d6a909501bd1ed256256bcd81cb/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 7f154fb2231c1d6a909501bd1ed256256bcd81cb
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:16.635Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:16.781Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:16.781Z

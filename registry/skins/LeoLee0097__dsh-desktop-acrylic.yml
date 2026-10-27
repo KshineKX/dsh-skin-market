@@ -1,0 +1,60 @@
+id: leolee0097.dsh-desktop-acrylic
+name:
+  zh: dsh-desktop-acrylic
+  en: dsh-desktop-acrylic
+author: LeoLee0097
+description: Tokyo Night dark & light themes for DeepSeek Harness (DSH) Desktop — real theme-runtime skins with acrylic panels, material blur, and a monospace font picker.
+repo: https://github.com/LeoLee0097/dsh-desktop-acrylic
+package: dsh-desktop-acrylic
+rowId: dark-acrylic
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:LeoLee0097/dsh-desktop-acrylic#b4c075446c2d6588f1e4fc6d4ddd9926cb904002
+  version: 0.9.23
+  commit: b4c075446c2d6588f1e4fc6d4ddd9926cb904002
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.1-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/LeoLee0097/dsh-desktop-acrylic/b4c075446c2d6588f1e4fc6d4ddd9926cb904002/snapdark.png
+  - https://raw.githubusercontent.com/LeoLee0097/dsh-desktop-acrylic/b4c075446c2d6588f1e4fc6d4ddd9926cb904002/snaplight.png
+listScreenshot: https://raw.githubusercontent.com/LeoLee0097/dsh-desktop-acrylic/b4c075446c2d6588f1e4fc6d4ddd9926cb904002/snapdark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - DSH 兼容范围待核对：保留的市场范围 0.2.1-rc.2 未被本次检测范围 ^0.1.0-rc.6 完全覆盖（固定版本 b4c075446c2d6588f1e4fc6d4ddd9926cb904002）。已保留原字段，请人工核对；此项是声明冲突，不代表已验证运行失败。
+  scan:
+    commit: b4c075446c2d6588f1e4fc6d4ddd9926cb904002
+    packageVersion: 0.9.23
+    scannerVersion: static-v2
+    dshVersion: ^0.1.0-rc.6
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:39.488Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-26T01:52:12.864Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:12.864Z

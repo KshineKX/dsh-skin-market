@@ -1,0 +1,71 @@
+id: signalight.dsh-codex-pet
+name:
+  zh: dsh-codex-pet
+  en: dsh-codex-pet
+author: Signalight
+description: "DSH web-GUI pet runtime: renders Codex spritesheet-atlas pets (v1/v2) with drag/wave/jump, live activity poses and progress bubbles. 把 Codex 桌宠图集渲染为 DSH 网页桌宠的运行时插件。"
+repo: https://github.com/Signalight/codex-to-dsh-pet
+subpath: packages/dsh-codex-pet
+package: "@signalight/dsh-codex-pet"
+rowId: codex-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Signalight/codex-to-dsh-pet#e2ee746b53cca4b1509b65f8916f6c5127914019&path:/packages/dsh-codex-pet
+  version: 0.5.0
+  commit: e2ee746b53cca4b1509b65f8916f6c5127914019
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: "@signalight/dsh-codex-pet"
+    packageVersion: 0.5.0
+    integrity: sha512-7nsweI7+xHqZj8ymGWFT9eQAOZJiOlue62MWGxGRYw2KAyj6M0A2ZLYC+9hre/Bjcv1GlVeWtYtI+Z4uABEE3w==
+  npm:
+    name: "@signalight/dsh-codex-pet"
+    version: 0.5.0
+    integrity: sha512-7nsweI7+xHqZj8ymGWFT9eQAOZJiOlue62MWGxGRYw2KAyj6M0A2ZLYC+9hre/Bjcv1GlVeWtYtI+Z4uABEE3w==
+    repository: https://github.com/Signalight/codex-to-dsh-pet
+    gitHead: e2ee746b53cca4b1509b65f8916f6c5127914019
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Signalight/codex-to-dsh-pet/e2ee746b53cca4b1509b65f8916f6c5127914019/assets/screenshots/screenshot-1.png
+  - https://raw.githubusercontent.com/Signalight/codex-to-dsh-pet/e2ee746b53cca4b1509b65f8916f6c5127914019/assets/screenshots/screenshot-2.png
+listScreenshot: https://raw.githubusercontent.com/Signalight/codex-to-dsh-pet/e2ee746b53cca4b1509b65f8916f6c5127914019/assets/screenshots/screenshot-1.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: e2ee746b53cca4b1509b65f8916f6c5127914019
+    packageVersion: 0.5.0
+    scannerVersion: static-v2
+    dshVersion: ">=0.1.0-rc.6"
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:35.716Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: false
+  notice: 代码与生成语音MIT；默认娜斯佳角色CC BY-NC 4.0，须署名且仅限非商业用途。
+featuredRank: 995
+starsSnapshot: 5
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

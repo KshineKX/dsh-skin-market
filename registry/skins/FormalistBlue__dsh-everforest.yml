@@ -1,0 +1,62 @@
+id: formalistblue.dsh-everforest
+name:
+  zh: dsh-everforest
+  en: dsh-everforest
+author: FormalistBlue
+description: Everforest color themes (Dark/Light × Hard/Medium/Soft) for DeepSeek Harness Web/Desktop.
+repo: https://github.com/FormalistBlue/dsh-everforest
+package: dsh-everforest
+rowId: everforest
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:FormalistBlue/dsh-everforest#db7de467cd6bac53856dcaa83127b4fedd3e7081
+  version: 1.0.0
+  commit: db7de467cd6bac53856dcaa83127b4fedd3e7081
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-dark-soft.png
+  - https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-light-hard.png
+listScreenshot: https://raw.githubusercontent.com/FormalistBlue/dsh-everforest/c71f1d8a2b942ced11b7a51d22971471a25e35bc/.github/assets/everforest-dark-soft.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: db7de467cd6bac53856dcaa83127b4fedd3e7081
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:51:42.433Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-26T01:51:43.054Z
+metadataUpdatedAt: 2026-10-26T01:51:43.054Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:43.054Z

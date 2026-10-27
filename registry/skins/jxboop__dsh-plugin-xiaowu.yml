@@ -1,0 +1,64 @@
+id: jxboop.dsh-plugin-xiaowu
+name:
+  zh: dsh-plugin-xiaowu
+  en: dsh-plugin-xiaowu
+author: jxboop
+description: 小舞 · DSH 桌宠：常驻 Web 界面右下角的兔耳少女桌面宠物，跟随 agent 工作状态换动作，任务完成时用运行时合成的甜声说一句「做完啦……」。形象为原创 SVG 手绘，声音为 WebAudio 实时合成。
+repo: https://github.com/jxboop/dsh-plugin-xiaowu
+package: dsh-plugin-xiaowu
+rowId: xiaowu-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:jxboop/dsh-plugin-xiaowu#ffccb456f89d4093241aacbb86c1189f789bc482
+  version: 0.1.2
+  commit: ffccb456f89d4093241aacbb86c1189f789bc482
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/jxboop__dsh-plugin-xiaowu/ffccb456f89d4093241aacbb86c1189f789bc482/home.png
+  - skin-screenshots/jxboop__dsh-plugin-xiaowu/ffccb456f89d4093241aacbb86c1189f789bc482/conversation.png
+  - skin-screenshots/jxboop__dsh-plugin-xiaowu/ffccb456f89d4093241aacbb86c1189f789bc482/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: ffccb456f89d4093241aacbb86c1189f789bc482
+    packageVersion: 0.1.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:54.217Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:54.341Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:54.341Z

@@ -1,0 +1,63 @@
+id: louke6572.dsh-whale-widget-plus
+name:
+  zh: dsh-whale-widget-plus
+  en: dsh-whale-widget-plus
+author: louke6572
+description: DSH Web 界面右下角的 DeepSeek 余额小鲸鱼挂件（基于官方 v0.4.2）：余额/今日已用/峰谷定价（峰谷时段外置常驻徽标）、33 厂商额度模板、自定义泡泡框、多版本表情素材包、台词自定义与表情/台词手动切换、火山 coding plan 额度查询、音效与每轮消耗统计
+repo: https://github.com/louke6572/dsh-whale-widget-plus
+package: dsh-whale-widget-plus
+rowId: dsh-whale-widget-plus
+category: theme
+tags:
+  - pet
+modes:
+  - light
+install:
+  target: github:louke6572/dsh-whale-widget-plus#cfe274aa7e59590501592d28825ff487035666aa
+  version: 0.6.8
+  commit: cfe274aa7e59590501592d28825ff487035666aa
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/louke6572__dsh-whale-widget-plus/cfe274aa7e59590501592d28825ff487035666aa/home.png
+  - skin-screenshots/louke6572__dsh-whale-widget-plus/cfe274aa7e59590501592d28825ff487035666aa/conversation.png
+  - skin-screenshots/louke6572__dsh-whale-widget-plus/cfe274aa7e59590501592d28825ff487035666aa/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/louke6572/dsh-whale-widget-plus/cfe274aa7e59590501592d28825ff487035666aa/assets/DSH2.png
+listScreenshot: https://raw.githubusercontent.com/louke6572/dsh-whale-widget-plus/cfe274aa7e59590501592d28825ff487035666aa/assets/DSH2.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: cfe274aa7e59590501592d28825ff487035666aa
+    packageVersion: 0.6.8
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:50:49.739Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 944
+starsSnapshot: 63
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:50:50.144Z
+starsUpdatedAt: 2026-10-26T23:11:15.487Z
+updatedAt: 2026-10-26T23:11:15.487Z

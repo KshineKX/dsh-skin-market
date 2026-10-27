@@ -1,0 +1,63 @@
+id: c-ling.dsh-plugin-pet
+name:
+  zh: dsh-plugin-pet
+  en: dsh-plugin-pet
+author: c-ling
+description: "A virtual pet companion for DeepSeek Harness 0.2.1+ Web and Desktop: a floating pet driven by live session state, a sidebar-free standalone Pet page opened from the account menu, built-in sprites, custom images, Codex spritesheet import, and a local companionship growth system with intimacy/level/EXP, interactions, achievements, and stats."
+repo: https://github.com/c-ling/dsh-plugin-pet
+package: dsh-plugin-pet
+rowId: dsh-plugin-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:c-ling/dsh-plugin-pet#672c068626a460268cc3e5514e9ff912dc5630a6
+  version: 2.0.0
+  commit: 672c068626a460268cc3e5514e9ff912dc5630a6
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.3.0-0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/c-ling__dsh-plugin-pet/672c068626a460268cc3e5514e9ff912dc5630a6/home.png
+  - skin-screenshots/c-ling__dsh-plugin-pet/672c068626a460268cc3e5514e9ff912dc5630a6/conversation.png
+  - skin-screenshots/c-ling__dsh-plugin-pet/672c068626a460268cc3e5514e9ff912dc5630a6/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 672c068626a460268cc3e5514e9ff912dc5630a6
+    packageVersion: 2.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:51:21.592Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 996
+starsSnapshot: 4
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:51:22.773Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:22.773Z

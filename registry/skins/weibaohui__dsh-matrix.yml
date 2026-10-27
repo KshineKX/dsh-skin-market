@@ -1,0 +1,66 @@
+id: weibaohui.dsh-matrix
+name:
+  zh: dsh-matrix
+  en: dsh-matrix
+author: weibaohui
+description: dsh 插件 · 字符雨：三模式（黑客帝国英文数字 / 道法修仙篆体·嵌入霞鹜篆书 OFL / 甲骨卜辞·嵌入甲骨数据集 CC-BY 4.0）× 七种配色（经典绿/琥珀/赛博青/品红/鎏金/七彩轮转/七彩随机）× 金边发光，三轴自由组合；雨字可标老式注音符号；agent 流式 token 原文实时掺进雨里，雨势随活跃度起伏，透明度/速度/密度/深浅配色可调，双击清屏。
+repo: https://github.com/weibaohui/dsh-matrix
+package: "@weibaohui/dsh-matrix"
+rowId: dsh-matrix
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:weibaohui/dsh-matrix#708112dad6d997b7259e3a2df2a20ed7ae3aa965
+  version: 0.7.0
+  commit: 708112dad6d997b7259e3a2df2a20ed7ae3aa965
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: "@weibaohui/dsh-matrix"
+    packageVersion: 0.7.0
+    integrity: sha512-+tpgbArPmre2OBATc/4pi9AHWxdpCfAfxRJwm3OSX/LmFtnu2c0FH5/G5tYOqKtWvJiDXU6Mjn6UAozNYR5Z6w==
+  npm:
+    name: "@weibaohui/dsh-matrix"
+    version: 0.7.0
+    integrity: sha512-+tpgbArPmre2OBATc/4pi9AHWxdpCfAfxRJwm3OSX/LmFtnu2c0FH5/G5tYOqKtWvJiDXU6Mjn6UAozNYR5Z6w==
+    repository: https://github.com/weibaohui/dsh-matrix
+    gitHead: 708112dad6d997b7259e3a2df2a20ed7ae3aa965
+compatibility:
+  dsh: ">=0.1.7-rc.2"
+  platform:
+    - web
+screenshots:
+  - https://cdn.jsdelivr.net/gh/weibaohui/dsh-matrix@main/docs/rain-dark.png
+listScreenshot: https://cdn.jsdelivr.net/gh/weibaohui/dsh-matrix@main/docs/rain-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 708112dad6d997b7259e3a2df2a20ed7ae3aa965
+    packageVersion: 0.7.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:34:03.484Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

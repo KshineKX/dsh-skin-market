@@ -1,0 +1,66 @@
+id: stellum-waq.dsh-pet-ronaldo
+name:
+  zh: dsh-pet-ronaldo
+  en: dsh-pet-ronaldo
+author: Stellum-Waq
+description: DSH 桌宠 bundle 插件（v2.3）。住在 Web 界面右下角的精灵宠物 + 一个独立于浏览器的原生桌面窗口：随 Agent 工作状态切换动作（对话中专注工作、回合思考、等待审批、出错摔倒），对话完成时跳跃庆祝并全机播放提示音。原生桌面窗口最小化/关闭网页也照样存在，悬停显示当前工作区与对话名，双击用 Edge 打开 Harness 网页。内置多宠物注册表（跨重启保留）、每宠物独立音频、素材 HTTP 路由与注册即校验（严格防图片错位）。配套技能 dsh-pet-forge 可一句话生成并导入新宠物（生图模型 + Blender 3D 建模 + 动作/音效设计），也能直接导入视频（抽帧 + 抠绿幕 + 按动作切分）。v2.1 新增宠物社区：按 DPSL-1.0 开放共享协议发布到 GitHub 的桌宠会被自动收录，可在插件内置画廊里浏览、下载、一键安装。v2.3 适配 DSH 0.2 桌面版：修好桌面端庆祝音效（0.2 起默认组合不再提供 ctx.shell，改为 shell 不可用时直接 spawn powershell），并新增单击挑衅动作（pet.json 的 interactions.clickAnim，播完自动回落）。
+repo: https://github.com/Stellum-Waq/dsh-pet-ronaldo
+package: dsh-ronaldo-pet
+rowId: ronaldo-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Stellum-Waq/dsh-pet-ronaldo#db09e4d59a99c1916fef06d444a0f2a562e6ddc2
+  version: 2.3.2
+  commit: db09e4d59a99c1916fef06d444a0f2a562e6ddc2
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.1-rc.1"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Stellum-Waq__dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/home.png
+screenshots:
+  - https://raw.githubusercontent.com/Stellum-Waq/dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/docs/preview.png
+  - https://raw.githubusercontent.com/Stellum-Waq/dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/screenshots/demo-idle.png
+  - https://raw.githubusercontent.com/Stellum-Waq/dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/screenshots/demo-running.png
+  - https://raw.githubusercontent.com/Stellum-Waq/dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/screenshots/demo-siu.png
+listScreenshot: https://raw.githubusercontent.com/Stellum-Waq/dsh-pet-ronaldo/db09e4d59a99c1916fef06d444a0f2a562e6ddc2/docs/preview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: db09e4d59a99c1916fef06d444a0f2a562e6ddc2
+    packageVersion: 2.3.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:51:16.921Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+  notice: 代码MIT；默认宠物素材另适用DPSL-1.0。额外siu.mp3不在该素材许可范围内。
+featuredRank: 994
+starsSnapshot: 6
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:51:17.344Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:17.344Z

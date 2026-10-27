@@ -1,0 +1,68 @@
+id: lildanger.dsh-skin-win2000
+name:
+  zh: dsh-skin-win2000
+  en: dsh-skin-win2000
+author: lildanger
+description: "Windows 2000 skin for the DSH Web GUI: metric-accurate grey chrome, two-tone gradient title bars, 1px bevels, square corners and a 16px scrollbar. 给 DSH Web GUI 换上 Windows 2000 经典外观。"
+repo: https://github.com/lildanger/dsh-skin-win2000
+package: dsh-skin-win2000
+rowId: skin-win2000
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:lildanger/dsh-skin-win2000#908ff7d80554721d40e15ef30c7c378e054db551
+  version: 1.3.1
+  commit: 908ff7d80554721d40e15ef30c7c378e054db551
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-skin-win2000
+    packageVersion: 1.3.1
+    integrity: sha512-kcmSN/aumjolMGcfVbXKu6daoDn8Jfn7N8xGa4qU2Xqa4rCiagplcUzI/at/Rru1l/iZYojzutWAtzxP9ZyK7g==
+  npm:
+    name: dsh-skin-win2000
+    version: 1.3.1
+    integrity: sha512-kcmSN/aumjolMGcfVbXKu6daoDn8Jfn7N8xGa4qU2Xqa4rCiagplcUzI/at/Rru1l/iZYojzutWAtzxP9ZyK7g==
+    repository: https://github.com/lildanger/dsh-skin-win2000
+    gitHead: 908ff7d80554721d40e15ef30c7c378e054db551
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/lildanger/dsh-skin-win2000/908ff7d80554721d40e15ef30c7c378e054db551/docs/screenshots/04-dark.png
+  - https://raw.githubusercontent.com/lildanger/dsh-skin-win2000/908ff7d80554721d40e15ef30c7c378e054db551/docs/screenshots/01-main-window.png
+listScreenshot: https://raw.githubusercontent.com/lildanger/dsh-skin-win2000/908ff7d80554721d40e15ef30c7c378e054db551/docs/screenshots/04-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 908ff7d80554721d40e15ef30c7c378e054db551
+    packageVersion: 1.3.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:40.240Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-26T23:11:51.250Z
+updatedAt: 2026-10-26T23:11:51.250Z

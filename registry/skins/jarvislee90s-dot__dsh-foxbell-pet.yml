@@ -1,0 +1,67 @@
+id: jarvislee90s-dot.dsh-foxbell-pet
+name:
+  zh: dsh-foxbell-pet
+  en: dsh-foxbell-pet
+author: jarvislee90s-dot
+description: DSH Web 右下角可拖拽的多宠物桌宠系统（内置小狐狸 Foxbell）：多项目状态监控（MAM 色彩口径：红待审批/黄运行/绿完成未读，深红错误）+ 语音提醒 + 外部宠物体系（商店/四来源导入/热切换/守卫）+ 🦊显隐开关。安装即用，内置素材随包自带。
+repo: https://github.com/jarvislee90s-dot/dsh-foxbell-pet
+package: dsh-foxbell-pet
+rowId: dsh-foxbell-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:jarvislee90s-dot/dsh-foxbell-pet#09ab288c63152cc5f857d61ede5ef1441084bbf2
+  version: 2.4.0
+  commit: 09ab288c63152cc5f857d61ede5ef1441084bbf2
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.2-rc.1"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/jarvislee90s-dot__dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/home.png
+  - skin-screenshots/jarvislee90s-dot__dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/jarvislee90s-dot/dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/reference/%E6%A1%83%E5%AD%90%E8%A1%A3%E6%9C%8D%E7%B2%89%E7%8B%90%E7%8B%B8%E5%BD%A2%E8%B1%A1.png
+  - https://raw.githubusercontent.com/jarvislee90s-dot/dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/docs/screenshots/switch-pet.png
+  - https://raw.githubusercontent.com/jarvislee90s-dot/dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/docs/screenshots/context-menu.png
+  - https://raw.githubusercontent.com/jarvislee90s-dot/dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/docs/screenshots/import-codex.png
+listScreenshot: https://raw.githubusercontent.com/jarvislee90s-dot/dsh-foxbell-pet/09ab288c63152cc5f857d61ede5ef1441084bbf2/reference/%E6%A1%83%E5%AD%90%E8%A1%A3%E6%9C%8D%E7%B2%89%E7%8B%90%E7%8B%B8%E5%BD%A2%E8%B1%A1.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - DSH 兼容范围待核对：保留的市场范围 >=0.1.2-rc.1 未被本次检测范围 0.2.0-rc.2 完全覆盖（固定版本 09ab288c63152cc5f857d61ede5ef1441084bbf2）。已保留原字段，请人工核对；此项是声明冲突，不代表已验证运行失败。
+  scan:
+    commit: 09ab288c63152cc5f857d61ede5ef1441084bbf2
+    packageVersion: 2.4.0
+    scannerVersion: static-v2
+    dshVersion: 0.2.0-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:51.983Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:52.502Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:52.502Z

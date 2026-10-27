@@ -1,0 +1,63 @@
+id: wupup.dsh-custom-style
+name:
+  zh: dsh-custom-style
+  en: dsh-custom-style
+author: wupup
+description: "DSH Web 界面样式自定义插件：全局自定义 CSS 编辑器、可视化点选元素编辑、--dsw-* 主题变量面板、界面密度微调、预设样式包与导入导出。Customize the DSH web GUI: a live CSS editor, visual element picker, design-token panel, density controls, and shareable preset packs."
+repo: https://github.com/wupup/dsh-custom-style
+package: dsh-custom-style
+rowId: custom-style
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:wupup/dsh-custom-style#ce67ec08af2363410355d0d3e29945f24de83fbe
+  version: 0.1.0
+  commit: ce67ec08af2363410355d0d3e29945f24de83fbe
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/wupup__dsh-custom-style/ce67ec08af2363410355d0d3e29945f24de83fbe/home.png
+  - skin-screenshots/wupup__dsh-custom-style/ce67ec08af2363410355d0d3e29945f24de83fbe/conversation.png
+  - skin-screenshots/wupup__dsh-custom-style/ce67ec08af2363410355d0d3e29945f24de83fbe/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: ce67ec08af2363410355d0d3e29945f24de83fbe
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:20.600Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:20.845Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:20.845Z

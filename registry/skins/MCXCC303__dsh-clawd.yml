@@ -1,0 +1,74 @@
+id: mcxcc303.dsh-clawd
+name:
+  zh: dsh-clawd
+  en: dsh-clawd
+author: MCXCC303
+description: "Clawd the pixel pet, living in the DeepSeek Harness Web GUI: reacts to session and agent state, draggable, themable."
+repo: https://github.com/MCXCC303/dsh-clawd
+package: "@mcxcc303/dsh-clawd"
+rowId: dsh-clawd
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:MCXCC303/dsh-clawd#15f3ac60cd7c4a81eed91b64c055a5b758acbe17
+  version: 0.1.1
+  commit: 15f3ac60cd7c4a81eed91b64c055a5b758acbe17
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: "@mcxcc303/dsh-clawd"
+    packageVersion: 0.1.1
+    integrity: sha512-VLnve87QWYJ1yHOETNjN4EydvApL59SiCEd9u9OnDRjPHlzt64bkaoo3aWfpVpfyctrhd0HCy9vxcGMrH0nnfg==
+  npm:
+    name: "@mcxcc303/dsh-clawd"
+    version: 0.1.1
+    integrity: sha512-VLnve87QWYJ1yHOETNjN4EydvApL59SiCEd9u9OnDRjPHlzt64bkaoo3aWfpVpfyctrhd0HCy9vxcGMrH0nnfg==
+    repository: https://github.com/MCXCC303/dsh-clawd
+    gitHead: 15f3ac60cd7c4a81eed91b64c055a5b758acbe17
+compatibility:
+  dsh: ">=0.1.7-rc.1"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/MCXCC303__dsh-clawd/15f3ac60cd7c4a81eed91b64c055a5b758acbe17/home.png
+  - skin-screenshots/MCXCC303__dsh-clawd/15f3ac60cd7c4a81eed91b64c055a5b758acbe17/conversation.png
+  - skin-screenshots/MCXCC303__dsh-clawd/15f3ac60cd7c4a81eed91b64c055a5b758acbe17/settings.png
+screenshots:
+  - https://github.com/user-attachments/assets/5416ce24-7ba5-49bd-a010-1717cc981548
+listScreenshot: https://github.com/user-attachments/assets/5416ce24-7ba5-49bd-a010-1717cc981548
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 15f3ac60cd7c4a81eed91b64c055a5b758acbe17
+    packageVersion: 0.1.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:00.195Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+  notice: 代码与默认Text/placeholder原创图形MIT；第三方Clawd/Calico主题未随包分发，其权利不由本插件授予。
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:00.815Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:00.815Z

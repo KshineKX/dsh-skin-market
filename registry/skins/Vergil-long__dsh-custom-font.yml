@@ -1,0 +1,63 @@
+id: vergil-long.dsh-custom-font
+name:
+  zh: dsh-custom-font
+  en: dsh-custom-font
+author: Vergil-long
+description: 自定义 DeepSeek Harness 界面字体/字号/加粗/颜色与版式：像 Word 一样在设置里改，所见即所得，自动保存。自带 STIX2Text 与 Latin Modern Mono Light 字体，内置一套作者推荐排版；设置存到 ~/.dsh（换桌面外壳不丢）。Windows 下自动读取系统已装字体库。
+repo: https://github.com/Vergil-long/dsh-custom-font
+package: dsh-custom-font
+rowId: dsh-custom-font
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Vergil-long/dsh-custom-font#373fd28a3618129d72a23e81bfec1ff31e044db4
+  version: 3.1.0
+  commit: 373fd28a3618129d72a23e81bfec1ff31e044db4
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Vergil-long__dsh-custom-font/373fd28a3618129d72a23e81bfec1ff31e044db4/home.png
+  - skin-screenshots/Vergil-long__dsh-custom-font/373fd28a3618129d72a23e81bfec1ff31e044db4/conversation.png
+  - skin-screenshots/Vergil-long__dsh-custom-font/373fd28a3618129d72a23e81bfec1ff31e044db4/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 373fd28a3618129d72a23e81bfec1ff31e044db4
+    packageVersion: 3.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:27.264Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:27.448Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:27.448Z

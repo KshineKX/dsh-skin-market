@@ -1,0 +1,58 @@
+id: 2754lm.dsh-theme-newsprint
+name:
+  zh: dsh-theme-newsprint
+  en: dsh-theme-newsprint
+author: 2754LM
+description: 报纸衬线 · Newsprint Serif — DSH 主题插件（cordis 埋点版）：暖白报纸 + 衬线正文 + 报纸排版笔画；暗色自带一份暖调暗色（warm brown-black `#1a1815` + 提亮海蓝 `#5aa9d6`），并修掉亮暗档的特异性冲突。零 @deepseek-ai/* client peer，免疫 dsh-client-ui-theme 拓扑变更。
+repo: https://github.com/2754LM/dsh-theme-newsprint
+package: dsh-theme-newsprint
+rowId: newsprint
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:2754LM/dsh-theme-newsprint#21ffb6ccfc2d2238efdd79ac1a4d0f74582c0640
+  version: 2.2.0
+  commit: 21ffb6ccfc2d2238efdd79ac1a4d0f74582c0640
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/2754LM/dsh-theme-newsprint/21ffb6ccfc2d2238efdd79ac1a4d0f74582c0640/assets/preview-light.png
+listScreenshot: https://raw.githubusercontent.com/2754LM/dsh-theme-newsprint/21ffb6ccfc2d2238efdd79ac1a4d0f74582c0640/assets/preview-light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 21ffb6ccfc2d2238efdd79ac1a4d0f74582c0640
+    packageVersion: 2.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:56.820Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

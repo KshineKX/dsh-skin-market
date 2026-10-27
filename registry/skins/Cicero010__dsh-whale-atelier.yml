@@ -1,0 +1,67 @@
+id: cicero010.dsh-whale-atelier
+name:
+  zh: dsh-whale-atelier
+  en: dsh-whale-atelier
+author: Cicero010
+description: "Full-interface whale skin pack for the DeepSeek Harness Web UI: layered wallpaper, metallic trim, lace and bows, a corner mascot that reacts to agent state, ambient particles, and an installable third-party skin-pack format."
+repo: https://github.com/Cicero010/dsh-whale-atelier
+package: dsh-whale-atelier
+rowId: dsh-whale-atelier
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Cicero010/dsh-whale-atelier#e8433fbb90504374a532ff8d5141e7c4e8bff37e
+  version: 1.1.0
+  commit: e8433fbb90504374a532ff8d5141e7c4e8bff37e
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-whale-atelier
+    packageVersion: 1.1.0
+    integrity: sha512-uDVD5OjQLBbrI7pjEnx1UwsvIi3eA5JH4WOQ8bl13gDtWwPODP3eEs7UxlsFzUEgFVG+lbTTgZq7f1ooVD8KSA==
+  npm:
+    name: dsh-whale-atelier
+    version: 1.1.0
+    integrity: sha512-uDVD5OjQLBbrI7pjEnx1UwsvIi3eA5JH4WOQ8bl13gDtWwPODP3eEs7UxlsFzUEgFVG+lbTTgZq7f1ooVD8KSA==
+    repository: https://github.com/Cicero010/dsh-whale-atelier
+    gitHead: e8433fbb90504374a532ff8d5141e7c4e8bff37e
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Cicero010/dsh-whale-atelier/e8433fbb90504374a532ff8d5141e7c4e8bff37e/docs/screenshots/atelier-dark.webp
+  - https://raw.githubusercontent.com/Cicero010/dsh-whale-atelier/e8433fbb90504374a532ff8d5141e7c4e8bff37e/docs/screenshots/snow-dark.webp
+listScreenshot: https://raw.githubusercontent.com/Cicero010/dsh-whale-atelier/e8433fbb90504374a532ff8d5141e7c4e8bff37e/docs/screenshots/atelier-dark.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: e8433fbb90504374a532ff8d5141e7c4e8bff37e
+    packageVersion: 1.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:59.378Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

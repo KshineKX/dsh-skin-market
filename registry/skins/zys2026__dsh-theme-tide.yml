@@ -1,0 +1,58 @@
+id: zys2026.dsh-theme-tide
+name:
+  zh: dsh-theme-tide
+  en: dsh-theme-tide
+author: zys2026
+description: Tide & Timber (潮汐木色) — a coastal light/dark theme for the DeepSeek Harness Web GUI, built on the official ThemeRuntime alias-token layer.
+repo: https://github.com/zys2026/dsh-theme-tide
+package: dsh-theme-tide
+rowId: dsh-theme-tide
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:zys2026/dsh-theme-tide#0ed565b9203da89a369e34ec58cbf8fda6c0392e
+  version: 1.0.1
+  commit: 0ed565b9203da89a369e34ec58cbf8fda6c0392e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/zys2026/dsh-theme-tide/0ed565b9203da89a369e34ec58cbf8fda6c0392e/previews/light.png
+  - https://raw.githubusercontent.com/zys2026/dsh-theme-tide/0ed565b9203da89a369e34ec58cbf8fda6c0392e/previews/dark.png
+listScreenshot: https://raw.githubusercontent.com/zys2026/dsh-theme-tide/0ed565b9203da89a369e34ec58cbf8fda6c0392e/previews/light.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 0ed565b9203da89a369e34ec58cbf8fda6c0392e
+    packageVersion: 1.0.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:34:16.514Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,62 @@
+id: lh15626127422-cloud.dsh-cp2077-theme
+name:
+  zh: dsh-cp2077-theme
+  en: dsh-cp2077-theme
+author: lh15626127422-cloud
+description: Cyberpunk 2077 themed UI for the DeepSeek Harness Web GUI
+repo: https://github.com/lh15626127422-cloud/dsh-cp2077-theme
+package: "@local/cp2077-theme"
+rowId: cp2077-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:lh15626127422-cloud/dsh-cp2077-theme#1204bef49daf664d5cdd2f0c99c18fb51345de6e
+  version: 2.0.2
+  commit: 1204bef49daf664d5cdd2f0c99c18fb51345de6e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/dark.jpg
+  - https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/light.jpg
+listScreenshot: https://raw.githubusercontent.com/lh15626127422-cloud/dsh-cp2077-theme/be416f72b5355b1ebfc1dd5eebe790203332a809/docs/screenshots/dark.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: 1204bef49daf664d5cdd2f0c99c18fb51345de6e
+    packageVersion: 2.0.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:56.219Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:52:56.793Z
+metadataUpdatedAt: 2026-10-26T01:52:56.793Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:56.793Z

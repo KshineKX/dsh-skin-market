@@ -1,0 +1,69 @@
+id: ronnyjung2021.dsh-mimo-skin
+name:
+  zh: dsh-mimo-skin
+  en: dsh-mimo-skin
+author: RonnyJung2021
+description: "MiMo skin for the DSH Web GUI: the warm off-white editorial page, hairline black rules, serif reading face and orange accent of mimo.xiaomi.com"
+repo: https://github.com/RonnyJung2021/dsh-mimo-skin
+package: dsh-mimo-skin
+rowId: dsh-mimo-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:RonnyJung2021/dsh-mimo-skin#62ea164f5db6d73eabc8581442adc7bc37933ac3
+  version: 0.2.0
+  commit: 62ea164f5db6d73eabc8581442adc7bc37933ac3
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-mimo-skin
+    packageVersion: 0.2.0
+    integrity: sha512-HA5acFuRqVYpTTARmjz0uDtZt4wBKNk5CXjWtrZBWPzyRXCgZR84RLS/kLpmcrle2u5KV6uhlC+lkVki76Uisg==
+  allowBuild: dsh-mimo-skin@https://codeload.github.com/RonnyJung2021/dsh-mimo-skin/tar.gz/62ea164f5db6d73eabc8581442adc7bc37933ac3
+  npm:
+    name: dsh-mimo-skin
+    version: 0.2.0
+    integrity: sha512-HA5acFuRqVYpTTARmjz0uDtZt4wBKNk5CXjWtrZBWPzyRXCgZR84RLS/kLpmcrle2u5KV6uhlC+lkVki76Uisg==
+    repository: https://github.com/RonnyJung2021/dsh-mimo-skin
+    gitHead: 62ea164f5db6d73eabc8581442adc7bc37933ac3
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/RonnyJung2021/dsh-mimo-skin/62ea164f5db6d73eabc8581442adc7bc37933ac3/docs/preview-compare.png
+  - https://raw.githubusercontent.com/RonnyJung2021/dsh-mimo-skin/62ea164f5db6d73eabc8581442adc7bc37933ac3/docs/preview-dark.png
+listScreenshot: https://raw.githubusercontent.com/RonnyJung2021/dsh-mimo-skin/62ea164f5db6d73eabc8581442adc7bc37933ac3/docs/preview-compare.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 62ea164f5db6d73eabc8581442adc7bc37933ac3
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:52.427Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-26T01:52:22.205Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:22.205Z

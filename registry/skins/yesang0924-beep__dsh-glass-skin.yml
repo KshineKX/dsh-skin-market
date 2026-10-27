@@ -1,0 +1,59 @@
+id: yesang0924-beep.dsh-glass-skin
+name:
+  zh: dsh-glass-skin
+  en: dsh-glass-skin
+author: yesang0924-beep
+description: Glass Skin — a glass-material theme for the DeepSeek Harness Web UI. The material ladder, reading scale, states and scene rules are frozen; the wallpaper is the only variable.
+repo: https://github.com/yesang0924-beep/dsh-glass-skin
+package: dsh-glass-skin
+rowId: ui-glass-skin
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:yesang0924-beep/dsh-glass-skin#88732342772b82a875333c0a1d298df838640220
+  version: 6.0.2
+  commit: 88732342772b82a875333c0a1d298df838640220
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-0 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yesang0924-beep/dsh-glass-skin/88732342772b82a875333c0a1d298df838640220/docs/screenshots/hero.jpg
+listScreenshot: https://raw.githubusercontent.com/yesang0924-beep/dsh-glass-skin/88732342772b82a875333c0a1d298df838640220/docs/screenshots/hero.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 88732342772b82a875333c0a1d298df838640220
+    packageVersion: 6.0.2
+    scannerVersion: static-v2
+    dshVersion: ">=0.2.0-0 <0.3.0-0"
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:01.910Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

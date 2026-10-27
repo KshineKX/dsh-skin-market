@@ -1,0 +1,68 @@
+id: zmm863-commits.dsh-client-ui-paopaocat
+name:
+  zh: dsh-client-ui-paopaocat
+  en: dsh-client-ui-paopaocat
+author: zmm863-commits
+description: 🐱 泡泡猫玻璃主题 — 基于 Seaglass 架构的可爱蓝白 glassmorphism 主题，含淡雅/蓝色双风格切换，猫爪印、小鱼、泡泡装饰
+repo: https://github.com/zmm863-commits/dsh-client-ui-paopaocat
+package: dsh-client-ui-paopaocat
+rowId: ui-paopaocat
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:zmm863-commits/dsh-client-ui-paopaocat#1970fa791fe514c52fa52a5d4db6a40b9c50c2d0
+  version: 0.3.4
+  commit: 1970fa791fe514c52fa52a5d4db6a40b9c50c2d0
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-client-ui-paopaocat
+    packageVersion: 0.3.4
+    integrity: sha512-/dAe/yNx0cwP7gbM35v8s5vURS9dl87kindqeLEdtEE3KJYY9rlUU39FNsmPIdakbBtujJivKaOWrr7uIiNbOA==
+  npm:
+    name: dsh-client-ui-paopaocat
+    version: 0.3.4
+    integrity: sha512-/dAe/yNx0cwP7gbM35v8s5vURS9dl87kindqeLEdtEE3KJYY9rlUU39FNsmPIdakbBtujJivKaOWrr7uIiNbOA==
+    repository: https://github.com/zmm863-commits/dsh-client-ui-paopaocat
+    gitHead: 1970fa791fe514c52fa52a5d4db6a40b9c50c2d0
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/zmm863-commits/dsh-client-ui-paopaocat/1970fa791fe514c52fa52a5d4db6a40b9c50c2d0/screenshots/01-home.jpg
+listScreenshot: https://raw.githubusercontent.com/zmm863-commits/dsh-client-ui-paopaocat/1970fa791fe514c52fa52a5d4db6a40b9c50c2d0/screenshots/01-home.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 1970fa791fe514c52fa52a5d4db6a40b9c50c2d0
+    packageVersion: 0.3.4
+    scannerVersion: static-v2
+    dshVersion: ^0.1.2-rc.1 || ^0.2.0-rc.1
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:34:14.957Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

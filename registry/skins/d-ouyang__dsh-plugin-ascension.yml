@@ -1,0 +1,70 @@
+id: d-ouyang.dsh-plugin-ascension
+name:
+  zh: dsh-plugin-ascension
+  en: dsh-plugin-ascension
+author: d-ouyang
+description: 渡劫飞升：仙逆·王林修炼伙伴。监控会话状态驱动动画，随使用修炼升境，境界越高皮肤越华丽。
+repo: https://github.com/d-ouyang/dsh-plugin-ascension
+package: dsh-plugin-ascension
+rowId: ascension
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:d-ouyang/dsh-plugin-ascension#3e9e72bf7bdf59b45d8a616a198210993c40010e
+  version: 0.2.0
+  commit: 3e9e72bf7bdf59b45d8a616a198210993c40010e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  npm:
+    name: dsh-plugin-ascension
+    version: 0.2.0
+    integrity: sha512-04UM92U+qdPCeacBevCD8Lc2+jKZSpODF3ZSddAKuuyvOkDT3temQxBDGGJenst7J86RT+mvG43eGCYkrcKgUA==
+    repository: https://github.com/d-ouyang/dsh-plugin-ascension
+    gitHead: 3e9e72bf7bdf59b45d8a616a198210993c40010e
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/d-ouyang__dsh-plugin-ascension/3e9e72bf7bdf59b45d8a616a198210993c40010e/home.png
+  - skin-screenshots/d-ouyang__dsh-plugin-ascension/3e9e72bf7bdf59b45d8a616a198210993c40010e/conversation.png
+  - skin-screenshots/d-ouyang__dsh-plugin-ascension/3e9e72bf7bdf59b45d8a616a198210993c40010e/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 3e9e72bf7bdf59b45d8a616a198210993c40010e
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:43.435Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:52:44.129Z
+metadataUpdatedAt: 2026-10-26T01:52:44.129Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:44.129Z

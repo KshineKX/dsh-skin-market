@@ -1,0 +1,63 @@
+id: tinynian.dsh-harness-os
+name:
+  zh: dsh-harness-os
+  en: dsh-harness-os
+author: TinyNian
+description: DeepSeek Harness 主界面皮肤「Harness OS」：沿用 dsh-startup-screen 开机动画的技术档案版式——暖白 / 暗色底板、发丝机框、等宽读数、准星罗盘。开机动画揭幕时原地接住常驻件，其余部件按同一节奏装配。纯客户端插件，不改 DSH 源码。
+repo: https://github.com/TinyNian/dsh-harness-os
+subpath: packages/dsh-harness-os
+package: dsh-harness-os
+rowId: dsh-harness-os
+category: theme
+tags:
+  - boot
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:TinyNian/dsh-harness-os#41646817d7c83db8cbd4108ad57bfe7805f8bd4c&path:/packages/dsh-harness-os
+  version: 0.2.2
+  commit: 41646817d7c83db8cbd4108ad57bfe7805f8bd4c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/TinyNian/dsh-harness-os/89639768a83028119b999931a71bd2b37c88a340/packages/dsh-harness-os/screenshots/dark-2-running.webp
+  - https://raw.githubusercontent.com/TinyNian/dsh-harness-os/89639768a83028119b999931a71bd2b37c88a340/packages/dsh-harness-os/screenshots/light-2-running.webp
+listScreenshot: https://raw.githubusercontent.com/TinyNian/dsh-harness-os/89639768a83028119b999931a71bd2b37c88a340/packages/dsh-harness-os/screenshots/dark-2-running.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 41646817d7c83db8cbd4108ad57bfe7805f8bd4c
+    packageVersion: 0.2.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T23:11:55.974Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-26T23:11:57.956Z
+metadataUpdatedAt: 2026-10-26T23:11:57.956Z
+starsUpdatedAt: 2026-10-26T01:53:12.653Z
+updatedAt: 2026-10-26T23:11:57.956Z

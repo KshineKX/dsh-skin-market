@@ -1,0 +1,70 @@
+id: yrsxy.dsh-warm-theme
+name:
+  zh: dsh-warm-theme
+  en: dsh-warm-theme
+author: yrsxy
+description: DSH 护眼配色包 —— 5 套低蓝光配色，通过官方 ctx.theme.overrideTokens 扩展点覆盖语义 token，零布局改动、热生效。
+repo: https://github.com/yrsxy/dsh-warm-theme
+package: dsh-warm-theme
+rowId: dsh-warm-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:yrsxy/dsh-warm-theme#8e3e4bbcd66202cd792c832e256397ceb4d651dd
+  version: 0.2.0
+  commit: 8e3e4bbcd66202cd792c832e256397ceb4d651dd
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/home.png
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/conversation.png
+  - skin-screenshots/yrsxy__dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/warm-paper.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/old-book.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/quiet-olive.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/tea-brown.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/mist-blue.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/dark-warm-paper.png
+  - https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/dark-tea-brown.png
+listScreenshot: https://raw.githubusercontent.com/yrsxy/dsh-warm-theme/8e3e4bbcd66202cd792c832e256397ceb4d651dd/assets/screenshots/warm-paper.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 8e3e4bbcd66202cd792c832e256397ceb4d651dd
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:24.585Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:25.356Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:25.356Z

@@ -1,0 +1,69 @@
+id: harmlessfunny.dsh-pet-in-frame
+name:
+  zh: dsh-pet-in-frame
+  en: dsh-pet-in-frame
+author: HarmlessFunny
+description: "Agent desktop pet overlay for DeepSeek Harness: static or frame-animated poses that react to agent status and tool calls."
+repo: https://github.com/HarmlessFunny/dsh-pet-in-frame
+package: dsh-pet-in-frame
+rowId: dsh-pet-in-frame
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:HarmlessFunny/dsh-pet-in-frame#8328aca0688a42090f7383c25800dce13b23036e
+  version: 0.6.0
+  commit: 8328aca0688a42090f7383c25800dce13b23036e
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-pet-in-frame
+    packageVersion: 0.6.0
+    integrity: sha512-BQjWv1mqnxB2SkEPa4w7Bbmz+mcM23nHnB6ast7A6tFa5AinlnUzU/pHLC5nkQKqI4Zxudp1Hg7SaXPahzMB5A==
+  npm:
+    name: dsh-pet-in-frame
+    version: 0.6.0
+    integrity: sha512-BQjWv1mqnxB2SkEPa4w7Bbmz+mcM23nHnB6ast7A6tFa5AinlnUzU/pHLC5nkQKqI4Zxudp1Hg7SaXPahzMB5A==
+    repository: https://github.com/HarmlessFunny/dsh-pet-in-frame
+    gitHead: 8328aca0688a42090f7383c25800dce13b23036e
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/HarmlessFunny/dsh-pet-in-frame/8328aca0688a42090f7383c25800dce13b23036e/screenshots/01-hero-idle.jpg
+  - https://raw.githubusercontent.com/HarmlessFunny/dsh-pet-in-frame/8328aca0688a42090f7383c25800dce13b23036e/screenshots/02-chat-bubble.jpg
+listScreenshot: https://raw.githubusercontent.com/HarmlessFunny/dsh-pet-in-frame/8328aca0688a42090f7383c25800dce13b23036e/screenshots/01-hero-idle.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 8328aca0688a42090f7383c25800dce13b23036e
+    packageVersion: 0.6.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:24.686Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

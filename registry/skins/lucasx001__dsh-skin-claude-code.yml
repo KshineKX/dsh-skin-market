@@ -1,0 +1,60 @@
+id: lucasx001.dsh-skin-claude-code
+name:
+  zh: dsh-skin-claude-code
+  en: dsh-skin-claude-code
+author: lucasx001
+description: "A Claude Code-inspired skin for the DeepSeek Harness web GUI: warm charcoal/cream surfaces, terracotta accent, and monospace terminal typography."
+repo: https://github.com/lucasx001/dsh-skin-claude-code
+package: dsh-skin-claude-code
+rowId: claude-code-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:lucasx001/dsh-skin-claude-code#4c2bd6fb7bb094a4f9a7cc7ce2661d2c8fd99874
+  version: 0.1.3
+  commit: 4c2bd6fb7bb094a4f9a7cc7ce2661d2c8fd99874
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/LucasN0820/dsh-skin-claude-code/main/docs/screenshots/skin-dark.png
+  - https://raw.githubusercontent.com/LucasN0820/dsh-skin-claude-code/main/docs/screenshots/skin-light.png
+listScreenshot: https://raw.githubusercontent.com/LucasN0820/dsh-skin-claude-code/main/docs/screenshots/skin-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 4c2bd6fb7bb094a4f9a7cc7ce2661d2c8fd99874
+    packageVersion: 0.1.3
+    scannerVersion: static-v2
+    dshVersion: ^0.1.0-rc.6
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:07.978Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,64 @@
+id: 4444hao.dsh-codefall
+name:
+  zh: dsh-codefall
+  en: dsh-codefall
+author: 4444Hao
+description: dsh-codefall — green digital-rain boot animation plus a green semantic theme for the DeepSeek Harness client.
+repo: https://github.com/4444Hao/dsh-codefall
+package: dsh-codefall
+rowId: codefall
+category: theme
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:4444Hao/dsh-codefall#68159fcced1d65c7ea356821859ea80d365c523a
+  version: 0.2.0
+  commit: 68159fcced1d65c7ea356821859ea80d365c523a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/4444Hao__dsh-codefall/68159fcced1d65c7ea356821859ea80d365c523a/home.png
+  - skin-screenshots/4444Hao__dsh-codefall/68159fcced1d65c7ea356821859ea80d365c523a/conversation.png
+  - skin-screenshots/4444Hao__dsh-codefall/68159fcced1d65c7ea356821859ea80d365c523a/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/4444Hao/dsh-codefall/68159fcced1d65c7ea356821859ea80d365c523a/docs/images/boot-waterfall-v2.gif
+listScreenshot: https://raw.githubusercontent.com/4444Hao/dsh-codefall/68159fcced1d65c7ea356821859ea80d365c523a/docs/images/boot-waterfall-v2.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 68159fcced1d65c7ea356821859ea80d365c523a
+    packageVersion: 0.2.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:51:57.104Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:51:57.313Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:57.313Z

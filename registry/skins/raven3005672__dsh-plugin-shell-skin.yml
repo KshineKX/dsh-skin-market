@@ -1,0 +1,79 @@
+id: raven3005672.dsh-plugin-shell-skin
+name:
+  zh: dsh-plugin-shell-skin
+  en: dsh-plugin-shell-skin
+author: raven3005672
+description: "A skin for DeepSeek Harness: opening animation, custom wallpaper, and panel opacity, applied as you change them."
+repo: https://github.com/raven3005672/dsh-plugin-shell-skin
+package: dsh-plugin-shell-skin
+rowId: dsh-plugin-shell-skin
+category: theme
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:raven3005672/dsh-plugin-shell-skin#12202022425baf954b84ddcbcacc797c898e3d64
+  version: 0.2.1
+  commit: 12202022425baf954b84ddcbcacc797c898e3d64
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-plugin-shell-skin
+    packageVersion: 0.2.1
+    integrity: sha512-xCteMTBMn/+18V5zVs4yTbWLWcBahwF4gOiKk+cVr9x/SdKagSLY/SaW2wYKjuc/a9+1onjtaj+U9GpLEIveUw==
+  npm:
+    name: dsh-plugin-shell-skin
+    version: 0.2.1
+    integrity: sha512-xCteMTBMn/+18V5zVs4yTbWLWcBahwF4gOiKk+cVr9x/SdKagSLY/SaW2wYKjuc/a9+1onjtaj+U9GpLEIveUw==
+    repository: https://github.com/raven3005672/dsh-plugin-shell-skin
+    gitHead: 12202022425baf954b84ddcbcacc797c898e3d64
+compatibility:
+  dsh: ">=0.2.0 <0.3.0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/home.png
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/conversation.png
+  - skin-screenshots/raven3005672__dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/home-light.jpg
+  - https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/splash.jpg
+listScreenshot: https://raw.githubusercontent.com/raven3005672/dsh-plugin-shell-skin/12202022425baf954b84ddcbcacc797c898e3d64/assets/preview/home-light.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: manual-only
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: improve
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议补全稳定的 package 名称、dsh.client Web 声明、row ID 和已构建客户端入口，以符合 dsh 插件要求并获得更顺畅的一键安装体验。
+    - 固定版本静态扫描无法完成，市场暂不提供该版本的一键安装。
+    - DSH 兼容范围待核对：保留的市场范围 >=0.2.0 <0.3.0 未被本次检测范围 0.2.1-rc.2 完全覆盖（固定版本 12202022425baf954b84ddcbcacc797c898e3d64）。已保留原字段，请人工核对；此项是声明冲突，不代表已验证运行失败。
+  scan:
+    commit: 12202022425baf954b84ddcbcacc797c898e3d64
+    packageVersion: 0.2.1
+    scannerVersion: static-v2
+    dshVersion: 0.2.1-rc.2
+    mode: static
+    result: unknown
+    checkedAt: 2026-10-26T01:53:04.840Z
+    findings:
+      - code: client-source-unavailable
+        message: 无法读取固定版本的 client 入口，静态扫描结果未知。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:53:05.569Z
+metadataUpdatedAt: 2026-10-26T01:53:05.569Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:05.569Z

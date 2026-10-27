@@ -1,0 +1,69 @@
+id: zuoyunlai.dsh-theme-palette
+name:
+  zh: dsh-theme-palette
+  en: dsh-theme-palette
+author: zuoyunlai
+description: DSH 主题配色：4 套配色 × 明暗两模式，OKLCH 色域安全重建 + 真实承载面对比度求解，可调强度与面板表面。
+repo: https://github.com/zuoyunlai/dsh-theme-palette
+package: dsh-theme-palette
+rowId: dsh-theme-palette
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:zuoyunlai/dsh-theme-palette#ebfb2e709cc1b33944af95ea7cf1e760ef721f2b
+  version: 1.9.7
+  commit: ebfb2e709cc1b33944af95ea7cf1e760ef721f2b
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-theme-palette
+    packageVersion: 1.9.7
+    integrity: sha512-8OgzTdaIywdJBP3vLmXRjMzaFGteH8F+ruYsevr3lvkaCR0N9xaLgDJZyy2OrjDz6P0eMjvSuUELWihwUQrvUw==
+  npm:
+    name: dsh-theme-palette
+    version: 1.9.7
+    integrity: sha512-8OgzTdaIywdJBP3vLmXRjMzaFGteH8F+ruYsevr3lvkaCR0N9xaLgDJZyy2OrjDz6P0eMjvSuUELWihwUQrvUw==
+    repository: https://github.com/zuoyunlai/dsh-theme-palette
+    gitHead: ebfb2e709cc1b33944af95ea7cf1e760ef721f2b
+compatibility:
+  dsh: ">=0.2.1-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: ebfb2e709cc1b33944af95ea7cf1e760ef721f2b
+    packageVersion: 1.9.7
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:41:52.800Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T18:48:39.623Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:48:39.623Z
+marketScreenshots:
+  - skin-screenshots/zuoyunlai__dsh-theme-palette/ebfb2e709cc1b33944af95ea7cf1e760ef721f2b/home.png
+  - skin-screenshots/zuoyunlai__dsh-theme-palette/ebfb2e709cc1b33944af95ea7cf1e760ef721f2b/conversation.png
+  - skin-screenshots/zuoyunlai__dsh-theme-palette/ebfb2e709cc1b33944af95ea7cf1e760ef721f2b/settings.png

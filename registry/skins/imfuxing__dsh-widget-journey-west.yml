@@ -1,0 +1,69 @@
+id: imfuxing.dsh-widget-journey-west
+name:
+  zh: dsh-widget-journey-west
+  en: dsh-widget-journey-west
+author: imfuxing
+description: "Journey to the West floating desktop pet for DeepSeek Harness: a frameless, transparent, always-on-top cartoon widget of Tang Monk and his disciples. Click to switch characters; idle shows a chasing scene."
+repo: https://github.com/imfuxing/dsh-widget-journey-west
+package: dsh-widget-journey-west
+rowId: journey-west-widget
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:imfuxing/dsh-widget-journey-west#32393bbfad7f72431815c26295e201d487a673f6
+  version: 1.0.1
+  commit: 32393bbfad7f72431815c26295e201d487a673f6
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/imfuxing__dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/home.png
+  - skin-screenshots/imfuxing__dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/conversation.png
+  - skin-screenshots/imfuxing__dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/tangseng.png
+  - https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/wukong.png
+  - https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/bajie.png
+  - https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/wujing.png
+  - https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/bailongma.png
+listScreenshot: https://raw.githubusercontent.com/imfuxing/dsh-widget-journey-west/32393bbfad7f72431815c26295e201d487a673f6/assets/tangseng.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: 32393bbfad7f72431815c26295e201d487a673f6
+    packageVersion: 1.0.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:51.318Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:51.913Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:51.913Z

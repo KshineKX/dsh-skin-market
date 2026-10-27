@@ -1,0 +1,64 @@
+id: hbgdjb.dsh-entry-transition
+name:
+  zh: dsh-entry-transition
+  en: dsh-entry-transition
+author: hbgdjb
+description: "One-shot entrance animation for the DSH workspace: logo is written onto the canvas, an inverted color bar sweeps across on exit; mirrors light/dark themes automatically."
+repo: https://github.com/hbgdjb/dsh-entry-transition
+package: dsh-entry-transition
+rowId: dsh-entry-transition
+category: theme
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:hbgdjb/dsh-entry-transition#96f0a90d794fbbf443d2b7d5036263f6399b1d01
+  version: 1.0.1
+  commit: 96f0a90d794fbbf443d2b7d5036263f6399b1d01
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/hbgdjb__dsh-entry-transition/96f0a90d794fbbf443d2b7d5036263f6399b1d01/home.png
+  - skin-screenshots/hbgdjb__dsh-entry-transition/96f0a90d794fbbf443d2b7d5036263f6399b1d01/conversation.png
+  - skin-screenshots/hbgdjb__dsh-entry-transition/96f0a90d794fbbf443d2b7d5036263f6399b1d01/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: 96f0a90d794fbbf443d2b7d5036263f6399b1d01
+    packageVersion: 1.0.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:49.728Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:49.861Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:49.861Z

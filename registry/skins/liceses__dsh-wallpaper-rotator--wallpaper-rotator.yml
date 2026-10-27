@@ -1,0 +1,60 @@
+id: liceses.wallpaper-rotator
+name:
+  zh: wallpaper-rotator
+  en: wallpaper-rotator
+author: liceses
+description: DSH 壁纸轮换插件：定时轮换应用背景壁纸（交叉淡化动效），内置 SVG 壁纸集，毛玻璃/压暗/文字阴影/背景不透明度等可读性调节，设置页可配置。
+repo: https://github.com/liceses/dsh-wallpaper-rotator
+subpath: wallpaper-rotator
+package: dsh-wallpaper-rotator
+rowId: wallpaper-rotator
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:liceses/dsh-wallpaper-rotator#42b0c05b1f6b13eb55d6f59fbb605beb5d7b5f42&path:/wallpaper-rotator
+  version: 1.0.0
+  commit: 42b0c05b1f6b13eb55d6f59fbb605beb5d7b5f42
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/liceses/dsh-wallpaper-rotator/42b0c05b1f6b13eb55d6f59fbb605beb5d7b5f42/docs/screenshots/effect-wallpaper.jpg
+listScreenshot: https://raw.githubusercontent.com/liceses/dsh-wallpaper-rotator/42b0c05b1f6b13eb55d6f59fbb605beb5d7b5f42/docs/screenshots/effect-wallpaper.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 42b0c05b1f6b13eb55d6f59fbb605beb5d7b5f42
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:30.316Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 994
+starsSnapshot: 6
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

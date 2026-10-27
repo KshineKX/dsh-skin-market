@@ -1,0 +1,65 @@
+id: yinhefuluoye.dsh-glass-effect
+name:
+  zh: dsh-glass-effect
+  en: dsh-glass-effect
+author: Yinhefuluoye
+description: 玻璃效果的界面外观：输入框、弹窗、菜单、卡片与代码块共用同一层半透明玻璃材质。开关在 设置 → 通用 → 外观（Settings → General → Appearance）。
+repo: https://github.com/Yinhefuluoye/dsh-glass-effect
+package: dsh-glass-effect
+rowId: glass-effect
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:Yinhefuluoye/dsh-glass-effect#78ad066bd3cfb4d44c20b0bc3fc2574719c8f830
+  version: 0.2.2
+  commit: 78ad066bd3cfb4d44c20b0bc3fc2574719c8f830
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0 <0.3.0-0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Yinhefuluoye__dsh-glass-effect/78ad066bd3cfb4d44c20b0bc3fc2574719c8f830/home.png
+  - skin-screenshots/Yinhefuluoye__dsh-glass-effect/78ad066bd3cfb4d44c20b0bc3fc2574719c8f830/conversation.png
+screenshots:
+  - https://raw.githubusercontent.com/Yinhefuluoye/dsh-glass-effect/78ad066bd3cfb4d44c20b0bc3fc2574719c8f830/assets/settings-row.png
+listScreenshot: https://raw.githubusercontent.com/Yinhefuluoye/dsh-glass-effect/78ad066bd3cfb4d44c20b0bc3fc2574719c8f830/assets/settings-row.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: 78ad066bd3cfb4d44c20b0bc3fc2574719c8f830
+    packageVersion: 0.2.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:24.100Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:24.383Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:24.383Z

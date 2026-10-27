@@ -1,0 +1,59 @@
+id: shokoup.dsh-theme-liuguang
+name:
+  zh: dsh-theme-liuguang
+  en: dsh-theme-liuguang
+author: ShokouP
+description: "Liuguang (琉光) — DeepSeek Harness skin with two switchable design languages: liquid glass and Soviet constructivism, plus a personalization panel, drop-in CSS skin packs and a whale-girl desktop pet."
+repo: https://github.com/ShokouP/dsh-theme-liuguang
+package: dsh-theme-liuguang
+rowId: theme-liuguang
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:ShokouP/dsh-theme-liuguang#71f072ed50b74015fc2c85ba2024d9e29fe0e5e3
+  version: 0.3.1
+  commit: 71f072ed50b74015fc2c85ba2024d9e29fe0e5e3
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/ShokouP/dsh-theme-liuguang/71f072ed50b74015fc2c85ba2024d9e29fe0e5e3/screenshots/demo.gif
+  - https://raw.githubusercontent.com/ShokouP/dsh-theme-liuguang/71f072ed50b74015fc2c85ba2024d9e29fe0e5e3/screenshots/design-glass.png
+listScreenshot: https://raw.githubusercontent.com/ShokouP/dsh-theme-liuguang/71f072ed50b74015fc2c85ba2024d9e29fe0e5e3/screenshots/demo.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 71f072ed50b74015fc2c85ba2024d9e29fe0e5e3
+    packageVersion: 0.3.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:51.346Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

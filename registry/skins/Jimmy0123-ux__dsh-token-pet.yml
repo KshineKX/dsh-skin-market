@@ -1,0 +1,79 @@
+id: jimmy0123-ux.dsh-token-pet
+name:
+  zh: dsh-token-pet
+  en: dsh-token-pet
+author: Jimmy0123-ux
+description: A bilingual floating pet for DeepSeek Harness with runtime status, context and lifetime token usage, trends, and optional completion sounds.
+repo: https://github.com/Jimmy0123-ux/dsh-token-pet
+package: dsh-token-pet
+rowId: token-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Jimmy0123-ux/dsh-token-pet#ca315d8b04f70770598d657629641d3437115a46
+  version: 0.4.2
+  commit: ca315d8b04f70770598d657629641d3437115a46
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-token-pet
+    packageVersion: 0.4.2
+    integrity: sha512-+8eAE8PmjITyPVTY7X0vjvCIc6ct5XfQA7g2kIrByrWNAEx6PVrsrnxQJX4j6yvuVEsC2g5rdUHjkAg4B0Df0Q==
+  allowBuild: dsh-token-pet@https://codeload.github.com/Jimmy0123-ux/dsh-token-pet/tar.gz/ca315d8b04f70770598d657629641d3437115a46
+  npm:
+    name: dsh-token-pet
+    version: 0.4.2
+    integrity: sha512-+8eAE8PmjITyPVTY7X0vjvCIc6ct5XfQA7g2kIrByrWNAEx6PVrsrnxQJX4j6yvuVEsC2g5rdUHjkAg4B0Df0Q==
+    repository: https://github.com/Jimmy0123-ux/dsh-token-pet
+    gitHead: ca315d8b04f70770598d657629641d3437115a46
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/home.png
+  - skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/conversation.png
+  - skin-screenshots/Jimmy0123-ux__dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-dark-overview.png
+  - https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-light-overview.png
+listScreenshot: https://raw.githubusercontent.com/Jimmy0123-ux/dsh-token-pet/ca315d8b04f70770598d657629641d3437115a46/docs/media/ui-dark-overview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: manual-only
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: improve
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议补全稳定的 package 名称、dsh.client Web 声明、row ID 和已构建客户端入口，以符合 dsh 插件要求并获得更顺畅的一键安装体验。
+    - 固定版本静态扫描无法完成，市场暂不提供该版本的一键安装。
+  scan:
+    commit: ca315d8b04f70770598d657629641d3437115a46
+    packageVersion: 0.4.2
+    scannerVersion: static-v2
+    mode: static
+    result: unknown
+    checkedAt: 2026-10-26T01:50:50.083Z
+    findings:
+      - code: client-source-unavailable
+        message: 无法读取固定版本的 client 入口，静态扫描结果未知。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 944
+starsSnapshot: 56
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:50:52.442Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:50:52.442Z

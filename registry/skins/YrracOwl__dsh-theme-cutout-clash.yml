@@ -1,0 +1,69 @@
+id: yrracowl.dsh-theme-cutout-clash
+name:
+  zh: dsh-theme-cutout-clash
+  en: dsh-theme-cutout-clash
+author: YrracOwl
+description: "EN: Selectable neo-brutalist/pop-art themes for DeepSeek Harness Web with calm reading surfaces. 0.5.11 targets the 0.2.1 host line. ZH: 面向 DeepSeek Harness Web、兼顾安静阅读表面的新粗野主义与波普艺术主题。0.5.11 适配 0.2.1 宿主线。"
+repo: https://github.com/YrracOwl/dsh-theme-cutout-clash
+package: dsh-theme-cutout-clash
+rowId: ui-theme-cutout-clash
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:YrracOwl/dsh-theme-cutout-clash#0bb0f15f6848fde5628c9712ac245e7d61b78643
+  version: 0.5.11
+  commit: 0bb0f15f6848fde5628c9712ac245e7d61b78643
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  npm:
+    name: dsh-theme-cutout-clash
+    version: 0.5.11
+    integrity: sha512-UO146ZmvKarePKDhD0WFi2tZShMUPj39NGLnQAqxfNJz15O+beI63EpRRvmXh02h4KLDtYiNZwXYJm1dzr9EwA==
+    repository: https://github.com/YrracOwl/dsh-theme-cutout-clash
+    gitHead: 0bb0f15f6848fde5628c9712ac245e7d61b78643
+compatibility:
+  dsh: ">=0.1.2-rc.1 <0.3.0-0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/home.png
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/conversation.png
+  - skin-screenshots/YrracOwl__dsh-theme-cutout-clash/0bb0f15f6848fde5628c9712ac245e7d61b78643/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 0bb0f15f6848fde5628c9712ac245e7d61b78643
+    packageVersion: 0.5.11
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:24.561Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:53:24.744Z
+metadataUpdatedAt: 2026-10-26T01:53:24.744Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:24.744Z

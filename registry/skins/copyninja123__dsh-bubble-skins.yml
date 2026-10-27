@@ -1,0 +1,71 @@
+id: copyninja123.dsh-bubble-skins
+name:
+  zh: dsh-bubble-skins
+  en: dsh-bubble-skins
+author: copyninja123
+description: DeepSeek Harness 用户消息气泡样式库：为 Web 界面提供多套可切换的用户气泡皮肤 | Multi-style user message bubble skins for the DSH Web GUI
+repo: https://github.com/copyninja123/dsh-bubble-skins
+package: dsh-bubble-skins
+rowId: bubble-skins
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:copyninja123/dsh-bubble-skins#6c40f944fd36286630f72409d65f11b109c2c7d7
+  version: 0.2.1
+  commit: 6c40f944fd36286630f72409d65f11b109c2c7d7
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-bubble-skins
+    packageVersion: 0.2.1
+    integrity: sha512-XnBu+7g4BK5joqBAD5w7klfERYRLJ7U96fpwhm87vvO7i523QcnXtztBf6luAGqzQR4HBvOiJVRz8rx+5fC+EA==
+  npm:
+    name: dsh-bubble-skins
+    version: 0.2.1
+    integrity: sha512-XnBu+7g4BK5joqBAD5w7klfERYRLJ7U96fpwhm87vvO7i523QcnXtztBf6luAGqzQR4HBvOiJVRz8rx+5fC+EA==
+    repository: https://github.com/copyninja123/dsh-bubble-skins
+    gitHead: 6c40f944fd36286630f72409d65f11b109c2c7d7
+compatibility:
+  dsh: ">=0.2.0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/copyninja123__dsh-bubble-skins/6c40f944fd36286630f72409d65f11b109c2c7d7/conversation.png
+screenshots:
+  - https://raw.githubusercontent.com/copyninja123/dsh-bubble-skins/6c40f944fd36286630f72409d65f11b109c2c7d7/assets/styles/bubble-ds-whale-girl/preview.png
+listScreenshot: https://raw.githubusercontent.com/copyninja123/dsh-bubble-skins/6c40f944fd36286630f72409d65f11b109c2c7d7/assets/styles/bubble-ds-whale-girl/preview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 6c40f944fd36286630f72409d65f11b109c2c7d7
+    packageVersion: 0.2.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:43.246Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:43.954Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:43.954Z

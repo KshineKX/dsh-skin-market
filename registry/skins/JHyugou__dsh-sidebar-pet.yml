@@ -1,0 +1,66 @@
+id: jhyugou.dsh-sidebar-pet
+name:
+  zh: dsh-sidebar-pet
+  en: dsh-sidebar-pet
+author: JHyugou
+description: 小蓝桌宠：侧栏中的几何风任务伙伴，支持连贯点击动画、任务提醒与独立外观设置
+repo: https://github.com/JHyugou/dsh-sidebar-pet
+package: dsh-sidebar-pet
+rowId: dsh-sidebar-pet
+category: theme
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:JHyugou/dsh-sidebar-pet#178587318cf86cc7807ab1e46f88e60e4f454725
+  version: 0.2.1
+  commit: 178587318cf86cc7807ab1e46f88e60e4f454725
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/JHyugou__dsh-sidebar-pet/178587318cf86cc7807ab1e46f88e60e4f454725/home.png
+  - skin-screenshots/JHyugou__dsh-sidebar-pet/178587318cf86cc7807ab1e46f88e60e4f454725/conversation.png
+screenshots:
+  - https://raw.githubusercontent.com/JHyugou/dsh-sidebar-pet/178587318cf86cc7807ab1e46f88e60e4f454725/docs/interaction-preview.gif
+  - https://raw.githubusercontent.com/JHyugou/dsh-sidebar-pet/178587318cf86cc7807ab1e46f88e60e4f454725/docs/sidebar-detail.png
+listScreenshot: https://raw.githubusercontent.com/JHyugou/dsh-sidebar-pet/178587318cf86cc7807ab1e46f88e60e4f454725/docs/interaction-preview.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: 178587318cf86cc7807ab1e46f88e60e4f454725
+    packageVersion: 0.2.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:52.965Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:53.413Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:53.413Z

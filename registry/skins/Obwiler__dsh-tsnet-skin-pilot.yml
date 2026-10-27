@@ -1,0 +1,63 @@
+id: obwiler.dsh-tsnet-skin-pilot
+name:
+  zh: dsh-tsnet-skin-pilot
+  en: dsh-tsnet-skin-pilot
+author: Obwiler
+description: DSH Web 皮肤：跟着背景取色的主题、7 档背景（含自定义渐变与照片档）、右缘刻度轨（可跳转对话位置）——零几何改动路线
+repo: https://github.com/Obwiler/dsh-tsnet-skin-pilot
+package: dsh-tsnet-skin-pilot
+rowId: tsnet-skin-pilot
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Obwiler/dsh-tsnet-skin-pilot#419d080cefc4f4f814164bf83c37eb5e343d9a1c
+  version: 0.5.0
+  commit: 419d080cefc4f4f814164bf83c37eb5e343d9a1c
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Obwiler__dsh-tsnet-skin-pilot/419d080cefc4f4f814164bf83c37eb5e343d9a1c/home.png
+  - skin-screenshots/Obwiler__dsh-tsnet-skin-pilot/419d080cefc4f4f814164bf83c37eb5e343d9a1c/conversation.png
+  - skin-screenshots/Obwiler__dsh-tsnet-skin-pilot/419d080cefc4f4f814164bf83c37eb5e343d9a1c/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 419d080cefc4f4f814164bf83c37eb5e343d9a1c
+    packageVersion: 0.5.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:53:02.815Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:53:03.031Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:53:03.031Z

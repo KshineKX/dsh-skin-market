@@ -1,0 +1,67 @@
+id: qin839.dsh-visual-system
+name:
+  zh: dsh-visual-system
+  en: dsh-visual-system
+author: qin839
+description: Wallpaper-driven visual system for the DeepSeek Harness Web GUI — one preset.json swaps the whole colour system and background
+repo: https://github.com/qin839/dsh-visual-system
+package: dsh-visual-system
+rowId: visual-system
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:qin839/dsh-visual-system#6aea3621237f576586d94b4fbe6dd1845ac99ac6
+  version: 1.4.0
+  commit: 6aea3621237f576586d94b4fbe6dd1845ac99ac6
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-visual-system
+    packageVersion: 1.4.0
+    integrity: sha512-gfEB1befPZAAtIBqB8VOEvg9X48iZ8RExTnnuexTMp2+qmSEPrA2NuoVTJf5kv9W3NKzeBkmdmB8Qiy6Hofirg==
+  npm:
+    name: dsh-visual-system
+    version: 1.4.0
+    integrity: sha512-gfEB1befPZAAtIBqB8VOEvg9X48iZ8RExTnnuexTMp2+qmSEPrA2NuoVTJf5kv9W3NKzeBkmdmB8Qiy6Hofirg==
+    repository: https://github.com/qin839/dsh-visual-system
+    gitHead: 6aea3621237f576586d94b4fbe6dd1845ac99ac6
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/qin839/dsh-visual-system/6aea3621237f576586d94b4fbe6dd1845ac99ac6/preview/01-app-demo.png
+listScreenshot: https://raw.githubusercontent.com/qin839/dsh-visual-system/6aea3621237f576586d94b4fbe6dd1845ac99ac6/preview/01-app-demo.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 6aea3621237f576586d94b4fbe6dd1845ac99ac6
+    packageVersion: 1.4.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:45.485Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

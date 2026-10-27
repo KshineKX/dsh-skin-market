@@ -1,0 +1,60 @@
+id: lbunc.dsh-composer-glass
+name:
+  zh: dsh-composer-glass
+  en: dsh-composer-glass
+author: Lbunc
+description: "DSH plugin: one uniform frosted-glass material for the UI surfaces, plus an optional image/video dynamic wallpaper behind them."
+repo: https://github.com/Lbunc/dsh-composer-glass
+package: dsh-composer-glass
+rowId: composer-glass
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:Lbunc/dsh-composer-glass#6da00fe16671e5f148ca87eb38e051c6406f6720
+  version: 1.1.0
+  commit: 6da00fe16671e5f148ca87eb38e051c6406f6720
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.1.7-rc.1"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Lbunc/dsh-composer-glass/6da00fe16671e5f148ca87eb38e051c6406f6720/images/01-start.webp
+  - https://raw.githubusercontent.com/Lbunc/dsh-composer-glass/6da00fe16671e5f148ca87eb38e051c6406f6720/images/02-in-conversation.webp
+listScreenshot: https://raw.githubusercontent.com/Lbunc/dsh-composer-glass/6da00fe16671e5f148ca87eb38e051c6406f6720/images/01-start.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 6da00fe16671e5f148ca87eb38e051c6406f6720
+    packageVersion: 1.1.0
+    scannerVersion: static-v2
+    dshVersion: ">=0.1.7-rc.1"
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:39.197Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

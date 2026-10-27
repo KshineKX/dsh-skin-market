@@ -1,0 +1,60 @@
+id: moshangzhe.dsh-shanqi-theme
+name:
+  zh: dsh-shanqi-theme
+  en: dsh-shanqi-theme
+author: moshangzhe
+description: 「山栖」田园主题：把 DeepSeek Harness 接入真实的山湖昼夜与农人任务联动。
+repo: https://github.com/moshangzhe/dsh-shanqi-theme
+package: dsh-shanqi-theme
+rowId: ui-shanqi-theme
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:moshangzhe/dsh-shanqi-theme#b0608aa20482619de0b4825e5269e832ae382d34
+  version: 0.1.9
+  commit: b0608aa20482619de0b4825e5269e832ae382d34
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-shanqi-theme@https://codeload.github.com/moshangzhe/dsh-shanqi-theme/tar.gz/b0608aa20482619de0b4825e5269e832ae382d34
+compatibility:
+  dsh: 0.2.1-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/moshangzhe/dsh-shanqi-theme/b0608aa20482619de0b4825e5269e832ae382d34/docs/screenshots/home-day.png
+  - https://raw.githubusercontent.com/moshangzhe/dsh-shanqi-theme/b0608aa20482619de0b4825e5269e832ae382d34/docs/screenshots/home-dawn.png
+listScreenshot: https://raw.githubusercontent.com/moshangzhe/dsh-shanqi-theme/b0608aa20482619de0b4825e5269e832ae382d34/docs/screenshots/home-day.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: b0608aa20482619de0b4825e5269e832ae382d34
+    packageVersion: 0.1.9
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:45.999Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: false
+  notice: 代码MIT；河畔场景等素材来自项目所有者提供的资源包，另按素材说明使用，不属于代码MIT授权。
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

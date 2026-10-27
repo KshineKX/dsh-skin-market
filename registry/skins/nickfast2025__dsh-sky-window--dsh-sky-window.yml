@@ -1,0 +1,69 @@
+id: nickfast2025.dsh-sky-window
+name:
+  zh: dsh-sky-window
+  en: dsh-sky-window
+author: nickfast2025
+description: A living illustrated sky for the real DeepSeek Harness workspace.
+repo: https://github.com/nickfast2025/dsh-sky-window
+subpath: dsh-sky-window
+package: dsh-sky-window
+rowId: sky-window
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:nickfast2025/dsh-sky-window#4ffebe5479a393a32ad969df4424ebb984a4eebe&path:/dsh-sky-window
+  version: 0.1.2
+  commit: 4ffebe5479a393a32ad969df4424ebb984a4eebe
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-sky-window
+    packageVersion: 0.1.2
+    integrity: sha512-t+5hSTevsfmvUa0CEtg/7JAGDNPGtizhFIrKndC7VFdpP+Im8J7MBoI6nOyEGchM1qOYKXYp6N6h070klz8rmQ==
+  allowBuild: dsh-sky-window@https://codeload.github.com/nickfast2025/dsh-sky-window/tar.gz/4ffebe5479a393a32ad969df4424ebb984a4eebe#path:dsh-sky-window
+  npm:
+    name: dsh-sky-window
+    version: 0.1.2
+    integrity: sha512-t+5hSTevsfmvUa0CEtg/7JAGDNPGtizhFIrKndC7VFdpP+Im8J7MBoI6nOyEGchM1qOYKXYp6N6h070klz8rmQ==
+    repository: https://github.com/nickfast2025/dsh-sky-window
+    gitHead: 4ffebe5479a393a32ad969df4424ebb984a4eebe
+compatibility:
+  dsh: 0.2.1-rc.2
+  platform:
+    - web
+screenshots:
+  - https://cdn.jsdelivr.net/npm/dsh-sky-window@latest/docs/images/02-workspace-skin.png
+  - https://raw.githubusercontent.com/nickfast2025/dsh-sky-window/4ffebe5479a393a32ad969df4424ebb984a4eebe/dsh-sky-window/docs/images/02-workspace-skin.png
+listScreenshot: https://cdn.jsdelivr.net/npm/dsh-sky-window@latest/docs/images/02-workspace-skin.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 4ffebe5479a393a32ad969df4424ebb984a4eebe
+    packageVersion: 0.1.2
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:47.527Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-26T01:52:19.324Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:19.324Z

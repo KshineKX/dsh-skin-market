@@ -1,0 +1,60 @@
+id: coldfish486.dsh-anime25d-pets
+name:
+  zh: dsh-anime25d-pets
+  en: dsh-anime25d-pets
+author: coldfish486
+description: "Anime2.5DRig × DSH pet: PSD auto-rig 2.5D desktop pet using Anime2.5DRig rendering instead of Live2D"
+repo: https://github.com/coldfish486/dsh-anime25d-pets
+package: dsh-anime25d-pets
+rowId: anime25d-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:coldfish486/dsh-anime25d-pets#425d95757004e120ae0d9ea3272d90ac77797ff9
+  version: 0.4.0
+  commit: 425d95757004e120ae0d9ea3272d90ac77797ff9
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-anime25d-pets@https://codeload.github.com/coldfish486/dsh-anime25d-pets/tar.gz/425d95757004e120ae0d9ea3272d90ac77797ff9
+compatibility:
+  dsh: 0.2.0-rc.2
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/coldfish486/dsh-anime25d-pets/425d95757004e120ae0d9ea3272d90ac77797ff9/assets/demo.gif
+listScreenshot: https://raw.githubusercontent.com/coldfish486/dsh-anime25d-pets/425d95757004e120ae0d9ea3272d90ac77797ff9/assets/demo.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - DSH 兼容范围待核对：保留的市场范围 0.2.0-rc.2 未被本次检测范围 0.1.0-rc.6 完全覆盖（固定版本 425d95757004e120ae0d9ea3272d90ac77797ff9）。已保留原字段，请人工核对；此项是声明冲突，不代表已验证运行失败。
+  scan:
+    commit: 425d95757004e120ae0d9ea3272d90ac77797ff9
+    packageVersion: 0.4.0
+    scannerVersion: static-v2
+    dshVersion: 0.1.0-rc.6
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:25.341Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-26T01:52:01.167Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:01.167Z

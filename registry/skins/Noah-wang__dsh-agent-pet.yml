@@ -1,0 +1,59 @@
+id: noah-wang.dsh-agent-pet
+name:
+  zh: dsh-agent-pet
+  en: dsh-agent-pet
+author: Noah-wang
+description: Eight looping animations, one per agent state — a DeepSeek Harness Web UI pet whose frame-by-frame sprite sheet you can generate from one sentence.
+repo: https://github.com/Noah-wang/dsh-agent-pet
+package: dsh-agent-pet
+rowId: agent-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Noah-wang/dsh-agent-pet#ebafb85aedca28206093d8e4bfbec98a3f5975ca
+  version: 0.5.0
+  commit: ebafb85aedca28206093d8e4bfbec98a3f5975ca
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-agent-pet@https://codeload.github.com/Noah-wang/dsh-agent-pet/tar.gz/ebafb85aedca28206093d8e4bfbec98a3f5975ca
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Noah-wang/dsh-agent-pet/ebafb85aedca28206093d8e4bfbec98a3f5975ca/assets/in-dsh.png
+listScreenshot: https://raw.githubusercontent.com/Noah-wang/dsh-agent-pet/ebafb85aedca28206093d8e4bfbec98a3f5975ca/assets/in-dsh.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: ebafb85aedca28206093d8e4bfbec98a3f5975ca
+    packageVersion: 0.5.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:33:41.250Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

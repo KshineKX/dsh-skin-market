@@ -1,0 +1,66 @@
+id: mrzhailiming.deepseek-pet-mrzhaili
+name:
+  zh: deepseek-pet-mrzhaili
+  en: deepseek-pet-mrzhaili
+author: Mrzhailiming
+description: 宠物自动喂食插件 — 把 Agent 的用户输入 / LLM 生成 / 工具调用变成喂食 Combo 特效
+repo: https://github.com/Mrzhailiming/deepseek-pet
+subpath: dsh-pet-plugin
+package: dsh-pet-plugin
+rowId: pet-feed
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:Mrzhailiming/deepseek-pet#539096149f644a923a295e0dd6f127c26e0b8847&path:/dsh-pet-plugin
+  version: 0.4.0
+  commit: 539096149f644a923a295e0dd6f127c26e0b8847
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Mrzhailiming__deepseek-pet--dsh-pet-plugin/539096149f644a923a295e0dd6f127c26e0b8847/home.png
+  - skin-screenshots/Mrzhailiming__deepseek-pet--dsh-pet-plugin/539096149f644a923a295e0dd6f127c26e0b8847/conversation.png
+  - skin-screenshots/Mrzhailiming__deepseek-pet--dsh-pet-plugin/539096149f644a923a295e0dd6f127c26e0b8847/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/Mrzhailiming/deepseek-pet/539096149f644a923a295e0dd6f127c26e0b8847/docs/whale.png
+listScreenshot: https://raw.githubusercontent.com/Mrzhailiming/deepseek-pet/539096149f644a923a295e0dd6f127c26e0b8847/docs/whale.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: 539096149f644a923a295e0dd6f127c26e0b8847
+    packageVersion: 0.4.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:51:33.994Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:51:34.316Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:34.316Z

@@ -1,0 +1,70 @@
+id: more-nico.dsh-nico-theme
+name:
+  zh: dsh-nico-theme
+  en: dsh-nico-theme
+author: more-nico
+description: Nico glass theme for DeepSeek Harness Web UI — glass material rendered by nico-glass-kit. Adapted for DSH 0.2.0-rc.2 / 0.2.1-rc.2. Not affiliated with DeepSeek.
+repo: https://github.com/more-nico/dsh-nico-theme
+package: dsh-nico-theme
+rowId: ui-nico
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:more-nico/dsh-nico-theme#99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7
+  version: 0.3.9
+  commit: 99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7
+  desktop:
+    mode: managed
+    registry: npm
+    packageName: dsh-nico-theme
+    packageVersion: 0.3.9
+    integrity: sha512-LOZKxWLGdY7FyLUJ/Lma4Rkk015BmBEyGF+4yObl76kdV4MdGBOipzPfoTJjGZT9eVILYO19UoZwdBQdQ4GLKQ==
+  npm:
+    name: dsh-nico-theme
+    version: 0.3.9
+    integrity: sha512-LOZKxWLGdY7FyLUJ/Lma4Rkk015BmBEyGF+4yObl76kdV4MdGBOipzPfoTJjGZT9eVILYO19UoZwdBQdQ4GLKQ==
+    repository: https://github.com/more-nico/dsh-nico-theme
+    gitHead: 99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7
+compatibility:
+  dsh: ">=0.1.7-rc.2"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/more-nico/dsh-nico-theme/99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7/assets/chat-dark.png
+  - https://raw.githubusercontent.com/more-nico/dsh-nico-theme/99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7/assets/rail-dark.png
+listScreenshot: https://raw.githubusercontent.com/more-nico/dsh-nico-theme/99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7/assets/chat-dark.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - DSH 兼容范围待核对：保留的市场范围 >=0.1.7-rc.2 未被本次检测范围 ^0.1.7-rc.2 || ^0.2.0-rc.2 || ^0.2.1-rc.2 完全覆盖（固定版本 99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7）。已保留原字段，请人工核对；此项是声明冲突，不代表已验证运行失败。
+  scan:
+    commit: 99ce2ccf6c4f7464c7b22de97f54d57ca84e41d7
+    packageVersion: 0.3.9
+    scannerVersion: static-v2
+    dshVersion: ^0.1.7-rc.2 || ^0.2.0-rc.2 || ^0.2.1-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:51.549Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 997
+starsSnapshot: 3
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-26T01:51:33.409Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:51:33.409Z

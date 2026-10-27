@@ -1,0 +1,69 @@
+id: jizenghui81.dsh-huashu-pixel
+name:
+  zh: dsh-huashu-pixel
+  en: dsh-huashu-pixel
+author: jizenghui81
+description: 花书像素主题：暖米白纸面 + 深褐墨字 + 橙色强调 + 像素字体，暗色切街机磷光；流式输出与状态变化带 CRT 动效。
+repo: https://github.com/jizenghui81/dsh-huashu-pixel
+package: dsh-huashu-pixel
+rowId: dsh-huashu-pixel
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:jizenghui81/dsh-huashu-pixel#85608f11bfb3c95e3d975245a91b81ef741bc18a
+  version: 1.2.1
+  commit: 85608f11bfb3c95e3d975245a91b81ef741bc18a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.1 <0.3.0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/jizenghui81__dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/home.png
+  - skin-screenshots/jizenghui81__dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/conversation.png
+  - skin-screenshots/jizenghui81__dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/standard.png
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/dark.png
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/soft.png
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/strong.png
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/busy.png
+  - https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/boot.png
+listScreenshot: https://raw.githubusercontent.com/jizenghui81/dsh-huashu-pixel/85608f11bfb3c95e3d975245a91b81ef741bc18a/screenshots/standard.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 85608f11bfb3c95e3d975245a91b81ef741bc18a
+    packageVersion: 1.2.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:10.607Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:11.129Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:11.129Z

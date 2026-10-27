@@ -1,0 +1,66 @@
+id: dongfang81.moony-singer
+name:
+  zh: moony-singer
+  en: moony-singer
+author: Dongfang81
+description: DSH 本地音乐播放插件：自带开源音乐 API 服务 + 浏览器内置播放引擎，无需任何桌面播放器即可搜索、点歌、歌单、歌词、推荐播放。附带月宝儿 Moony 宠物浮窗。
+repo: https://github.com/Dongfang81/dsh-music
+package: "@dongfang81/dsh-music"
+rowId: alger-music
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Dongfang81/dsh-music#b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f
+  version: 1.5.1
+  commit: b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Dongfang81__dsh-music/b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f/home.png
+  - skin-screenshots/Dongfang81__dsh-music/b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f/conversation.png
+  - skin-screenshots/Dongfang81__dsh-music/b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f/settings.png
+screenshots:
+  - https://raw.githubusercontent.com/Dongfang81/dsh-music/b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f/docs/moony-series.png
+listScreenshot: https://raw.githubusercontent.com/Dongfang81/dsh-music/b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f/docs/moony-series.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: improve
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议为仓库添加 dsh-plugin Topic，方便用户和 DSH 皮肤市场发现它。
+  scan:
+    commit: b29a3fd3a226c51b8aa89bdecc3ddf31fcaed57f
+    packageVersion: 1.5.1
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:03.315Z
+    findings: []
+license:
+  code: GPL-3.0
+  commercialUse: true
+  notice: 插件代码采用 GPL-3.0；第三方音乐 API 保留其 MIT 许可。曲目播放地址不代表曲目可再分发。
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:44:29.949Z
+metadataUpdatedAt: 2026-10-26T01:52:03.526Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:03.526Z

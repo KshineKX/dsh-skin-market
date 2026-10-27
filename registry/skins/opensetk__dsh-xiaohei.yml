@@ -1,0 +1,60 @@
+id: opensetk.dsh-xiaohei
+name:
+  zh: dsh-xiaohei
+  en: dsh-xiaohei
+author: opensetk
+description: A pet that lives in the DSH Web UI, changing poses as the agent runs.
+repo: https://github.com/opensetk/dsh-xiaohei
+package: dsh-pet
+rowId: dsh-pet-host
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:opensetk/dsh-xiaohei#2fc2610f341c9a17426804ccfd519dc0a2f18a2a
+  version: 0.1.0
+  commit: 2fc2610f341c9a17426804ccfd519dc0a2f18a2a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+  allowBuild: dsh-pet@https://codeload.github.com/opensetk/dsh-xiaohei/tar.gz/2fc2610f341c9a17426804ccfd519dc0a2f18a2a
+compatibility:
+  dsh: 0.1.0-rc.6
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/opensetk/dsh-xiaohei/2fc2610f341c9a17426804ccfd519dc0a2f18a2a/docs/screenshots/QQ_1786634277517.png
+  - https://raw.githubusercontent.com/opensetk/dsh-xiaohei/2fc2610f341c9a17426804ccfd519dc0a2f18a2a/docs/screenshots/QQ_1786634322842.png
+listScreenshot: https://raw.githubusercontent.com/opensetk/dsh-xiaohei/2fc2610f341c9a17426804ccfd519dc0a2f18a2a/docs/screenshots/QQ_1786634277517.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+  suggestions: []
+  scan:
+    commit: 2fc2610f341c9a17426804ccfd519dc0a2f18a2a
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    dshVersion: 0.1.0-rc.6
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:31:35.706Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 995
+starsSnapshot: 5
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

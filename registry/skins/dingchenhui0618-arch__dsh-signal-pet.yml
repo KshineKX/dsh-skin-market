@@ -1,0 +1,63 @@
+id: dingchenhui0618-arch.dsh-signal-pet
+name:
+  zh: dsh-signal-pet
+  en: dsh-signal-pet
+author: dingchenhui0618-arch
+description: "A status pet for DeepSeek Harness: a frame-wide companion that reacts to real session events — thinking, tool calls, errors, long-job completion — and doubles as the busy/error indicator you can actually see."
+repo: https://github.com/dingchenhui0618-arch/dsh-signal-pet
+package: dsh-signal-pet
+rowId: dsh-signal-pet
+category: theme
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:dingchenhui0618-arch/dsh-signal-pet#6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff
+  version: 0.1.0
+  commit: 6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.3.0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/dingchenhui0618-arch__dsh-signal-pet/6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff/home.png
+  - skin-screenshots/dingchenhui0618-arch__dsh-signal-pet/6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff/conversation.png
+  - skin-screenshots/dingchenhui0618-arch__dsh-signal-pet/6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+  scan:
+    commit: 6f8b1e45e2f7b910be5f8cff72b2ca53cdaa0cff
+    packageVersion: 0.1.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:44.681Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-26T01:52:44.814Z
+metadataUpdatedAt: 2026-10-26T01:52:44.814Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:44.814Z

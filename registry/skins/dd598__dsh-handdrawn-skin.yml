@@ -1,0 +1,63 @@
+id: dd598.dsh-handdrawn-skin
+name:
+  zh: dsh-handdrawn-skin
+  en: dsh-handdrawn-skin
+author: dd598
+description: 手绘素描风皮肤：纸 + 墨的单色观感 —— 墨黑强调色、牛皮纸颗粒、马克笔轻描边、铅笔细线、楷体标题。
+repo: https://github.com/dd598/dsh-handdrawn-skin
+package: dsh-handdrawn-skin
+rowId: dsh-handdrawn-skin
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:dd598/dsh-handdrawn-skin#ef51e459abc1f282169d568e8f7e70f56072da8e
+  version: 1.0.0
+  commit: ef51e459abc1f282169d568e8f7e70f56072da8e
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/dd598__dsh-handdrawn-skin/ef51e459abc1f282169d568e8f7e70f56072da8e/home.png
+  - skin-screenshots/dd598__dsh-handdrawn-skin/ef51e459abc1f282169d568e8f7e70f56072da8e/conversation.png
+  - skin-screenshots/dd598__dsh-handdrawn-skin/ef51e459abc1f282169d568e8f7e70f56072da8e/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - README 图片未通过文件、尺寸或图片 hash 检查，请补充可核验的运行截图。
+  scan:
+    commit: ef51e459abc1f282169d568e8f7e70f56072da8e
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:44.366Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:44.561Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:44.561Z

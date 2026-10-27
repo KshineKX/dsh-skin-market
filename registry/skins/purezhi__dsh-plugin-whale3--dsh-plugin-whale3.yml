@@ -1,0 +1,66 @@
+id: purezhi.dsh-plugin-whale3
+name:
+  zh: "@purezhi/dsh-plugin-whale3"
+  en: "@purezhi/dsh-plugin-whale3"
+author: purezhi
+description: An animated whale companion for the DSH UI. Default humpback, right-click cycles blue whale / orca; drag to reposition. Lives in the user profile so it survives app upgrades.
+repo: https://github.com/purezhi/dsh-plugin-whale3
+subpath: dsh-plugin-whale3
+package: "@purezhi/dsh-plugin-whale3"
+rowId: whale
+category: theme
+tags:
+  - appearance
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:purezhi/dsh-plugin-whale3#b6e397117e217df2eedee78ee7f1e832ae698fa2&path:/dsh-plugin-whale3
+  version: 1.0.0
+  commit: b6e397117e217df2eedee78ee7f1e832ae698fa2
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/purezhi__dsh-plugin-whale3--dsh-plugin-whale3/b6e397117e217df2eedee78ee7f1e832ae698fa2/home.png
+  - skin-screenshots/purezhi__dsh-plugin-whale3--dsh-plugin-whale3/b6e397117e217df2eedee78ee7f1e832ae698fa2/conversation.png
+  - skin-screenshots/purezhi__dsh-plugin-whale3--dsh-plugin-whale3/b6e397117e217df2eedee78ee7f1e832ae698fa2/settings.png
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 中加入至少一张仓库内的真实界面截图，并让图片路径随仓库一起版本化，方便用户预览和市场稳定展示。
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+  scan:
+    commit: b6e397117e217df2eedee78ee7f1e832ae698fa2
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-26T01:52:20.247Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 999
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-26T01:52:20.413Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-26T01:52:20.413Z

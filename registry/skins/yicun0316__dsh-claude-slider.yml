@@ -1,0 +1,60 @@
+id: yicun0316.dsh-claude-slider
+name:
+  zh: dsh-claude-slider
+  en: dsh-claude-slider
+author: yicun0316
+description: Claude 风格推理强度滑块插件：一体化液态玻璃面板、背景透明度与动效亮度双轴调校、无感平滑跟手、纯净工坊预设分享
+repo: https://github.com/yicun0316/dsh-claude-slider
+package: dsh-claude-slider
+rowId: dsh-claude-slider
+category: theme
+tags:
+  - appearance
+  - glass
+modes:
+  - light
+  - dark
+install:
+  target: github:yicun0316/dsh-claude-slider#0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a
+  version: 2.11.0
+  commit: 0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yicun0316/dsh-claude-slider/0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a/assets/ui_look.png
+  - https://raw.githubusercontent.com/yicun0316/dsh-claude-slider/0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a/assets/ui_tuning.png
+listScreenshot: https://raw.githubusercontent.com/yicun0316/dsh-claude-slider/0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a/assets/ui_look.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: 0650abb9903e83fe6c46ffa7cb34d6813a5e3c3a
+    packageVersion: 2.11.0
+    scannerVersion: static-v2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-24T21:32:16.296Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 998
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-25T18:20:01.273Z
+metadataUpdatedAt: 2026-10-25T18:20:01.273Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T18:20:01.273Z

@@ -1,0 +1,61 @@
+id: njuptlzf.dsh-dynamic-background
+name:
+  zh: bgx-dynamic-background
+  en: bgx-dynamic-background
+author: njuptlzf
+description: DeepSeek Harness (DSH) 动态背景切换插件：上传 GIF/WebP 动图与静态图、内置 12 色纯色调色板，定时丝滑交叉淡入淡出切换页面背景，聊天区自动叠加主题色保护层。
+repo: https://github.com/njuptlzf/dsh-dynamic-background
+package: bgx-dynamic-background
+rowId: bgx-dynamic-background
+category: theme
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:njuptlzf/dsh-dynamic-background#b14b22dbf4406ae0f46ce96c60c36bfca5787392
+  version: 1.2.0
+  commit: b14b22dbf4406ae0f46ce96c60c36bfca5787392
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证npm安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: improve
+    compatibility: improve
+    installation: pass
+  suggestions:
+    - 支持的DSH版本尚未明确声明，需在目标版本中确认效果。
+  scan:
+    commit: b14b22dbf4406ae0f46ce96c60c36bfca5787392
+    packageVersion: 1.2.0
+    scannerVersion: isolated-capture-v1
+    dshVersion: 0.2.1-rc.2
+    mode: runtime
+    result: pass
+    checkedAt: 2026-10-25T18:47:09.060Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-25T18:22:32.727Z
+metadataUpdatedAt: 2026-10-25T19:28:57.629Z
+starsUpdatedAt: 2026-10-24T21:34:17.947Z
+updatedAt: 2026-10-25T19:28:57.629Z
+marketScreenshots:
+  - skin-screenshots/njuptlzf__dsh-dynamic-background/b14b22dbf4406ae0f46ce96c60c36bfca5787392/home.png
+  - skin-screenshots/njuptlzf__dsh-dynamic-background/b14b22dbf4406ae0f46ce96c60c36bfca5787392/conversation.png
+  - skin-screenshots/njuptlzf__dsh-dynamic-background/b14b22dbf4406ae0f46ce96c60c36bfca5787392/settings.png
