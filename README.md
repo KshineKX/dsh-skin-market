@@ -14,6 +14,10 @@
 
 [打开在线皮肤市场](https://kingofsoysauce.github.io/dsh-skin-market/)
 
+### 近期收录
+
+- 最新收录见[近期收录日志](./docs/recently-added.md#自动同步更新)，最近一批更新于 **2026-10-26**。
+
 ## 安装
 
 ### 方法 1：命令安装
@@ -49,6 +53,43 @@ dsh-skin-market@latest
 - 官方 Desktop：你负责只读核查和操作指导，安装、启用及重启由我在应用界面完成。不要代我点击安装或启用，不要执行 dsh plugin --profile desktop、pnpm 或其他安装命令，也不要修改 Desktop profile。每次只给下一项操作，等我反馈后继续：打开「插件 → 添加插件」，输入 dsh-skin-market@latest，确认安装结果，再按应用提示启用；需要重启时指导我完全退出并重新打开应用。
 
 这次只安装皮肤市场，不做其他皮肤的冲突检查，也不要求停用它们。不要替我安装其他皮肤。安装后告诉我从哪里打开「皮肤市场」；Desktop 以插件页状态和我的实际操作反馈核对结果，没有核实就不要声称安装或启用成功。不要读取 .env、凭据或聊天记录。
+```
+
+</details>
+
+<a id="manual-update"></a>
+## 更新
+
+### 方法 1：命令更新
+
+Web 版在终端执行：
+
+```bash
+dsh plugin --profile web add "dsh-skin-market@latest"
+```
+
+### 方法 2：页面内更新
+
+在官方 Desktop 的「插件 → 添加插件」中输入 `dsh-skin-market@latest`，然后按应用提示完成更新和重启。
+
+### 方法 3：插件内更新
+
+在「设置 → 皮肤市场」标题右侧点击「更新」，完成后按界面提示重启 DSH Web 或官方 Desktop。
+
+### 需要 Agent 帮忙更新？
+
+复制下面的提示词给你的 DSH Agent。它会先判断当前宿主，再选择更新方式。
+
+<details>
+<summary><strong>点击展开更新提示词</strong></summary>
+
+```text
+请更新已安装的 dsh-skin-market。先判断当前宿主和实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。
+
+- Web 版：只读确认 web profile 已安装 dsh-skin-market，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
+- 官方 Desktop：只读核对版本和插件状态，逐步指导我在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest、确认更新结果并按提示启用；每次只给下一项操作，等我反馈后继续。安装、启用及重启由我在应用界面完成，不要代操作、执行 Desktop 安装命令或修改 profile。
+
+Web 更新后验证同一宿主的 dsh-skin-market 依赖和 bundle；Desktop 根据插件页状态和我的实际反馈核对结果，没有核实就不要声称成功。告诉我更新前后版本及需要重启哪个宿主。不要替我更新或卸载其他皮肤。
 ```
 
 </details>
@@ -118,39 +159,6 @@ Agent 每次只指导一项操作，等你反馈后继续：打开「插件 → 
 ```
 
 这个命令会关闭皮肤市场管理的皮肤并恢复默认外观，但保留已安装的皮肤包和皮肤市场。随后重新启动 DSH Web。官方 Desktop 不要执行这个 Web profile 命令，请在应用插件管理器或市场中停用冲突皮肤。
-
-<a id="manual-update"></a>
-## 更新皮肤市场
-
-### 页面更新（推荐）
-
-在「设置 → 皮肤市场」标题右侧点击「更新」，完成后按界面提示重启 DSH Web 或官方 Desktop。
-
-### 命令更新
-
-Web：
-
-```bash
-dsh plugin --profile web add "dsh-skin-market@latest"
-```
-
-官方 Desktop：在「插件 → 添加插件」中输入 `dsh-skin-market@latest`，然后按应用提示完成更新和重启。
-
-### 需要 Agent 帮忙更新？
-
-<details>
-<summary><strong>点击展开更新提示词</strong></summary>
-
-```text
-请更新已安装的 dsh-skin-market。先判断当前宿主和实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。
-
-- Web 版：只读确认 web profile 已安装 dsh-skin-market，再执行 dsh plugin --profile web add "dsh-skin-market@latest"。
-- 官方 Desktop：只读核对版本和插件状态，逐步指导我在桌面应用「插件 → 添加插件」中输入 dsh-skin-market@latest、确认更新结果并按提示启用；每次只给下一项操作，等我反馈后继续。安装、启用及重启由我在应用界面完成，不要代操作、执行 Desktop 安装命令或修改 profile。
-
-Web 更新后验证同一宿主的 dsh-skin-market 依赖和 bundle；Desktop 根据插件页状态和我的实际反馈核对结果，没有核实就不要声称成功。告诉我更新前后版本及需要重启哪个宿主。不要替我更新或卸载其他皮肤。
-```
-
-</details>
 
 ## 在线目录
 
