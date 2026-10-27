@@ -18,18 +18,20 @@
 
 - 最新收录见[近期收录日志](./docs/recently-added.md#自动同步更新)，最近一批更新于 **2026-10-26**。
 
-## 安装
+<a id="manual-update"></a>
+## 安装、更新
 
-### 方法 1：命令安装
+> 更新失败时，可先卸载 `dsh-skin-market`，再按上面的安装方法重装；如果卸载或重装仍失败，再查看错误提示并复制诊断日志。
 
-在终端执行：
+### 方法 1：命令
+
+终端执行：
 
 ```sh
 dsh plugin --profile web add "dsh-skin-market@latest"
 ```
 
-
-### 方法 2：页面内安装
+### 方法 2：应用内
 
 左上角「插件 → 添加插件」，输入：
 
@@ -37,14 +39,18 @@ dsh plugin --profile web add "dsh-skin-market@latest"
 dsh-skin-market@latest
 ```
 
-按应用提示完成安装和启用。如果提示需要重启，请完全退出 Desktop App 后重新打开；仅关闭窗口不一定等于退出应用。
+### 方法 3：插件内更新
 
-### 方法 3： Agent 帮忙安装
+皮肤市场内点击「更新」按钮
+
+### 方法 4： Agent 帮忙
 
 复制下面的提示词给你的 DSH Agent。它会先判断当前是 Web 还是官方 Desktop；Desktop 的安装、启用和重启仍由你在应用界面完成。
 
 <details>
-<summary><strong>点击展开安装提示词</strong></summary>
+<summary><strong>点击展开提示词</strong></summary>
+
+**安装提示词**
 
 ```text
 请帮我安装 dsh-skin-market。先只读确认当前是 Web 版还是官方 Desktop，以及当前宿主和实际 profile。Web 查看 dsh --version；官方 Desktop 以应用“关于”中的版本为准，不把系统终端的 npm dsh 版本当作桌面版本。无法读取应用信息时，请让我提供该版本；无法判断宿主就先问我。
@@ -55,39 +61,7 @@ dsh-skin-market@latest
 这次只安装皮肤市场，不做其他皮肤的冲突检查，也不要求停用它们。不要替我安装其他皮肤。安装后告诉我从哪里打开「皮肤市场」；Desktop 以插件页状态和我的实际操作反馈核对结果，没有核实就不要声称安装或启用成功。不要读取 .env、凭据或聊天记录。
 ```
 
-</details>
-
-<a id="manual-update"></a>
-## 更新
-
-### 方法 1：命令更新
-
-Web 版在终端执行：
-
-```bash
-dsh plugin --profile web add "dsh-skin-market@latest"
-```
-
-### 方法 2：页面内更新
-
-在官方 Desktop 的「插件 → 添加插件」中输入：
-
-```text
-dsh-skin-market@latest
-```
-
-然后按应用提示完成更新和重启。
-
-### 方法 3：插件内更新
-
-在「设置 → 皮肤市场」标题右侧点击「更新」，完成后按界面提示重启 DSH Web 或官方 Desktop。
-
-### 需要 Agent 帮忙更新？
-
-复制下面的提示词给你的 DSH Agent。它会先判断当前宿主，再选择更新方式。
-
-<details>
-<summary><strong>点击展开更新提示词</strong></summary>
+**更新提示词**
 
 ```text
 请更新已安装的 dsh-skin-market。先判断当前宿主和实际 profile：Web 查看 dsh --version；官方 Desktop 查看应用“关于”中的版本，不用系统终端的 npm dsh 版本替代。无法判断就先问我。
