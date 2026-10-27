@@ -419,7 +419,7 @@ function Site() {
     const fetchCatalog = (input: string, init: RequestInit) => fetch(input, { ...init, signal: controller.signal })
     const catalogRequest = useLocalPreviewCatalog
       ? fetchLiveCatalog<Skin>(fallbackUrl, fetchCatalog)
-      : fetchLiveCatalogWithFallback<Skin>(REMOTE_CATALOG_URL, fallbackUrl, fetchCatalog)
+      : fetchLiveCatalogWithFallback<Skin>(fallbackUrl, REMOTE_CATALOG_URL, fetchCatalog)
     setGeneratedMediaSources([])
     void fetch(generatedMediaManifestUrl(), { cache: 'no-store', signal: controller.signal })
       .then(async response => response.ok ? parseGeneratedMediaManifest(await response.json()) : undefined)
