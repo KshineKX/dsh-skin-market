@@ -70,7 +70,13 @@ dsh plugin --profile web add "dsh-skin-market@latest"
 
 ### 方法 2：页面内更新
 
-在官方 Desktop 的「插件 → 添加插件」中输入 `dsh-skin-market@latest`，然后按应用提示完成更新和重启。
+在官方 Desktop 的「插件 → 添加插件」中输入：
+
+```text
+dsh-skin-market@latest
+```
+
+然后按应用提示完成更新和重启。
 
 ### 方法 3：插件内更新
 
