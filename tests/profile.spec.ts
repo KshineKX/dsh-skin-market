@@ -13,6 +13,19 @@ import { CORDIS_JS_TAG, cordisYamlOptions } from '../src/cordis-yaml.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-profile-')) }
 
+function isolatedCatalogSkin() {
+  const skins = loadCatalog().skins
+  const packages = new Map<string, number>()
+  const rows = new Map<string, number>()
+  for (const skin of skins) {
+    packages.set(skin.package, (packages.get(skin.package) ?? 0) + 1)
+    rows.set(skin.rowId, (rows.get(skin.rowId) ?? 0) + 1)
+  }
+  const skin = skins.find(skin => packages.get(skin.package) === 1 && rows.get(skin.rowId) === 1)
+  if (skin === undefined) throw new Error('catalog has no skin with a unique package and row id')
+  return skin
+}
+
 describe('profile patch YAML round trips', () => {
   const skin = { ...loadCatalog().skins[0]!, id: 'example.skin', package: '@example/skin', rowId: 'example-skin' }
   // The host expressions from Issue 118 are data for the editor, never executable code.
@@ -463,11 +476,11 @@ describe('profile state', () => {
 
   it('uses every declared bundle patch in order for validation and skin registration', () => {
     const dir = fixture()
-    const skin = loadCatalog().skins[0]
+    const skin = isolatedCatalogSkin()
     const directory = join(dir, 'node_modules', skin.package)
     atomicWriteJson(join(dir, 'package.json'), { dependencies: { [skin.package]: skin.install.target } })
     atomicWriteJson(join(directory, 'package.json'), { name: skin.package, version: skin.install.version, dsh: { client: { platform: 'web' }, bundle: { patch: ['./first.yml', './second.yml'] } } })
-    atomicWriteText(join(directory, 'first.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${skin.package}\n`)
+    atomicWriteText(join(directory, 'first.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n`)
     atomicWriteText(join(directory, 'second.yml'), `- id: ${skin.rowId}\n  config:\n    test: true\n`)
     expect(validateInstalledSkin(dir, skin).ok).toBe(true)
     expect(() => assertLoaderMetadata(dir, skin)).not.toThrow()
@@ -876,7 +889,7 @@ describe('profile state', () => {
 
   it('removes an inactive bundle from the stack and restores it without duplicating its row', () => {
     const dir = fixture()
-    const skin = loadCatalog().skins[0]
+    const skin = isolatedCatalogSkin()
     const packageDir = join(dir, 'node_modules', ...skin.package.split('/'))
     mkdirSync(packageDir, { recursive: true })
     atomicWriteJson(join(dir, 'package.json'), {
@@ -888,7 +901,7 @@ describe('profile state', () => {
       version: skin.install.version,
       dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web' } },
     })
-    atomicWriteText(join(packageDir, 'cordis.patch.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${skin.package}\n      marker: bundle-owned\n`)
+    atomicWriteText(join(packageDir, 'cordis.patch.yml'), `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n      marker: bundle-owned\n`)
     atomicWriteText(profilePatchFile(dir), `- insert:\n    - id: ${skin.rowId}\n      name: ${JSON.stringify(skin.package)}\n`)
 
     ensureSkinRegistration(dir, skin, true)

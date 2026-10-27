@@ -25,17 +25,38 @@ async function finished(operation: Operation): Promise<Operation> {
 
 function success(): CommandResult { return { exitCode: 0, stdout: '', stderr: '', timedOut: false } }
 
+function identityCounts(catalog: SkinLifecycle['catalog']) {
+  const packages = new Map<string, number>()
+  const rows = new Map<string, number>()
+  for (const item of catalog) {
+    packages.set(item.package, (packages.get(item.package) ?? 0) + 1)
+    rows.set(item.rowId, (rows.get(item.rowId) ?? 0) + 1)
+  }
+  return { packages, rows }
+}
+
+function isIsolatedInstallable(item: SkinLifecycle['catalog'][number], counts: ReturnType<typeof identityCounts>) {
+  // Forks can share a package name or loader id. A fixture that installs one of
+  // them is attributed to every match, so these runners only use an identity
+  // that belongs to a single catalog skin.
+  return item.review?.installation !== 'manual-only'
+    && item.install.npm === undefined
+    && counts.packages.get(item.package) === 1
+    && counts.rows.get(item.rowId) === 1
+}
+
 function firstInstallable(lifecycle: SkinLifecycle) {
   // These generic lifecycle runners materialize GitHub targets. Tests of npm
   // installation attach explicit npm metadata and verify that separate path.
-  const skin = lifecycle.catalog.find(item => item.review?.installation !== 'manual-only' && item.install.npm === undefined)
-  if (skin === undefined) throw new Error('fixture catalog has no GitHub-only installable skin')
+  const skin = lifecycle.catalog.find(item => isIsolatedInstallable(item, identityCounts(lifecycle.catalog)))
+  if (skin === undefined) throw new Error('fixture catalog has no GitHub-only installable skin with a unique package and row id')
   return skin
 }
 
 function anotherInstallable(lifecycle: SkinLifecycle, excludedId: string) {
-  const skin = lifecycle.catalog.find(item => item.id !== excludedId && item.review?.installation !== 'manual-only' && item.install.npm === undefined)
-  if (skin === undefined) throw new Error('fixture catalog has only one GitHub-only installable skin')
+  const counts = identityCounts(lifecycle.catalog)
+  const skin = lifecycle.catalog.find(item => item.id !== excludedId && isIsolatedInstallable(item, counts))
+  if (skin === undefined) throw new Error('fixture catalog has only one GitHub-only installable skin with a unique package and row id')
   return skin
 }
 
@@ -1005,7 +1026,7 @@ describe('skin lifecycle', () => {
   it('adopts a manually bundled skin as active and can deactivate it without uninstalling', async () => {
     const dir = fixture()
     const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
-    const skin = probe.catalog[0]
+    const skin = firstInstallable(probe)
     atomicWriteJson(join(dir, 'package.json'), {
       dependencies: { [skin.package]: skin.install.target },
       dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', skin.package, 'dsh-skin-market'] } },
@@ -1024,7 +1045,7 @@ describe('skin lifecycle', () => {
     await lifecycle.replay()
 
     expect(readMarketState(dir).activeSkinId).toBe(skin.id)
-    expect(lifecycle.states()[0]).toMatchObject({ installation: 'installed', activation: 'active' })
+    expect(lifecycle.states().find(state => state.skinId === skin.id)).toMatchObject({ installation: 'installed', activation: 'active' })
     const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
     expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-base', skin.package, 'dsh-skin-market'])
 

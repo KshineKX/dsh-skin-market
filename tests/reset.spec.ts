@@ -10,10 +10,23 @@ import { resetManagedSkins } from '../src/reset.ts'
 
 function fixture() { return mkdtempSync(join(tmpdir(), 'skin-reset-')) }
 
+function isolatedSkins(count: number) {
+  const skins = loadCatalog().skins
+  const packages = new Map<string, number>()
+  const rows = new Map<string, number>()
+  for (const skin of skins) {
+    packages.set(skin.package, (packages.get(skin.package) ?? 0) + 1)
+    rows.set(skin.rowId, (rows.get(skin.rowId) ?? 0) + 1)
+  }
+  const unique = skins.filter(skin => packages.get(skin.package) === 1 && rows.get(skin.rowId) === 1)
+  if (unique.length < count) throw new Error(`catalog has ${unique.length} skins with a unique package and row id`)
+  return unique.slice(0, count)
+}
+
 describe('emergency skin reset', () => {
   it('disables installed market skins without uninstalling their packages', () => {
     const dir = fixture()
-    const skins = loadCatalog().skins.slice(0, 2)
+    const skins = isolatedSkins(2)
     atomicWriteJson(join(dir, 'package.json'), {
       dependencies: Object.fromEntries(skins.map(skin => [skin.package, skin.install.target])),
       dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', 'dsh-skin-market', ...skins.map(skin => skin.package)] } },
