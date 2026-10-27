@@ -10,11 +10,14 @@ import { officialFailureDiagnostic, officialOperationFailure, ManualInstallRequi
 import { allowReleaseAgeVersion, parseReleaseAgeTarget, repairReleaseAgeExcludes, type ReleaseAgeTarget } from './release-age.ts'
 import { compareInstalledArtifact, manifestFile, packageManifest, pnpmLockfile, readDependencies, readProfileBundles, resolveProfileDir, restoreFile, snapshotFile, snapshotInstalledArtifact, validateNpmArtifact, type FileSnapshot, type InstalledArtifactSnapshot } from './profile.ts'
 import { compareVersions, parseVersion } from './semver.ts'
+import { marketFetch, marketNetworkMode } from './market-fetch.ts'
+import { normalizeRegistryBase } from './registry-plan.ts'
 import type { OperationFailure } from './types.ts'
 import type { OfficialApplication } from './official-desktop.ts'
 
 export const MARKET_NPM_PACKAGE = 'dsh-skin-market'
-export const MARKET_NPM_METADATA_URL = `https://registry.npmjs.org/${MARKET_NPM_PACKAGE}`
+export const MARKET_NPM_REGISTRY = 'https://registry.npmjs.org'
+export const MARKET_NPM_METADATA_URL = `${MARKET_NPM_REGISTRY}/${MARKET_NPM_PACKAGE}`
 const PNPM_FETCH_TIMEOUT_MS = 10 * 60 * 1000
 const RECOVERY_TIMEOUT_MS = 60_000
 
@@ -54,10 +57,28 @@ export interface MarketUpdateOperation {
 interface FetchProgress { size?: number; downloaded: number }
 
 interface MarketRelease {
+  registry: string
   version: string
   gitHead: string
   tarball: string
   integrity?: string
+}
+
+interface RegistryAttempt {
+  registry: string
+  outcome: string
+  cause?: string
+}
+
+class MarketMetadataError extends Error {
+  constructor(
+    message: string,
+    readonly kind: OperationFailure['kind'],
+    readonly attempts: readonly RegistryAttempt[],
+  ) {
+    super(message)
+    this.name = 'MarketMetadataError'
+  }
 }
 
 interface MarketReleaseApproval {
@@ -68,7 +89,21 @@ interface MarketReleaseApproval {
 }
 
 function sameRelease(left: MarketRelease, right: MarketRelease): boolean {
-  return (['version', 'gitHead', 'tarball', 'integrity'] as const).every(key => left[key] === right[key])
+  return (['registry', 'version', 'gitHead', 'tarball', 'integrity'] as const).every(key => left[key] === right[key])
+}
+
+function causeSummary(error: unknown): string {
+  if (error instanceof Error) {
+    const cause = (error as Error & { cause?: unknown }).cause
+    const code = cause !== null && typeof cause === 'object' && typeof (cause as { code?: unknown }).code === 'string'
+      ? (cause as { code: string }).code : undefined
+    return [error.name, code, error.message].filter(Boolean).join(': ')
+  }
+  return String(error)
+}
+
+function hostOf(registry: string): string {
+  try { return new URL(registry).host } catch { return registry }
 }
 
 class MarketProgressTracker {
@@ -160,12 +195,120 @@ export function packageVersion(): string { return LOADED_MARKET_VERSION }
 
 export { compareVersions } from './semver.ts'
 
+function metadataFailureKind(error: unknown): OperationFailure['kind'] {
+  const summary = causeSummary(error).toLowerCase()
+  return /timeout|timed out|abort|etimedout|und_err_connect_timeout/.test(summary) ? 'fetch-timeout' : 'network'
+}
+
+function retryableStatus(status: number): boolean {
+  return status === 408 || status === 425 || status === 429 || status >= 500
+}
+
+function releaseFromPackument(value: unknown, registry: string): MarketRelease | 'no-matching-version' {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('npm 未返回对象格式的市场 metadata')
+  const packument = value as Record<string, unknown>
+  const tags = packument['dist-tags']
+  const latestVersion = tags !== null && typeof tags === 'object' && !Array.isArray(tags)
+    ? (tags as Record<string, unknown>).latest : undefined
+  if (typeof latestVersion !== 'string' || parseVersion(latestVersion) === null) return 'no-matching-version'
+  const versions = packument.versions
+  if (versions === null || typeof versions !== 'object' || Array.isArray(versions)) throw new Error('npm 未返回有效的市场版本列表')
+  const releaseValue = (versions as Record<string, unknown>)[latestVersion]
+  if (releaseValue === null || typeof releaseValue !== 'object' || Array.isArray(releaseValue)) return 'no-matching-version'
+  const releaseRecord = releaseValue as Record<string, unknown>
+  const gitHead = releaseRecord.gitHead
+  const dist = releaseRecord.dist
+  const tarball = dist !== null && typeof dist === 'object' && !Array.isArray(dist) ? (dist as Record<string, unknown>).tarball : undefined
+  const integrity = dist !== null && typeof dist === 'object' && !Array.isArray(dist) ? (dist as Record<string, unknown>).integrity : undefined
+  if (releaseRecord.name !== undefined && releaseRecord.name !== MARKET_NPM_PACKAGE) throw new Error('npm 市场构件包名不一致')
+  if (releaseRecord.version !== latestVersion) throw new Error('npm 市场构件版本不一致')
+  if (typeof gitHead !== 'string' || !/^[0-9a-f]{40}$/i.test(gitHead)) throw new Error('npm 市场构件缺少可验证的 gitHead')
+  if (typeof tarball !== 'string') throw new Error('npm 市场构件缺少 tarball')
+  const tarballUrl = new URL(tarball)
+  const registryUrl = new URL(registry)
+  if (tarballUrl.protocol !== registryUrl.protocol || tarballUrl.host !== registryUrl.host) {
+    throw new Error(`npm 市场构件 tarball host 与 registry 不一致（${hostOf(registry)}）`)
+  }
+  if (integrity !== undefined && (typeof integrity !== 'string' || !/^[A-Za-z0-9_-]+-[A-Za-z0-9+/=_-]+$/u.test(integrity))) {
+    throw new Error('npm 市场构件完整性 metadata 不合法')
+  }
+  return {
+    registry,
+    version: latestVersion,
+    gitHead: gitHead.toLowerCase(),
+    tarball,
+    ...(typeof integrity === 'string' ? { integrity } : {}),
+  }
+}
+
+async function fetchMarketRelease(
+  registries: readonly string[],
+  fetcher: typeof fetch,
+): Promise<{ release: MarketRelease; attempts: RegistryAttempt[] }> {
+  const attempts: RegistryAttempt[] = []
+  let lastKind: OperationFailure['kind'] = 'network'
+  for (const registry of registries) {
+    const url = `${registry}/${MARKET_NPM_PACKAGE}`
+    let response: Response
+    try {
+      response = await fetcher(url, {
+        headers: { accept: 'application/json', 'user-agent': `dsh-skin-market/${packageVersion()}` },
+        signal: AbortSignal.timeout(10_000),
+      })
+    } catch (error) {
+      lastKind = metadataFailureKind(error)
+      attempts.push({ registry: hostOf(registry), outcome: lastKind, cause: causeSummary(error) })
+      continue
+    }
+    if (response.status === 404) {
+      lastKind = 'fetch-404'
+      attempts.push({ registry: hostOf(registry), outcome: 'http-404' })
+      continue
+    }
+    if (!response.ok) {
+      lastKind = retryableStatus(response.status) ? 'network' : 'command'
+      attempts.push({ registry: hostOf(registry), outcome: `http-${String(response.status)}` })
+      if (retryableStatus(response.status)) continue
+      throw new MarketMetadataError(`npm 版本检查失败（${hostOf(registry)} HTTP ${String(response.status)}）`, lastKind, attempts)
+    }
+    let value: unknown
+    try {
+      value = await response.json()
+    } catch (error) {
+      attempts.push({ registry: hostOf(registry), outcome: 'invalid-json', cause: causeSummary(error) })
+      throw new MarketMetadataError(`npm ${hostOf(registry)} 返回的市场 metadata 无法解析`, 'command', attempts)
+    }
+    let release: MarketRelease | 'no-matching-version'
+    try {
+      release = releaseFromPackument(value, registry)
+    } catch (error) {
+      attempts.push({ registry: hostOf(registry), outcome: 'invalid-metadata', cause: causeSummary(error) })
+      throw new MarketMetadataError(error instanceof Error ? error.message : String(error), 'command', attempts)
+    }
+    if (release === 'no-matching-version') {
+      lastKind = 'no-matching-version'
+      attempts.push({ registry: hostOf(registry), outcome: 'no-matching-version' })
+      continue
+    }
+    attempts.push({ registry: hostOf(registry), outcome: 'ok' })
+    return { release, attempts }
+  }
+  const detail = attempts.map(attempt => `${attempt.registry}=${attempt.outcome}`).join(', ')
+  throw new MarketMetadataError(`所有配置的 npm 安装源均未返回可验证的市场版本（${detail}）`, lastKind, attempts)
+}
+
 export function createMarketUpdater(
   profile: string,
   runner: PluginRunner,
-  options: { currentVersion?: string; fetch?: typeof fetch; cacheMs?: number; profileDir?: string } = {},
+  options: {
+    currentVersion?: string
+    fetch?: typeof fetch
+    cacheMs?: number
+    profileDir?: string
+    registryPlan?: () => Promise<readonly string[] | undefined>
+  } = {},
 ): MarketUpdater {
-  const fetchLatest = options.fetch ?? fetch
+  const fetchLatest = options.fetch ?? marketFetch
   const loadedVersion = options.currentVersion ?? packageVersion()
   let installedVersion = loadedVersion
   const cacheMs = options.cacheMs ?? 5 * 60 * 1000
@@ -175,6 +318,8 @@ export function createMarketUpdater(
   let restartRequired = false
   let activeOperation: string | null = null
   let disposed = false
+  let cachedRegistryKey: string | null = null
+  let lastRegistryAttempts: RegistryAttempt[] = []
   const checkedReleases = new WeakMap<MarketUpdateStatus, MarketRelease>()
   const operations = new Map<string, MarketUpdateOperation>()
   const abortControllers = new Map<string, AbortController>()
@@ -183,6 +328,21 @@ export function createMarketUpdater(
   const pendingApprovals = new Map<string, MarketReleaseApproval>()
   const profileDir = options.profileDir ?? resolveProfileDir(profile)
   const cancellationAvailable = (): boolean => runner.management === undefined || runner.management.capabilities().cancel.available
+
+  const resolveRegistryPlan = async (): Promise<string[]> => {
+    let supplied: readonly string[] | undefined
+    try {
+      supplied = options.registryPlan === undefined
+        ? await runner.registryPlan?.()
+        : await options.registryPlan()
+    } catch {
+      supplied = undefined
+    }
+    const normalized = (supplied ?? [])
+      .map(normalizeRegistryBase)
+      .filter((item): item is string => item !== null)
+    return normalized.length === 0 ? [MARKET_NPM_REGISTRY] : [...new Set(normalized)]
+  }
 
   const releaseStatus = (release: MarketRelease): MarketUpdateStatus => {
     const next: MarketUpdateStatus = {
@@ -226,6 +386,10 @@ export function createMarketUpdater(
     let mutationStarted = false
     let lastResult: CommandResult | undefined
     let targetRelease: MarketRelease | undefined
+    let fallbackRelease: MarketRelease | undefined = cached !== null
+      && Date.now() - cached.checkedAt <= cacheMs
+      && compareVersions(cached.release.version, installedVersion) > 0
+      ? cached.release : undefined
     let managedArtifactMismatch = false
     const approval = pendingApprovals.get(operation.id)
     const managerOwned = runner.management !== undefined
@@ -263,7 +427,7 @@ export function createMarketUpdater(
       setOperation(operation, { phase: 'checking', message: '正在检查皮肤市场版本' })
       const before = await status(true)
       operation.status = before
-      if (approval !== undefined && (!sameRelease(approval.release, checkedReleases.get(before) ?? { version: '', gitHead: '', tarball: '' }))) {
+      if (approval !== undefined && (!sameRelease(approval.release, checkedReleases.get(before) ?? { registry: '', version: '', gitHead: '', tarball: '' }))) {
         throw new Error('待批准的更新版本已变化，请重新更新并核对提示。')
       }
       if (!before.updateAvailable) {
@@ -281,6 +445,7 @@ export function createMarketUpdater(
       }
       // Freeze the checked source and integrity across concurrent metadata requests.
       targetRelease = Object.freeze({ ...checkedRelease })
+      fallbackRelease = targetRelease
       const assertApprovalCurrent = (): void => {
         if (approval === undefined) return
         const failed = operations.get(approval.failedId)
@@ -444,6 +609,14 @@ export function createMarketUpdater(
             && !controller.signal.aborted && !lastResult?.aborted && !lastResult?.timedOut
             ? { ...officialFailure, releaseAgeTarget: target, action: 'approve-release-age' } : officialFailure
           logEvent('error', 'market-update-official', `kind=${officialFailure.kind} ${officialFailureDiagnostic(lastResult!)}`, operation.id)
+        } else if (error instanceof MarketMetadataError) {
+          operation.failure = {
+            kind: error.kind,
+            message: error.message,
+            ...(error.kind === 'network' || error.kind === 'fetch-timeout' || error.kind === 'fetch-404' || error.kind === 'no-matching-version'
+              ? { action: 'retry' as const } : {}),
+          }
+          logEvent('error', 'market-update-registry', `network=${marketNetworkMode()} attempts=${error.attempts.map(attempt => `${attempt.registry}=${attempt.outcome}`).join(',')} cause=${error.attempts.at(-1)?.cause ?? 'none'}`, operation.id)
         } else if (error instanceof PnpmCommandError) {
           const failure = error.failure
           const action = failure.kind === 'network' || failure.kind === 'fetch-timeout' ? 'retry' : undefined
@@ -473,6 +646,12 @@ export function createMarketUpdater(
           }
           logEvent('error', 'market-update-recovery', recoveryError, operation.id)
         }
+        const verifiedFallback = fallbackRelease !== undefined && latestRelease === fallbackRelease
+          && compareVersions(fallbackRelease.version, installedVersion) > 0
+          ? `${MARKET_NPM_PACKAGE}@${fallbackRelease.version}` : undefined
+        if (verifiedFallback !== undefined && operation.failure !== undefined && operation.failure.fallbackSpec === undefined) {
+          operation.failure = { ...operation.failure, fallbackSpec: verifiedFallback }
+        }
         const blocked = operation.failure?.releaseAgeTarget
         const target = blocked === undefined ? undefined : parseReleaseAgeTarget(blocked.packageName, blocked.version)
         if (operation.failure?.action === 'approve-release-age' && target !== undefined && targetRelease !== undefined) {
@@ -493,42 +672,32 @@ export function createMarketUpdater(
 
   const status = async (force = false): Promise<MarketUpdateStatus> => {
     reconcileInstalledVersion()
+    // Keep the legacy single-registry path synchronous until the first fetch;
+    // this preserves the updater's concurrency contract for injected fetchers.
+    // Official Desktop/provider-backed paths are asynchronous by design.
+    const registryProvider = options.registryPlan ?? runner.registryPlan
+    const registries = registryProvider === undefined ? [MARKET_NPM_REGISTRY] : await resolveRegistryPlan()
+    const registryKey = registries.join('\n')
+    if (cached !== null && cachedRegistryKey !== null && cachedRegistryKey !== registryKey) {
+      cached = null
+      latestRelease = null
+    }
     if (!force && cached !== null && Date.now() - cached.checkedAt < cacheMs) {
       cached.status = releaseStatus(cached.release)
       return cached.status
     }
-    const requestOptions = {
-      headers: { accept: 'application/json', 'user-agent': `dsh-skin-market/${installedVersion}` },
-      signal: AbortSignal.timeout(10_000),
+    let result: { release: MarketRelease; attempts: RegistryAttempt[] }
+    try {
+      result = await fetchMarketRelease(registries, fetchLatest)
+    } catch (error) {
+      if (error instanceof MarketMetadataError) lastRegistryAttempts = [...error.attempts]
+      throw error
     }
-    const response = await fetchLatest(MARKET_NPM_METADATA_URL, requestOptions)
-    if (!response.ok) throw new Error(`npm 版本检查失败（HTTP ${response.status}）`)
-    const value = await response.json() as {
-      'dist-tags'?: unknown
-      versions?: unknown
-    }
-    const tags = value['dist-tags']
-    const latestVersion = tags !== null && typeof tags === 'object' ? (tags as Record<string, unknown>).latest : undefined
-    if (typeof latestVersion !== 'string' || parseVersion(latestVersion) === null) throw new Error('npm 未返回有效的市场 latest 版本')
-    const versions = value.versions
-    if (versions === null || typeof versions !== 'object') throw new Error('npm 未返回有效的市场版本列表')
-    const releaseValue = (versions as Record<string, unknown>)[latestVersion]
-    if (releaseValue === null || typeof releaseValue !== 'object') throw new Error('npm 未返回有效的市场 latest 构件')
-    const releaseRecord = releaseValue as Record<string, unknown>
-    const gitHead = releaseRecord.gitHead
-    const dist = releaseRecord.dist
-    const tarball = dist !== null && typeof dist === 'object' ? (dist as Record<string, unknown>).tarball : undefined
-    const integrity = dist !== null && typeof dist === 'object' ? (dist as Record<string, unknown>).integrity : undefined
-    if (typeof gitHead !== 'string' || !/^[0-9a-f]{40}$/i.test(gitHead) || typeof tarball !== 'string' || !tarball.startsWith('https://registry.npmjs.org/')) {
-      throw new Error('npm 市场构件缺少可验证的版本来源或下载地址')
-    }
-    if ((releaseRecord.name !== undefined && releaseRecord.name !== MARKET_NPM_PACKAGE)
-      || releaseRecord.version !== latestVersion || (integrity !== undefined && (typeof integrity !== 'string' || integrity.trim() === ''))) {
-      throw new Error('npm 市场构件的包名、版本或完整性元数据不一致')
-    }
-    const release: MarketRelease = { version: latestVersion, gitHead: gitHead.toLowerCase(), tarball, ...(typeof integrity === 'string' ? { integrity } : {}) }
+    lastRegistryAttempts = result.attempts
+    const release = result.release
     const next = releaseStatus(release)
     latestRelease = release
+    cachedRegistryKey = registryKey
     cached = { checkedAt: Date.now(), status: next, release }
     return next
   }

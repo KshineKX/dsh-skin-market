@@ -1,7 +1,8 @@
 import { commandError, type CommandResult } from './commands.ts'
 import { readDependencies } from './profile.ts'
+import { normalizeRegistryPlan } from './registry-plan.ts'
 
-export type PnpmFailureKind = 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'command'
+export type PnpmFailureKind = 'release-age' | 'network' | 'fetch-timeout' | 'build-approval' | 'fetch-404' | 'no-matching-version' | 'integrity' | 'adding-to-root' | 'not-a-workspace' | 'unexpected-store' | 'lockfile-outdated' | 'lockfile-broken' | 'script-timeout' | 'command'
 
 export interface PnpmFailure {
   kind: PnpmFailureKind
@@ -27,6 +28,8 @@ export interface PnpmRecoveryOptions {
   attempt: (args: readonly string[], options?: PnpmAttemptOptions) => Promise<CommandResult>
   onRetry?: (failure: PnpmFailure) => void
   profileDir?: string
+  /** Ordered host-provided registries. Undefined means keep pnpm's own config. */
+  registryPlan?: readonly string[]
 }
 
 const RELEASE_AGE_OVERRIDE = '--config.minimumReleaseAge=0'
@@ -150,6 +153,14 @@ export function classifyPnpmFailure(result: CommandResult): PnpmFailure {
     }
   }
 
+  if (/ERR_PNPM_NO_MATCHING_VERSION|No matching version found|No matching version/i.test(output)) {
+    return { kind: 'no-matching-version', message: '安装源没有所需的精确版本；请检查其他配置的安装源' }
+  }
+
+  if (/ERR_PNPM_TARBALL_INTEGRITY|integrity checksum failed|integrity.*mismatch/i.test(output)) {
+    return { kind: 'integrity', message: '安装源返回的包完整性校验失败；请检查其他配置的安装源' }
+  }
+
   if (output.includes('ERR_PNPM_ADDING_TO_ROOT')) {
     return { kind: 'adding-to-root', message: 'pnpm 拒绝在 workspace 根目录安装；市场已识别为兼容性问题，请重试' }
   }
@@ -182,6 +193,35 @@ function withCommandOption(args: readonly string[], option: string): string[] {
   return [...args.slice(0, commandIndex + 1), option, ...args.slice(commandIndex + 1)]
 }
 
+function isRegistryCommand(args: readonly string[]): boolean {
+  if (args[0] === 'add' || args[0] === 'install') return true
+  // Legacy Desktop installPlugin receives only pnpm flags; the host adds the
+  // verb and exact target around them, so registry fallback must cover this
+  // option-only shape as well.
+  return args.length > 0 && args.every(argument => argument.startsWith('-'))
+}
+
+/** Add one ephemeral registry without touching the profile's persistent config. */
+export function withRegistry(args: readonly string[], registry: string): string[] {
+  if (!isRegistryCommand(args)) return [...args]
+  const filtered: string[] = []
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]
+    if (argument === '--registry') {
+      index += 1
+      continue
+    }
+    if (argument.startsWith('--registry=')) continue
+    filtered.push(argument)
+  }
+  return withCommandOption(filtered, `--registry=${registry}`)
+}
+
+function registryRetryable(failure: PnpmFailure): boolean {
+  return failure.kind === 'network' || failure.kind === 'fetch-timeout' || failure.kind === 'fetch-404'
+    || failure.kind === 'no-matching-version' || failure.kind === 'integrity'
+}
+
 function explicitDirectory(args: readonly string[]): string | undefined {
   const index = args.indexOf('--dir')
   const directory = index >= 0 ? args[index + 1] : undefined
@@ -202,17 +242,33 @@ function isAutomaticallyRecoverable(kind: PnpmFailureKind): boolean {
 }
 
 export async function runPnpmWithRecovery(args: readonly string[], options: PnpmRecoveryOptions): Promise<void> {
-  const result = await options.attempt(args)
+  const registryPlan = normalizeRegistryPlan(options.registryPlan)
+  let registryIndex = 0
+  const attemptArgs = (): readonly string[] => {
+    const registry = registryPlan?.[registryIndex]
+    return registry === undefined ? args : withRegistry(args, registry)
+  }
+  let result = await options.attempt(attemptArgs())
   if (result.exitCode === 0 && !result.timedOut && result.aborted !== true) return
 
-  const failure = classifyPnpmFailure(result)
-  const disablePeerAutoinstall = shouldDisablePeerAutoinstall(args, failure, options.profileDir)
+  let failure = classifyPnpmFailure(result)
+  while (registryPlan !== undefined && registryIndex + 1 < registryPlan.length && registryRetryable(failure)
+    && result.aborted !== true && !result.timedOut) {
+    registryIndex += 1
+    options.onRetry?.(failure)
+    result = await options.attempt(attemptArgs())
+    if (result.exitCode === 0 && !result.timedOut && result.aborted !== true) return
+    failure = classifyPnpmFailure(result)
+  }
+
+  const currentArgs = attemptArgs()
+  const disablePeerAutoinstall = shouldDisablePeerAutoinstall(currentArgs, failure, options.profileDir)
   if (!disablePeerAutoinstall && !isAutomaticallyRecoverable(failure.kind)) throw new PnpmCommandError(failure, result)
 
   options.onRetry?.(disablePeerAutoinstall ? { ...failure, recovery: 'disable-peer-autoinstall' } : failure)
   const retryArgs = disablePeerAutoinstall
-    ? withCommandOption(args, AUTO_INSTALL_PEERS_OFF)
-    : failure.kind === 'release-age' ? withReleaseAgeOverride(args) : args
+    ? withCommandOption(currentArgs, AUTO_INSTALL_PEERS_OFF)
+    : failure.kind === 'release-age' ? withReleaseAgeOverride(currentArgs) : currentArgs
   const retryOptions = failure.kind === 'fetch-timeout'
     ? { env: { pnpm_config_fetch_timeout: String(FETCH_TIMEOUT_MS) } }
     : undefined

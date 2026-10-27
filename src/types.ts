@@ -224,6 +224,8 @@ export interface OperationFailure {
   releaseAgeTarget?: { packageName: string; version: string }
   artifactRisk?: SkinArtifactRisk
   manualSpec?: string
+  /** An exact verified target that the official Desktop panel may prefill after a failure. */
+  fallbackSpec?: string
   buildKeys?: string[]
   action?: OperationRetryAction
   conflicts?: InstallConflict[]

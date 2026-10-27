@@ -62,6 +62,70 @@ describe('market self update', () => {
     expect((await updater.status()).packageOperationsWarning).toBeUndefined()
   })
 
+  it('uses the host-provided registry order when the primary metadata request fails', async () => {
+    const profileDir = installedProfile('0.1.59')
+    const primary = 'https://registry.primary.example'
+    const fallback = 'https://registry.fallback.example'
+    const fetchLatest = vi.fn(async (url: string) => {
+      if (url.startsWith(primary)) throw new TypeError('fetch failed')
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          'dist-tags': { latest: '0.1.60' },
+          versions: { '0.1.60': {
+            version: '0.1.60', gitHead: 'e'.repeat(40),
+            dist: { tarball: `${fallback}/${MARKET_NPM_PACKAGE}/-/${MARKET_NPM_PACKAGE}-0.1.60.tgz`, integrity: REVIEWED_INTEGRITY },
+          } },
+        }),
+      }
+    }) as unknown as typeof fetch
+    const runner = vi.fn(async () => {
+      materialize(profileDir, '0.1.60')
+      return { exitCode: 0, stdout: '', stderr: '', timedOut: false, management: { application: 'restart-required' as const } }
+    }) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, {
+      currentVersion: '0.1.59', profileDir, fetch: fetchLatest,
+      registryPlan: async () => [primary, fallback],
+    })
+
+    await expect(updater.update()).resolves.toMatchObject({ currentVersion: '0.1.60', updateAvailable: false })
+    expect(fetchLatest.mock.calls.map(([url]) => url)).toEqual([
+      `${primary}/${MARKET_NPM_PACKAGE}`, `${fallback}/${MARKET_NPM_PACKAGE}`,
+    ])
+    expect(runner).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the last verified exact release for an update-time metadata failure', async () => {
+    const profileDir = installedProfile('0.1.59')
+    let calls = 0
+    const fetchLatest = vi.fn(async () => {
+      calls += 1
+      if (calls > 1) throw new TypeError('fetch failed')
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          'dist-tags': { latest: '0.1.60' },
+          versions: { '0.1.60': {
+            version: '0.1.60', gitHead: 'f'.repeat(40),
+            dist: { tarball: `https://registry.npmjs.org/${MARKET_NPM_PACKAGE}/-/${MARKET_NPM_PACKAGE}-0.1.60.tgz`, integrity: REVIEWED_INTEGRITY },
+          } },
+        }),
+      }
+    }) as unknown as typeof fetch
+    const runner = vi.fn(async () => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false })) as unknown as PluginRunner
+    managedRunner(runner)
+    const updater = createMarketUpdater('desktop', runner, { currentVersion: '0.1.59', profileDir, fetch: fetchLatest })
+
+    await expect(updater.status()).resolves.toMatchObject({ latestVersion: '0.1.60', updateAvailable: true })
+    const operation = updater.startUpdate()
+    await vi.waitFor(() => expect(operation.phase).toBe('failed'))
+    expect(operation.failure).toMatchObject({ kind: 'network', fallbackSpec: 'dsh-skin-market@0.1.60' })
+    expect(runner).not.toHaveBeenCalled()
+  })
+
   it.each([true, false])('freezes the verified source across concurrent metadata checks changed=%s', async changed => {
     const profileDir = installedProfile('0.1.59')
     const manifest = readFileSync(join(profileDir, 'package.json'), 'utf8')

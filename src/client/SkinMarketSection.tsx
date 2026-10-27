@@ -842,6 +842,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const hostStateRead = useRef<Promise<void> | null>(null)
   const pendingRestartRef = useRef<PendingRestartNotice | null>(null)
   const clientRestartNotices = useRef(new Map<string, PendingRestartNotice>())
+  const marketFallbackOpened = useRef(new Set<string>())
   const restartTargetRef = useRef<RestartTarget | null>(null)
   pendingRestartRef.current = pendingRestart
   restartTargetRef.current = restartTarget
@@ -1237,6 +1238,24 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
   }, [hostKind, restartAvailable])
 
+  const openMarketUpdateFallback = useCallback(async (operation: MarketUpdateOperation) => {
+    const spec = operation.failure?.fallbackSpec?.trim()
+    if (!officialDesktop || desktopPluginPanel?.available() !== true || spec === undefined || spec === ''
+      || marketFallbackOpened.current.has(operation.id) || !mounted.current) return
+    marketFallbackOpened.current.add(operation.id)
+    try {
+      const result = await desktopPluginPanel.open(spec, { skinId: 'dsh-skin-market', packageName: 'dsh-skin-market' })
+      if (!mounted.current || !result.ok) return
+      const message = result.kind === 'prefilled'
+        ? `已打开官方插件页并预填 ${spec}，请在官方面板确认安装。`
+        : '官方插件页已有安装任务，已保留原任务，没有覆盖用户输入。'
+      setMarketOperation(current => current?.id === operation.id ? { ...current, message } : current)
+    } catch {
+      // The failure dialog and exact fallback spec remain available when the
+      // optional native panel bridge cannot be opened.
+    }
+  }, [desktopPluginPanel, officialDesktop])
+
   const waitForMarketUpdate = useCallback(async (operationId: string) => {
     if (marketUpdatePolls.current.has(operationId)) return
     marketUpdatePolls.current.add(operationId)
@@ -1260,6 +1279,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           if (!mounted.current) return
           setMarketUpdating(false)
           setError(null)
+          if (operation.phase === 'failed') void openMarketUpdateFallback(operation)
           return
         }
         await new Promise(resolve => setTimeout(resolve, operation.phase === 'waiting' ? 5000 : 600))
@@ -1274,7 +1294,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     } finally {
       marketUpdatePolls.current.delete(operationId)
     }
-  }, [applyMarketState])
+  }, [applyMarketState, openMarketUpdateFallback])
 
   const checkMarketUpdate = useCallback(async () => {
     try {

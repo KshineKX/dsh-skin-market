@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { desktopRunner, runPluginCli, type DesktopPnpmLike } from './commands.ts'
-import { officialDesktopRunner, type OfficialPluginManagerLike, type OfficialManagementEvents } from './official-desktop.ts'
+import { createPluginCliRunner, desktopRunner, type DesktopPnpmLike } from './commands.ts'
+import { normalizeOfficialRegistryPlan, officialDesktopRunner, type OfficialPluginManagerLike, type OfficialManagementEvents } from './official-desktop.ts'
 import { resolveProfileDir } from './profile.ts'
 import { mountRoutes, type SkinMarketHost } from './routes.ts'
 import { createCliRestartScheduler } from './restart.ts'
@@ -53,6 +53,14 @@ export function apply(ctx: Context, config?: Config): void {
     const agents = readService('agents') as SkinMarketHost['agents']
     const runtime = detectDshRuntime()
     const connection = (): HostConnectionLike | undefined => readService('connection') as HostConnectionLike | undefined
+    const initialPluginManager = readService('pluginManager') as OfficialPluginManagerLike | undefined
+    const registryPlan = typeof initialPluginManager?.registries === 'function'
+      ? async () => {
+        const manager = readService('pluginManager') as OfficialPluginManagerLike | undefined
+        if (typeof manager?.registries !== 'function') return undefined
+        try { return normalizeOfficialRegistryPlan(await manager.registries()) } catch { return undefined }
+      }
+      : undefined
     const officialDesktop = desktopProfiles === undefined && (configuredProfile?.toLowerCase() === 'desktop'
       || (configuredProfile === undefined && launchedProfile?.toLowerCase() === 'desktop'))
     // Official Electron Desktop owns its profile through profileContext and
@@ -76,7 +84,7 @@ export function apply(ctx: Context, config?: Config): void {
       const profileDir = configuredProfile === undefined && contextDir !== '' ? contextDir : resolveProfileDir(profile)
       const appExit = readService('appExit') as ((code: number) => void) | undefined
       const restart = appExit === undefined ? undefined : createCliRestartScheduler(appExit)
-      host.effect(() => mountRoutes(host, { profile, profileDir, runner: runPluginCli, hostKind: 'dsh', runtime, restart, agents, connection, configurationOverride }), 'dsh-skin-market: routes')
+      host.effect(() => mountRoutes(host, { profile, profileDir, runner: createPluginCliRunner(registryPlan), hostKind: 'dsh', runtime, restart, agents, connection, configurationOverride }), 'dsh-skin-market: routes')
       return
     }
     hostContext.inject(['desktopPnpm'], desktopContext => {

@@ -205,6 +205,17 @@ describe('failure help', () => {
     expect(interceptNotice(failed('command', '宿主拒绝安装', { failure: { kind: 'command', message: '宿主拒绝安装', manualSpec: 'dsh-test@1.1.0' } }), '测试皮肤').copySpec).toBe('dsh-test@1.1.0')
   })
 
+  it('keeps a verified fallback spec without turning it into a second market action', () => {
+    const spec = 'dsh-skin-market@0.1.68'
+    const notice = marketUpdateNotice({
+      failure: { kind: 'network', message: '所有配置的 npm 安装源均不可达', action: 'retry', fallbackSpec: spec },
+    })
+    expect(notice.copySpec).toBe(spec)
+    expect(notice.links).toEqual([])
+    expect(notice.why).toContain('官方插件页')
+    expect(notice.why).toContain(spec)
+  })
+
   it('summarizes a native package failure without showing multiline progress or raw error codes', () => {
     const message = [
       'Progress: resolved 1, reused 0, downloaded 0, added 0',

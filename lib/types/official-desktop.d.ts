@@ -4,6 +4,8 @@ import type { DshRuntime } from './types.ts';
 export interface OfficialPluginManagerLike {
     installBundle(spec: string, options?: Record<string, unknown>): Promise<unknown>;
     removeBundle(name: string): Promise<unknown>;
+    /** DSH 0.2.1 exposes the configured registry and its ordered fallbacks. */
+    registries?(): Promise<unknown>;
     cancelInstall?(requestId: string): Promise<unknown>;
     waitForInstall?(requestId: string): Promise<unknown>;
     setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>;
@@ -96,7 +98,16 @@ export interface OfficialManagementAdapter {
     inspect(spec: string, options?: OfficialInspectionOptions): Promise<unknown>;
     listBundles(): Promise<unknown>;
     listPlugins(): Promise<unknown>;
+    /** Ordered registry bases supplied by the official host, when available. */
+    registries?(): Promise<string[] | undefined>;
 }
+/**
+ * Convert the official manager's registry snapshot into a safe ordered plan.
+ * `registry: null` means "whatever pnpm resolves"; in that case `resolved`
+ * becomes the first candidate. A resolved private override must not fall
+ * through to public registries that could leak the package name.
+ */
+export declare function normalizeOfficialRegistryPlan(value: unknown): string[] | undefined;
 /** One-argument callers retain structural compatibility; added option fields require audited runtime versions. */
 export declare function officialDesktopRunner(getManager: () => OfficialPluginManagerLike | undefined, runtime?: DshRuntime, events?: OfficialManagementEvents): PluginRunner;
 export {};
