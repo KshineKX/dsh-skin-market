@@ -7,7 +7,7 @@ description: DSH 网页皮肤管理器：可拖动的鲸鱼按钮，左键恢复
 repo: https://github.com/tiantyu/dsh-skin-toggle
 package: dsh-skin-toggle
 rowId: ui-skin-toggle
-category: theme
+category: skin
 tags:
   - wallpaper
   - anime

@@ -7,7 +7,7 @@ description: "Aemeath desktop pet for the DeepSeek Harness web GUI: a pixel-art 
 repo: https://github.com/culture-flask/dsh-aemeath-pet
 package: dsh-aemeath-pet
 rowId: aemeath-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

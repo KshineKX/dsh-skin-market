@@ -7,7 +7,7 @@ description: 一个为 DeepSeek Harness Web UI 打造的 Google Gemini 风格 Ma
 repo: https://github.com/makajo/dsh-gemini-m3e-theme
 package: dsh-gemini-m3e-theme
 rowId: gemini-m3e-theme-service
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

@@ -3318,6 +3318,41 @@ describe('client market', () => {
     expect(latest.getAttribute('aria-pressed')).toBe('true')
   })
 
+  it('toggles discovery categories beside the heading and starts with skin and splash selected', async () => {
+    const pet = { ...skin, id: 'test.pet', name: { zh: '桌面宠物', en: 'Desk Pet' }, category: 'pet' }
+    const player = { ...skin, id: 'test.player', name: { zh: '音乐播放器', en: 'Music Player' }, category: 'player' }
+    const legacy = { ...skin, id: 'test.legacy', name: { zh: '旧分类皮肤', en: 'Legacy Skin' }, category: 'theme' }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin, pet, player, legacy] } : { skins: [] } })))
+    render(<SkinMarketSection t={key => key} />)
+    const heading = await screen.findByRole('heading', { name: '发现更多' })
+    const filters = screen.getByRole('group', { name: '分类' })
+    expect(heading.parentElement).toBe(filters.parentElement)
+    expect(screen.queryByText('正在使用、常驻优先，其余按最近操作排序')).toBeNull()
+    expect(within(filters).getByRole('button', { name: '皮肤' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(filters).getByRole('button', { name: '开屏动画' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(filters).getByRole('button', { name: '桌宠' }).getAttribute('aria-pressed')).toBe('false')
+    expect(within(filters).getByRole('button', { name: '播放器' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByRole('button', { name: /桌面宠物 界面预览/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /音乐播放器 界面预览/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /旧分类皮肤 界面预览/ })).toBeTruthy()
+
+    fireEvent.click(within(filters).getByRole('button', { name: '桌宠' }))
+    expect(screen.getByRole('button', { name: /桌面宠物 界面预览/ })).toBeTruthy()
+    fireEvent.click(within(filters).getByRole('button', { name: '皮肤' }))
+    expect(within(filters).getByRole('button', { name: '皮肤' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByRole('button', { name: /测试皮肤 界面预览/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /旧分类皮肤 界面预览/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /桌面宠物 界面预览/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /音乐播放器 界面预览/ })).toBeNull()
+
+    fireEvent.click(within(filters).getByRole('button', { name: '播放器' }))
+    expect(screen.getByRole('button', { name: /音乐播放器 界面预览/ })).toBeTruthy()
+    fireEvent.click(within(filters).getByRole('button', { name: '播放器' }))
+    expect(screen.queryByRole('button', { name: /音乐播放器 界面预览/ })).toBeNull()
+    fireEvent.click(within(filters).getByRole('button', { name: '皮肤' }))
+    expect(screen.getByRole('button', { name: /测试皮肤 界面预览/ })).toBeTruthy()
+  })
+
   it('shows Stars in list rows and marks the selected skin', async () => {
     const secondSkin = { ...skin, id: 'test.second', name: { zh: '第二皮肤', en: 'Second Skin' }, githubStars: 7 }
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin, secondSkin] } : { skins: [] } })))

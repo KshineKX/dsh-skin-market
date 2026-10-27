@@ -26,7 +26,7 @@ function skin(id: string, version = '1.0.0'): SkinEntry {
   const integrity = `sha512-${createHash('sha512').update(`${packageName}@${version}`).digest('base64')}`
   return {
     id, package: packageName, rowId: id, repo: repository, name: { zh: id, en: id },
-    author: 'fixture', description: 'Materialized native bundle fixture', category: 'theme', tags: [],
+    author: 'fixture', description: 'Materialized native bundle fixture', category: 'skin', tags: [],
     modes: ['light', 'dark'], screenshots: [], license: { code: 'MIT', commercialUse: true },
     featuredRank: 0, starsSnapshot: 0,
     releaseUpdatedAt: '2026-10-14', metadataUpdatedAt: '2026-10-14', starsUpdatedAt: '2026-10-14', updatedAt: '2026-10-14',

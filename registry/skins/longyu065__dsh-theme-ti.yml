@@ -7,7 +7,7 @@ description: 正值 Dota 2 The International 赛季，给 dsh Web 界面做的�
 repo: https://github.com/longyu065/dsh-theme-ti
 package: "@dsh-theme/ti"
 rowId: theme-ti
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

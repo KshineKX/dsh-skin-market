@@ -7,7 +7,7 @@ description: 姬子的星月夜：星云壁纸 + 莫奈取色 + 液态玻璃的 
 repo: https://github.com/Yoimiya-Lover-0621-01/himeko-starry-night
 package: "@local/star-wallpaper"
 rowId: star-wallpaper
-category: theme
+category: skin
 tags:
   - appearance
 modes:

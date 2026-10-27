@@ -7,7 +7,7 @@ description: 适用于 DeepSeek Harness Web UI 的 One Dark Pro 主题插件。
 repo: https://github.com/yudaxia1/one-dark-pro-dsh-plugin
 package: one-dark-pro-dsh-plugin
 rowId: one-dark-pro
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

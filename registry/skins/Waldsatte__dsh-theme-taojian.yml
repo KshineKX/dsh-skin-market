@@ -7,7 +7,7 @@ description: "Taojian (陶笺) — Claude-inspired DSH theme: warm paper #F5F3EE
 repo: https://github.com/Waldsatte/dsh-theme-taojian
 package: dsh-theme-taojian
 rowId: theme-taojian
-category: theme
+category: skin
 tags:
   - appearance
 modes:

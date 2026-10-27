@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness 用的客户端插件。它把 Claude Code 风
 repo: https://github.com/kelemiao/dsh-animation-optimization
 package: dsh-animation-optimization
 rowId: dsh-animation-optimization
-category: theme
+category: skin
 tags:
   - glass
   - motion

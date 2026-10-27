@@ -7,7 +7,7 @@ description: DeepSeek Harness 轻量级外观皮肤：自定义壁纸、玻璃�
 repo: https://github.com/mumuer1024/dsh-ui-liteglass
 package: dsh-ui-liteglass
 rowId: ui-liteglass
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

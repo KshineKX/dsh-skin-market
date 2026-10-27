@@ -7,7 +7,7 @@ description: "Preset color themes for the DSH Web GUI: Nord, Dracula, Catppuccin
 repo: https://github.com/MicroSharpAnt/dsh-theme-presets
 package: dsh-theme-presets
 rowId: theme-presets
-category: theme
+category: skin
 tags:
   - appearance
 modes:

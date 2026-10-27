@@ -7,7 +7,7 @@ description: "DSH Web 界面样式自定义插件：全局自定义 CSS 编辑�
 repo: https://github.com/wupup/dsh-custom-style
 package: dsh-custom-style
 rowId: custom-style
-category: theme
+category: skin
 tags:
   - appearance
 modes:

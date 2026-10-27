@@ -7,7 +7,7 @@ description: dsh-skin-center | DeepSeek Harness 皮肤中心(官方插件)
 repo: https://github.com/bruce-hmz/dsh-skin-center
 package: dsh-skin-center
 rowId: skin-center
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

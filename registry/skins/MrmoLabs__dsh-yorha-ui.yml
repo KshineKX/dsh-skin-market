@@ -7,7 +7,7 @@ description: NieR:Automata (YoRHa) industrial terminal theme plugin for the Deep
 repo: https://github.com/MrmoLabs/dsh-yorha-ui
 package: dsh-yorha-ui
 rowId: ui-yorha
-category: theme
+category: skin
 tags:
   - appearance
 modes:

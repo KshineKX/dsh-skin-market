@@ -8,7 +8,7 @@ repo: https://github.com/CH4ACKO3/dsh-render-engine
 subpath: packages/code-render
 package: "@ch4acko3/dsh-code-render"
 rowId: ch4acko3-dsh-code-render
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

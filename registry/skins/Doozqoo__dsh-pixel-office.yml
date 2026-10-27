@@ -7,7 +7,7 @@ description: 一款给 DeepSeek Harness Web GUI 的 digital + pixel-art 工作�
 repo: https://github.com/Doozqoo/dsh-pixel-office
 package: dsh-client-pixel-office
 rowId: pixel-office
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

@@ -7,7 +7,7 @@ description: Cyberpunk 2077 themed UI for the DeepSeek Harness Web GUI
 repo: https://github.com/lh15626127422-cloud/dsh-cp2077-theme
 package: "@local/cp2077-theme"
 rowId: cp2077-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/TinyNian/dsh-harness-os
 subpath: packages/dsh-harness-os
 package: dsh-harness-os
 rowId: dsh-harness-os
-category: theme
+category: skin
 tags:
   - boot
   - motion

@@ -7,7 +7,7 @@ description: dsh 插件 · 字符雨：三模式（黑客帝国英文数字 / �
 repo: https://github.com/weibaohui/dsh-matrix
 package: "@weibaohui/dsh-matrix"
 rowId: dsh-matrix
-category: theme
+category: skin
 tags:
   - appearance
 modes:

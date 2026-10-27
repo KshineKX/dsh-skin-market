@@ -7,7 +7,7 @@ description: "Deep-sea whale-blue reskin for the DSH Web GUI: 14 theme tokens (l
 repo: https://github.com/luo0712yan0219-blip/dsh-whale-decor
 package: dsh-whale-decor
 rowId: dsh-whale-decor
-category: theme
+category: skin
 tags:
   - appearance
 modes:

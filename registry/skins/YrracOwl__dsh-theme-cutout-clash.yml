@@ -7,7 +7,7 @@ description: "EN: Selectable neo-brutalist/pop-art themes for DeepSeek Harness W
 repo: https://github.com/YrracOwl/dsh-theme-cutout-clash
 package: dsh-theme-cutout-clash
 rowId: ui-theme-cutout-clash
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: "Liuguang (琉光) — DeepSeek Harness skin with two switchable de
 repo: https://github.com/ShokouP/dsh-theme-liuguang
 package: dsh-theme-liuguang
 rowId: theme-liuguang
-category: theme
+category: skin
 tags:
   - appearance
   - glass

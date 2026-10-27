@@ -7,7 +7,7 @@ description: DeepSeek Harness（DSH）会话修改审查插件：自动追踪会
 repo: https://github.com/xwh5/dsh-change-review
 package: dsh-diff-review
 rowId: diff-review
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

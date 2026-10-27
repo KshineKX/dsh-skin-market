@@ -7,7 +7,7 @@ description: DSH Web 动态背景皮肤：把本地 images/ 目录的图片每 5
 repo: https://github.com/wensincai/dsh-skin-rotator
 package: dsh-skin-rotator
 rowId: skin-rotator
-category: background
+category: skin
 tags:
   - dynamic-background
   - wallpaper-rotation

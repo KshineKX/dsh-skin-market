@@ -7,7 +7,7 @@ description: "DSH plugin: one uniform frosted-glass material for the UI surfaces
 repo: https://github.com/Lbunc/dsh-composer-glass
 package: dsh-composer-glass
 rowId: composer-glass
-category: theme
+category: skin
 tags:
   - appearance
   - glass

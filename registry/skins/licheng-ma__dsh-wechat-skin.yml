@@ -7,7 +7,7 @@ description: 微信风格皮肤 for DeepSeek Harness — WeChat-style light them
 repo: https://github.com/licheng-ma/dsh-wechat-skin
 package: dsh-wechat-skin
 rowId: wechat-skin
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

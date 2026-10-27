@@ -7,7 +7,7 @@ description: 一个用户级客户端插件，为 DeepSeek Harness Web GUI 提�
 repo: https://github.com/oceanxuikun/dsh-eva-theme-plugin
 package: dsh-eva-theme-plugin
 rowId: dsh-eva-theme-plugin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

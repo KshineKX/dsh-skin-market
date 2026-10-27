@@ -1,0 +1,40 @@
+id: hey.ruomei.dsh.music.player
+name:
+  zh: dsh-music-player-heyruome
+  en: dsh-music-player-heyruome
+author: hey-ruomei
+description: "DeepSeek Harness music player plugin: search and stream legal music from Audius in the web UI, controllable by agent tools."
+repo: https://github.com/hey-ruomei/dsh-music-player
+package: dsh-music-player
+rowId: ui-music-player
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:hey-ruomei/dsh-music-player#153bd346eae50b2fa1edd1dac9afabc2237aead2
+  version: 1.0.2
+  commit: 153bd346eae50b2fa1edd1dac9afabc2237aead2
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

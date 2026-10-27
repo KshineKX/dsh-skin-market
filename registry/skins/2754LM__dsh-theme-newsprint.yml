@@ -7,7 +7,7 @@ description: 报纸衬线 · Newsprint Serif — DSH 主题插件（cordis 埋�
 repo: https://github.com/2754LM/dsh-theme-newsprint
 package: dsh-theme-newsprint
 rowId: newsprint
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: A Nachoneko (甘城猫猫) themed skin for the DeepSeek Harness web
 repo: https://github.com/drfccv/dsh-theme-neko
 package: dsh-theme-neko
 rowId: ui-skin-neko
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

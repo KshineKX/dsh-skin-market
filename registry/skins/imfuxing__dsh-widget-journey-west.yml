@@ -7,7 +7,7 @@ description: "Journey to the West floating desktop pet for DeepSeek Harness: a f
 repo: https://github.com/imfuxing/dsh-widget-journey-west
 package: dsh-widget-journey-west
 rowId: journey-west-widget
-category: theme
+category: pet
 tags:
   - pet
 modes:

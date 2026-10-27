@@ -7,7 +7,7 @@ description: 📈 dsh-stock-terminal · 股市行情皮肤 + 功能插件
 repo: https://github.com/linhut/dsh-stock-terminal
 package: "@linxin666/dsh-client-ui-skin-stock"
 rowId: ui-skin-stock
-category: theme
+category: skin
 tags:
   - token-theme
 modes:

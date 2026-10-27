@@ -7,7 +7,7 @@ description: dsh主题维什戴尔风格
 repo: https://github.com/cdxDNRF/wishadel-theme
 package: "@cdxdnrf/dsh-client-ui-skin-wishadel"
 rowId: ui-skin-wishadel
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

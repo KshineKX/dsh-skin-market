@@ -7,7 +7,7 @@ description: dsh-arcaea-theme 是面向 DeepSeek Harness Web UI 的原创高曝�
 repo: https://github.com/a1swg1159-pixel/dsh-arcaea-theme
 package: dsh-arcaea-theme
 rowId: arcaea-theme
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

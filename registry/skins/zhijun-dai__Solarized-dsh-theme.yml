@@ -7,7 +7,7 @@ description: Solarized 与 Selenized 主题插件：向 DSH Web 主题运行时�
 repo: https://github.com/zhijun-dai/Solarized-dsh-theme
 package: "@yuquexianzhou/solarized-dsh-theme"
 rowId: solarized
-category: theme
+category: skin
 tags:
   - pastel
   - token-theme

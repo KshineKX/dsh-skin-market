@@ -7,7 +7,7 @@ description: Codex-inspired appearance controls for DeepSeek Harness
 repo: https://github.com/zhongjiadeng-cmd/dsh-codex-appearance
 package: dsh-codex-appearance
 rowId: codex-appearance
-category: theme
+category: skin
 tags:
   - appearance
 modes:

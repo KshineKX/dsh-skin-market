@@ -7,7 +7,7 @@ description: Claude 风格皮肤：暖黑画布、陶橙点缀、衬线 UI，跟
 repo: https://github.com/PAKIKNOWLEDGE/dsh-client-ui-skin-claude
 package: "@pakiknowledge/dsh-client-ui-skin-claude"
 rowId: ui-skin-claude
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

@@ -7,7 +7,7 @@ description: 面向 DSH Web UI 的真希波·玛丽 / EVA 八号机主题皮肤�
 repo: https://github.com/unpain/dsh-skin-mari
 package: dsh-skin-mari
 rowId: ui-skin-mari-interface
-category: theme
+category: skin
 tags:
   - glass
   - motion

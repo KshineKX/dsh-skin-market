@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness（DSH）Web 界面制作的非官方联动主�
 repo: https://github.com/thjyy/dph-endfield-theme
 package: dph-endfield-theme
 rowId: dph-endfield-theme
-category: theme
+category: skin
 tags:
   - glass
   - retro

@@ -7,7 +7,7 @@ description: DSH Web GUI 会话页的 GAL 视窗：Galgame 风格对话视图 + 
 repo: https://github.com/Ayase34/gal-view
 package: gal-view
 rowId: gal-view
-category: theme
+category: skin
 tags:
   - anime
   - motion

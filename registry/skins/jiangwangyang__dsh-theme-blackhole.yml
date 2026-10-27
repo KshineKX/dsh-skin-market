@@ -7,7 +7,7 @@ description: DeepSeek Harness（dsh）Web UI 的黑洞主题插件：以 WebGL �
 repo: https://github.com/jiangwangyang/dsh-theme-blackhole
 package: dsh-theme-blackhole
 rowId: theme-blackhole
-category: theme
+category: skin
 tags:
   - glass
   - retro

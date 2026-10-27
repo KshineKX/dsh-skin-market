@@ -7,7 +7,7 @@ description: "Custom UI suite for DeepSeek Harness: theme gallery is the first m
 repo: https://github.com/Yinxe/dsh-custom-ui
 package: "@dshp-inx/custom-ui"
 rowId: dshp-inx-custom-ui
-category: theme
+category: skin
 tags:
   - appearance
 modes:

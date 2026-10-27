@@ -7,7 +7,7 @@ description: 琉璃主题——为DeepSeek Harness打造实用美观的主题UI
 repo: https://github.com/LilycleHeart/liuli-theme
 package: "@deepseek-ai/liuli-theme"
 rowId: liuli-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

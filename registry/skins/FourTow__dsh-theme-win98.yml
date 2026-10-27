@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness Web(DSH Web)用的 Windows 98 经典主题插�
 repo: https://github.com/FourTow/dsh-theme-win98
 package: dsh-theme-win98
 rowId: theme-win98
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

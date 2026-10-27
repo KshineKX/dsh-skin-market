@@ -7,7 +7,7 @@ description: DeepSeek Harness（DSH）Web 界面中动态 Cordis 插件的乐高
 repo: https://github.com/XIAOke8698/dsh-lego-plugin
 package: dsh-lego-plugin
 rowId: dsh-lego-plugin
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

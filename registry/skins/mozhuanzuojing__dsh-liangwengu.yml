@@ -7,7 +7,7 @@ description: 修仙风格的常驻状态挂件，包含九境HUD、卡通人物�
 repo: https://github.com/mozhuanzuojing/dsh-liangwengu
 package: dsh-liangwengu
 rowId: liangwengu
-category: theme
+category: skin
 tags:
   - appearance
 modes:

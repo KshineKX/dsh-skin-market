@@ -7,7 +7,7 @@ description: API3D（api3d.cn）站点专属的 DSH 桌宠挂件：右下角常�
 repo: https://github.com/ptb-xiaou/dsh-api3d-pet
 package: dsh-api3d-pet
 rowId: dsh-api3d-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

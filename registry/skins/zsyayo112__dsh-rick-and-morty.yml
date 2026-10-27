@@ -7,7 +7,7 @@ description: Wubba lubba dub dub! 给 DeepSeek Harness (dsh) Web 界面的 Rick 
 repo: https://github.com/zsyayo112/dsh-rick-and-morty
 package: "@zsy1126/dsh-rick-and-morty"
 rowId: rick-and-morty
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

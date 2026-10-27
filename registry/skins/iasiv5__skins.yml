@@ -7,7 +7,7 @@ description: dsh-skins — DSH Web 多皮肤插件
 repo: https://github.com/iasiv5/skins
 package: dsh-skins
 rowId: skins
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

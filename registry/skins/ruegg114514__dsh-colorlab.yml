@@ -7,7 +7,7 @@ description: "Chat UI colour theme plugin for DeepSeek Harness. Ships the Marian
 repo: https://github.com/ruegg114514/dsh-colorlab
 package: dsh-colorlab
 rowId: mariana-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/xjg12345/DeepSeek-Harness-Bocchi-UI
 subpath: packages/dsh-client-ui-bocchi
 package: dsh-client-ui-bocchi
 rowId: ui-bocchi
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

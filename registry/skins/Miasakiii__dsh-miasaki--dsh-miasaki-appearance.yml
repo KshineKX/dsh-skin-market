@@ -8,7 +8,7 @@ repo: https://github.com/Miasakiii/dsh-miasaki
 subpath: dsh-miasaki-appearance
 package: "@miasaki/dsh-appearance"
 rowId: appearance
-category: theme
+category: skin
 tags:
   - appearance
 modes:

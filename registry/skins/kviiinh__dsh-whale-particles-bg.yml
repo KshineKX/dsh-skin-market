@@ -7,7 +7,7 @@ description: "Animated whale particle background for the DeepSeek Harness (dsh) 
 repo: https://github.com/kviiinh/dsh-whale-particles-bg
 package: dsh-whale-particles-bg
 rowId: whale-particles-bg
-category: theme
+category: skin
 tags:
   - appearance
   - motion

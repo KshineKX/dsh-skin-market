@@ -7,7 +7,7 @@ description: DSH Web GUI 的德古拉主题插件：经典暗色配色与 Soft �
 repo: https://github.com/ossFrankFrank/dsh-dracula-theme
 package: dsh-dracula-theme
 rowId: dracula
-category: theme
+category: skin
 tags:
   - wallpaper
   - pastel

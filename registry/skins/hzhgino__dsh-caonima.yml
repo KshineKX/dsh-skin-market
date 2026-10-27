@@ -7,7 +7,7 @@ description: 核动力草泥马 —— DSH 桌宠插件:Web 右下角的网红�
 repo: https://github.com/hzhgino/dsh-caonima
 package: dsh-caonima
 rowId: caonima
-category: theme
+category: pet
 tags:
   - pet
 modes:

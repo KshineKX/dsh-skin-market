@@ -7,7 +7,7 @@ description: "A DSH web GUI color-scheme plugin: a data-driven registry of theme
 repo: https://github.com/hatanokokosa/dsh-colorschemes
 package: color-schemes
 rowId: color-schemes
-category: theme
+category: skin
 tags:
   - appearance
 modes:

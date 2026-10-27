@@ -7,7 +7,7 @@ description: DeepSeek Harness 的字体系统插件 — 内置 OFL 开源字体�
 repo: https://github.com/zhijun-dai/dsh-Fonts
 package: dsh-fonts
 rowId: fonts
-category: theme
+category: skin
 tags:
   - pastel
 modes:

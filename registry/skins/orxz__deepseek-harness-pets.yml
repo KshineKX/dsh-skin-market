@@ -7,7 +7,7 @@ description: DeepSeek Harness 桌宠插件：像素鲸鱼/机械章鱼随评测�
 repo: https://github.com/orxz/deepseek-harness-pets
 package: deepseek-harness-pets
 rowId: deepseek-harness-pets
-category: theme
+category: pet
 tags:
   - pet
 modes:

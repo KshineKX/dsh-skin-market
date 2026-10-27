@@ -7,7 +7,7 @@ description: "DeepSeek Pet plugin: an interactive, state-aware companion embedde
 repo: https://github.com/keleus/deepseek-pet
 package: "@keleus/deepseek-pet"
 rowId: deepseek-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/wxj783428795/dsh-plugins
 subpath: dsh-theme-black-hole
 package: "@wxj783428795/dsh-theme-black-hole"
 rowId: wxj-theme-black-hole
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

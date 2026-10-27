@@ -7,7 +7,7 @@ description: dsh-bg-image — DSH Web 背景图插件
 repo: https://github.com/lyh9712/dsh-bg-image
 package: "@local/dsh-bg-image"
 rowId: bg-image
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

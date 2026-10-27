@@ -7,7 +7,7 @@ description: 外观增强：侧边栏工作区专属颜色 + 页面背景 tint�
 repo: https://github.com/MirrMeur/dsh-workspace-colors
 package: dsh-workspace-colors
 rowId: dsh-workspace-colors
-category: theme
+category: skin
 tags:
   - appearance
 modes:

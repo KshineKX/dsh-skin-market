@@ -7,7 +7,7 @@ description: "V CYBER — multi-colorway plugin for the DeepSeek Harness Web cli
 repo: https://github.com/victor10035445/dsh-v-theme
 package: dsh-v-theme
 rowId: dsh-v-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

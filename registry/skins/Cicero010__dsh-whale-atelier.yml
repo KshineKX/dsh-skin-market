@@ -7,7 +7,7 @@ description: "Full-interface whale skin pack for the DeepSeek Harness Web UI: la
 repo: https://github.com/Cicero010/dsh-whale-atelier
 package: dsh-whale-atelier
 rowId: dsh-whale-atelier
-category: theme
+category: skin
 tags:
   - appearance
 modes:

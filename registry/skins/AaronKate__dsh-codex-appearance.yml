@@ -7,7 +7,7 @@ description: "Eye-comfort appearance controls for DeepSeek Harness: five light t
 repo: https://github.com/AaronKate/dsh-codex-appearance
 package: dsh-eye-comfort
 rowId: eye-comfort
-category: theme
+category: skin
 tags:
   - appearance
   - motion

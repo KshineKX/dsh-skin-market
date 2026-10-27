@@ -8,7 +8,7 @@ repo: https://github.com/CAPTAIN1275/dsh-ui-web
 subpath: packages/skins/whale-song
 package: "@captain1275/dsh-client-ui-skin-whale-song"
 rowId: ui-skin-whale-song
-category: theme
+category: skin
 tags:
   - glass
   - wallpaper

@@ -7,7 +7,7 @@ description: 550C 开机动画 + 登录授权界面：启动时播放 550C 片�
 repo: https://github.com/yannicksong0106/dsh-550c-boot
 package: dsh-550c-boot
 rowId: boot-550c
-category: theme
+category: splash
 tags:
   - boot
   - motion

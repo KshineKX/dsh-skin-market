@@ -7,7 +7,7 @@ description: Death Stranding skin for DeepSeek Harness UI + live heartbeat feed 
 repo: https://github.com/MoonShadow1976/chiral-pulse
 package: chiral-pulse
 rowId: ui-chiral-pulse
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

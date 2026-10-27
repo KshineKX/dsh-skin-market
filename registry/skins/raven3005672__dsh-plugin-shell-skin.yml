@@ -7,7 +7,7 @@ description: "A skin for DeepSeek Harness: opening animation, custom wallpaper, 
 repo: https://github.com/raven3005672/dsh-plugin-shell-skin
 package: dsh-plugin-shell-skin
 rowId: dsh-plugin-shell-skin
-category: theme
+category: skin
 tags:
   - boot
 modes:

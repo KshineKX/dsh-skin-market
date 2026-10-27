@@ -8,7 +8,7 @@ repo: https://github.com/147228/dsh-xiaoyao-skins
 subpath: packages/skins/great-wall-beacon
 package: "@xiaoyao-ai/dsh-client-ui-skin-great-wall-beacon"
 rowId: ui-skin-great-wall-beacon
-category: theme
+category: skin
 tags:
   - token-theme
 modes:

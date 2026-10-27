@@ -7,7 +7,7 @@ description: "Session-status desktop pet for DeepSeek Harness (dsh): live counts
 repo: https://github.com/ShiMarin233/dsh-session-hud
 package: dsh-session-hud
 rowId: session-hud
-category: theme
+category: pet
 tags:
   - pet
 modes:

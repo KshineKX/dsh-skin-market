@@ -8,7 +8,7 @@ repo: https://github.com/shuigege2025-dev/cloud-smoke-widget
 subpath: plugin
 package: dsh-client-cloud-smoke-widget
 rowId: cloud-smoke-widget
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

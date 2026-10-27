@@ -7,7 +7,7 @@ description: DeepSeek Harness 主题插件 — 支持 浅色 / 深色 / 跟随�
 repo: https://github.com/CoolTea001/dsh-cool-theme
 package: dsh-cool-theme
 rowId: dsh-cool-theme
-category: theme
+category: skin
 tags:
   - pastel
   - token-theme

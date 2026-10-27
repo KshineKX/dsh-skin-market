@@ -1,0 +1,40 @@
+id: jh.evil.dsh.music
+name:
+  zh: dsh-music-jhevil
+  en: dsh-music-jhevil
+author: jh-Evil
+description: 音乐播放器卡片插件：在 DeepSeek Harness 对话中把 dsh-music 围栏渲染为可交互播放器。支持网易云 / QQ 音乐双后端（搜索、播放、歌词）、玻璃拟态悬浮歌词、气泡交互特效与多主题（glass / neon / paper / vapor / 自定义）。
+repo: https://github.com/jh-Evil/dsh-music
+package: dsh-music
+rowId: music
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:jh-Evil/dsh-music#bf40dafcec7b337afce807c9b6d134f08332f291
+  version: 0.1.0
+  commit: bf40dafcec7b337afce807c9b6d134f08332f291
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

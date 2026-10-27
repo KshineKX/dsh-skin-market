@@ -7,7 +7,7 @@ description: Material You 皮肤 · DeepSeek Harness
 repo: https://github.com/mtaech/dsh-material-you
 package: "@deepseek-ai/dsh-skin-material-you"
 rowId: ui-skin-material-you
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

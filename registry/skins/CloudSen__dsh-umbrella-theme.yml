@@ -7,7 +7,7 @@ description: "Umbrella Corporation theme for DeepSeek Harness: a black-and-red d
 repo: https://github.com/CloudSen/dsh-umbrella-theme
 package: dsh-umbrella-theme
 rowId: umbrella-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

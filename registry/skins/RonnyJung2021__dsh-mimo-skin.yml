@@ -7,7 +7,7 @@ description: "MiMo skin for the DSH Web GUI: the warm off-white editorial page, 
 repo: https://github.com/RonnyJung2021/dsh-mimo-skin
 package: dsh-mimo-skin
 rowId: dsh-mimo-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

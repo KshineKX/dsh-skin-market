@@ -102,10 +102,16 @@ const ids = new Set()
 const packages = new Set()
 const rows = new Set()
 for (const skin of skins) {
-  for (const [label, value, set] of [['id', skin.id, ids], ['package', skin.package, packages], ['rowId', skin.rowId, rows]]) {
-    if (set.has(value)) throw new Error(`duplicate ${label}: ${value}`)
-    set.add(value)
-  }
+  if (ids.has(skin.id)) throw new Error(`duplicate id: ${skin.id}`)
+  ids.add(skin.id)
+  // Forks can publish the same package name or loader id. Install matching
+  // still requires the pinned commit, so both entries can stay in the catalog.
+  const packageKey = `${skin.package}\n${skin.repo}`
+  if (packages.has(packageKey)) throw new Error(`duplicate package: ${skin.package} in ${skin.repo}`)
+  packages.add(packageKey)
+  const rowKey = `${skin.rowId}\n${skin.package}\n${skin.repo}`
+  if (rows.has(rowKey)) throw new Error(`duplicate rowId: ${skin.rowId} for ${skin.package}`)
+  rows.add(rowKey)
 }
 
 const catalogPath = join(root, 'data/catalog.json')

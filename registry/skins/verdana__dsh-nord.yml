@@ -7,7 +7,7 @@ description: Nord theme, a settings row, and a DeepSeek balance readout with a d
 repo: https://github.com/verdana/dsh-nord
 package: dsh-nord
 rowId: dsh-nord
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -1,0 +1,40 @@
+id: xiao000xue.dsh.music.local
+name:
+  zh: dsh-music-local
+  en: dsh-music-local
+author: xiao000xue
+description: 本地音乐播放器：把音乐根目录下的每个文件夹作为一个列表，支持 mp3/flac/wav/dts/dff/dsd/ape/wma 等全部常见格式；零 token 消耗
+repo: https://github.com/xiao000xue/dsh-music-local
+package: dsh-music-local
+rowId: music-local
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:xiao000xue/dsh-music-local#943606f09fcfd1273b12f90caeaf2ba80443f2df
+  version: 1.0.0
+  commit: 943606f09fcfd1273b12f90caeaf2ba80443f2df
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

@@ -7,7 +7,7 @@ description: "Three hand-tuned skins for DeepSeek Harness (DSH): Aurora (deep na
 repo: https://github.com/breaker505/dsh-aurora-skin
 package: dsh-aurora-skin
 rowId: aurora-skin
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

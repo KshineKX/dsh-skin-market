@@ -7,7 +7,7 @@ description: "Pixel dynamic starfield theme for DeepSeek Harness: five palettes,
 repo: https://github.com/longgege-cd/dsh-skin-pixel-anime
 package: dsh-skin-pixel-anime
 rowId: dsh-skin-pixel-anime
-category: theme
+category: skin
 tags:
   - appearance
 modes:

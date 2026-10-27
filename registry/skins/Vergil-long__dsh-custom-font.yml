@@ -7,7 +7,7 @@ description: 自定义 DeepSeek Harness 界面字体/字号/加粗/颜色与版�
 repo: https://github.com/Vergil-long/dsh-custom-font
 package: dsh-custom-font
 rowId: dsh-custom-font
-category: theme
+category: skin
 tags:
   - appearance
 modes:

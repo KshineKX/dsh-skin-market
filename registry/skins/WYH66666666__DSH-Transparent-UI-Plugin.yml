@@ -7,7 +7,7 @@ description: 是一层高自由度的玻璃质感主题，套在 DeepSeek Harnes
 repo: https://github.com/WYH66666666/DSH-Transparent-UI-Plugin
 package: "@deepseek-ai/dsh-client-ui-aqua"
 rowId: ui-aqua
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

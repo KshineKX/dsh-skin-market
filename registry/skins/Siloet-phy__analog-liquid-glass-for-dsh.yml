@@ -7,7 +7,7 @@ description: Analog Liquid Glass for DeepSeek Harness —— 把 DSH 的输入�
 repo: https://github.com/Siloet-phy/analog-liquid-glass-for-dsh
 package: analog-liquid-glass-for-dsh
 rowId: analog-liquid-glass
-category: theme
+category: skin
 tags:
   - appearance
   - glass

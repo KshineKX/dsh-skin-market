@@ -7,7 +7,7 @@ description: Animated, local-only desktop pets for DeepSeek Harness
 repo: https://github.com/ToBeWin/DSH-Pet-Companion
 package: "@tobewin/dsh-pet-companion"
 rowId: tobewin-dsh-pet-companion
-category: theme
+category: pet
 tags:
   - pet
   - motion

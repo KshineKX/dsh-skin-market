@@ -8,7 +8,7 @@ repo: https://github.com/GqqQq-Q/ASCII-ocean-DSHplugin
 subpath: DshASCiiOcean/ascii-ocean
 package: dsh-ascii-ocean
 rowId: ascii-ocean
-category: theme
+category: skin
 tags:
   - appearance
   - ascii-art

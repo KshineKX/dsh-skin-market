@@ -7,7 +7,7 @@ description: A bilingual floating pet for DeepSeek Harness with runtime status, 
 repo: https://github.com/Jimmy0123-ux/dsh-token-pet
 package: dsh-token-pet
 rowId: token-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

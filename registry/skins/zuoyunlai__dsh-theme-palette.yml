@@ -7,7 +7,7 @@ description: DSH 主题配色：4 套配色 × 明暗两模式，OKLCH 色域安
 repo: https://github.com/zuoyunlai/dsh-theme-palette
 package: dsh-theme-palette
 rowId: dsh-theme-palette
-category: theme
+category: skin
 tags:
   - appearance
 modes:

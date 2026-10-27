@@ -7,7 +7,7 @@ description: DeepSeek Harness 皮肤插件：把 Web/Desktop 客户端改造成 
 repo: https://github.com/LJY7812/dsh-winui-skin
 package: dsh-winui-skin
 rowId: winui-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

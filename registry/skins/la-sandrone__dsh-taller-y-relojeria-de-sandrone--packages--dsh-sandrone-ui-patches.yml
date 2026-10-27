@@ -8,7 +8,7 @@ repo: https://github.com/la-sandrone/dsh-taller-y-relojeria-de-sandrone
 subpath: packages/dsh-sandrone-ui-patches
 package: dsh-sandrone-ui-patches
 rowId: dsh-sandrone-ui-patches
-category: theme
+category: skin
 tags:
   - appearance
 modes:

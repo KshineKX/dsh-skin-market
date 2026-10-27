@@ -7,7 +7,7 @@ description: DeepSeek Harness Web 的 Steins;Gate 0 / Amadeus 风格主题皮肤
 repo: https://github.com/justintangsysu/dsh-amadeus-skin
 package: "@dsh-external/dsh-client-ui-skin-amadeus"
 rowId: ui-skin-amadeus
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

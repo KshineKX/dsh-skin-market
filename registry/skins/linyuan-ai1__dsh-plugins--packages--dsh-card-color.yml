@@ -8,7 +8,7 @@ repo: https://github.com/linyuan-ai1/dsh-plugins
 subpath: packages/dsh-card-color
 package: dsh-card-color
 rowId: dsh-card-color
-category: theme
+category: skin
 tags:
   - wallpaper
   - pastel

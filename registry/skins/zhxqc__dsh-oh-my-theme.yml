@@ -7,7 +7,7 @@ description: DSH Web 主题与文件工作台：全局字体设置、@ 文件引
 repo: https://github.com/zhxqc/dsh-oh-my-theme
 package: dsh-oh-my-theme
 rowId: oh-my-theme
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

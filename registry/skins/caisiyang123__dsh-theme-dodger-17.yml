@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness Web 界面打造的道奇蓝球场主题。
 repo: https://github.com/caisiyang123/dsh-theme-dodger-17
 package: dsh-theme-dodger-17
 rowId: dsh-theme-dodger-17
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

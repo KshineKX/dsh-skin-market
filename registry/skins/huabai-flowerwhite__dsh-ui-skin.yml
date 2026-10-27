@@ -7,7 +7,7 @@ description: 面向 DeepSeek Harness 的 UI 皮肤插件：在 UI 下方注入�
 repo: https://github.com/huabai-flowerwhite/dsh-ui-skin
 package: dsh-ui-skin
 rowId: dsh-ui-skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

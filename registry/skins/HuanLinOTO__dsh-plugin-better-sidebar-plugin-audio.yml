@@ -1,0 +1,45 @@
+id: huanlinoto.dsh-plugin-better-sidebar-plugin-audio
+name:
+  zh: dsh-plugin-better-sidebar-plugin-audio
+  en: dsh-plugin-better-sidebar-plugin-audio
+author: HuanLinOTO
+description: 给 dsh-better-sidebar 的音频预览：在 DSH 右侧栏里直接播放音频，看波形、拖进度、量选区、查实时频谱与全曲频谱图。
+repo: https://github.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio
+package: "@huanlin/dsh-plugin-better-sidebar-plugin-audio"
+rowId: better-sidebar-audio
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio#9e59a980a6da85b92697412b8c239bdf5d6bbf66
+  version: 0.1.0
+  commit: 9e59a980a6da85b92697412b8c239bdf5d6bbf66
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio/9e59a980a6da85b92697412b8c239bdf5d6bbf66/dev/shot-waveform.png
+  - https://raw.githubusercontent.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio/9e59a980a6da85b92697412b8c239bdf5d6bbf66/dev/shot-spectrogram.png
+  - https://raw.githubusercontent.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio/9e59a980a6da85b92697412b8c239bdf5d6bbf66/dev/shot-zoom-waveform.png
+  - https://raw.githubusercontent.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio/9e59a980a6da85b92697412b8c239bdf5d6bbf66/dev/shot-zoom-spectrogram.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/HuanLinOTO/dsh-plugin-better-sidebar-plugin-audio/9e59a980a6da85b92697412b8c239bdf5d6bbf66/dev/shot-waveform.png

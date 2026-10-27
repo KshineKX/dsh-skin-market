@@ -7,7 +7,7 @@ description: "Glassic Mist 雾蓝主题 for DeepSeek Harness: mist-blue veil + d
 repo: https://github.com/VlanTech/dsh-glassic-mist-theme
 package: dsh-mistblue
 rowId: mistblue
-category: theme
+category: skin
 tags:
   - glass
   - motion

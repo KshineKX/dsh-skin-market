@@ -7,7 +7,7 @@ description: Raiden Inazuma Atelier / 稻妻雷电工房
 repo: https://github.com/lengzhanbao/dsh-raiden-theme
 package: "@dsh-external/dsh-raiden-theme"
 rowId: dsh-raiden-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

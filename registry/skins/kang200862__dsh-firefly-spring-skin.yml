@@ -7,7 +7,7 @@ description: '流萤「春日手信」主题皮肤 for DeepSeek Harness — Fire
 repo: https://github.com/kang200862/dsh-firefly-spring-skin
 package: dsh-firefly-spring-skin
 rowId: firefly-spring-skin
-category: theme
+category: skin
 tags:
   - appearance
   - glass

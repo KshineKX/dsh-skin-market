@@ -7,7 +7,7 @@ description: 一款 Claude 风格的 dsh插件：为 DSH WebUI 打造，暖羊�
 repo: https://github.com/RayYeung1989/claude-parchment-theme
 package: "@dsh-local/claude-parchment-theme"
 rowId: ui-claude-theme
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

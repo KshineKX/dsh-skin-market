@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness（DSH）Web UI 换一套好看的外观：配�
 repo: https://github.com/Zalpha263/dsh-ui-beautify
 package: dsh-ui-beautify
 rowId: ui-beautify
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

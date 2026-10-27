@@ -7,7 +7,7 @@ description: "FC Bayern München skin for the dsh web GUI: home-red / away-white
 repo: https://github.com/dirtywork22/dsh-client-ui-skin-bayern
 package: dsh-client-ui-skin-bayern
 rowId: ui-skin-bayern
-category: theme
+category: skin
 tags:
   - appearance
 modes:

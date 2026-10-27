@@ -7,7 +7,7 @@ description: 完美复刻 Claude Code 皮肤，纪念我的 Vibe Coding 白月�
 repo: https://github.com/le-soleil-se-couche/dsh-skin-claude-code
 package: "@deepseek-ai/dsh-client-ui-skin-claude-code"
 rowId: ui-skin-claude-code
-category: theme
+category: skin
 tags:
   - light-dark
 modes:

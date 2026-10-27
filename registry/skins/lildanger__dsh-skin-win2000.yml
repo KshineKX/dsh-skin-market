@@ -7,7 +7,7 @@ description: "Windows 2000 skin for the DSH Web GUI: metric-accurate grey chrome
 repo: https://github.com/lildanger/dsh-skin-win2000
 package: dsh-skin-win2000
 rowId: skin-win2000
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: "One plugin, every upgrade DeepSeek Harness lacks out of the box: m
 repo: https://github.com/HIT-HTML/dsh-ENHANCED
 package: dsh-enhanced
 rowId: dsh-enhanced
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

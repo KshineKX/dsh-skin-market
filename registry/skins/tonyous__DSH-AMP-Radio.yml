@@ -1,0 +1,43 @@
+id: tonyous.dsh-amp-radio
+name:
+  zh: DSH-AMP-Radio
+  en: DSH-AMP-Radio
+author: tonyous
+description: AMP radio player with live visualizer, station search, and favourites for DeepSeek Harness.
+repo: https://github.com/tonyous/DSH-AMP-Radio
+package: dsh-amp-radio
+rowId: dsh-amp-radio
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:tonyous/DSH-AMP-Radio#8221c14acee2382a90d1627833a43c7253a03f00
+  version: 1.2.0
+  commit: 8221c14acee2382a90d1627833a43c7253a03f00
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://cdn.jsdelivr.net/gh/tonyous/DSH-AMP-Radio@master/screenshot.png
+  - https://raw.githubusercontent.com/tonyous/DSH-AMP-Radio/8221c14acee2382a90d1627833a43c7253a03f00/screenshot.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://cdn.jsdelivr.net/gh/tonyous/DSH-AMP-Radio@master/screenshot.png

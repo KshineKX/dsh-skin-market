@@ -7,7 +7,7 @@ description: DeepSeek Harness (dsh) 皮肤插件：给 Web 界面加上可切换
 repo: https://github.com/megatronyy/dsh-skin-background
 package: dsh-skin-background
 rowId: skin-background
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

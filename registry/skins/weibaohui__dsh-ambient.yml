@@ -1,0 +1,42 @@
+id: weibaohui.dsh-ambient
+name:
+  zh: dsh-ambient
+  en: dsh-ambient
+author: weibaohui
+description: 白噪音播放器：场景完全由音频根目录下的文件夹决定——有什么文件夹就有什么场景，有什么音频就播什么。点「执行下载」让 AI 在后台从 Wikimedia Commons 按 CC0/PD/CC BY 许可分门别类下载到对应文件夹（读 INDEX.md 防重复、完成自动刷新库）。顺序/随机/单曲循环/间歇四种播放模式，定时关支持 N 小时或指定时刻。宿主侧流式读取（Range 支持），不上传、不分发音频。
+repo: https://github.com/weibaohui/dsh-ambient
+package: "@weibaohui/dsh-ambient"
+rowId: dsh-ambient
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:weibaohui/dsh-ambient#b36a96749c549ba1ac437aab923b69e989916f04
+  version: 0.1.2
+  commit: b36a96749c549ba1ac437aab923b69e989916f04
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://foruda.gitee.com/images/1774880015525784725/4fd67005_77493.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://foruda.gitee.com/images/1774880015525784725/4fd67005_77493.png

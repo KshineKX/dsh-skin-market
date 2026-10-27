@@ -7,7 +7,7 @@ description: Xiaoyaoyou glyph water, exclusively on the new conversation screen.
 repo: https://github.com/Aimer779/dsh-xiaoyaoyou
 package: "@local/dsh-xiaoyaoyou"
 rowId: xiaoyaoyou
-category: theme
+category: skin
 tags:
   - appearance
 modes:

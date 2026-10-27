@@ -7,7 +7,7 @@ description: 会话进程看板：自动识别 等你回答 / 工作中 / 闲置
 repo: https://github.com/SherinG-official/dsh-desktop-pet
 package: dsh-session-board
 rowId: session-board
-category: theme
+category: skin
 tags:
   - pet
 modes:

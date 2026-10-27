@@ -7,7 +7,7 @@ description: DSH 临时聊天插件：页面悬浮一只缓慢游动的半透明
 repo: https://github.com/winditer/dsh-temp-chat
 package: dsh-temp-chat
 rowId: elf
-category: theme
+category: skin
 tags:
   - appearance
 modes:

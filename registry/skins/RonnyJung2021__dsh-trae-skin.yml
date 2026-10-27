@@ -7,7 +7,7 @@ description: "Trae skin for the DSH Web GUI: the near-black page, mint-green acc
 repo: https://github.com/RonnyJung2021/dsh-trae-skin
 package: dsh-trae-skin
 rowId: dsh-trae-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

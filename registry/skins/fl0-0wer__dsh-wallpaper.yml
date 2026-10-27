@@ -7,7 +7,7 @@ description: "Photo wallpaper for the DeepSeek Harness web GUI: serves ~/.dsh/wa
 repo: https://github.com/fl0-0wer/dsh-wallpaper
 package: dsh-wallpaper
 rowId: dsh-wallpaper
-category: theme
+category: skin
 tags:
   - appearance
 modes:

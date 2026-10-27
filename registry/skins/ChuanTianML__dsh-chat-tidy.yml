@@ -7,7 +7,7 @@ description: 调整DSH对话的字体、段落节奏和表格样式，附工作�
 repo: https://github.com/ChuanTianML/dsh-chat-tidy
 package: dsh-chat-tidy
 rowId: dsh-chat-tidy
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: A pet that lives in the DSH Web UI, changing poses as the agent run
 repo: https://github.com/opensetk/dsh-xiaohei
 package: dsh-pet
 rowId: dsh-pet-host
-category: theme
+category: pet
 tags:
   - pet
 modes:

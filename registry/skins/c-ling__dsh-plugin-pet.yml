@@ -7,7 +7,7 @@ description: "A virtual pet companion for DeepSeek Harness 0.2.1+ Web and Deskto
 repo: https://github.com/c-ling/dsh-plugin-pet
 package: dsh-plugin-pet
 rowId: dsh-plugin-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

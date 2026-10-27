@@ -39,6 +39,8 @@ export interface CatalogSkin {
   subpath?: string
   package: string
   rowId: string
+  /** Older catalogs use theme, anime, interactive, or background. Those count as skin. */
+  category?: string
   tags: string[]
   modes: string[]
   install: { target: string; version: string; commit: string; allowBuild?: string; npm?: NpmInstallSource; desktop?: DesktopInstallCapability; companions?: Array<{ package: string; target: string; version: string; commit: string; rowId: string }> }

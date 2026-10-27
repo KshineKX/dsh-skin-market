@@ -7,7 +7,7 @@ description: CapyReporter — an always-on-top capybara task reporter for the De
 repo: https://github.com/linkbag/dsh-capyreporter
 package: dsh-capyreporter
 rowId: capyreporter
-category: theme
+category: pet
 tags:
   - pet
 modes:

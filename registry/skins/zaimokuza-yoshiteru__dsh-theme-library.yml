@@ -7,7 +7,7 @@ description: 素材来源 - Wallpaper - Black Smoke
 repo: https://github.com/zaimokuza-yoshiteru/dsh-theme-library
 package: "@zaimokuza/dsh-theme-library"
 rowId: dsh-theme-library
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

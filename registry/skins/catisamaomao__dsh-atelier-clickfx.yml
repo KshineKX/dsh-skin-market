@@ -7,7 +7,7 @@ description: "Five non-repeating, theme-aware click animations for DeepSeek Harn
 repo: https://github.com/catisamaomao/dsh-atelier-clickfx
 package: dsh-atelier-clickfx
 rowId: atelier-clickfx
-category: theme
+category: skin
 tags:
   - appearance
 modes:

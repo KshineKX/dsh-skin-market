@@ -8,7 +8,7 @@ repo: https://github.com/CAPTAIN1275/dsh-ui-web
 subpath: packages/skins/blue-fantasy
 package: "@captain1275/dsh-client-ui-skin-blue-fantasy"
 rowId: ui-skin-blue-fantasy
-category: theme
+category: skin
 tags:
   - anime
   - wallpaper

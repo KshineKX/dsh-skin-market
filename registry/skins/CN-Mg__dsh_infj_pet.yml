@@ -7,7 +7,7 @@ description: INFJ Sage — a pixel-art Advocate/Counselor companion that lives i
 repo: https://github.com/CN-Mg/dsh_infj_pet
 package: dsh-plugin-infj-pet
 rowId: infj-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

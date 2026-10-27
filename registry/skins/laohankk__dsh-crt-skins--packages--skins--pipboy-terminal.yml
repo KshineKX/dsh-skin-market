@@ -8,7 +8,7 @@ repo: https://github.com/laohankk/dsh-crt-skins
 subpath: packages/skins/pipboy-terminal
 package: dsh-pipboy-terminal
 rowId: pipboy-terminal
-category: theme
+category: skin
 tags:
   - appearance
 modes:

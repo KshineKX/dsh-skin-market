@@ -7,7 +7,7 @@ description: Glass Skin — a glass-material theme for the DeepSeek Harness Web 
 repo: https://github.com/yesang0924-beep/dsh-glass-skin
 package: dsh-glass-skin
 rowId: ui-glass-skin
-category: theme
+category: skin
 tags:
   - appearance
   - glass

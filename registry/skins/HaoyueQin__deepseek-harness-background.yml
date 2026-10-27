@@ -7,7 +7,7 @@ description: "DeepSeek Harness Background │ ├── timeline.tsx # 会话时
 repo: https://github.com/HaoyueQin/deepseek-harness-background
 package: deepseek-harness-background
 rowId: deepseek-harness-background
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

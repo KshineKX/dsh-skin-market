@@ -7,7 +7,7 @@ description: "A chibi Frieren desktop pet for the DeepSeek Harness Web GUI: inst
 repo: https://github.com/dakeshui123/dsh-pet-frieren
 package: dsh-pet-frieren
 rowId: frieren-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

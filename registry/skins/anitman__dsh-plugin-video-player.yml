@@ -1,0 +1,40 @@
+id: anitman.dsh-plugin-video-player
+name:
+  zh: dsh-plugin-video-player
+  en: dsh-plugin-video-player
+author: anitman
+description: DSH Video Player / DSH 刷视频
+repo: https://github.com/anitman/dsh-plugin-video-player
+package: dsh-plugin-video-player
+rowId: video-player
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:anitman/dsh-plugin-video-player#d7436a80cdfcdc8eb28f864a63e14348e99ce816
+  version: 0.2.0
+  commit: d7436a80cdfcdc8eb28f864a63e14348e99ce816
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

@@ -7,7 +7,7 @@ description: "Tsukuyomi: Night & Day - dual-world backdrop skin plugin for the D
 repo: https://github.com/DaydreAmRing/dsh-cho-kaguya-plugin-public
 package: "@dsh-external/dsh-client-ui-skin-cho-kaguya"
 rowId: ui-skin-cho-kaguya
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/pineapple880066/dsh-webUI-pets
 subpath: packages/client/ui-desktop-pet
 package: "@dsh-external/dsh-webui-pets"
 rowId: dsh-desktop-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/Hotsteel2901/dsh-frutiger-aero
 subpath: packages/frutiger-aero
 package: dsh-frutiger-aero
 rowId: frutiger-aero
-category: theme
+category: skin
 tags:
   - appearance
   - glass

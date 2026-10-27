@@ -7,7 +7,7 @@ description: 「山栖」田园主题：把 DeepSeek Harness 接入真实的山�
 repo: https://github.com/moshangzhe/dsh-shanqi-theme
 package: dsh-shanqi-theme
 rowId: ui-shanqi-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

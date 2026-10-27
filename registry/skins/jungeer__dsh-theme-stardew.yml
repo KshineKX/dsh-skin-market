@@ -7,7 +7,7 @@ description: 面向 DeepSeek Harness Web 端的 《星露谷物语》主题客�
 repo: https://github.com/jungeer/dsh-theme-stardew
 package: dsh-theme-stardew
 rowId: theme-stardew
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

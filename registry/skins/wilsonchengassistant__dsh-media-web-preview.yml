@@ -1,0 +1,43 @@
+id: wilsonchengassistant.dsh-media-web-preview
+name:
+  zh: dsh-media-web-preview
+  en: dsh-media-web-preview
+author: wilsonchengassistant
+description: 在 DSH 右侧栏里直接播放视频和音频。远程浏览器打开时，不必再点 Open 让 Mac 上的 QuickTime / 音乐 App 打开。
+repo: https://github.com/wilsonchengassistant/dsh-media-web-preview
+package: dsh-media-web-preview
+rowId: media-web-preview
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:wilsonchengassistant/dsh-media-web-preview#8f7d0dcce0a34d22407d1a306ee8254b3cf63c67
+  version: 1.0.0
+  commit: 8f7d0dcce0a34d22407d1a306ee8254b3cf63c67
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/wilsonchengassistant/dsh-media-web-preview/8f7d0dcce0a34d22407d1a306ee8254b3cf63c67/docs/preview-video.png
+  - https://raw.githubusercontent.com/wilsonchengassistant/dsh-media-web-preview/8f7d0dcce0a34d22407d1a306ee8254b3cf63c67/docs/preview-audio.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/wilsonchengassistant/dsh-media-web-preview/8f7d0dcce0a34d22407d1a306ee8254b3cf63c67/docs/preview-video.png

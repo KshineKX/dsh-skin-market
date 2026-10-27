@@ -7,7 +7,7 @@ description: 为 dsh Web UI 提供的全局毛玻璃（frosted glass / backdrop 
 repo: https://github.com/makuralymi/dsh-webUI-Glass-Theme
 package: dsh-client-ui-frosted-glass
 rowId: ui-frosted-glass
-category: theme
+category: skin
 tags:
   - glass
   - motion

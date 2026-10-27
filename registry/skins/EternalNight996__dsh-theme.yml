@@ -7,7 +7,7 @@ description: 🎨 给 DeepSeek Harness 的 Web GUI 换背景：内置主题 / �
 repo: https://github.com/EternalNight996/dsh-theme
 package: "@eternalnight/dsh-theme"
 rowId: dsh-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

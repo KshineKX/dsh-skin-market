@@ -7,7 +7,7 @@ description: 葫芦娃（Calabash Brothers）theme plugin for DeepSeek Harness W
 repo: https://github.com/Jayliu2025-vip/dsh-theme-huluwa
 package: dsh-theme-huluwa
 rowId: ui-theme-huluwa
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

@@ -7,7 +7,7 @@ description: "Lightweight personalisation for the DeepSeek Harness running-turn 
 repo: https://github.com/Saknutella/dsh-thinking-quips
 package: dsh-thinking-quips
 rowId: thinking-quips
-category: theme
+category: skin
 tags:
   - appearance
 modes:

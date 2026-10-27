@@ -7,7 +7,7 @@ description: 聊天背景美化：自定义本地图片 / 视频、清晰度、�
 repo: https://github.com/yezitotempeace/dsh-chat-background
 package: dsh-chat-background
 rowId: chat-background
-category: theme
+category: skin
 tags:
   - appearance
   - glass

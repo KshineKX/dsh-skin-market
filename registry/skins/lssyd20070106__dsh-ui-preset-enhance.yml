@@ -7,7 +7,7 @@ description: 一个给 DeepSeek Harness（DSH）WebUI 用的第三方界面增�
 repo: https://github.com/lssyd20070106/dsh-ui-preset-enhance
 package: dsh-ui-preset-enhance
 rowId: dsh-ui-preset-enhance
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

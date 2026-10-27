@@ -7,7 +7,7 @@ description: 主题四合 —— DeepSeek Harness Web 界面的四套换肤皮�
 repo: https://github.com/RZ-0410/dsh-theme-quartet
 package: dsh-theme-quartet
 rowId: theme-quartet
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: DSH 暖纸外观皮肤插件：Claude Desktop 暖白纸配色 + 更
 repo: https://github.com/Anarcadia/chuanban-dsh-theme
 package: chuanban-dsh-theme
 rowId: chuanban-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -1,0 +1,45 @@
+id: qifanai.dsh-startup-screen
+name:
+  zh: dsh-startup-screen
+  en: dsh-startup-screen
+author: QIFANAI
+description: DeepSeek Harness 的开机启动动画：黑幕标识、过曝洗白、档案底板、可交互的访问授权，然后揭幕。不是界面皮肤，播完回到原来的界面。
+repo: https://github.com/QIFANAI/dsh-startup-screen
+subpath: package
+package: dsh-startup-screen
+rowId: dsh-startup-screen
+category: splash
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:QIFANAI/dsh-startup-screen#8499f9df21c6cb27bef8ed7bb1ba29da654fc795&path:/package
+  version: 1.6.0
+  commit: 8499f9df21c6cb27bef8ed7bb1ba29da654fc795
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/QIFANAI/dsh-startup-screen/8499f9df21c6cb27bef8ed7bb1ba29da654fc795/docs/screenshots/dark.webp
+  - https://raw.githubusercontent.com/QIFANAI/dsh-startup-screen/8499f9df21c6cb27bef8ed7bb1ba29da654fc795/docs/screenshots/light.webp
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+  notice: 代码 MIT。第三方影音不随包；作者自录的 line6 同样是 MIT。
+featuredRank: 0
+starsSnapshot: 23
+releaseUpdatedAt: 2026-10-22T00:00:00.000Z
+metadataUpdatedAt: 2026-10-27T06:00:00.000Z
+starsUpdatedAt: 2026-10-22T00:00:00.000Z
+updatedAt: 2026-10-27T06:00:00.000Z
+listScreenshot: https://raw.githubusercontent.com/QIFANAI/dsh-startup-screen/8499f9df21c6cb27bef8ed7bb1ba29da654fc795/docs/screenshots/dark.webp

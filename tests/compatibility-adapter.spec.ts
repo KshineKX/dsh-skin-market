@@ -25,7 +25,7 @@ function skin(): SkinEntry {
     repo: 'https://github.com/example/generic',
     package: '@example/generic-skin',
     rowId: 'generic-skin',
-    category: 'theme',
+    category: 'skin',
     tags: ['theme'],
     modes: ['dark'],
     install: { target: 'github:example/generic#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', version: '1.0.0', commit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },

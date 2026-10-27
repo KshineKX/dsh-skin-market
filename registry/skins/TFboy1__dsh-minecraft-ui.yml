@@ -7,7 +7,7 @@ description: "[](https://github.com/TFboy1/dsh-minecraft-ui/actions/workflows/ci
 repo: https://github.com/TFboy1/dsh-minecraft-ui
 package: dsh-minecraft-ui
 rowId: minecraft-ui
-category: theme
+category: skin
 tags:
   - appearance
 modes:

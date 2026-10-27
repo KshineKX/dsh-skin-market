@@ -7,7 +7,7 @@ description: 参考《明日方舟：终末地》官网视觉风格的 DSH Web �
 repo: https://github.com/SkillyNotFound/dsh-theme-endfield-re
 package: dsh-theme-endfield-re
 rowId: theme-endfield-re
-category: theme
+category: skin
 tags:
   - appearance
 modes:

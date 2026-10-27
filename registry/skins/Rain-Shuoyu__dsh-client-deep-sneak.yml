@@ -1,0 +1,40 @@
+id: rain.shuoyu.dsh.client.deep.sneak
+name:
+  zh: dsh-client-deep-sneak
+  en: dsh-client-deep-sneak
+author: Rain-Shuoyu
+description: 摸鱼伴侣：右下角小窗播放 B站视频（原生播放器/弹幕/评论/搜索），agent 需要你时自动暂停提醒，处理完从原位置精确续播。
+repo: https://github.com/Rain-Shuoyu/dsh-client-deep-sneak
+package: dsh-client-deep-sneak
+rowId: deep-sneak
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:Rain-Shuoyu/dsh-client-deep-sneak#21d0646de043b5bb2e18835826394e0aa2fe7497
+  version: 0.12.0
+  commit: 21d0646de043b5bb2e18835826394e0aa2fe7497
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

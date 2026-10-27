@@ -1,0 +1,42 @@
+id: yuanyihy.deepseek-media-gallery
+name:
+  zh: deepseek-media-gallery
+  en: deepseek-media-gallery
+author: yuanyiHY
+description: DSH（cordis）插件：把一个媒体目录里的图片/视频列成画廊 —— 预览、Range 播放、下载到桌面、删除。入口是侧边栏底部的按钮，打开一个半透明弹出窗口（不占中央聊天区）。
+repo: https://github.com/yuanyiHY/deepseek-media-gallery
+package: deepseek-media-gallery
+rowId: deepseek-media-gallery
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:yuanyiHY/deepseek-media-gallery#c84a6f80aa1348713e375e2ec9f3f2f314609851
+  version: 1.0.0
+  commit: c84a6f80aa1348713e375e2ec9f3f2f314609851
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: ^0.1.5-rc.1
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/yuanyiHY/deepseek-media-gallery/c84a6f80aa1348713e375e2ec9f3f2f314609851/assets/screenshot-1.png
+review:
+  compatibility: verified
+  preview: verified
+  installation: manual-only
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/yuanyiHY/deepseek-media-gallery/c84a6f80aa1348713e375e2ec9f3f2f314609851/assets/screenshot-1.png

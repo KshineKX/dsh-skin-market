@@ -7,7 +7,7 @@ description: DSH 主题切换：自动检测已安装的皮肤/主题，在设�
 repo: https://github.com/kinmat-A/dsh-theme-switch
 package: "@dsh-external/dsh-theme-switch"
 rowId: ui-theme-switch
-category: theme
+category: skin
 tags:
   - token-theme
 modes:

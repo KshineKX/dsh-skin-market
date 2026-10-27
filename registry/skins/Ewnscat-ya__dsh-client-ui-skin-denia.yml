@@ -7,7 +7,7 @@ description: DeepSeek Harness Web GUI 皮肤 · 鸣潮·达妮娅(Denia)主题�
 repo: https://github.com/Ewnscat-ya/dsh-client-ui-skin-denia
 package: "@dsh-external/dsh-client-ui-skin-denia"
 rowId: ui-skin-denia
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

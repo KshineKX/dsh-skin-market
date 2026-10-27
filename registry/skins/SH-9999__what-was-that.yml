@@ -7,7 +7,7 @@ description: A tiny octopus desktop pet that explains AI-jargon in plain languag
 repo: https://github.com/SH-9999/what-was-that
 package: what-was-that
 rowId: what-was-that
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/trees163/dsh-customizations
 subpath: packages/dsh-client-ui-beauty
 package: dsh-client-ui-beauty
 rowId: ui-beauty
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

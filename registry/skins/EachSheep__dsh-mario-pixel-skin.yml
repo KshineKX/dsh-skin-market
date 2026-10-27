@@ -7,7 +7,7 @@ description: 给 DSH Desktop 和 Web UI 用的马里奥像素皮肤。它会替�
 repo: https://github.com/EachSheep/dsh-mario-pixel-skin
 package: dsh-client-ui-skin-pixel-kingdom
 rowId: ui-skin-pixel-kingdom
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

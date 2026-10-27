@@ -7,7 +7,7 @@ description: "DSH plugin: weather tool + immersive weather theming + FishLogo wh
 repo: https://github.com/shenmy-git/dsh-weather-plugin
 package: dsh-weather-plugin
 rowId: weather
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

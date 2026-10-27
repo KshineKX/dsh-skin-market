@@ -18,7 +18,7 @@ function testSkin(id: string): SkinEntry {
   return {
     id, package: id, rowId: id, author: 'fixture', name: { zh: id, en: id }, description: 'Loader lifecycle fixture',
     repo: `https://github.com/example/${id}`, install: { target: `github:example/${id}#${commit}`, version: '1.0.0', commit },
-    compatibility: { dsh: '>=0.1.0-rc.6', platform: ['web'] }, category: 'theme', tags: [], modes: ['dark'], screenshots: [],
+    compatibility: { dsh: '>=0.1.0-rc.6', platform: ['web'] }, category: 'skin', tags: [], modes: ['dark'], screenshots: [],
     license: { code: 'MIT', commercialUse: true }, featuredRank: 0, starsSnapshot: 0,
     releaseUpdatedAt: '2026-10-14T00:00:00Z', metadataUpdatedAt: '2026-10-14T00:00:00Z', starsUpdatedAt: '2026-10-14T00:00:00Z', updatedAt: '2026-10-14T00:00:00Z',
   }

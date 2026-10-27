@@ -7,7 +7,7 @@ description: DSH-RealFish-Pet 桌面宠物插件：在 dsh web 界面里自由�
 repo: https://github.com/FaMuer/dsh-real-fish-pet
 package: dsh-real-fish-pet
 rowId: real-fish-pet
-category: theme
+category: pet
 tags:
   - pet
   - motion

@@ -7,7 +7,7 @@ description: 一个dsh的主题修改插件
 repo: https://github.com/X9wd09ncc/dsh-x9-theme
 package: dsh-x9-theme
 rowId: ui-x9-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

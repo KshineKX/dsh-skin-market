@@ -7,7 +7,7 @@ description: Restart the web GUI (dsh web) — the page then boots with the rail
 repo: https://github.com/ShineFree7/dsh-doc-rail
 package: dsh-doc-rail
 rowId: dsh-doc-rail
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

@@ -7,7 +7,7 @@ description: DSH 插件：本地 rembg GPU 抠图工具（remove_background）�
 repo: https://github.com/H-table/dsh-bg-tool
 package: "@local/dsh-bg-tool"
 rowId: bg-tool
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

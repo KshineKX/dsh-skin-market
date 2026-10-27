@@ -7,7 +7,7 @@ description: DSH 图片皮肤插件：导入 PNG/JPG/WebP 自动生成主题配�
 repo: https://github.com/Jack-sun-learner/dsh-image-skin
 package: dsh-image-skin
 rowId: dsh-image-skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

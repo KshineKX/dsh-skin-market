@@ -7,7 +7,7 @@ description: Codex 风格皮肤切换器 + 自定义壁纸层，可调透明度�
 repo: https://github.com/KinGao294/dsh-skin
 package: dsh-skin
 rowId: skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

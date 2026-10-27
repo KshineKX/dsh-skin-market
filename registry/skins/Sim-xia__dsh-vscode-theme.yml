@@ -7,7 +7,7 @@ description: 导入为 Visual Studio Code 设计的 .vsix 主题文件并应用�
 repo: https://github.com/Sim-xia/dsh-vscode-theme
 package: dsh-vscode-theme
 rowId: vscode-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

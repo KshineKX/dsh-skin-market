@@ -7,7 +7,7 @@ description: Unofficial modular themes and starter kit for DeepSeek Harness.
 repo: https://github.com/Slymaster/dsh-theme-lab
 package: dsh-theme-lab
 rowId: dsh-theme-lab-live
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

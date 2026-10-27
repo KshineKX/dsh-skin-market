@@ -7,7 +7,7 @@ description: DeepSeek Harness 主题选择插件：管理应用主题与已安�
 repo: https://github.com/yhPrime/dsh-theme-picker
 package: dsh-theme-picker
 rowId: dsh-theme-picker
-category: theme
+category: skin
 tags:
   - token-theme
 modes:

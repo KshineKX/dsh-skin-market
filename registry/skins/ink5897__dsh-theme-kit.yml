@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness 的 Web 界面换一套好看的外观：32 �
 repo: https://github.com/ink5897/dsh-theme-kit
 package: dsh-theme-kit
 rowId: theme-kit
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

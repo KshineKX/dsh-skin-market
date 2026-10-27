@@ -8,7 +8,7 @@ repo: https://github.com/Mrzhailiming/deepseek-pet
 subpath: dsh-pet-plugin
 package: dsh-pet-plugin
 rowId: pet-feed
-category: theme
+category: pet
 tags:
   - pet
 modes:

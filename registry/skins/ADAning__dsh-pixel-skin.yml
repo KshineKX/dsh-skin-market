@@ -7,7 +7,7 @@ description: DeepSeek Harness Web GUI 的 8-bit / CRT 皮肤。
 repo: https://github.com/ADAning/dsh-pixel-skin
 package: dsh-pixel-skin
 rowId: dsh-pixel-skin
-category: theme
+category: skin
 tags:
   - retro
   - motion

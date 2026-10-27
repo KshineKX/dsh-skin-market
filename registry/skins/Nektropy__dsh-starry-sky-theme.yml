@@ -7,7 +7,7 @@ description: "Dark-only starry-sky theme for DeepSeek Harness: deep-space palett
 repo: https://github.com/Nektropy/dsh-starry-sky-theme
 package: dsh-starry-sky-theme
 rowId: starry-sky-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

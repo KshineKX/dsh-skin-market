@@ -1,0 +1,40 @@
+id: hyna.hla.dsh.ambience
+name:
+  zh: dsh-ambience
+  en: dsh-ambience
+author: Hyna-hla
+description: DSH 氛围插件：可自主淡化的自定义图片背景（JPG/PNG/WebP，不遮挡 UI）+ 背景音乐播放器（FLAC/MP3/WAV/M4A，音量 0-200%，播放列表/循环/随机）+ 10 段专业均衡器（预设/预放大/旁路），右下角悬浮条展开面板；v1.1 增加设置页入口，v1.1.1 修复大图导入被静默丢弃的问题。
+repo: https://github.com/Hyna-hla/dsh-ambience
+package: dsh-ambience
+rowId: dsh-ambience
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:Hyna-hla/dsh-ambience#fddbd75e786fdb46f6b89bcca2a145f82d888120
+  version: 1.1.1
+  commit: fddbd75e786fdb46f6b89bcca2a145f82d888120
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

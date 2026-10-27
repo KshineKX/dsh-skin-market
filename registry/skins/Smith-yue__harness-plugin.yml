@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness Web 与桌面端提供两套可切换主题、
 repo: https://github.com/Smith-yue/harness-plugin
 package: dsh-skin-token-dashboard
 rowId: skin-token-dashboard
-category: theme
+category: skin
 tags:
   - theme
 modes:

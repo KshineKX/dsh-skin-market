@@ -7,7 +7,7 @@ description: DeepSeek Harness 的可自定义主题插件（默认带一套「�
 repo: https://github.com/jinxlux/xiao-theme-dsh-ui-plugin
 package: xiao-ui-theme-ts
 rowId: xiao-theme-ts
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

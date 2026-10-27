@@ -7,7 +7,7 @@ description: Nothing Phone style skin for DeepSeek Harness Web — dot-matrix ba
 repo: https://github.com/Cinnamobot/dsh-nothing-skin
 package: dsh-nothing-skin
 rowId: ui-skin-nothing
-category: theme
+category: skin
 tags:
   - appearance
 modes:

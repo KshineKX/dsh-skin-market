@@ -7,7 +7,7 @@ description: 鲸鱼娘桌宠 for dsh —— frames2d 宠物：待机是分层烘
 repo: https://github.com/wei125775-lab/whalegirl-deskpet
 package: "@wei125775-lab/whalegirl-deskpet"
 rowId: whalegirl-deskpet
-category: theme
+category: pet
 tags:
   - pet
 modes:

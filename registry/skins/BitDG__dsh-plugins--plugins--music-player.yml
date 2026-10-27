@@ -1,0 +1,44 @@
+id: bitdg.music-player
+name:
+  zh: music-player
+  en: music-player
+author: BitDG
+description: Public collection of independently versioned DeepSeek Harness plugins
+repo: https://github.com/BitDG/dsh-plugins
+subpath: plugins/music-player
+package: "@dship/music-player"
+rowId: dship-music-player
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:BitDG/dsh-plugins#50f733a801bc534dda4bb7420cc1743576c8048e&path:/plugins/music-player
+  version: 0.4.2
+  commit: 50f733a801bc534dda4bb7420cc1743576c8048e
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: 0.1.2-alpha.3
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/BitDG/dsh-plugins/50f733a801bc534dda4bb7420cc1743576c8048e/plugins/music-player/assets/music-sidebar-search.png
+  - https://raw.githubusercontent.com/BitDG/dsh-plugins/50f733a801bc534dda4bb7420cc1743576c8048e/plugins/music-player/assets/music-sidebar-player.png
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/BitDG/dsh-plugins/50f733a801bc534dda4bb7420cc1743576c8048e/plugins/music-player/assets/music-sidebar-search.png

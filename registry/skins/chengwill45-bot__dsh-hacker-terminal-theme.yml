@@ -7,7 +7,7 @@ description: DSH 黑客终端皮肤
 repo: https://github.com/chengwill45-bot/dsh-hacker-terminal-theme
 package: dsh-client-ui-skin-hacker-terminal
 rowId: hacker-terminal-theme
-category: theme
+category: skin
 tags:
   - glass
   - motion

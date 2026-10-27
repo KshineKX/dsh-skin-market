@@ -8,7 +8,7 @@ repo: https://github.com/purezhi/dsh-plugin-whale3
 subpath: dsh-plugin-whale3
 package: "@purezhi/dsh-plugin-whale3"
 rowId: whale
-category: theme
+category: pet
 tags:
   - appearance
   - motion

@@ -7,7 +7,7 @@ description: ncm-player — 网易云音乐浮窗
 repo: https://github.com/WolfGenerals/ncm-player
 package: "@wolfgenerals/ncm-player"
 rowId: ncm-player
-category: theme
+category: player
 tags:
   - token-theme
 modes:

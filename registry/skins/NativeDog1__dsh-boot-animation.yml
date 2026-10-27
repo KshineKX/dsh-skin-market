@@ -1,0 +1,40 @@
+id: nativedog1.dsh-boot-animation
+name:
+  zh: dsh-boot-animation
+  en: dsh-boot-animation
+author: NativeDog1
+description: 每次打开 DSH 播一次片头开机动画，视频铺满窗口；被钉住的会话每次进入都重播。可跳过，也可以换成自己的片子。
+repo: https://github.com/NativeDog1/dsh-boot-animation
+package: dsh-boot-animation
+rowId: dsh-boot-animation
+category: splash
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:NativeDog1/dsh-boot-animation#24c711296cb4af2618fef4f65e81346a660fc67b
+  version: 0.4.4
+  commit: 24c711296cb4af2618fef4f65e81346a660fc67b
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: ">=0.1.5-rc.1"
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: BSD-3-Clause
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 316
+releaseUpdatedAt: 2026-10-21T02:46:24.000Z
+metadataUpdatedAt: 2026-10-27T06:00:00.000Z
+starsUpdatedAt: 2026-10-22T00:00:00.000Z
+updatedAt: 2026-10-27T06:00:00.000Z

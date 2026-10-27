@@ -7,7 +7,7 @@ description: dsh-pet — 桌面宠物插件（宠物 + 实用工具）
 repo: https://github.com/zealot00/dsh-pet
 package: "@dsh-local/dsh-pet"
 rowId: dsh-pet
-category: theme
+category: pet
 tags:
   - glass
   - motion

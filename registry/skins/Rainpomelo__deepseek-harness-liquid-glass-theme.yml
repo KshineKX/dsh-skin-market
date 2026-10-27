@@ -7,7 +7,7 @@ description: DeepSeek Harness - 液态玻璃与动态壁纸主题 (Liquid Glass 
 repo: https://github.com/Rainpomelo/deepseek-harness-liquid-glass-theme
 package: "@deepseek-ai/dsh-client-ui-liquid-glass"
 rowId: ui-liquid-glass
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

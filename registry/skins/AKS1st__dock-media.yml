@@ -1,0 +1,43 @@
+id: aks1st.dock-media
+name:
+  zh: dock-media
+  en: dock-media
+author: AKS1st
+description: DSH 生态中最好用的媒体播放插件 —— 没有之一。 MP3、WAV、FLAC、M4A 等纯音频用音乐播放器呈现；MP4、WebM、MOV 等视频支持全屏播放。播放不走整文件 base64，而是流式（HTTP Range / 206 分片）读取，大文件也能秒开、随时拖动进度条。
+repo: https://github.com/AKS1st/dock-media
+package: dock-media
+rowId: dock-media
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:AKS1st/dock-media#5eb1ece47eb9aed7bbd96e9a7536f716be8186c0
+  version: 0.1.2
+  commit: 5eb1ece47eb9aed7bbd96e9a7536f716be8186c0
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/AKS1st/dock-media/5eb1ece47eb9aed7bbd96e9a7536f716be8186c0/assets/preview-music.png
+  - https://raw.githubusercontent.com/AKS1st/dock-media/5eb1ece47eb9aed7bbd96e9a7536f716be8186c0/assets/preview-video.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/AKS1st/dock-media/5eb1ece47eb9aed7bbd96e9a7536f716be8186c0/assets/preview-music.png

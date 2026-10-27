@@ -7,7 +7,7 @@ description: 给 DSH（DeepSeek Harness）Web UI 用的合成波 / Synthwave 主
 repo: https://github.com/1MLightyears/dsh-theme-synthwave
 package: "@1mlightyears/dsh-theme-synthwave"
 rowId: theme-synthwave
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

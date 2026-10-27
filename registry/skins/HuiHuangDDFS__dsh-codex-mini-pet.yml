@@ -7,7 +7,7 @@ description: DeepSeek Harness 聊天 / 工作双模式与桌面宠物伙伴，�
 repo: https://github.com/HuiHuangDDFS/dsh-codex-mini-pet
 package: dsh-codex-mini-pet
 rowId: dsh-codex-mini-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

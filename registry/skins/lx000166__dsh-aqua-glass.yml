@@ -7,7 +7,7 @@ description: Aqua 玻璃主题：为 DeepSeek Harness Web GUI 提供磨砂玻璃
 repo: https://github.com/lx000166/dsh-aqua-glass
 package: dsh-aqua-glass
 rowId: aqua-glass
-category: theme
+category: skin
 tags:
   - appearance
   - glass

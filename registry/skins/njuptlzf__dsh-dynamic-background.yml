@@ -7,7 +7,7 @@ description: DeepSeek Harness (DSH) 动态背景切换插件：上传 GIF/WebP �
 repo: https://github.com/njuptlzf/dsh-dynamic-background
 package: bgx-dynamic-background
 rowId: bgx-dynamic-background
-category: theme
+category: skin
 tags:
   - appearance
 modes:

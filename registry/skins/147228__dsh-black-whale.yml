@@ -8,7 +8,7 @@ repo: https://github.com/147228/dsh-xiaoyao-skins
 subpath: packages/skins/black-whale
 package: "@xiaoyao-ai/dsh-client-ui-skin-black-whale"
 rowId: ui-skin-black-whale
-category: theme
+category: skin
 tags:
   - wallpaper
   - light-dark

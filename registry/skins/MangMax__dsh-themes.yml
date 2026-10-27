@@ -7,7 +7,7 @@ description: DSH Web UI 外观与主题插件：内置调色板、明 / 暗 / �
 repo: https://github.com/MangMax/dsh-themes
 package: dsh-themes
 rowId: dsh-themes
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

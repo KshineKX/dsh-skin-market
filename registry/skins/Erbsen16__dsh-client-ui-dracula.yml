@@ -7,7 +7,7 @@ description: Dracula dark theme for the DeepSeek Harness Web GUI — the VS Code
 repo: https://github.com/Erbsen16/dsh-client-ui-dracula
 package: dsh-client-ui-dracula
 rowId: ui-dracula
-category: theme
+category: skin
 tags:
   - appearance
 modes:

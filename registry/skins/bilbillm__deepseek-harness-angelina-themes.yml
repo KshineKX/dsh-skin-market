@@ -7,7 +7,7 @@ description: 把 Codex 的安洁莉娜亮色、暗色主题移植到 DeepSeek Ha
 repo: https://github.com/bilbillm/deepseek-harness-angelina-themes
 package: dsh-angelina-themes
 rowId: dsh-angelina-themes
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

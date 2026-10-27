@@ -1,0 +1,43 @@
+id: ywleeo.dsh-image-preview-ywleeo
+name:
+  zh: dsh-image-preview-ywleeo
+  en: dsh-image-preview-ywleeo
+author: ywleeo
+description: 让 DeepSeek Harness（dsh）Web 对话正文直接显示本地图片与视频的插件：助手回复里写出的本地图片/视频绝对路径会自动变成内联图片或可播放的视频，媒体下方附一行可点击的本地地址（点击用系统默认应用打开）。
+repo: https://github.com/ywleeo/dsh-image-preview
+package: dsh-image-preview
+rowId: dsh-image-preview
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:ywleeo/dsh-image-preview#273a786fb04eadea96338681d261572ccf9e4be4
+  version: 0.2.1
+  commit: 273a786fb04eadea96338681d261572ccf9e4be4
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/ywleeo/dsh-image-preview/273a786fb04eadea96338681d261572ccf9e4be4/assets/screenshots/preview.png
+  - https://raw.githubusercontent.com/ywleeo/dsh-image-preview/273a786fb04eadea96338681d261572ccf9e4be4/assets/screenshots/preview-video.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: manual-only
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/ywleeo/dsh-image-preview/273a786fb04eadea96338681d261572ccf9e4be4/assets/screenshots/preview.png

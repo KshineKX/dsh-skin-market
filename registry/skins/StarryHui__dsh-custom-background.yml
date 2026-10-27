@@ -7,7 +7,7 @@ description: vibe coding初作品，自定义 DeepSeek Harness（DSH）WebUI 背
 repo: https://github.com/StarryHui/dsh-custom-background
 package: "@starryhui/dsh-background"
 rowId: dsh-background
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

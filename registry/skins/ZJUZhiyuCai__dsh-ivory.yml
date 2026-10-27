@@ -7,7 +7,7 @@ description: DSH Web 暖中性色明暗主题，支持响应式布局、双语�
 repo: https://github.com/ZJUZhiyuCai/dsh-ivory
 package: dsh-ivory
 rowId: dsh-ivory
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

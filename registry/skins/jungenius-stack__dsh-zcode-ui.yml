@@ -7,7 +7,7 @@ description: DSH ZCode UI — 把 DeepSeek Harness Web 的界面换成 ZCode 风
 repo: https://github.com/jungenius-stack/dsh-zcode-ui
 package: dsh-zcode-ui
 rowId: zcode-ui
-category: theme
+category: skin
 tags:
   - appearance
 modes:

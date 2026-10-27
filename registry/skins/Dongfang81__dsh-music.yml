@@ -7,7 +7,7 @@ description: DSH 本地音乐播放插件：自带开源音乐 API 服务 + 浏�
 repo: https://github.com/Dongfang81/dsh-music
 package: "@dongfang81/dsh-music"
 rowId: alger-music
-category: theme
+category: skin
 tags:
   - appearance
 modes:

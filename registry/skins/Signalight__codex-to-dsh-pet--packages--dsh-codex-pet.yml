@@ -8,7 +8,7 @@ repo: https://github.com/Signalight/codex-to-dsh-pet
 subpath: packages/dsh-codex-pet
 package: "@signalight/dsh-codex-pet"
 rowId: codex-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

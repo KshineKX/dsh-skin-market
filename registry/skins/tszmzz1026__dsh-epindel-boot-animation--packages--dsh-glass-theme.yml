@@ -8,7 +8,7 @@ repo: https://github.com/tszmzz1026/dsh-epindel-boot-animation
 subpath: packages/dsh-glass-theme
 package: dsh-glass-theme
 rowId: glass-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

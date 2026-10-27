@@ -8,7 +8,7 @@ repo: https://github.com/rison114514/dsh-endfield-ui
 subpath: endfield-ui-plugin
 package: "@rison/dsh-endfield-ui"
 rowId: endfield-ui
-category: theme
+category: skin
 tags:
   - endfield
   - industrial

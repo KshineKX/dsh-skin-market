@@ -7,7 +7,7 @@ description: DeepSeek Harness 外观自定义:主题调色、壁纸与视频背�
 repo: https://github.com/TQSY114514/dsh-ui-appearance
 package: dsh-ui-appearance
 rowId: ui-appearance
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

@@ -7,7 +7,7 @@ description: 把 DSH 界面换成 550C 控制台：四套磷光配色、扫描�
 repo: https://github.com/yannicksong0106/dsh-550c-skin
 package: dsh-550c-skin
 rowId: dsh-550c-skin
-category: theme
+category: skin
 tags:
   - appearance
   - retro

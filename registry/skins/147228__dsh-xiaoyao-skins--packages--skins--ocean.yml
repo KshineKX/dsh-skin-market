@@ -8,7 +8,7 @@ repo: https://github.com/147228/dsh-xiaoyao-skins
 subpath: packages/skins/ocean
 package: "@xiaoyao-ai/dsh-client-ui-skin-xiaoyao"
 rowId: ui-skin-xiaoyao
-category: theme
+category: skin
 tags:
   - wallpaper
   - light-dark

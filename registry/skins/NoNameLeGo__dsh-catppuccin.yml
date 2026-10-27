@@ -7,7 +7,7 @@ description: DeepSeek Harness 的 Catppuccin 主题插件——一个包同时�
 repo: https://github.com/NoNameLeGo/dsh-catppuccin
 package: "@nonamelego/dsh-catppuccin"
 rowId: dsh-catppuccin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

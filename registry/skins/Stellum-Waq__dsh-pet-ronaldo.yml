@@ -7,7 +7,7 @@ description: DSH 桌宠 bundle 插件（v2.3）。住在 Web 界面右下角的�
 repo: https://github.com/Stellum-Waq/dsh-pet-ronaldo
 package: dsh-ronaldo-pet
 rowId: ronaldo-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

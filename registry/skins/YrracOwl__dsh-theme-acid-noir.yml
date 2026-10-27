@@ -7,7 +7,7 @@ description: "EN: Usability-first cyber-editorial themes for DeepSeek Harness We
 repo: https://github.com/YrracOwl/dsh-theme-acid-noir
 package: dsh-theme-acid-noir
 rowId: ui-theme-acid-noir
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -60,14 +60,16 @@ export function validateCatalog(value: unknown): CatalogFile {
     if (entry.subpath !== undefined && entry.install.allowBuild !== undefined && !entry.install.allowBuild.endsWith(`#path:${entry.subpath}`)) {
       throw new Error(`invalid allowBuild path for ${entry.id}; expected #path:${entry.subpath}`)
     }
-    for (const [label, key, set] of [
-      ['id', entry.id, ids],
-      ['package', entry.package, packages],
-      ['rowId', entry.rowId, rows],
-    ] as const) {
-      if (set.has(key)) throw new Error(`duplicate ${label}: ${key}`)
-      set.add(key)
-    }
+    if (ids.has(entry.id)) throw new Error(`duplicate id: ${entry.id}`)
+    ids.add(entry.id)
+    // Forks can publish the same package name or loader id. Install matching
+    // still requires this entry's pinned commit, so the catalog can list both.
+    const packageKey = `${entry.package}\n${entry.repo}`
+    if (packages.has(packageKey)) throw new Error(`duplicate package: ${entry.package} in ${entry.repo}`)
+    packages.add(packageKey)
+    const rowKey = `${entry.rowId}\n${entry.package}\n${entry.repo}`
+    if (rows.has(rowKey)) throw new Error(`duplicate rowId: ${entry.rowId} for ${entry.package}`)
+    rows.add(rowKey)
   }
   return candidate as CatalogFile
 }

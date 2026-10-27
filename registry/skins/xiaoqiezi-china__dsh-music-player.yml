@@ -1,0 +1,40 @@
+id: xiaoqiezi.china.dsh.music.player
+name:
+  zh: dsh-music-player-xiaoqiez
+  en: dsh-music-player-xiaoqiez
+author: xiaoqiezi-china
+description: DSH 简约在线音乐播放器:支持网易云/本地音乐源;完整 Agent SKILL(AI 自定义播放器风格/控制播放/播完通知);队列与搜索集成在官方设置页。
+repo: https://github.com/xiaoqiezi-china/dsh-music-player
+package: dsh-music-player
+rowId: dsh-music
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:xiaoqiezi-china/dsh-music-player#6213deadd7323647dd32134d8fe67c520d1c171b
+  version: 0.1.0
+  commit: 6213deadd7323647dd32134d8fe67c520d1c171b
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

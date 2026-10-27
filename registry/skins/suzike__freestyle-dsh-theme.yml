@@ -7,7 +7,7 @@ description: DeepSeek Harness 主题体验插件：OKLCH 主题提案 + 主题�
 repo: https://github.com/suzike/freestyle-dsh-theme
 package: dsh-freestyle-theme
 rowId: theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - pastel

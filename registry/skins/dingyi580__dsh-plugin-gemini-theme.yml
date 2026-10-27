@@ -7,7 +7,7 @@ description: DeepSeek Harness Web 客户端的 Gemini 风格皮肤。
 repo: https://github.com/dingyi580/dsh-plugin-gemini-theme
 package: dsh-plugin-gemini-theme
 rowId: gemini-theme
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

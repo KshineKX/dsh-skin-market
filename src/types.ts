@@ -52,7 +52,7 @@ export interface SkinEntry {
   subpath?: string
   package: string
   rowId: string
-  category: string
+  category: 'skin' | 'pet' | 'player' | 'splash'
   tags: string[]
   modes: Array<'light' | 'dark'>
   install: { target: string; version: string; commit: string; allowBuild?: string; npm?: NpmInstallSource; desktop?: DesktopInstallCapability; companions?: SkinCompanion[] }

@@ -8,7 +8,7 @@ repo: https://github.com/eh-tools/dsh-plugin
 subpath: plugins/deepseek-harness
 package: dsh-deepseek-harness
 rowId: deepseek-harness
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

@@ -8,7 +8,7 @@ repo: https://github.com/147228/dsh-xiaoyao-skins
 subpath: packages/skins/great-wall-sunrise
 package: "@xiaoyao-ai/dsh-client-ui-skin-great-wall-sunrise"
 rowId: ui-skin-great-wall-sunrise
-category: theme
+category: skin
 tags:
   - token-theme
 modes:

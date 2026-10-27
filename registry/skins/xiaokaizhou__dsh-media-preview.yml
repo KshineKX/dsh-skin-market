@@ -1,0 +1,42 @@
+id: xiaokaizhou.dsh-media-preview
+name:
+  zh: dsh-media-preview
+  en: dsh-media-preview
+author: xiaokaizhou
+description: DSH 插件：在聊天记录中自动将本地/在线音视频/图片路径渲染为可播放的预览组件
+repo: https://github.com/xiaokaizhou/dsh-media-preview
+package: media-preview
+rowId: media-preview
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:xiaokaizhou/dsh-media-preview#673b38897bf83d6d4a8b30014cda14bc67a826c1
+  version: 0.1.3
+  commit: 673b38897bf83d6d4a8b30014cda14bc67a826c1
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/xiaokaizhou/dsh-media-preview/673b38897bf83d6d4a8b30014cda14bc67a826c1/.github/demo-preview.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/xiaokaizhou/dsh-media-preview/673b38897bf83d6d4a8b30014cda14bc67a826c1/.github/demo-preview.png

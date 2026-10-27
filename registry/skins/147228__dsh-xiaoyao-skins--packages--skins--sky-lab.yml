@@ -8,7 +8,7 @@ repo: https://github.com/147228/dsh-xiaoyao-skins
 subpath: packages/skins/sky-lab
 package: "@xiaoyao-ai/dsh-client-ui-skin-sky-lab"
 rowId: ui-skin-sky-lab
-category: theme
+category: skin
 tags:
   - anime
   - token-theme

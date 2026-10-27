@@ -7,7 +7,7 @@ description: 把 DeepSeek Harness 变成 2005 年门户网站：在侧栏、对�
 repo: https://github.com/Nagi-ovo/dsh-ads
 package: "@nagi-ovo/dsh-ads"
 rowId: dsh-ads
-category: theme
+category: skin
 tags:
   - retro
   - motion

@@ -7,7 +7,7 @@ description: 一眼看清 DeepSeek 在什么时间、做了什么、做了多久
 repo: https://github.com/YLifeOnlyOnce/dsh-calendar
 package: dsh-usage-calendar
 rowId: calendar
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

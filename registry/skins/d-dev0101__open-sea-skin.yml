@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness Web UI 提供实时 WebGPU 海洋背景，支�
 repo: https://github.com/d-dev0101/open-sea-skin
 package: open-sea-skin
 rowId: open-sea-skin
-category: theme
+category: skin
 tags:
   - ocean
   - webgpu

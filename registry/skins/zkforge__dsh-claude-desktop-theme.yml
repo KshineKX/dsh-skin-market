@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness（DSH）Desktop 换上 Claude Code Desktop 外
 repo: https://github.com/zkforge/dsh-claude-desktop-theme
 package: dsh-claude-desktop-theme
 rowId: ui-skin-ccd-style
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

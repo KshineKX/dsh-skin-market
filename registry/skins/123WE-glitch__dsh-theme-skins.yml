@@ -7,7 +7,7 @@ description: Four curated color skins for the DeepSeek Harness Web UI — Aurora
 repo: https://github.com/123WE-glitch/dsh-theme-skins
 package: "@local/dsh-theme-skins"
 rowId: theme-skins
-category: theme
+category: skin
 tags:
   - appearance
 modes:

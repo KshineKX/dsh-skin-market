@@ -7,7 +7,7 @@ description: DeepSeek Harness 用户消息气泡样式库：为 Web 界面提供
 repo: https://github.com/copyninja123/dsh-bubble-skins
 package: dsh-bubble-skins
 rowId: bubble-skins
-category: theme
+category: skin
 tags:
   - appearance
 modes:

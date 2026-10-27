@@ -7,7 +7,7 @@ description: 七夕情人节彩蛋插件 —— 在 DeepSeek Harness 的 AI 会�
 repo: https://github.com/Zhang9628/qixi-plugin
 package: dsh-qixi
 rowId: qixi
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

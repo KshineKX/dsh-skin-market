@@ -7,7 +7,7 @@ description: dsh web 暗色主题插件（移植自 Obsidian things-soft-colorfu
 repo: https://github.com/MitterMeierGithub/dsh-darksoft-theme
 package: dsh-darksoft-theme
 rowId: dsh-darksoft-theme
-category: theme
+category: skin
 tags:
   - theme
 modes:

@@ -7,7 +7,7 @@ description: 一个 DeepSeek Harness (DSH) 客户端插件：为当前会话提�
 repo: https://github.com/He2way/dsh-task-console
 package: dsh-task-console
 rowId: task-console
-category: theme
+category: skin
 tags:
   - glass
   - motion

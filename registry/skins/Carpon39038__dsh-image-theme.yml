@@ -7,7 +7,7 @@ description: "Warp-inspired image-to-theme plugin for DeepSeek Harness: upload a
 repo: https://github.com/Carpon39038/dsh-image-theme
 package: "@cabeta/dsh-image-theme"
 rowId: image-theme
-category: theme
+category: skin
 tags:
   - glass
   - motion

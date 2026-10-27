@@ -7,7 +7,7 @@ description: 上传一张本地图片，按工作台宽高比裁切，把它设�
 repo: https://github.com/JerryPhoenixCKY/dsh-plugin-wallpaper
 package: dsh-plugin-wallpaper
 rowId: wallpaper
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

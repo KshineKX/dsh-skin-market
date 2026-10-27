@@ -7,7 +7,7 @@ description: 护眼配色 Eye-care palettes — three switchable low-glare theme
 repo: https://github.com/xiaotuchu/dsh-theme-eye-care
 package: "@xiaotuchu/dsh-theme-eye-care"
 rowId: dsh-theme-eye-care
-category: theme
+category: skin
 tags:
   - appearance
 modes:

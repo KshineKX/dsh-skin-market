@@ -7,7 +7,7 @@ description: DSH Web 皮肤：跟着背景取色的主题、7 档背景（含自
 repo: https://github.com/Obwiler/dsh-tsnet-skin-pilot
 package: dsh-tsnet-skin-pilot
 rowId: tsnet-skin-pilot
-category: theme
+category: skin
 tags:
   - appearance
 modes:

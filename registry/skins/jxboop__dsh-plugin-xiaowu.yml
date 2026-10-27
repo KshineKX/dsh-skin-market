@@ -7,7 +7,7 @@ description: 小舞 · DSH 桌宠：常驻 Web 界面右下角的兔耳少女桌
 repo: https://github.com/jxboop/dsh-plugin-xiaowu
 package: dsh-plugin-xiaowu
 rowId: xiaowu-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

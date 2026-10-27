@@ -7,7 +7,7 @@ description: "Dim the DSH web GUI's over-bright text: calmer label tokens plus a
 repo: https://github.com/Upstream196/dsh-label-tune
 package: dsh-label-tune
 rowId: dsh-label-tune
-category: theme
+category: skin
 tags:
   - appearance
 modes:

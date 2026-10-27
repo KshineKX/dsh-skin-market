@@ -7,7 +7,7 @@ description: Private blue theme foundation for the DeepSeek Harness web client
 repo: https://github.com/vb2250158/dsh-theme-blue
 package: dsh-theme-blue
 rowId: ui-theme-blue
-category: theme
+category: skin
 tags:
   - appearance
 modes:

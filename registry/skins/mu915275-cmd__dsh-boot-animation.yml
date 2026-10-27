@@ -7,7 +7,7 @@ description: 打开新对话（或你钉住的会话）时，铺满窗口播放�
 repo: https://github.com/mu915275-cmd/dsh-boot-animation
 package: dsh-boot-animation
 rowId: dsh-boot-animation
-category: theme
+category: skin
 tags:
   - boot
   - motion

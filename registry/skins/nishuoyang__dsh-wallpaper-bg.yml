@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness（DSH）界面加上一层独立的动态壁�
 repo: https://github.com/nishuoyang/dsh-wallpaper-bg
 package: dsh-wallpaper-bg
 rowId: wallpaper-bg
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

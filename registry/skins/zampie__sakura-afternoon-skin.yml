@@ -7,7 +7,7 @@ description: "Sakura-afternoon (樱色午后) skin for the DSH Web UI: pastel sa
 repo: https://github.com/zampie/sakura-afternoon-skin
 package: sakura-afternoon-skin
 rowId: sakura-afternoon-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

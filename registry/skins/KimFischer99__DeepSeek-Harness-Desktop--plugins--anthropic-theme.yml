@@ -8,7 +8,7 @@ repo: https://github.com/KimFischer99/DeepSeek-Harness-Desktop
 subpath: plugins/anthropic-theme
 package: dsh-anthropic-theme
 rowId: anthropic-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

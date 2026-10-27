@@ -7,7 +7,7 @@ description: Five themes for the DeepSeek Harness Web client. Each ships a light
 repo: https://github.com/kjx-talesofai/dsh-plugin-theme-workbench
 package: dsh-plugin-theme-workbench
 rowId: theme-workbench
-category: theme
+category: skin
 tags:
   - appearance
 modes:

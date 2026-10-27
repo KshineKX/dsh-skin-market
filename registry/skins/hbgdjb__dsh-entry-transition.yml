@@ -7,7 +7,7 @@ description: "One-shot entrance animation for the DSH workspace: logo is written
 repo: https://github.com/hbgdjb/dsh-entry-transition
 package: dsh-entry-transition
 rowId: dsh-entry-transition
-category: theme
+category: splash
 tags:
   - boot
 modes:

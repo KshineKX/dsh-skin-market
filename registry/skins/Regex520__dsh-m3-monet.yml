@@ -7,7 +7,7 @@ description: "Monet wallpaper theming for DeepSeek Harness: Material Design 3 to
 repo: https://github.com/Regex520/dsh-m3-monet
 package: "@local/dsh-m3-monet"
 rowId: dsh-m3-monet
-category: theme
+category: skin
 tags:
   - appearance
   - glass

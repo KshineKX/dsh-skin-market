@@ -7,7 +7,7 @@ description: "DSH plugin: adds customizable color themes to the DeepSeek Web UI,
 repo: https://github.com/RealHacker/dsh-theme-colorizer
 package: dsh-theme-colorizer
 rowId: theme-colorizer
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

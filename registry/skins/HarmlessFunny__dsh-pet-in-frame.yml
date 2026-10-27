@@ -7,7 +7,7 @@ description: "Agent desktop pet overlay for DeepSeek Harness: static or frame-an
 repo: https://github.com/HarmlessFunny/dsh-pet-in-frame
 package: dsh-pet-in-frame
 rowId: dsh-pet-in-frame
-category: theme
+category: pet
 tags:
   - pet
   - motion

@@ -8,7 +8,7 @@ repo: https://github.com/DocJlm/dsh-arknights
 subpath: skins/pramanix-eyjafjalla
 package: dsh-arknights
 rowId: ui-skin-arknights
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

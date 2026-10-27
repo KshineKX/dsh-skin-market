@@ -7,7 +7,7 @@ description: 为 DSH Web GUI 换上一套「助理皮肤」：黑蓝暗调主题
 repo: https://github.com/zanechen6/dsh-assistant-skin
 package: dsh-assistant-skin
 rowId: assistant-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: DSH (DeepSeek Harness) 的 QQ2006 皮肤插件：注册 qq2006 主�
 repo: https://github.com/LaplaceYoung/dsh-qq2006
 package: "@dsh-external/dsh-qq2006"
 rowId: ui-skin-qq2006
-category: theme
+category: skin
 tags:
   - retro
   - motion

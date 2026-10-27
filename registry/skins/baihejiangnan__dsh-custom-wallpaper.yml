@@ -7,7 +7,7 @@ description: DeepSeek Harness Web GUI 的自定义壁纸引擎：上传图片（
 repo: https://github.com/baihejiangnan/dsh-custom-wallpaper
 package: "@baihejiangnan/dsh-custom-wallpaper"
 rowId: ui-custom-wallpaper
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

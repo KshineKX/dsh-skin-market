@@ -7,7 +7,7 @@ description: 明日香桌宠 — Standalone chibi Asuka desktop companion for De
 repo: https://github.com/sHen9Qi/dsh-asuka-pet
 package: "@dsh-external/dsh-client-ui-asuka-pet"
 rowId: ui-asuka-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -8,7 +8,7 @@ repo: https://github.com/A-BigDog/Gandalf
 subpath: plugin
 package: gandalf-theme
 rowId: gandalf-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

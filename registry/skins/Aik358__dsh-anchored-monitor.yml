@@ -7,7 +7,7 @@ description: 一句话说清（In one sentence）：这是给 DeepSeek V4 Pro �
 repo: https://github.com/Aik358/dsh-anchored-monitor
 package: "@a9i5k4/dsh-anchored-monitor"
 rowId: anchored-monitor
-category: theme
+category: skin
 tags:
   - glass
   - retro

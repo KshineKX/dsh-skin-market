@@ -7,7 +7,7 @@ description: "Real Madrid dual-mode skin for DeepSeek Harness: Bernabéu night s
 repo: https://github.com/alexfengrui/dsh-client-ui-skin-real-madrid
 package: dsh-client-ui-skin-real-madrid
 rowId: ui-skin-real-madrid
-category: theme
+category: skin
 tags:
   - appearance
 modes:

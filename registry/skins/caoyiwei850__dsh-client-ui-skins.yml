@@ -7,7 +7,7 @@ description: DSH Web 换肤插件：4 套内置皮肤 + 自定义图片皮肤，
 repo: https://github.com/caoyiwei850/dsh-client-ui-skins
 package: dsh-client-ui-skins
 rowId: ui-skins
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

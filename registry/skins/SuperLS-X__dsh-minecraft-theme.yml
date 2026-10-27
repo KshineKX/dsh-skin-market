@@ -7,7 +7,7 @@ description: Minecraft 主题插件 for DeepSeek Harness (DSH)
 repo: https://github.com/SuperLS-X/dsh-minecraft-theme
 package: "@superls-x/dsh-minecraft-theme"
 rowId: mc-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

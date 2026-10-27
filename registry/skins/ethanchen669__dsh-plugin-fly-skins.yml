@@ -7,7 +7,7 @@ description: "DSH Fly skins: the four Fly palettes (solid / glass / volume / neo
 repo: https://github.com/ethanchen669/dsh-plugin-fly-skins
 package: "@dsh-fly/dsh-plugin-fly-skins"
 rowId: fly-skins
-category: theme
+category: skin
 tags:
   - appearance
   - glass

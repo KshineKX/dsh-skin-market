@@ -8,7 +8,7 @@ repo: https://github.com/juliye2025/dsh-butler-atelier
 subpath: butler-atelier
 package: "@dsh-external/dsh-client-ui-skin-butler-atelier"
 rowId: ui-skin-butler-atelier
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

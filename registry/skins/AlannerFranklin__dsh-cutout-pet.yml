@@ -7,7 +7,7 @@ description: "Turn any picture into a floating desk pet in the Harness Web UI: l
 repo: https://github.com/AlannerFranklin/dsh-cutout-pet
 package: dsh-cutout-pet
 rowId: cutout-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

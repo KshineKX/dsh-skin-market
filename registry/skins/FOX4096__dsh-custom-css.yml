@@ -7,7 +7,7 @@ description: 提供Acrylic渐变与半透明材质预设；需在插件设置导
 repo: https://github.com/FOX4096/dsh-custom-css
 package: dsh-custom-css
 rowId: custom-css
-category: theme
+category: skin
 tags:
   - appearance
 modes:

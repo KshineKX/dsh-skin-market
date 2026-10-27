@@ -7,7 +7,7 @@ description: DeepSeek Harness（DSH）Web 界面自定义主题插件：背景�
 repo: https://github.com/lxxz1918/dsh-theme-customizer
 package: dsh-theme-customizer
 rowId: theme-customizer
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

@@ -7,7 +7,7 @@ description: dsh-卡芙卡-ui
 repo: https://github.com/54088lp/dsh-kafka-ui
 package: "@dsh-external/dsh-client-ui-skin-kafka"
 rowId: ui-skin-kafka
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

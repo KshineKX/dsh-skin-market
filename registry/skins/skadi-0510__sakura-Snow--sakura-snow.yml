@@ -8,7 +8,7 @@ repo: https://github.com/skadi-0510/sakura-Snow
 subpath: sakura-snow
 package: "@dsh-external/dsh-client-ui-skin-sakura-snow"
 rowId: ui-skin-sakura-snow
-category: theme
+category: skin
 tags:
   - wallpaper
   - anime

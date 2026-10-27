@@ -7,7 +7,7 @@ description: "A status pet for DeepSeek Harness: a frame-wide companion that rea
 repo: https://github.com/dingchenhui0618-arch/dsh-signal-pet
 package: dsh-signal-pet
 rowId: dsh-signal-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

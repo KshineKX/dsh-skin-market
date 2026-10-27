@@ -7,7 +7,7 @@ description: deepseek harness 开发者预览版纸质仿claude主题
 repo: https://github.com/WuWL-98/dsh-theme-paper
 package: dsh-theme-paper
 rowId: theme-paper
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

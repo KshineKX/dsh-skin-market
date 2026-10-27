@@ -7,7 +7,7 @@ description: Wallpaper-driven visual system for the DeepSeek Harness Web GUI —
 repo: https://github.com/qin839/dsh-visual-system
 package: dsh-visual-system
 rowId: visual-system
-category: theme
+category: skin
 tags:
   - appearance
 modes:

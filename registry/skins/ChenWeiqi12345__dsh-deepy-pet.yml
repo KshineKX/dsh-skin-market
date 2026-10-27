@@ -7,7 +7,7 @@ description: A reference-style two-eyed royal-blue pixel whale companion for Dee
 repo: https://github.com/ChenWeiqi12345/dsh-deepy-pet
 package: dsh-deepy-pet
 rowId: deepy-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

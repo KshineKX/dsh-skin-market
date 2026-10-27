@@ -8,7 +8,7 @@ repo: https://github.com/nickfast2025/dsh-sky-window
 subpath: dsh-sky-window
 package: dsh-sky-window
 rowId: sky-window
-category: theme
+category: skin
 tags:
   - appearance
 modes:

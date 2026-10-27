@@ -7,7 +7,7 @@ description: DSH Web 皮肤管理器：支持主流 DSH 皮肤包本地/GitHub �
 repo: https://github.com/Juryorca/dsh-custom-theme-import
 package: dsh-custom-theme-import
 rowId: custom-theme-import
-category: theme
+category: skin
 tags:
 - retro
 - token-theme

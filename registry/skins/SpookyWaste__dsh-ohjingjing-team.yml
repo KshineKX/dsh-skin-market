@@ -7,7 +7,7 @@ description: DSH 的哦鲸鲸主题：成员行皮肤 + 标题栏跑道 + 子代
 repo: https://github.com/SpookyWaste/dsh-ohjingjing-team
 package: dsh-ohjingjing-team
 rowId: ui-ohjingjing-team-client
-category: theme
+category: skin
 tags:
   - appearance
 modes:

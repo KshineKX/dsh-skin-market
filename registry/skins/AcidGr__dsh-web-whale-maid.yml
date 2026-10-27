@@ -7,7 +7,7 @@ description: "Anime maid whale desktop pet for the DeepSeek Harness (dsh) Web UI
 repo: https://github.com/AcidGr/dsh-web-whale-maid
 package: dsh-web-whale-maid
 rowId: whale-maid
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -7,7 +7,7 @@ description: Animated video background for the DeepSeek Harness (DSH) web GUI â€
 repo: https://github.com/haxi8/dsh-JujutsuKaisen-rainlove
 package: dsh-video-bg
 rowId: video-bg
-category: theme
+category: skin
 tags:
   - appearance
   - motion

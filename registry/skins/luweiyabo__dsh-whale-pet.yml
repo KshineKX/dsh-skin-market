@@ -7,7 +7,7 @@ description: "A floating whale desktop pet for the DeepSeek Harness Web UI: 95 c
 repo: https://github.com/luweiyabo/dsh-whale-pet
 package: "@luweiyabo/dsh-whale-pet"
 rowId: whale-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

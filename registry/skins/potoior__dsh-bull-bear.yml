@@ -7,7 +7,7 @@ description: 牛熊行情宠物 — DeepSeek Harness 实时行情桌宠：由自
 repo: https://github.com/potoior/dsh-bull-bear
 package: dsh-bull-bear
 rowId: bull-bear
-category: theme
+category: pet
 tags:
   - pet
 modes:

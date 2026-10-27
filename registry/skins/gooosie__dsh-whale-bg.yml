@@ -7,7 +7,7 @@ description: 一个非官方的 DeepSeek Harness Web UI 背景插件，将 DeepS
 repo: https://github.com/gooosie/dsh-whale-bg
 package: dsh-whale-bg
 rowId: whale-bg
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

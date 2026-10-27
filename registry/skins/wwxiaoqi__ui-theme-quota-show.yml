@@ -7,7 +7,7 @@ description: 一个面向 DeepSeek Harness Web UI 的插件：在侧边栏 “�
 repo: https://github.com/wwxiaoqi/ui-theme-quota-show
 package: ui-theme-quota-show
 rowId: ui-theme-quota-show
-category: theme
+category: skin
 tags:
   - retro
 modes:

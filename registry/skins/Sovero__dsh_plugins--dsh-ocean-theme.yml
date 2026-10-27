@@ -8,7 +8,7 @@ repo: https://github.com/Sovero/dsh_plugins
 subpath: dsh-ocean-theme
 package: dsh-ocean-theme
 rowId: dsh-ocean-theme
-category: theme
+category: skin
 tags:
   - appearance
   - motion

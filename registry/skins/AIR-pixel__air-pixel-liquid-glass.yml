@@ -7,7 +7,7 @@ description: A configurable Liquid Glass theme for DeepSeek Harness with frosted
 repo: https://github.com/AIR-pixel/air-pixel-liquid-glass
 package: air-pixel-liquid-glass
 rowId: air-pixel-liquid-glass
-category: theme
+category: skin
 tags:
   - appearance
   - glass

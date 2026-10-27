@@ -7,7 +7,7 @@ description: 给 dsh web 铺上 DeepSeek Harness 首页同款背景：WebGL 流�
 repo: https://github.com/yushi-xxh/dsh-homepage-skin
 package: dsh-homepage-skin
 rowId: homepage-skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

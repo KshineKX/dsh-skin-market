@@ -7,7 +7,7 @@ description: 在「Deep diving...」状态提示前，放一只动态小伙伴�
 repo: https://github.com/dsh-plugins/dsh-thought-buddy
 package: "@dsh-plugin/dsh-thought-buddy"
 rowId: thought-buddy
-category: theme
+category: skin
 tags:
   - retro
   - motion

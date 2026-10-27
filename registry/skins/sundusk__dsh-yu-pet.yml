@@ -7,7 +7,7 @@ description: "Xiaoyu floating web pet plugin for the dsh web GUI: 8x8 sprite-she
 repo: https://github.com/sundusk/dsh-yu-pet
 package: "@sundusk/dsh-yu-pet"
 rowId: xiaoyu
-category: theme
+category: pet
 tags:
   - pet
 modes:

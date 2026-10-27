@@ -7,7 +7,7 @@ description: DeepSeek Harness 完整美化包：本地主题换肤（不联网�
 repo: https://github.com/nlqh7/dsh-beautify
 package: "@nlqh/dsh-beautify"
 rowId: dsh-beautify
-category: theme
+category: skin
 tags:
   - wallpaper
   - anime

@@ -7,7 +7,7 @@ description: "DSH Web GUI plugin: custom UI/code fonts plus 24 color palettes, c
 repo: https://github.com/v587d/dsh-custom-skin
 package: dsh-custom-skin
 rowId: custom-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

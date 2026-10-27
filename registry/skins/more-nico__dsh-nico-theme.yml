@@ -7,7 +7,7 @@ description: Nico glass theme for DeepSeek Harness Web UI — glass material ren
 repo: https://github.com/more-nico/dsh-nico-theme
 package: dsh-nico-theme
 rowId: ui-nico
-category: theme
+category: skin
 tags:
   - appearance
   - glass

@@ -7,7 +7,7 @@ description: "A DeepSeek Harness Web theme: ten OKLCH Chinese-traditional-colour
 repo: https://github.com/CosmoSail/dsh-bloomglass
 package: dsh-bloomglass
 rowId: dsh-bloomglass
-category: theme
+category: skin
 tags:
   - appearance
   - glass

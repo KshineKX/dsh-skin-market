@@ -7,7 +7,7 @@ description: "Hacker-terminal skin for the dsh web GUI: pure black background, h
 repo: https://github.com/XiaoluoFoxington/dsh-theme-hacker-terminal
 package: dsh-theme-hacker-terminal
 rowId: ui-hacker-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

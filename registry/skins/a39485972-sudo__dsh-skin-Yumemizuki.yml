@@ -7,7 +7,7 @@ description: "Genshin Yumemizuki Mizuki fan skin for the DSH web GUI: warm rosy 
 repo: https://github.com/a39485972-sudo/dsh-skin-Yumemizuki
 package: "@dsh-external/dsh-client-ui-skin-mizuki"
 rowId: ui-skin-mizuki
-category: theme
+category: skin
 tags:
   - appearance
 modes:

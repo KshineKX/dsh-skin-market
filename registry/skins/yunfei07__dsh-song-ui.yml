@@ -7,7 +7,7 @@ description: 一个面向 DeepSeek Harness 的宋式美学主题插件。它通�
 repo: https://github.com/yunfei07/dsh-song-ui
 package: ui-song-theme
 rowId: ui-song-theme-external
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

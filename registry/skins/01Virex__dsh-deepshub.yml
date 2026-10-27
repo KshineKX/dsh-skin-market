@@ -7,7 +7,7 @@ description: "Pornhub-style parody reskin for the DeepSeek Harness web UI: charc
 repo: https://github.com/01Virex/dsh-deepshub
 package: dsh-deepshub
 rowId: deepshub
-category: theme
+category: skin
 tags:
   - appearance
 modes:

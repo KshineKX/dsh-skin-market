@@ -7,7 +7,7 @@ description: "Hello Kitty (凯蒂猫) theme skin for the DeepSeek Harness (DSH) 
 repo: https://github.com/luongthimydieu/dsh-client-ui-skin-kitty
 package: dsh-client-ui-skin-kitty
 rowId: dsh-client-ui-skin-kitty
-category: theme
+category: skin
 tags:
   - appearance
 modes:

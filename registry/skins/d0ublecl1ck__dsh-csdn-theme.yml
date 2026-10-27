@@ -7,7 +7,7 @@ description: CSDN 风格的 DSH Web 主题：CSDN 品牌色与博文正文排版
 repo: https://github.com/d0ublecl1ck/dsh-csdn-theme
 package: dsh-csdn-theme
 rowId: csdn-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

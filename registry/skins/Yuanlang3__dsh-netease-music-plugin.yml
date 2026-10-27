@@ -1,0 +1,40 @@
+id: yuanlang3.dsh.netease.music
+name:
+  zh: dsh-netease-music-plugin
+  en: dsh-netease-music-plugin
+author: Yuanlang3
+description: "Netease Cloud Music player for the dsh web GUI: a sidebar entry that plays the logged-in user's liked songs plus search and online playback."
+repo: https://github.com/Yuanlang3/dsh-netease-music-plugin
+package: dsh-netease-music
+rowId: netease-music
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:Yuanlang3/dsh-netease-music-plugin#98ceb84bd661e0a38a707e26a2b93f44c8b5142e
+  version: 1.0.0
+  commit: 98ceb84bd661e0a38a707e26a2b93f44c8b5142e
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

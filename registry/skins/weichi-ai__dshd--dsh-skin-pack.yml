@@ -8,7 +8,7 @@ repo: https://github.com/weichi-ai/dshd
 subpath: dsh-skin-pack
 package: dsh-skin-pack
 rowId: skin-pack
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

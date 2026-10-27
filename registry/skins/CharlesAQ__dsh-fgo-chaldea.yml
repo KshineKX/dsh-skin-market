@@ -7,7 +7,7 @@ description: FGO 迦勒底风格的 DeepSeek Harness Web UI 皮肤插件。配�
 repo: https://github.com/CharlesAQ/dsh-fgo-chaldea
 package: dsh-fgo-chaldea
 rowId: fgo-chaldea
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

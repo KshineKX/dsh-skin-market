@@ -7,7 +7,7 @@ description: 面向 DeepSeek Harness Web 的个人、非商业明日方舟 / P.R
 repo: https://github.com/ash-qw/dsh-theme-prts
 package: "@ash-qw/dsh-theme-prts"
 rowId: theme-prts
-category: theme
+category: skin
 tags:
   - glass
   - motion

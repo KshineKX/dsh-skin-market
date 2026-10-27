@@ -29,7 +29,7 @@ function skin(id: string): SkinEntry {
   const integrity = `sha512-${createHash('sha512').update(packageName).digest('base64')}`
   return {
     id, package: packageName, rowId: `skin-${id}`, repo: repository, name: { zh: id, en: id },
-    author: 'fixture', description: 'Official component recovery fixture', category: 'theme', tags: [],
+    author: 'fixture', description: 'Official component recovery fixture', category: 'skin', tags: [],
     modes: ['light', 'dark'], screenshots: [], license: { code: 'MIT', commercialUse: true },
     featuredRank: 0, starsSnapshot: 0,
     releaseUpdatedAt: '2026-10-16', metadataUpdatedAt: '2026-10-16', starsUpdatedAt: '2026-10-16', updatedAt: '2026-10-16',

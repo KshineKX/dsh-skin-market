@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness（dsh）网页版重组《明日方舟》莱�
 repo: https://github.com/ReLuckyLucy/dsh_Rhine_Lab_themo
 package: dsh-theme-rhine-lab
 rowId: rhine-lab-theme
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

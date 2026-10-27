@@ -7,7 +7,7 @@ description: "DeepSeek Harness web UI pet plugin: Codex-style companion pets wit
 repo: https://github.com/LucasleeCN/dsh-client-ui-pet
 package: dsh-client-ui-pet
 rowId: ui-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

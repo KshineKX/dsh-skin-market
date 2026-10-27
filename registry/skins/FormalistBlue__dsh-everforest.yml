@@ -7,7 +7,7 @@ description: Everforest color themes (Dark/Light × Hard/Medium/Soft) for DeepSe
 repo: https://github.com/FormalistBlue/dsh-everforest
 package: dsh-everforest
 rowId: everforest
-category: theme
+category: skin
 tags:
   - appearance
 modes:

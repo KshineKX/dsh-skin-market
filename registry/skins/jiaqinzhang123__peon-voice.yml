@@ -1,0 +1,40 @@
+id: jiaqinzhang123.peon.voice
+name:
+  zh: peon-voice
+  en: peon-voice
+author: jiaqinzhang123
+description: "DSH voice + theme pack plugin: random voice lines on session events, NetEase background music per theme."
+repo: https://github.com/jiaqinzhang123/peon-voice
+package: peon-voice
+rowId: peon-voice
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:jiaqinzhang123/peon-voice#55645b83c72451a03ea1397a8cdf42de2484e4f9
+  version: 1.0.0
+  commit: 55645b83c72451a03ea1397a8cdf42de2484e4f9
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: manual-only
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

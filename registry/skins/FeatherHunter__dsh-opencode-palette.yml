@@ -8,7 +8,7 @@ repo: https://github.com/FeatherHunter/dsh-opencode-palette
 subpath: package
 package: dsh-opencode-palette
 rowId: opencode-palette
-category: theme
+category: skin
 tags:
   - token-theme
   - dark

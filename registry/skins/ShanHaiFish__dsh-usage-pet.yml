@@ -7,7 +7,7 @@ description: DeepSeek Harness 的悬浮鲸鱼娘宠物：跟随会话模型显�
 repo: https://github.com/ShanHaiFish/dsh-usage-pet
 package: dsh-usage-pet
 rowId: dsh-usage-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

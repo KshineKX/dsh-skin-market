@@ -7,7 +7,7 @@ description: DeepSeek Harness Web UI 的本地皮肤工作室：创建、实时�
 repo: https://github.com/realMisakaMikoto/dsh-skin-studio
 package: dsh-skin-studio
 rowId: skin-studio
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

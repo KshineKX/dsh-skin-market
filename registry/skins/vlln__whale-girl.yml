@@ -7,7 +7,7 @@ description: DSH Web GUI 内的桌面宠物（QQ 宠物形态）
 repo: https://github.com/vlln/whale-girl
 package: whale-girl
 rowId: whale-girl
-category: theme
+category: pet
 tags:
   - pet
 modes:

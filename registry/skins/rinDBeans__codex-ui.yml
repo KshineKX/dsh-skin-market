@@ -7,7 +7,7 @@ description: 让 DSH Web 呈现 Codex 的外观：窗口边缘、侧栏分界、
 repo: https://github.com/rinDBeans/codex-ui
 package: codex-ui
 rowId: codex-ui
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

@@ -7,7 +7,7 @@ description: 给 DeepSeek Harness（DSH）Web GUI 换肤的毛玻璃皮肤插件
 repo: https://github.com/noexcs/dsh-skin-glass
 package: dsh-skin-glass
 rowId: dsh-skin-glass
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

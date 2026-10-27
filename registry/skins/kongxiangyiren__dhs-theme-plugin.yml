@@ -7,7 +7,7 @@ description: dsh 主题管理插件,可以自定义主题
 repo: https://github.com/kongxiangyiren/dhs-theme-plugin
 package: "@kongxiangyiren/dhs-theme-plugin"
 rowId: dhs-theme-plugin
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

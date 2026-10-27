@@ -613,6 +613,20 @@ export function compareSkinOrder(a: CatalogSkin, b: CatalogSkin, sortBy: Catalog
 const CATALOG_SORTS = ['heat', 'stars', 'latest'] as const
 const CATALOG_SORT_LABELS: Record<CatalogSort, string> = { heat: '热度', stars: 'Stars', latest: '最新' }
 
+export const MARKET_CATEGORIES = ['skin', 'pet', 'player', 'splash'] as const
+export type MarketCategory = typeof MARKET_CATEGORIES[number]
+const MARKET_CATEGORY_LABELS: Record<MarketCategory, string> = {
+  skin: '皮肤',
+  pet: '桌宠',
+  player: '播放器',
+  splash: '开屏动画',
+}
+
+/** A plugin that spans several kinds stays a skin. Unknown legacy values do too. */
+export function marketCategory(skin: { category?: string }): MarketCategory {
+  return skin.category === 'pet' || skin.category === 'player' || skin.category === 'splash' ? skin.category : 'skin'
+}
+
 export function catalogSortLabel(sort: CatalogSort): string {
   return CATALOG_SORT_LABELS[sort]
 }
@@ -720,6 +734,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const [query, setQuery] = useState('')
   const [homeQuery, setHomeQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'installed'>('all')
+  const [enabledCategories, setEnabledCategories] = useState<ReadonlySet<MarketCategory>>(() => new Set<MarketCategory>(['skin', 'splash']))
   const [sortBy, setSortBy] = useState<CatalogSort>('heat')
   const [visibleCount, setVisibleCount] = useState(CATALOG_BATCH_SIZE)
   const [homeVisibleCount, setHomeVisibleCount] = useState(HOME_CATALOG_BATCH_SIZE)
@@ -782,6 +797,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const skinListRef = useRef<HTMLDivElement | null>(null)
   const homeRef = useRef<HTMLDivElement | null>(null)
   const homeHeaderRef = useRef<HTMLElement | null>(null)
+  const discoverTitleRef = useRef<HTMLDivElement | null>(null)
   const homeLoadMoreRef = useRef<HTMLDivElement | null>(null)
   const thumbnailStripRef = useRef<HTMLDivElement | null>(null)
   const detailRef = useRef<HTMLElement | null>(null)
@@ -1365,10 +1381,18 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     if (layout !== 'embedded' || header === null) return
     // Expanded operation details must leave room to browse the page, without
     // introducing a second scroll area inside the sticky header.
-    const updateSticky = () => setHomeHeaderSticky(header.getBoundingClientRect().height <= window.innerHeight / 2)
+    const updateSticky = () => {
+      const headerHeight = header.getBoundingClientRect().height
+      const discoverHeight = discoverTitleRef.current?.getBoundingClientRect().height ?? 0
+      // The plugin page has one scrollport. Both bars stick together, and only
+      // while the pair still leaves half the page free to browse.
+      setHomeHeaderSticky(headerHeight + discoverHeight <= window.innerHeight / 2)
+      header.parentElement?.style.setProperty('--market-home-header-height', `${headerHeight}px`)
+    }
     updateSticky()
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateSticky)
     observer?.observe(header)
+    if (discoverTitleRef.current !== null) observer?.observe(discoverTitleRef.current)
     window.addEventListener('resize', updateSticky)
     return () => { observer?.disconnect(); window.removeEventListener('resize', updateSticky) }
   }, [layout])
@@ -1426,8 +1450,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     .filter(skin => runtimeFor(states, skin.id).installation !== 'missing')
     .sort((a, b) => compareInstalledSkinOrder(a, b, states)), [skins, states])
   const discoverySkins = useMemo(() => skins
-    .filter(skin => matchesCatalogSearch(skin, homeQuery))
-    .sort((a, b) => compareSkinOrder(a, b, sortBy)), [homeQuery, skins, sortBy])
+    .filter(skin => matchesCatalogSearch(skin, homeQuery) && enabledCategories.has(marketCategory(skin)))
+    .sort((a, b) => compareSkinOrder(a, b, sortBy)), [enabledCategories, homeQuery, skins, sortBy])
   const visibleDiscoverySkins = useMemo(() => discoverySkins.slice(0, homeVisibleCount), [discoverySkins, homeVisibleCount])
   const installedRowSkins = installedSkins.length > installedSlots ? installedSkins.slice(0, Math.max(1, installedSlots - 1)) : installedSkins
   const installedOverflow = installedSkins.length > installedRowSkins.length
@@ -1515,7 +1539,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   }
 
   useEffect(() => { setVisibleCount(CATALOG_BATCH_SIZE) }, [filter, query, sortBy])
-  useEffect(() => { setHomeVisibleCount(HOME_CATALOG_BATCH_SIZE) }, [homeQuery, sortBy])
+  useEffect(() => { setHomeVisibleCount(HOME_CATALOG_BATCH_SIZE) }, [enabledCategories, homeQuery, sortBy])
 
   const copyOperationLog = useCallback(async (operationId: string) => {
     setCopyingLogId(operationId)
@@ -2463,7 +2487,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           }
         }}>
           {homeQuery.trim() === '' && (loading || installedSkins.length > 0) && <section className={css.homeSection} aria-labelledby="installed-skins-title">
-            <div className={css.homeSectionTitle}><h3 id="installed-skins-title">已安装</h3><span>正在使用、常驻优先，其余按最近操作排序</span></div>
+            <div className={css.homeSectionTitle}><h3 id="installed-skins-title">已安装</h3></div>
             {loading ? <div className={css.installedRow} style={{ '--installed-columns': installedSlots } as CSSProperties} role="status" aria-label="正在加载已安装皮肤"><span className={css.srOnly}>正在加载已安装皮肤…</span>{Array.from({ length: installedSlots }, (_, index) => <article className={css.installedSkeletonCard} key={index} aria-hidden="true"><span /><span><i /><i /></span></article>)}</div> : <div className={css.installedRow} style={{ '--installed-columns': installedSlots } as CSSProperties}>
               {installedRowSkins.map(skin => renderHomeCard(skin, 'installed'))}
               {installedOverflow && <button type="button" className={`${css.homeCard} ${css.installedMoreCard}`} onClick={() => openInstalledBrowser()}><SquaresFourIcon size={24} aria-hidden="true" /><strong>查看全部已安装</strong></button>}
@@ -2471,8 +2495,18 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           </section>}
 
           <section className={css.homeSection} aria-labelledby="discover-skins-title">
-            <div className={css.homeSectionTitle}>
-              <h3 id="discover-skins-title">{homeQuery.trim() === '' ? '发现更多' : '搜索结果'}</h3>
+            <div className={`${css.homeSectionTitle} ${css.discoverTitle}`} ref={discoverTitleRef}>
+              <div className={css.discoverHeading}>
+                <h3 id="discover-skins-title">{homeQuery.trim() === '' ? '发现更多' : '搜索结果'}</h3>
+                <div className={css.categoryFilters} role="group" aria-label="分类">
+                  {MARKET_CATEGORIES.map(category => <Pill key={category} className={css.filterPill} active={enabledCategories.has(category)} aria-pressed={enabledCategories.has(category)} onClick={() => setEnabledCategories(current => {
+                    const next = new Set(current)
+                    if (next.has(category)) next.delete(category)
+                    else next.add(category)
+                    return next
+                  })}>{MARKET_CATEGORY_LABELS[category]}</Pill>)}
+                </div>
+              </div>
               <CatalogSortOptions value={sortBy} onChange={setSortBy} />
             </div>
             {catalogLoading && skins.length === 0 ? <div className={css.homeLoading}><IconLoadingOutline /> 正在加载皮肤…</div> : visibleDiscoverySkins.length > 0 ? <div className={css.discoveryGrid}>

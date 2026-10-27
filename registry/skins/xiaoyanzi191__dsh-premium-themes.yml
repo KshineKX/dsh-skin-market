@@ -7,7 +7,7 @@ description: Premium color palettes for DeepSeek Harness — 8 built-in + custom
 repo: https://github.com/xiaoyanzi191/dsh-premium-themes
 package: "@deepseek-ai/dsh-client-ui-premium-themes"
 rowId: premium-themes
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

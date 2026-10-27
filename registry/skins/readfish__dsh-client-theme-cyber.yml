@@ -7,7 +7,7 @@ description: "Cyber Sand theme for DeepSeek Harness Web: a dark cyber-city palet
 repo: https://github.com/readfish/dsh-client-theme-cyber
 package: "@anywhere-labs/dsh-client-theme-cyber"
 rowId: theme-cyber
-category: theme
+category: skin
 tags:
   - appearance
 modes:

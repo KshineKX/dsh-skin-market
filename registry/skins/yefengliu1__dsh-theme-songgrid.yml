@@ -7,7 +7,7 @@ description: 宋律 Songgrid —— 宋代美学 × 瑞士国际主义设计语�
 repo: https://github.com/yefengliu1/dsh-theme-songgrid
 package: dsh-theme-songgrid
 rowId: song-grid-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

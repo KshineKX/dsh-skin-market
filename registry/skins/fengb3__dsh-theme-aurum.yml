@@ -7,7 +7,7 @@ description: DSH 鎏金主题：oklch 金粉双色层 + 24px 点阵画布 + 浮�
 repo: https://github.com/fengb3/dsh-theme-aurum
 package: dsh-theme-aurum
 rowId: theme-aurum
-category: theme
+category: skin
 tags:
   - gold
   - token-theme

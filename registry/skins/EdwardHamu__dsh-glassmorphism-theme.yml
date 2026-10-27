@@ -7,7 +7,7 @@ description: "Open 设置 → 壁纸 to configure your background:"
 repo: https://github.com/EdwardHamu/dsh-glassmorphism-theme
 package: "@edwardhamu/dsh-glassmorphism-theme"
 rowId: dsh-glassmorphism-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

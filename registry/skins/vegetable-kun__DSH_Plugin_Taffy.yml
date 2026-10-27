@@ -7,7 +7,7 @@ description: Taffy 表情包状态机：右下角悬浮表情随 agent 状态切
 repo: https://github.com/vegetable-kun/DSH_Plugin_Taffy
 package: dsh-taffy-mood
 rowId: dsh-taffy-mood
-category: theme
+category: pet
 tags:
   - pet
 modes:

@@ -7,7 +7,7 @@ description: DeepSeek Harness Web GUI 动态背景插件（live wallpaper），b
 repo: https://github.com/feng78-boop/dsh-thirteen-bg
 package: dsh-thirteen-bg
 rowId: thirteen-bg
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

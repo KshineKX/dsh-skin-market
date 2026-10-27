@@ -1,0 +1,40 @@
+id: caiccc.a11y.local.dsh.wyymusic.player
+name:
+  zh: dsh-wyymusic-player
+  en: dsh-wyymusic-player
+author: Caiccc-a11y
+description: NetEase Cloud Music in the DSH right sidebar.
+repo: https://github.com/Caiccc-a11y/dsh-wyymusic-player
+package: "@local/dsh-wyymusic-player"
+rowId: wyymusic-player
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:Caiccc-a11y/dsh-wyymusic-player#72599a6eb9d6ba846349c9f439ecae69c962aede
+  version: 1.0.0
+  commit: 72599a6eb9d6ba846349c9f439ecae69c962aede
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

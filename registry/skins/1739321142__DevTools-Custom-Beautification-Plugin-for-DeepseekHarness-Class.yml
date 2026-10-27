@@ -7,7 +7,7 @@ description: 内置樱花粉等6套明暗配色，可调整字体、侧栏和聊
 repo: https://github.com/1739321142/DevTools-Custom-Beautification-Plugin-for-DeepseekHarness-Class
 package: dsh-beautify-plugin
 rowId: beautify
-category: theme
+category: skin
 tags:
   - appearance
 modes:

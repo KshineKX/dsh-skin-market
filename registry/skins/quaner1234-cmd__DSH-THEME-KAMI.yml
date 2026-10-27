@@ -7,7 +7,7 @@ description: Kami 风格（纸媒/editorial）DeepSeek Harness WebUI 主题 —�
 repo: https://github.com/quaner1234-cmd/DSH-THEME-KAMI
 package: dsh-kami-theme
 rowId: dsh-kami-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

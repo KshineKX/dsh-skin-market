@@ -7,7 +7,7 @@ description: "A theme gallery for DeepSeek Harness (DSH): JSON-defined skins wit
 repo: https://github.com/renjie2026/dsh-theme-gallery
 package: dsh-theme-gallery
 rowId: theme-gallery
-category: theme
+category: skin
 tags:
   - appearance
 modes:

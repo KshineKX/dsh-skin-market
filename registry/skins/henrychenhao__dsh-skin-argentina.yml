@@ -7,7 +7,7 @@ description: 阿根廷 · 梅西 (Argentina · Messi) web skin for the DeepSeek 
 repo: https://github.com/henrychenhao/dsh-skin-argentina
 package: dsh-skin-argentina
 rowId: theme-argentina
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

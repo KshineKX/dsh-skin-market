@@ -7,7 +7,7 @@ description: Leafy — an eye-friendly green skin that folds the DSH Web GUI's -
 repo: https://github.com/badai147/dsh-leafy-skin
 package: dsh-leafy-skin
 rowId: leafy-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

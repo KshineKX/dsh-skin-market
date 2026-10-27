@@ -1,0 +1,40 @@
+id: conafun.dsh.music.plus
+name:
+  zh: dsh-music-plus
+  en: dsh-music-plus
+author: conafun
+description: 基于 dsh-music-player 的修改版：移除在线QQ/酷狗/讲书/歌词，新增播客
+repo: https://github.com/conafun/dsh-music-plus
+package: dsh-music-plus
+rowId: music-player-plus
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:conafun/dsh-music-plus#aeb6c74ffa2e26e18da668cc247fd75796a8b3e0
+  version: 0.6.7
+  commit: aeb6c74ffa2e26e18da668cc247fd75796a8b3e0
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

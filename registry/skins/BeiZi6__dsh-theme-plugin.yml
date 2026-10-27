@@ -7,7 +7,7 @@ description: DSH Web GUI 主题工作室：5 套内置预设 + 完全可自定�
 repo: https://github.com/BeiZi6/dsh-theme-plugin
 package: dsh-theme-plugin
 rowId: theme-plugin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

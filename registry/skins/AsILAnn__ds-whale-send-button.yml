@@ -7,7 +7,7 @@ description: 把对话输入栏的主发送按钮图标替换为 DeepSeek 官方
 repo: https://github.com/AsILAnn/ds-whale-send-button
 package: "@dsh-external/ds-whale-send-button"
 rowId: ds-whale-send-button
-category: theme
+category: skin
 tags:
   - appearance
 modes:

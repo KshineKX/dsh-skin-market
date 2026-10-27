@@ -7,7 +7,7 @@ description: DeepSeek Harness 对话大纲插件 —— 在会话页右侧显示
 repo: https://github.com/twelvecarbon/dsh-conversation-toc
 package: dsh-conversation-toc
 rowId: conversation-toc
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

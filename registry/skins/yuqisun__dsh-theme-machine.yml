@@ -7,7 +7,7 @@ description: 《疑犯追踪》（Person of Interest）「机器」风格的 Dee
 repo: https://github.com/yuqisun/dsh-theme-machine
 package: dsh-theme-machine
 rowId: theme-machine
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

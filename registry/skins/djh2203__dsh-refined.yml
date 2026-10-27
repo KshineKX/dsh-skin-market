@@ -7,7 +7,7 @@ description: DeepSeek-Refined 移植：为 DeepSeek Harness 前端注入 5 套 O
 repo: https://github.com/djh2203/dsh-refined
 package: dsh-refined
 rowId: dsh-refined
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: dsh-diorama · DSH 角色舞台
 repo: https://github.com/ZaVang/dsh-diorama
 package: dsh-diorama
 rowId: ui-skin-diorama
-category: theme
+category: skin
 tags:
   - glass
   - token-theme

@@ -8,7 +8,7 @@ repo: https://github.com/CAPTAIN1275/dsh-ui-web
 subpath: packages/skins/miku
 package: "@captain1275/dsh-client-ui-skin-miku"
 rowId: ui-skin-miku
-category: theme
+category: skin
 tags:
   - anime
   - glass

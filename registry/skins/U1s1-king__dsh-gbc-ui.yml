@@ -7,7 +7,7 @@ description: DeepSeek Harness Web GUI 的自研皮肤插件：深海宫殿背景
 repo: https://github.com/U1s1-king/dsh-gbc-ui
 package: dsh-gbc-ui
 rowId: ui-skin-gbc-atelier
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

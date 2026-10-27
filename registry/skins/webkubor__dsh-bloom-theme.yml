@@ -7,7 +7,7 @@ description: DeepSeek Harness (DSH) 主题插件：Bloom 莫兰迪配色 4 变�
 repo: https://github.com/webkubor/dsh-bloom-theme
 package: dsh-bloom-theme
 rowId: bloom-theme
-category: theme
+category: skin
 tags:
   - pastel
   - token-theme

@@ -7,7 +7,7 @@ description: 轻量的 DSH 字体与主题插件：中英文字体分开选（�
 repo: https://github.com/LX-HMKK/DSH-appearance
 package: "@hmkk/dsh-appearance"
 rowId: dsh-appearance
-category: theme
+category: skin
 tags:
   - appearance
 modes:

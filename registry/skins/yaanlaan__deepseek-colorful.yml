@@ -7,7 +7,7 @@ description: DeepSeek Colorful - A comprehensive UI theme and customizer plugin 
 repo: https://github.com/yaanlaan/deepseek-colorful
 package: dsh-colorful
 rowId: deepseek-colorful
-category: theme
+category: skin
 tags:
   - appearance
   - glass

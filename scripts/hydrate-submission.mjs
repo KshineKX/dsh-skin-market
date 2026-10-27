@@ -189,7 +189,7 @@ export async function hydrateSkinSubmission(draft, options = {}) {
     ...(target.subpath ? { subpath: target.subpath } : {}),
     package: pkg.name,
     rowId,
-    category: 'theme',
+    category: 'skin',
     tags: ['appearance'],
     modes: ['light', 'dark'],
     install: {

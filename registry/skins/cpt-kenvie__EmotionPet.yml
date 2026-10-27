@@ -7,7 +7,7 @@ description: Emotion Ball pet dock for the DeepSeek Harness Web composer
 repo: https://github.com/cpt-kenvie/EmotionPet
 package: dsh-emotion-pet
 rowId: emotion-pet
-category: theme
+category: pet
 tags:
   - pet
   - motion

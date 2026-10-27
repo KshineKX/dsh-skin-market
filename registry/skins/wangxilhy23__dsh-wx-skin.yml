@@ -7,7 +7,7 @@ description: DeepSeek Harness（DSH）Web GUI 皮肤插件 —— 侧栏「皮�
 repo: https://github.com/wangxilhy23/dsh-wx-skin
 package: dsh-wx-skin
 rowId: ui-dsh-wx-skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

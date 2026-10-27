@@ -1,0 +1,40 @@
+id: nxz1026.singleplayer
+name:
+  zh: SinglePlayer
+  en: SinglePlayer
+author: nxz1026
+description: 运行在 DeepSeek Harness（dsh）内的 AI 原生插件化音乐播放器。 聚合网易云 / QQ 音乐、逐字卡拉OK歌词、花再（HALO PIXELBAR）音箱歌词同步；DeepSeek 全程对话操控——点歌、进度音量、队列收藏、音箱场景、闹钟提醒，一个插件全包。
+repo: https://github.com/nxz1026/SinglePlayer
+package: dsh-music-huazai
+rowId: music
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:nxz1026/SinglePlayer#73e552c5fbf57016aceb3677fa26092e9e1fbd2b
+  version: 0.1.0
+  commit: 73e552c5fbf57016aceb3677fa26092e9e1fbd2b
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: ^0.1.1-rc.1
+  platform:
+    - web
+screenshots: []
+review:
+  compatibility: verified
+  preview: repository-card
+  installation: verified
+license:
+  code: GPL-3.0-only
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z

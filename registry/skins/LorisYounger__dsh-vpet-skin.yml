@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness 添加五种 VPet 萝莉斯角色形态和对�
 repo: https://github.com/LorisYounger/dsh-vpet-skin
 package: dsh-client-vpet-skin
 rowId: vpet-skin
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -7,7 +7,7 @@ description: "Clawd the pixel pet, living in the DeepSeek Harness Web GUI: react
 repo: https://github.com/MCXCC303/dsh-clawd
 package: "@mcxcc303/dsh-clawd"
 rowId: dsh-clawd
-category: theme
+category: pet
 tags:
   - pet
 modes:

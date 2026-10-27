@@ -7,7 +7,7 @@ description: DeepSeek Harness Web UI 主题背景中心插件：主题/渐变图
 repo: https://github.com/syOPV/dsh-theme-background-center
 package: dsh-theme-background-center
 rowId: theme-background-center
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

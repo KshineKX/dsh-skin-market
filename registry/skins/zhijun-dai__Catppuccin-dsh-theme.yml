@@ -7,7 +7,7 @@ description: Catppuccin 主题插件：为 DSH Web 主题运行时提供 Latte�
 repo: https://github.com/zhijun-dai/Catppuccin-dsh-theme
 package: dsh-catppuccin
 rowId: catppuccin
-category: theme
+category: skin
 tags:
   - catppuccin
   - pastel

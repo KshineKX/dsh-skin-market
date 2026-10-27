@@ -7,7 +7,7 @@ description: DSH 桌面版背景主题插件：给 DeepSeek Harness 换上动态
 repo: https://github.com/Witherwithwinter/dsh-ccx
 package: dsh-ccx
 rowId: dsh-ccx
-category: theme
+category: skin
 tags:
   - appearance
   - motion

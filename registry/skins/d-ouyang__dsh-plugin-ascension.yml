@@ -7,7 +7,7 @@ description: 渡劫飞升：仙逆·王林修炼伙伴。监控会话状态驱�
 repo: https://github.com/d-ouyang/dsh-plugin-ascension
 package: dsh-plugin-ascension
 rowId: ascension
-category: theme
+category: pet
 tags:
   - appearance
   - motion

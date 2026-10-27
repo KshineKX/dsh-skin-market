@@ -7,7 +7,7 @@ description: "Configurable DSH web-surface plugin: wallpaper & frosted-glass the
 repo: https://github.com/yoli-mi/dsh-client-ui-custom
 package: "@ha-na-bi/dsh-client-ui-custom"
 rowId: ui-custom
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

@@ -7,7 +7,7 @@ description: "DSH Harness desktop plugin: wallpaper, glass surfaces and appearan
 repo: https://github.com/yunshu-iii/dsh-wallpaper-theme
 package: dsh-wallpaper-theme
 rowId: wallpaper-theme
-category: theme
+category: skin
 tags:
   - appearance
   - glass

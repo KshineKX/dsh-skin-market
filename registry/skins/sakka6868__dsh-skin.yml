@@ -7,7 +7,7 @@ description: DSH 皮肤插件：把 Alphacoders 热门壁纸 设为 DeepSeek Har
 repo: https://github.com/sakka6868/dsh-skin
 package: dsh-skin-alphacoders
 rowId: skin-alphacoders
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

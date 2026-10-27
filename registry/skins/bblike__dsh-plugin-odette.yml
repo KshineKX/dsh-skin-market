@@ -7,7 +7,7 @@ description: DeepSeek Harness Web 的「奥黛塔 / 至冬」主题皮肤插件�
 repo: https://github.com/bblike/dsh-plugin-odette
 package: dsh-plugin-odette
 rowId: odette-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - motion

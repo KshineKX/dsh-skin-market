@@ -7,7 +7,7 @@ description: Claude 风格推理强度滑块插件：一体化液态玻璃面板
 repo: https://github.com/yicun0316/dsh-claude-slider
 package: dsh-claude-slider
 rowId: dsh-claude-slider
-category: theme
+category: skin
 tags:
   - appearance
   - glass

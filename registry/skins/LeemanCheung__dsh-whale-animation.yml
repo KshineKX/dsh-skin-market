@@ -7,7 +7,7 @@ description: 在 DeepSeek Harness Web 的任务状态旁播放黑白鲸鱼动画
 repo: https://github.com/LeemanCheung/dsh-whale-animation
 package: dsh-whale-animation
 rowId: whale-animation
-category: theme
+category: skin
 tags:
   - motion
   - token-theme

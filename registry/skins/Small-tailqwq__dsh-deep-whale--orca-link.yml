@@ -8,7 +8,7 @@ repo: https://github.com/Small-tailqwq/dsh-deep-whale
 subpath: orca-link
 package: "@dsh-external/dsh-client-ui-skin-orca-link"
 rowId: ui-skin-orca-link
-category: anime
+category: skin
 tags:
   - orca
   - mechanical

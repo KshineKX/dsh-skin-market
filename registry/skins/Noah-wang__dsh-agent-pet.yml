@@ -7,7 +7,7 @@ description: Eight looping animations, one per agent state — a DeepSeek Harnes
 repo: https://github.com/Noah-wang/dsh-agent-pet
 package: dsh-agent-pet
 rowId: agent-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

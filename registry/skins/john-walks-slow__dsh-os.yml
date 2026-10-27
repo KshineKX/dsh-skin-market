@@ -7,7 +7,7 @@ description: "DeepSeek Harness OS: a whole-GUI theme for the DSH Web interface â
 repo: https://github.com/john-walks-slow/dsh-os
 package: dsh-os
 rowId: dsh-os
-category: theme
+category: skin
 tags:
   - appearance
 modes:

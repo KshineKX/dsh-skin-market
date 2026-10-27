@@ -7,7 +7,7 @@ description: Five whale species with shaded cells or ASCII fill; every content c
 repo: https://github.com/jryang1997/dsh-ascii-whales
 package: "@local/dsh-ascii-ocean"
 rowId: ascii-whale-background
-category: theme
+category: skin
 tags:
   - appearance
   - glass

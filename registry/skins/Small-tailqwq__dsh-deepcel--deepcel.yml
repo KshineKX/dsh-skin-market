@@ -8,7 +8,7 @@ repo: https://github.com/Small-tailqwq/dsh-deepcel
 subpath: deepcel
 package: "@dsh-external/dsh-client-ui-skin-deepcel"
 rowId: ui-skin-deepcel
-category: theme
+category: skin
 tags:
   - wallpaper
 modes:

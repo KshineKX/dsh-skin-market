@@ -8,7 +8,7 @@ repo: https://github.com/CAPTAIN1275/dsh-ui-web
 subpath: packages/skins/xp
 package: "@captain1275/dsh-client-ui-skin-xp"
 rowId: ui-skin-xp
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

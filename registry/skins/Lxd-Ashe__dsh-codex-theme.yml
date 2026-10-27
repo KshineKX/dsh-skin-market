@@ -7,7 +7,7 @@ description: Codex 主题外观插件 for DeepSeek Harness（DSH）：把 Codex 
 repo: https://github.com/Lxd-Ashe/dsh-codex-theme
 package: dsh-codex-theme
 rowId: dsh-codex-theme
-category: theme
+category: skin
 tags:
   - wallpaper
   - token-theme

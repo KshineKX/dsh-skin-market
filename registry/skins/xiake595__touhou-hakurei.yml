@@ -7,7 +7,7 @@ description: 灵梦（Reimu）·博丽神社（东方Project）美化版皮肤�
 repo: https://github.com/xiake595/touhou-hakurei
 package: "@dsh-external/dsh-client-ui-skin-hakurei-shrine"
 rowId: ui-skin-hakurei
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

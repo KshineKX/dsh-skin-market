@@ -7,7 +7,7 @@ description: Auto-detected, user-customizable icons for DeepSeek Harness setting
 repo: https://github.com/yzke/dsh-icon-theme
 package: dsh-icon-theme
 rowId: dsh-icon-theme
-category: theme
+category: skin
 tags:
   - retro
 modes:

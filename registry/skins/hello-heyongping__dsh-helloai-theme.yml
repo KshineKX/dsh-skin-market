@@ -7,7 +7,7 @@ description: "HelloAI Theme: ten selectable color themes for the DeepSeek Harnes
 repo: https://github.com/hello-heyongping/dsh-helloai-theme
 package: "@hello-heyongping/dsh-helloai-theme"
 rowId: dsh-helloai-theme
-category: theme
+category: skin
 tags:
   - appearance
   - glass

@@ -7,7 +7,7 @@ description: "Clear glass skin for the Harness Web UI: aurora or a chosen image 
 repo: https://github.com/abyss2021/dsh-glass-skin
 package: "@local/glass-skin"
 rowId: glass-skin
-category: theme
+category: skin
 tags:
   - appearance
   - glass

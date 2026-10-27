@@ -7,7 +7,7 @@ description: 面向 DeepSeek Harness Web 的桌面体验增强插件。它保留
 repo: https://github.com/AlexYin-Tongji/dsh-ui-enhancer
 package: dsh-ui-enhancer
 rowId: ui-enhancer-web-ui-settings
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

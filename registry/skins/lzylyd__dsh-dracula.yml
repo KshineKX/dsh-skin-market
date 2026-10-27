@@ -7,7 +7,7 @@ description: A third-party Dracula dark theme for the DeepSeek Harness web UI
 repo: https://github.com/lzylyd/dsh-dracula
 package: dsh-dracula
 rowId: dracula-theme
-category: theme
+category: skin
 tags:
   - token-theme
   - light-dark

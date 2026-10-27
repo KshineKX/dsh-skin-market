@@ -7,7 +7,7 @@ description: "Local-usage desk pet for DeepSeek Harness: an original chibi field
 repo: https://github.com/zeheng723/dsh-medic-pet
 package: dsh-medic-pet
 rowId: medic-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

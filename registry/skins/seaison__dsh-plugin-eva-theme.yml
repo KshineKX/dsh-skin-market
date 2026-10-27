@@ -7,7 +7,7 @@ description: DSH / DeepSeek Harness EVA 主题插件：明日香暗色、绫波�
 repo: https://github.com/seaison/dsh-plugin-eva-theme
 package: dsh-plugin-eva-theme
 rowId: eva-magi-theme
-category: theme
+category: skin
 tags:
   - appearance
 modes:

@@ -1,0 +1,42 @@
+id: joeseesun.qiaomu-radio-dsh
+name:
+  zh: qiaomu-radio-dsh
+  en: qiaomu-radio-dsh
+author: joeseesun
+description: 把 乔木电台 的五种播放器环境搬进 DeepSeek Harness：发现并收听全球直播电台， 让音乐陪着你工作与阅读。
+repo: https://github.com/joeseesun/qiaomu-radio-dsh
+package: "@qiaomu/dsh-radio"
+rowId: qiaomu-radio
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:joeseesun/qiaomu-radio-dsh#490db5f81643407ab578a8f88639e7c1f31e62b9
+  version: 0.1.1
+  commit: 490db5f81643407ab578a8f88639e7c1f31e62b9
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/joeseesun/qiaomu-radio-dsh/490db5f81643407ab578a8f88639e7c1f31e62b9/docs/screenshots/braun-menu.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: GPL-3.0-or-later
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/joeseesun/qiaomu-radio-dsh/490db5f81643407ab578a8f88639e7c1f31e62b9/docs/screenshots/braun-menu.png

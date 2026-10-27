@@ -1,0 +1,43 @@
+id: orderg-x.dsh-video-preview
+name:
+  zh: dsh-video-preview
+  en: dsh-video-preview
+author: OrderG-X
+description: 让 DSH（DeepSeek Harness）的对话流里直接播放本地视频 / 音频：模型录屏、转码、配音生成的文件，回合结束时播放器自动出现在回复正下方——Claude 桌面端 / Codex 同款位置，不用点任何东西，也不用模型专门调工具。说一句「播一下 /Movies/a.mp4」也行。
+repo: https://github.com/OrderG-X/dsh-video-preview
+package: "@orderg-x/dsh-video-preview"
+rowId: orderg-x-video-preview
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:OrderG-X/dsh-video-preview#7351b414ce84e296c6d8b1a0b0cfd18906f7b3e1
+  version: 0.4.0
+  commit: 7351b414ce84e296c6d8b1a0b0cfd18906f7b3e1
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: ">=0.1.0-rc.1 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/OrderG-X/dsh-video-preview/7351b414ce84e296c6d8b1a0b0cfd18906f7b3e1/assets/hero.png
+  - https://raw.githubusercontent.com/OrderG-X/dsh-video-preview/7351b414ce84e296c6d8b1a0b0cfd18906f7b3e1/assets/demo.gif
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 0
+starsSnapshot: 2
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/OrderG-X/dsh-video-preview/7351b414ce84e296c6d8b1a0b0cfd18906f7b3e1/assets/hero.png

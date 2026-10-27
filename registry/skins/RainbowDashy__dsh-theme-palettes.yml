@@ -7,7 +7,7 @@ description: dsh-theme-palettes
 repo: https://github.com/RainbowDashy/dsh-theme-palettes
 package: dsh-theme-palettes
 rowId: theme-palettes
-category: theme
+category: skin
 tags:
   - retro
   - token-theme

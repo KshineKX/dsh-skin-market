@@ -7,7 +7,7 @@ description: 优化插件大小，大幅提高安装速度，去除多余文件
 repo: https://github.com/kingOfSoySauce/dsh-liang-skin
 package: "@leon___/dsh-client-liang-intensity-skin"
 rowId: liang-intensity-skin
-category: interactive
+category: skin
 tags:
   - black-gold
   - reasoning-slider

@@ -7,7 +7,7 @@ description: "Themes and personalisation for DeepSeek Harness: 18 themes, a them
 repo: https://github.com/IRdotAI/dsh-studio
 package: dsh-studio
 rowId: studio
-category: theme
+category: skin
 tags:
   - appearance
   - glass

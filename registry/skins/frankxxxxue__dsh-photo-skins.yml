@@ -7,7 +7,7 @@ description: 一次导入，自动取色，让每一张照片成为 DSH Web GUI 
 repo: https://github.com/frankxxxxue/dsh-photo-skins
 package: dsh-photo-skins
 rowId: photo-skins
-category: theme
+category: skin
 tags:
   - wallpaper
   - retro

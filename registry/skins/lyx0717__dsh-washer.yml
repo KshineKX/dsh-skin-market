@@ -7,7 +7,7 @@ description: 滚筒洗衣机 · 用一台洗衣机的运转状态显示 Agent �
 repo: https://github.com/lyx0717/dsh-washer
 package: "@lyx0717/dsh-washer"
 rowId: washer
-category: theme
+category: skin
 tags:
   - appearance
 modes:

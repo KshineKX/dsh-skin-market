@@ -8,7 +8,7 @@ repo: https://github.com/LAN-TINA-WS/dsh-gui-customization
 subpath: packages/dsh-gui-customization
 package: dsh-gui-customization
 rowId: ui-gui-customization
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

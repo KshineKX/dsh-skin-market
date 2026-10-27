@@ -8,7 +8,7 @@ repo: https://github.com/krystal-cao/deepseek-harness-swift
 subpath: assets/dsh-desktop-host
 package: dsh-desktop-host
 rowId: desktop-host
-category: theme
+category: skin
 tags:
   - motion
 modes:

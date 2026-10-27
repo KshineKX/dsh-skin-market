@@ -7,7 +7,7 @@ description: 一个为 DSH（DeepSeek Harness） 网页版开发的客户端插�
 repo: https://github.com/Magic-Mercury/dsh-chat-customizer
 package: dsh-chat-customizer
 rowId: ui-sidebar
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

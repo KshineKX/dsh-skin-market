@@ -7,7 +7,7 @@ description: dsh-remielle-pet（蕾米埃尔桌宠）：DSH 桌宠插件，在 D
 repo: https://github.com/Shinarin/dsh-remielle-pet
 package: dsh-remielle-pet
 rowId: dsh-remielle-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:

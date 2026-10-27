@@ -7,7 +7,7 @@ description: dsh Web 界面的持久化壁纸皮肤：静态图片或静音循�
 repo: https://github.com/ddbj-hub/dsh-wallpaper-skin
 package: dsh-wallpaper-skin
 rowId: dsh-wallpaper-skin
-category: theme
+category: skin
 tags:
   - wallpaper
   - glass

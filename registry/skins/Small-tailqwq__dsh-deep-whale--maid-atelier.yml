@@ -8,7 +8,7 @@ repo: https://github.com/Small-tailqwq/dsh-deep-whale
 subpath: maid-atelier
 package: "@dsh-external/dsh-client-ui-skin-maid-atelier"
 rowId: ui-skin-maid-atelier
-category: anime
+category: skin
 tags:
   - anime
   - maid

@@ -1,0 +1,42 @@
+id: jasonchtt.dsh.netease.music
+name:
+  zh: dsh-netease-music
+  en: dsh-netease-music
+author: JasonCHTT
+description: DSH 网页版网易云音乐播放器插件：顶部条常驻迷你播放器 + 展开面板（每日推荐/歌单/私人FM/搜索/队列/历史/设置），扫码登录，内置自动启动 NeteaseCloudMusicApi，支持 AI 对话控制播放。
+repo: https://github.com/JasonCHTT/dsh-netease-music
+package: dsh-netease-music
+rowId: netease-music
+category: player
+tags:
+  - player
+modes:
+  - light
+  - dark
+install:
+  target: github:JasonCHTT/dsh-netease-music#4aab9fd1a5b566730ebc24609208dbd2fa0b1fa4
+  version: 1.0.0
+  commit: 4aab9fd1a5b566730ebc24609208dbd2fa0b1fa4
+  desktop:
+    mode: manual-only
+    reason: npm-package-not-found
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/JasonCHTT/dsh-netease-music/4aab9fd1a5b566730ebc24609208dbd2fa0b1fa4/demo.jpg
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+license:
+  code: UNKNOWN
+  commercialUse: false
+featuredRank: 0
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-27T05:10:00.000Z
+metadataUpdatedAt: 2026-10-27T05:10:00.000Z
+starsUpdatedAt: 2026-10-27T05:10:00.000Z
+updatedAt: 2026-10-27T05:10:00.000Z
+listScreenshot: https://raw.githubusercontent.com/JasonCHTT/dsh-netease-music/4aab9fd1a5b566730ebc24609208dbd2fa0b1fa4/demo.jpg

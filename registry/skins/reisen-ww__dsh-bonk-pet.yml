@@ -7,7 +7,7 @@ description: 敲盆宠物 —— DSH Web GUI 的悬浮小鲸鱼：agent 执行�
 repo: https://github.com/reisen-ww/dsh-bonk-pet
 package: dsh-bonk-pet
 rowId: bonk-pet
-category: theme
+category: pet
 tags:
   - pet
 modes:
