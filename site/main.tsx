@@ -25,19 +25,12 @@ interface Skin extends CatalogSkin {
 const GALLERY_INTERVAL_MS = 5600
 const FEED_COMPACT_EXIT_OFFSET = 16
 const CATALOG_SORTS: readonly CatalogSort[] = ['heat', 'stars', 'latest']
-const CATALOG_SORT_LABELS: Record<CatalogSort, string> = { heat: '热度优先', stars: 'Stars 优先', latest: '最近更新' }
+const CATALOG_SORT_LABELS: Record<CatalogSort, string> = { heat: '热度', stars: 'Stars', latest: '最新' }
 
-function nextCatalogSort(sort: CatalogSort): CatalogSort {
-  return CATALOG_SORTS[(CATALOG_SORTS.indexOf(sort) + 1) % CATALOG_SORTS.length]!
-}
-
-function formatHeatRate(value: number): string {
-  const digits = value >= 10 ? 1 : value >= 1 ? 2 : 3
-  return value.toFixed(digits).replace(/\.?(0+)$/, '')
-}
-
-function heatTitle(heat: NonNullable<Skin['heat']>): string {
-  return `皮肤年龄 ${heat.ageDays} 天；Stars ${formatHeatRate(heat.starsPerDay)}/天，线性衰减后的增长 ${formatHeatRate(heat.starGrowthPerDay)}/天；提交 ${formatHeatRate(heat.commitsPerDay)}/天、PR ${formatHeatRate(heat.pullsPerDay)}/天、外部 issue ${formatHeatRate(heat.issuesPerDay)}/天（截至 ${heat.asOf}）`
+function CatalogSortOptions({ value, onChange }: { value: CatalogSort; onChange: (value: CatalogSort) => void }) {
+  return <div className="sort-options" role="group" aria-label="排序方式">
+    {CATALOG_SORTS.map(sort => <button key={sort} type="button" className="sort-option" aria-pressed={value === sort} onClick={() => onChange(sort)}>{CATALOG_SORT_LABELS[sort]}</button>)}
+  </div>
 }
 
 function CatalogCard({ skin, onOpen, onInstall }: { skin: Skin; onOpen: () => void; onInstall: () => void }) {
@@ -48,7 +41,7 @@ function CatalogCard({ skin, onOpen, onInstall }: { skin: Skin; onOpen: () => vo
     <button className="feed-card-open dsh-skin-media-hover" aria-label={`${title} 界面预览`} onClick={onOpen}>
       <span className="feed-card-media"><PreviewMedia skin={skin} src={getCatalogListScreenshot(skin)} fallbackSources={getCatalogScreenshotUrls(skin)} alt={`${skin.name.zh} 界面预览`} kind="card" loading="lazy" /></span>
       <span className="feed-card-copy">
-        <span className="feed-card-title"><strong title={title}>{title}</strong><span className="feed-card-stats"><StarIcon size={12} /> {skin.starsSnapshot}{skin.heat !== undefined && skin.heat.starGrowthPerDay > 0 && <em className="feed-card-trend" title={heatTitle(skin.heat)}>+{formatHeatRate(skin.heat.starGrowthPerDay)}/天</em>}</span></span>
+        <span className="feed-card-title"><strong title={title}>{title}</strong><span className="feed-card-stats"><StarIcon size={12} /> {skin.starsSnapshot}</span></span>
         <span className="feed-card-description" title={skin.description}>{displayTitle(skin.description)}</span>
       </span>
     </button>
@@ -252,7 +245,7 @@ export function App({ skins }: { skins: Skin[] }) {
     <main className="feed-page">
       <FeedHeader headerRef={feedHeaderRef} searchSlotRef={feedSearchSlotRef} skinCount={skins.length} />
       <section className="feed-content" aria-labelledby="discover-title">
-        <div className="feed-section-title"><div><h2 id="discover-title">{query.trim() === '' ? '发现更多' : '搜索结果'}</h2><span>{filtered.length} 个结果</span></div><button title="切换排序：热度 → Stars → 最近更新" onClick={() => setSort(nextCatalogSort)}>{CATALOG_SORT_LABELS[sort]}</button></div>
+        <div className="feed-section-title"><div><h2 id="discover-title">{query.trim() === '' ? '发现更多' : '搜索结果'}</h2><span>{filtered.length} 个结果</span></div><CatalogSortOptions value={sort} onChange={setSort} /></div>
         {visibleSkins.length > 0 ? <div className="skin-grid">
           {visibleSkins.map(skin => <CatalogCard key={skin.id} skin={skin} onOpen={() => select(skin.id)} onInstall={() => { setSelectedId(skin.id); setShot(0); setCopied(null); setInstallDialog('skin') }} />)}
         </div> : <p className="no-results feed-empty">没有匹配的皮肤</p>}
@@ -276,7 +269,7 @@ export function App({ skins }: { skins: Skin[] }) {
         <div className="detail-actions">
           <button className="button primary" onClick={() => { setCopied(null); setInstallDialog('skin') }}>安装这个皮肤</button>
           <a className="button outline repo-button" href={selected.repo} target="_blank" rel="noreferrer"><GithubLogo size={17} /><span>{selected.repo.replace('https://', '')}</span></a>
-          <span className="detail-stars"><StarIcon size={16} /> {selected.starsSnapshot}{selected.heat !== undefined && selected.heat.starGrowthPerDay > 0 && <em className="detail-trend" title={heatTitle(selected.heat)}>+{formatHeatRate(selected.heat.starGrowthPerDay)}/天</em>}</span>
+          <span className="detail-stars"><StarIcon size={16} /> {selected.starsSnapshot}</span>
         </div>
 
         {!verified && <p className="notice">兼容性待验证，安装前请先确认。</p>}

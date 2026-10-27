@@ -24,7 +24,7 @@ import { assessCompatibility, compatibilityContext as skinCompatibilityContext, 
 import { matchesCatalogSearch } from '../catalog-search.ts'
 import { desktopInstallPlan } from '../desktop-install.ts'
 import type { DesktopActivationIntent, DesktopPluginPanel } from './desktop-plugin-panel.ts'
-import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin, SkinHeat } from './types.ts'
+import type { CatalogSkin, DshRuntime, InstalledClientPlugin, MarketHostKind, Operation, RuntimeSkin } from './types.ts'
 import type { ConfigurationOverrideBatchPlan } from '../configuration-override-types.ts'
 import type { InstallCommandContext, InstallEnvironment } from '../install-command.ts'
 
@@ -54,7 +54,6 @@ export function resolvePrimitiveIcon(module: Record<string, unknown>, currentNam
 
 const primitiveModule = primitiveExports as unknown as Record<string, unknown>
 const IconChevronLeftOutline = resolvePrimitiveIcon(primitiveModule, 'IconChevronLeftOutlineRegular', 'IconChevronLeftOutline14')
-const IconChevronDownOutline = resolvePrimitiveIcon(primitiveModule, 'IconChevronDownOutlineRegular', 'IconChevronDownOutline14')
 const IconCheckOutline = resolvePrimitiveIcon(primitiveModule, 'IconCheckOutlineRegular', 'IconCheckOutline16')
 const IconCopyOutline = resolvePrimitiveIcon(primitiveModule, 'IconCopyOutlineRegular', 'IconCopyOutline16')
 const IconDownloadOutline = resolvePrimitiveIcon(primitiveModule, 'IconDownloadOutlineRegular', 'IconDownloadOutline16')
@@ -612,28 +611,16 @@ export function compareSkinOrder(a: CatalogSkin, b: CatalogSkin, sortBy: Catalog
 }
 
 const CATALOG_SORTS = ['heat', 'stars', 'latest'] as const
-export const CATALOG_SORT_HINT = '切换排序：热度 → Stars → 最新'
-
-export function nextCatalogSort(sort: CatalogSort): CatalogSort {
-  return CATALOG_SORTS[(CATALOG_SORTS.indexOf(sort) + 1) % CATALOG_SORTS.length]!
-}
+const CATALOG_SORT_LABELS: Record<CatalogSort, string> = { heat: '热度', stars: 'Stars', latest: '最新' }
 
 export function catalogSortLabel(sort: CatalogSort): string {
-  return sort === 'heat' ? '热度' : sort === 'stars' ? 'Stars' : '最新'
+  return CATALOG_SORT_LABELS[sort]
 }
 
-/** Age-normalized Star growth worth showing on a card. */
-export function skinHeatRate(skin: Pick<CatalogSkin, 'heat'>): number {
-  return skin.heat === undefined ? 0 : Math.max(0, skin.heat.starGrowthPerDay)
-}
-
-export function formatHeatRate(value: number): string {
-  const digits = value >= 10 ? 1 : value >= 1 ? 2 : 3
-  return value.toFixed(digits).replace(/\.?(0+)$/, '')
-}
-
-export function heatTitle(heat: SkinHeat): string {
-  return `皮肤年龄 ${heat.ageDays} 天；Stars ${formatHeatRate(heat.starsPerDay)}/天，线性衰减后的增长 ${formatHeatRate(heat.starGrowthPerDay)}/天；提交 ${formatHeatRate(heat.commitsPerDay)}/天、PR ${formatHeatRate(heat.pullsPerDay)}/天、外部 issue ${formatHeatRate(heat.issuesPerDay)}/天（截至 ${heat.asOf}）`
+function CatalogSortOptions({ value, onChange }: { value: CatalogSort; onChange: (value: CatalogSort) => void }) {
+  return <div className={css.sortOptions} role="group" aria-label="排序方式">
+    {CATALOG_SORTS.map(sort => <Pill key={sort} className={css.sortPill} active={value === sort} aria-pressed={value === sort} onClick={() => onChange(sort)}>{catalogSortLabel(sort)}</Pill>)}
+  </div>
 }
 
 export function compareInstalledSkinOrder(a: CatalogSkin, b: CatalogSkin, states: RuntimeSkin[]): number {
@@ -2195,12 +2182,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             ? '已安装'
             : null
     const open = () => location === 'installed' ? openInstalledBrowser(skin.id) : openBrowser(skin.id, 'discover')
-    const heatRate = location === 'discover' ? skinHeatRate(skin) : 0
     return <article className={css.homeCard} data-active={itemState.activation === 'active' ? 'true' : undefined} data-actions={actionCount} key={`${location}:${skin.id}`}>
       <button type="button" className={`${css.homeCardOpen} dsh-skin-media-hover`} aria-current={itemState.activation === 'active' ? 'true' : undefined} aria-label={location === 'installed' ? `${skin.name.zh} 已安装卡片` : `${skin.name.zh} 界面预览`} onClick={open}>
         <span className={css.homeCardMedia}><PreviewMedia skin={skin} src={getCatalogListScreenshot(skin)} fallbackSources={getCatalogScreenshotUrls(skin)} alt={`${skin.name.zh} 界面预览`} kind="recommendation" loading="lazy" /></span>
         <span className={css.homeCardCopy}>
-          <span className={css.homeCardTitleRow}><strong title={skin.name.zh}>{skin.name.zh}</strong>{location === 'discover' && <><span className={css.feedMeta}><StarIcon size={12} aria-hidden="true" /> {skin.githubStars}</span>{heatRate > 0 && skin.heat !== undefined && <span className={css.cardTrend} title={heatTitle(skin.heat)}>+{formatHeatRate(heatRate)}/天</span>}</>}</span>
+          <span className={css.homeCardTitleRow}><strong title={skin.name.zh}>{skin.name.zh}</strong>{location === 'discover' && <span className={css.feedMeta}><StarIcon size={12} aria-hidden="true" /> {skin.githubStars}</span>}</span>
           <span className={css.homeCardDescription} title={skin.description}>{displayTitle(skin.description)}</span>
         </span>
       </button>
@@ -2487,7 +2473,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           <section className={css.homeSection} aria-labelledby="discover-skins-title">
             <div className={css.homeSectionTitle}>
               <h3 id="discover-skins-title">{homeQuery.trim() === '' ? '发现更多' : '搜索结果'}</h3>
-              <Button className={css.sortButton} variant="ghost" size="sm" title={CATALOG_SORT_HINT} aria-label={`排序：${catalogSortLabel(sortBy)}`} onClick={() => setSortBy(nextCatalogSort)}>{catalogSortLabel(sortBy)} <IconChevronDownOutline /></Button>
+              <CatalogSortOptions value={sortBy} onChange={setSortBy} />
             </div>
             {catalogLoading && skins.length === 0 ? <div className={css.homeLoading}><IconLoadingOutline /> 正在加载皮肤…</div> : visibleDiscoverySkins.length > 0 ? <div className={css.discoveryGrid}>
               {visibleDiscoverySkins.map(skin => renderHomeCard(skin, 'discover'))}
@@ -2509,9 +2495,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               <Pill className={css.filterPill} active={filter === 'all'} aria-pressed={filter === 'all'} onClick={() => { setFilter('all'); setSortBy('heat') }}>全部</Pill>
               <Pill className={css.filterPill} active={filter === 'installed'} aria-pressed={filter === 'installed'} onClick={() => setFilter('installed')}>已安装</Pill>
             </div>
-            <Button className={css.sortButton} variant="ghost" size="sm" title={CATALOG_SORT_HINT} aria-label={`排序：${catalogSortLabel(sortBy)}`} onClick={() => setSortBy(nextCatalogSort)}>
-              {catalogSortLabel(sortBy)} <IconChevronDownOutline />
-            </Button>
+            <CatalogSortOptions value={sortBy} onChange={setSortBy} />
           </div>
         </div>
         <div className={css.skinList} ref={skinListRef} onScroll={event => {
@@ -2532,7 +2516,6 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
                 <span className={css.cardMetaLine}>
                   <span className={css.cardMeta} title={githubRepoLabel(skin.repo)}>{githubRepoLabel(skin.repo)}</span>
                   <span className={css.cardStars} title={`GitHub Stars 快照，更新于 ${displayDate(skin.starsUpdatedAt)}`}><StarIcon size={12} aria-hidden="true" /> {skin.githubStars}</span>
-                  {skinHeatRate(skin) > 0 && skin.heat !== undefined && <span className={css.cardTrend} title={heatTitle(skin.heat)}>+{formatHeatRate(skinHeatRate(skin))}/天</span>}
                 </span>
               </span>
               <StatusLabel active={mutationLabel === null && itemState.activation === 'active'}>{mutationLabel ?? (itemState.activation === 'active' ? compactStatusLabel(itemState) : itemState.updateAvailable && !isManualOnly(skin) ? '可更新' : compactStatusLabel(itemState))}</StatusLabel>
@@ -2588,7 +2571,6 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               <span className={css.actionDivider} aria-hidden="true" />
               <span className={css.repoMeta}>
                 <span className={css.stars} title={`GitHub Stars 快照，更新于 ${displayDate(selected.starsUpdatedAt)}`}><StarIcon size={16} aria-hidden="true" /> {selected.githubStars}</span>
-                {skinHeatRate(selected) > 0 && selected.heat !== undefined && <span className={css.cardTrend} title={heatTitle(selected.heat)}>+{formatHeatRate(selected.heat.starGrowthPerDay)}/天</span>}
                 <a className={css.repoLink} href={selected.repo} target="_blank" rel="noreferrer" title={selected.repo}><MarkGithubIcon size={16} aria-hidden="true" /><span>{selected.repo.replace('https://', '')}</span></a>
               </span>
           </div>
@@ -2617,7 +2599,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
 
           <div className={css.aboutGrid}>
             <article><h3>关于此皮肤</h3><p>{selected.description}</p><div className={css.tags}>{selected.tags.map(tag => <Pill key={tag}>{tag}</Pill>)}</div><dl className={css.metadata}><div><dt>许可证</dt><dd>{selected.license.code}</dd></div><div><dt>代码商业使用</dt><dd>{selected.license.commercialUse ? '许可证允许' : '未获授权'}</dd></div><div><dt>模式</dt><dd>{selected.modes.join(' / ')}</dd></div></dl>{manualOnly && <p className={css.notice}>{manualHealthNotice}</p>}{selected.review?.preview === 'repository-card' && !(selected.marketScreenshots?.length) && <p className={css.notice}>该仓库暂无可识别的皮肤截图，市场使用本地占位卡，不会加载 GitHub 仓库图片。</p>}{usesMarketScreenshots(selected) && <p className={css.notice}>当前展示的是市场在隔离 DSH 中实机补录的截图；仓库尚无可识别的界面截图。</p>}{selected.license.notice && <p className={css.notice}>{selected.license.notice}</p>}</article>
-            <aside className={css.changelog}><h3>仓库健康</h3>{selected.health ? <><ol className={css.healthList}>{Object.entries(selected.health.checks).map(([key, value]) => <li key={key}><strong>{healthLabels[key as keyof typeof healthLabels]}</strong><span data-health={value}>{value === 'pass' ? '符合要求' : '建议完善'}</span></li>)}</ol>{selected.health.suggestions.map(suggestion => <p className={css.healthSuggestion} key={suggestion}>{suggestion}</p>)}</> : <p className={css.healthSuggestion}>等待下一次仓库健康扫描。</p>}<h3 className={css.collectionTitle}>收录信息</h3><ol><li><strong>{selected.install.version}</strong><span>版本快照更新于 {displayDate(selected.releaseUpdatedAt)}</span></li><li><strong>Stars</strong><span>{selected.githubStars}，更新于 {displayDate(selected.starsUpdatedAt)}</span></li>{selected.heat !== undefined && <li><strong>热度</strong><span>皮肤年龄 {selected.heat.ageDays} 天；Stars {selected.heat.starsPerDay}/天，线性增长 {selected.heat.starGrowthPerDay}/天；提交 {selected.heat.commitsPerDay}/天 / PR {selected.heat.pullsPerDay}/天 / 外部 issue {selected.heat.issuesPerDay}/天（截至 {selected.heat.asOf}）</span></li>}<li><strong>兼容</strong><span>{compatibilityUnverified ? '等待维护者声明 DSH 兼容范围' : `支持 DSH ${selected.compatibility.dsh}`}</span></li></ol><a href={selected.repo} target="_blank" rel="noreferrer">查看仓库详情</a></aside>
+            <aside className={css.changelog}><h3>仓库健康</h3>{selected.health ? <><ol className={css.healthList}>{Object.entries(selected.health.checks).map(([key, value]) => <li key={key}><strong>{healthLabels[key as keyof typeof healthLabels]}</strong><span data-health={value}>{value === 'pass' ? '符合要求' : '建议完善'}</span></li>)}</ol>{selected.health.suggestions.map(suggestion => <p className={css.healthSuggestion} key={suggestion}>{suggestion}</p>)}</> : <p className={css.healthSuggestion}>等待下一次仓库健康扫描。</p>}<h3 className={css.collectionTitle}>收录信息</h3><ol><li><strong>{selected.install.version}</strong><span>版本快照更新于 {displayDate(selected.releaseUpdatedAt)}</span></li><li><strong>Stars</strong><span>{selected.githubStars}，更新于 {displayDate(selected.starsUpdatedAt)}</span></li><li><strong>兼容</strong><span>{compatibilityUnverified ? '等待维护者声明 DSH 兼容范围' : `支持 DSH ${selected.compatibility.dsh}`}</span></li></ol><a href={selected.repo} target="_blank" rel="noreferrer">查看仓库详情</a></aside>
           </div>
 
           <section className={css.recommendations}><h3>更多推荐</h3><div>{recommendations.map(skin => renderHomeCard(skin, 'discover'))}</div></section>

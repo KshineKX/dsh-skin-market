@@ -114,4 +114,22 @@ describe('public install panel', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: '复制安装皮肤市场的命令' }))
     await waitFor(() => expect(writeText).toHaveBeenLastCalledWith('dsh plugin --profile web add "dsh-skin-market"'))
   })
+
+  it('shows inline sorting modes with only Stars on a skin card', () => {
+    const withHeat = {
+      ...skin,
+      heat: { ageDays: 12, starsPerDay: 1, starGrowthPerDay: 0.5, commitsPerDay: 0, pullsPerDay: 0, issuesPerDay: 0, score: 2, asOf: '2026-10-27' },
+    }
+    render(<App skins={[withHeat]} />)
+
+    const sortOptions = screen.getByRole('group', { name: '排序方式' })
+    expect(within(sortOptions).getByRole('button', { name: '热度' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(sortOptions).getByRole('button', { name: 'Stars' }).getAttribute('aria-pressed')).toBe('false')
+    expect(within(sortOptions).getByRole('button', { name: '最新' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByText(/优先/)).toBeNull()
+    expect(screen.getByRole('button', { name: '测试皮肤 界面预览' }).textContent).not.toContain('/天')
+
+    fireEvent.click(within(sortOptions).getByRole('button', { name: 'Stars' }))
+    expect(within(sortOptions).getByRole('button', { name: 'Stars' }).getAttribute('aria-pressed')).toBe('true')
+  })
 })

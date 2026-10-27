@@ -115,7 +115,7 @@
 .homeGithubAction:focus-visible .homeGithubLabel { display: inline; }
 .homeContent { display: grid; min-height: 0; gap: 30px; margin-top: 12px; padding: 24px 24px 38px; overflow-y: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-gutter: stable; -webkit-overflow-scrolling: touch; }
 .homeSection { min-width: 0; }
-.homeSectionTitle { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+.homeSectionTitle { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
 .homeSectionTitle h3 { font-size: 15px; font-weight: 600; line-height: 22px; }
 .homeSectionTitle > span { color: var(--dsw-alias-label-caption); font-size: 11px; line-height: 17px; }
 .installedRow { display: grid; grid-template-columns: repeat(var(--installed-columns), minmax(0, 1fr)); gap: 20px; overflow: hidden; }
@@ -308,10 +308,11 @@
 .catalogHeader > span input { min-width: 0; flex: 1; color: var(--dsw-alias-label-primary); border: 0; outline: 0; background: transparent; }
 .catalogHeader > span input::placeholder { color: var(--dsw-alias-label-caption); }
 
-.filterBar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.filterBar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .filters { display: flex; flex-wrap: wrap; gap: 4px; }
 .filterPill { flex: none; }
-.sortButton { flex: none; }
+.sortOptions { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px; }
+.sortPill { flex: none; }
 .skinList { display: flex; height: 0; min-height: 0; flex: 1 1 0; flex-direction: column; gap: 4px; margin: 0; padding: 8px 12px 16px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 
 .skinCard {
@@ -351,7 +352,7 @@
 .cardMetaLine { display: flex; min-width: 0; align-items: center; gap: 8px; color: var(--dsw-alias-label-tertiary, var(--dsw-alias-label-secondary)); font-size: var(--dsw-font-xxs-12-font-size); line-height: var(--dsw-font-xxs-12-line-height); }
 .cardMeta { min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .cardStars { display: inline-flex; flex: none; align-items: center; gap: 3px; white-space: nowrap; }
-.cardTrend { display: inline-flex; flex: none; align-items: center; color: var(--dsw-alias-state-success-primary); font-size: 11px; font-variant-numeric: tabular-nums; line-height: 17px; white-space: nowrap; }
+
 .statusLabel { display: inline-flex; min-width: 0; align-items: center; color: var(--dsw-alias-label-tertiary, var(--dsw-alias-label-secondary)); font-size: 11px; font-weight: 400; line-height: 17px; white-space: nowrap; }
 .statusLabel[data-active="true"] { color: var(--dsw-alias-state-success-primary); }
 

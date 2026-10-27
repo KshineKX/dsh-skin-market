@@ -1187,7 +1187,7 @@ describe('client market', () => {
     const sidebarCards = screen.getByRole('complementary', { name: 'catalog' }).querySelectorAll<HTMLButtonElement>('button[data-skin-id]')
     expect([...sidebarCards].map(card => card.dataset.skinId)).toEqual(installedSkins.map(item => item.id).reverse())
     fireEvent.click(screen.getByRole('button', { name: '全部' }))
-    expect(screen.getByRole('button', { name: '排序：热度' })).toBeTruthy()
+    expect(within(screen.getByRole('complementary', { name: 'catalog' })).getByRole('group', { name: '排序方式' })).toBeTruthy()
   })
 
   it('shows installed skeletons while runtime state loads and hides the section when empty', async () => {
@@ -3299,17 +3299,23 @@ describe('client market', () => {
     expect(screen.queryByRole('button', { name: /测试皮肤 界面预览/ })).toBeNull()
   })
 
-  it('cycles heat, Stars and latest sorting on the discovery feed', async () => {
+  it('shows heat, Stars and latest sorting modes and highlights the active one', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog') ? { skins: [skin] } : { skins: [] } })))
     render(<SkinMarketSection t={key => key} />)
     await screen.findByRole('heading', { name: '发现更多' })
-    expect(screen.getByRole('button', { name: '排序：热度' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '排序：热度' }))
-    expect(screen.getByRole('button', { name: '排序：Stars' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '排序：Stars' }))
-    expect(screen.getByRole('button', { name: '排序：最新' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '排序：最新' }))
-    expect(screen.getByRole('button', { name: '排序：热度' })).toBeTruthy()
+    const sortOptions = screen.getByRole('group', { name: '排序方式' })
+    const heat = within(sortOptions).getByRole('button', { name: '热度' })
+    const stars = within(sortOptions).getByRole('button', { name: 'Stars' })
+    const latest = within(sortOptions).getByRole('button', { name: '最新' })
+    expect(heat.getAttribute('aria-pressed')).toBe('true')
+    expect(stars.getAttribute('aria-pressed')).toBe('false')
+    expect(latest.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(stars)
+    expect(heat.getAttribute('aria-pressed')).toBe('false')
+    expect(stars.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(latest)
+    expect(stars.getAttribute('aria-pressed')).toBe('false')
+    expect(latest.getAttribute('aria-pressed')).toBe('true')
   })
 
   it('shows Stars in list rows and marks the selected skin', async () => {
