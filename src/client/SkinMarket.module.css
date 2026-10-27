@@ -186,7 +186,7 @@
 .homeCardRepo { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feedMeta { display: inline-flex; flex: none; align-items: center; gap: 4px; white-space: nowrap; }
 .cardInlineActions { display: inline-flex; min-width: 0; align-items: center; gap: 4px; flex: none; }
-.cardAction { min-height: 24px; height: 24px; padding-inline: 8px; font-size: 11px; line-height: 16px; flex: none; }
+.cardAction { min-height: 24px; height: 24px; padding-inline: 8px; border-radius: var(--dsw-radius-sm); font-size: 11px; line-height: 16px; flex: none; }
 .cardActionProgress { display: inline-flex; min-height: 24px; align-items: center; gap: 4px; color: var(--dsw-alias-label-caption); font-size: 11px; line-height: 17px; }
 .cardActionProgress svg { width: 13px; height: 13px; animation: spin 1s linear infinite; }
 .installedMoreCard { display: flex; min-height: 0; align-items: center; justify-content: center; gap: 9px; color: var(--dsw-alias-label-secondary); text-align: center; }
@@ -482,9 +482,9 @@
 .manualInstallGuide p { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 18px; }
 .installCommandLabel { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; }
 .installCommandGroup { display: grid; min-width: 0; gap: 8px; }
-.installSegmented { display: inline-flex; flex: none; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; background: var(--dsw-alias-bg-layer-1); }
-.installSegmented button { min-width: 0; min-height: 26px; height: auto; padding: 4px 9px; cursor: pointer; border: 0; border-radius: 6px; color: var(--dsw-alias-label-caption); background: var(--dsw-alias-bg-layer-1); font: inherit; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; transition: color var(--ds-transition-duration), background var(--ds-transition-duration); }
-.installSegmented button[aria-pressed="true"] { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); box-shadow: 0 1px 3px rgb(0 0 0 / 9%); }
+.installSegmented { display: inline-flex; flex: none; align-items: center; gap: 2px; padding: 4px; border-radius: var(--dsw-radius-md); background: var(--dsw-alias-bg-layer-1); }
+.installSegmented button { min-width: 0; min-height: 26px; height: auto; padding: 4px 9px; cursor: pointer; border: 0; border-radius: var(--dsw-radius-sm); color: var(--dsw-alias-label-caption); background: var(--dsw-alias-bg-layer-1); font: inherit; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; transition: color var(--ds-transition-duration), background var(--ds-transition-duration); }
+.installSegmented button[aria-pressed="true"] { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); box-shadow: var(--dsw-elevation-soft); }
 .installSegmented button:hover { color: var(--dsw-alias-label-primary); }
 .copyCapsule { display: flex; min-width: 0; height: 36px; align-items: center; gap: 8px; padding: 0 0 0 12px; overflow: hidden; border: 0.5px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-md); background: var(--dsw-alias-bg-layer-1); }
 .copyCapsule code { min-width: 0; flex: 1; overflow: hidden; color: var(--dsw-alias-label-secondary); font: 12px/32px var(--ds-font-family-code); text-overflow: ellipsis; white-space: nowrap; }

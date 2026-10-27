@@ -258,7 +258,7 @@ export function App({ skins }: { skins: Skin[] }) {
     {detailOpen && <div className="browser-overlay" role="presentation">
       <button className="browser-mask" aria-hidden="true" tabIndex={-1} onClick={() => setDetailOpen(false)} />
       <section className="browser-panel" role="dialog" aria-modal="true" aria-label="皮肤详情">
-        <header className="browser-titlebar"><span><strong>皮肤详情</strong><small>{githubRepoLabel(selected.repo)}</small></span><button className="button outline" onClick={() => setDetailOpen(false)}><X size={15} /> 关闭详情</button></header>
+        <header className="browser-titlebar"><span><strong>皮肤详情</strong><small>{githubRepoLabel(selected.repo)}</small></span><button className="button outline" aria-label="关闭详情" title="关闭详情" onClick={() => setDetailOpen(false)}><X size={15} /></button></header>
         <section className="detail" ref={detailRef} aria-label="皮肤详情内容">
         <button className="mobile-back" onClick={() => setDetailOpen(false)}><ArrowLeft size={16} /> 返回发现</button>
         <header className="skin-head">
