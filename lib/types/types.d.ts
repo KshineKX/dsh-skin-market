@@ -228,6 +228,8 @@ export interface OperationFailure {
     };
     artifactRisk?: SkinArtifactRisk;
     manualSpec?: string;
+    /** An exact verified target that the official Desktop panel may prefill after a failure. */
+    fallbackSpec?: string;
     buildKeys?: string[];
     action?: OperationRetryAction;
     conflicts?: InstallConflict[];

@@ -81,11 +81,13 @@ export declare class SkinLifecycle {
     private readonly pendingConfigurationRepairs;
     private readonly failedConfigurationBindings;
     private readonly pendingSelectionConfigurations;
+    private readonly registryPlanCache;
     get waitingReason(): string | undefined;
     constructor(host: LifecycleHost, options: LifecycleOptions, catalog?: SkinEntry[]);
     get catalog(): SkinEntry[];
     private get hostKind();
     private get management();
+    private registryPlanFor;
     private assertSkinLoaderConflicts;
     private legacyBinding;
     private bundleBinding;
@@ -110,6 +112,9 @@ export declare class SkinLifecycle {
     private applyReleaseAgeApproval;
     /** Called only for package transactions while holding the profile queue. */
     private managedPackageCall;
+    private shouldTryNextRegistry;
+    /** Retry only confirmed, pre-application package failures on the host's next registry. */
+    private managedInstallWithRegistryRecovery;
     /** HMR Desktop rejects installBundle for a dependency that already exists. */
     private replaceInstalledDesktopPackage;
     private acceptManagement;

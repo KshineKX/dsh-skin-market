@@ -897,6 +897,61 @@ describe('skin lifecycle', () => {
     expect(calls.find(args => args[0] === 'add' && !args.includes('--dir'))).toEqual(['add', `${skin.package}@${skin.install.version}`, '--prefer-offline', '--save-exact', '--reporter=ndjson'])
   })
 
+  it('uses the host registry fallback for npm skin prefetch and live installation', async () => {
+    const dir = fixture()
+    const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+    const base = firstInstallable(probe)
+    const integrity = 'sha512-abc'
+    const skin = {
+      ...base,
+      id: 'npm-registry-fallback.skin',
+      install: { ...base.install, npm: { name: base.package, version: base.install.version, integrity, repository: base.repo, gitHead: base.install.commit } },
+    }
+    const calls: string[][] = []
+    const primary = 'https://primary.example/npm'
+    const fallback = 'https://fallback.example/npm'
+    let failedPrimaryPrefetch = false
+    const materialize = (targetDir: string): void => {
+      atomicWriteJson(join(targetDir, 'package.json'), { dependencies: { [skin.package]: skin.install.version } })
+      const packageDir = join(targetDir, 'node_modules', ...skin.package.split('/'))
+      mkdirSync(packageDir, { recursive: true })
+      atomicWriteJson(join(packageDir, 'package.json'), {
+        name: skin.package,
+        version: skin.install.version,
+        repository: { type: 'git', url: `git+${skin.repo}.git` },
+        exports: { './client': './client.js' },
+        dsh: { client: { platform: 'web' } },
+      })
+      atomicWriteText(join(packageDir, 'client.js'), 'export const fixture = true\n')
+      atomicWriteText(join(targetDir, 'pnpm-lock.yaml'), `lockfileVersion: '9.0'\npackages:\n  '${skin.package}@${skin.install.version}':\n    resolution:\n      integrity: ${integrity}\n`)
+    }
+    const runner: PluginRunner = Object.assign(
+      async (_profile: string, args: readonly string[]) => {
+        calls.push([...args])
+        if (args[0] === 'add' && args.includes('--dir')) {
+          const targetDir = args[args.indexOf('--dir') + 1]!
+          if (args.includes(`--registry=${primary}`) && !failedPrimaryPrefetch) {
+            failedPrimaryPrefetch = true
+            return { ...success(), exitCode: 1, stderr: 'TypeError: fetch failed' }
+          }
+          materialize(targetDir)
+        } else if (args[0] === 'add') {
+          materialize(dir)
+        }
+        return success()
+      },
+      { registryPlan: async () => [primary, fallback] },
+    )
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner }, [skin])
+
+    expect((await finished(lifecycle.begin('install', skin.id))).phase).toBe('done')
+    expect(calls.filter(args => args[0] === 'add').map(args => args.find(arg => arg.startsWith('--registry=')))).toEqual([
+      `--registry=${primary}`,
+      `--registry=${fallback}`,
+      `--registry=${primary}`,
+    ])
+  })
+
   it('requires explicit approval for an unknown exact build key and retries with that key', async () => {
     const dir = fixture()
     const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })

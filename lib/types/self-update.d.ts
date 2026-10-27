@@ -2,6 +2,7 @@ import type { PluginRunner } from './commands.ts';
 import type { OperationFailure } from './types.ts';
 import type { OfficialApplication } from './official-desktop.ts';
 export declare const MARKET_NPM_PACKAGE = "dsh-skin-market";
+export declare const MARKET_NPM_REGISTRY = "https://registry.npmjs.org";
 export declare const MARKET_NPM_METADATA_URL = "https://registry.npmjs.org/dsh-skin-market";
 export interface MarketUpdateStatus {
     currentVersion: string;
@@ -53,4 +54,5 @@ export declare function createMarketUpdater(profile: string, runner: PluginRunne
     fetch?: typeof fetch;
     cacheMs?: number;
     profileDir?: string;
+    registryPlan?: () => Promise<readonly string[] | undefined>;
 }): MarketUpdater;

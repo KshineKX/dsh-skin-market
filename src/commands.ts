@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { resolveProfileDir } from './profile.ts'
 import type { MarketHostKind } from './types.ts'
 import type { OfficialInstallProgress, OfficialManagementAdapter, OfficialManagementResult } from './official-desktop.ts'
+import { normalizeRegistryBase, registryPlanFromSnapshot, type RegistryPlanProvider } from './registry-plan.ts'
 
 export interface CommandResult {
   exitCode: number | null
@@ -46,6 +47,8 @@ export interface PluginRunner {
   ensurePnpm?: (options?: CommandOptions) => Promise<void>
   installPlugin?: (profile: string, request: PluginInstallRequest, options?: CommandOptions) => Promise<CommandResult>
   management?: OfficialManagementAdapter
+  /** Ordered registry bases supplied by the host for package operations. */
+  registryPlan?: RegistryPlanProvider
 }
 export function normalizedEnvironment(options?: CommandOptions): NodeJS.ProcessEnv | undefined {
   if (options?.env === undefined) return undefined
@@ -431,10 +434,16 @@ export function createPnpmProvisioner(execute: CommandExecutor = runCommand): (o
 
 export const ensurePnpmAvailable = createPnpmProvisioner()
 
-export const runPluginCli: PluginRunner = (profile, args, options) => runProcess(
-  pluginProcess(profile, args), PLUGIN_COMMAND_TIMEOUT_MS, options,
-)
-runPluginCli.ensurePnpm = ensurePnpmAvailable
+export function createPluginCliRunner(registryPlan?: RegistryPlanProvider): PluginRunner {
+  const runner: PluginRunner = (profile, args, options) => runProcess(
+    pluginProcess(profile, args), PLUGIN_COMMAND_TIMEOUT_MS, options,
+  )
+  runner.ensurePnpm = ensurePnpmAvailable
+  if (registryPlan !== undefined) runner.registryPlan = registryPlan
+  return runner
+}
+
+export const runPluginCli: PluginRunner = createPluginCliRunner()
 
 interface DesktopOperation {
   stdout: NodeJS.ReadableStream
@@ -445,9 +454,12 @@ interface DesktopOperation {
 
 export interface DesktopPnpmLike {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): DesktopOperation
+  /** Configured registry and ordered fallbacks, when exposed by the host. */
+  registries?(): Promise<unknown>
   /** Hosts that still book a recovery receipt. Absent on Anywhere Labs Desktop 2.x. */
   installPlugin?(request: {
     pnpmOptions?: readonly string[]
+    registry?: string | null
     invokingDir: string
     recovery: { packageName: string; packageVersion: string; receiptId: string }
     signal?: AbortSignal
@@ -473,7 +485,10 @@ function externalMarketInstallArgv(request: PluginInstallRequest): readonly stri
   if (!NPM_PACKAGE_NAME.test(request.packageName) || !NPM_EXACT_VERSION.test(request.packageVersion)) return undefined
   const flags = request.pnpmOptions ?? []
   if (flags.some(flag => !flag.startsWith('-') || flag.includes('\0'))) return undefined
-  return ['add', ...flags, `${request.packageName}@${request.packageVersion}`]
+  const normalizedRegistry = request.registry === undefined || request.registry === null ? null : normalizeRegistryBase(request.registry)
+  if (request.registry !== undefined && request.registry !== null && normalizedRegistry === null) return undefined
+  const registry = normalizedRegistry === null ? [] : [`--registry=${normalizedRegistry}`]
+  return ['add', ...flags, ...registry, `${request.packageName}@${request.packageVersion}`]
 }
 
 function desktopInstallRejected(stderr: string): Promise<CommandResult> {
@@ -563,6 +578,15 @@ export function desktopRunner(service: DesktopPnpmLike, profileDir: string): Plu
     options,
   )
   runner.hostKind = 'desktop'
+  if (typeof service.registries === 'function') {
+    runner.registryPlan = async () => {
+      try {
+        return registryPlanFromSnapshot(await service.registries!())
+      } catch {
+        return undefined
+      }
+    }
+  }
   runner.installPlugin = (_profile, request, options) => {
     if (request.spec !== undefined && request.spec !== `${request.packageName}@${request.packageVersion}`) {
       return desktopInstallRejected(DESKTOP_NPM_ONLY)
@@ -571,6 +595,7 @@ export function desktopRunner(service: DesktopPnpmLike, profileDir: string): Plu
       return runDesktopOperation(
         signal => service.installPlugin!({
           pnpmOptions: request.pnpmOptions,
+          registry: request.registry,
           invokingDir: profileDir,
           recovery: {
             packageName: request.packageName,

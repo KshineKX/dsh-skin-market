@@ -1,5 +1,6 @@
 import type { MarketHostKind } from './types.ts';
 import type { OfficialInstallProgress, OfficialManagementAdapter, OfficialManagementResult } from './official-desktop.ts';
+import { type RegistryPlanProvider } from './registry-plan.ts';
 export interface CommandResult {
     exitCode: number | null;
     stdout: string;
@@ -36,6 +37,8 @@ export interface PluginRunner {
     ensurePnpm?: (options?: CommandOptions) => Promise<void>;
     installPlugin?: (profile: string, request: PluginInstallRequest, options?: CommandOptions) => Promise<CommandResult>;
     management?: OfficialManagementAdapter;
+    /** Ordered registry bases supplied by the host for package operations. */
+    registryPlan?: RegistryPlanProvider;
 }
 export declare function normalizedEnvironment(options?: CommandOptions): NodeJS.ProcessEnv | undefined;
 export declare const winCmdShim: boolean;
@@ -96,6 +99,7 @@ export declare function quoteCmdArg(arg: string): string;
 export declare function cmdCommandLine(argv: readonly string[]): string;
 export declare function createPnpmProvisioner(execute?: CommandExecutor): (options?: CommandOptions) => Promise<void>;
 export declare const ensurePnpmAvailable: (options?: CommandOptions) => Promise<void>;
+export declare function createPluginCliRunner(registryPlan?: RegistryPlanProvider): PluginRunner;
 export declare const runPluginCli: PluginRunner;
 interface DesktopOperation {
     stdout: NodeJS.ReadableStream;
@@ -108,9 +112,12 @@ interface DesktopOperation {
 }
 export interface DesktopPnpmLike {
     runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): DesktopOperation;
+    /** Configured registry and ordered fallbacks, when exposed by the host. */
+    registries?(): Promise<unknown>;
     /** Hosts that still book a recovery receipt. Absent on Anywhere Labs Desktop 2.x. */
     installPlugin?(request: {
         pnpmOptions?: readonly string[];
+        registry?: string | null;
         invokingDir: string;
         recovery: {
             packageName: string;

@@ -10,9 +10,10 @@ import { loadCatalog } from './catalog.ts'
 import { desktopGithubInstallPlan, desktopInstallPlan } from './desktop-install.ts'
 import { companionAsSkin, discoverMonorepoTarget, isNpmInstallTarget, npmInstallTarget, preferredInstallTarget, reviewedNpmSourceError, updateInstallTarget } from './install-resolution.ts'
 import { sharedLoaderIdentifiers } from './loader-ownership.ts'
-import { failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
+import { classifyPnpmFailure, failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, type PnpmFailure } from './pnpm-recovery.ts'
 import { pluginArgsFor } from './pnpm-compat.ts'
 import { PnpmProgressTracker } from './pnpm-progress.ts'
+import { normalizeRegistryPlan } from './registry-plan.ts'
 import { officialFailureDiagnostic, officialOperationFailure, manualInstallInstruction } from './official-failure.ts'
 import { applyConfigurationOverride, applyConfigurationOverrides, inspectConfigurationOverride, inspectConfigurationOverrides, rollbackConfigurationOverride, type ConfigurationOverrideOptions, type ConfigurationOverrideTarget } from './configuration-override.ts'
 import type { ConfigurationOverrideBatchPlan } from './configuration-override-types.ts'
@@ -287,6 +288,7 @@ export class SkinLifecycle {
   private readonly pendingConfigurationRepairs = new Map<string, ConfigurationRepairApproval>()
   private readonly failedConfigurationBindings = new Map<string, string>()
   private readonly pendingSelectionConfigurations = new Map<string, string>()
+  private readonly registryPlanCache = new Map<string, string[] | undefined>()
 
   get waitingReason(): string | undefined {
     if (this.unresolvedManager) return '宿主未返回可确认的操作结果，请重新打开宿主后核对插件状态'
@@ -303,6 +305,27 @@ export class SkinLifecycle {
 
   private get hostKind(): MarketHostKind { return this.options.hostKind ?? this.options.runner.hostKind ?? 'dsh' }
   private get management() { return this.options.runner.management }
+
+  private async registryPlanFor(operation?: Operation): Promise<readonly string[] | undefined> {
+    const key = operation?.id ?? '__background__'
+    if (this.registryPlanCache.has(key)) return this.registryPlanCache.get(key)
+    const provider = this.options.runner.registryPlan ?? this.management?.registries
+    if (provider === undefined) {
+      this.registryPlanCache.set(key, undefined)
+      return undefined
+    }
+    try {
+      const plan = normalizeRegistryPlan(await provider())
+      this.registryPlanCache.set(key, plan)
+      return plan
+    } catch {
+      // The host remains authoritative for its own package-manager defaults;
+      // a failed optional snapshot must not make an otherwise usable install
+      // guess a public mirror.
+      this.registryPlanCache.set(key, undefined)
+      return undefined
+    }
+  }
 
   private assertSkinLoaderConflicts(skin: SkinEntry, rows?: readonly LoaderIdentity[]): void {
     assertNoLoaderConflicts(this.options.profileDir, skin, rows, this.management === undefined ? {} : { hostKind: 'desktop' })
@@ -574,6 +597,37 @@ export class SkinLifecycle {
     return result
   }
 
+  private shouldTryNextRegistry(result: CommandResult): boolean {
+    if (result.aborted === true || result.timedOut || result.management?.indeterminate === true) return false
+    if (result.management?.application !== undefined && result.management.application !== 'failed') return false
+    const failure = officialOperationFailure(result) ?? classifyPnpmFailure(result)
+    return failure.kind === 'network' || failure.kind === 'fetch-timeout' || failure.kind === 'fetch-404'
+      || failure.kind === 'integrity' || failure.kind === 'no-matching-version'
+  }
+
+  /** Retry only confirmed, pre-application package failures on the host's next registry. */
+  private async managedInstallWithRegistryRecovery(
+    request: PluginInstallRequest,
+    operation: Operation,
+    install: (request: PluginInstallRequest) => Promise<CommandResult>,
+  ): Promise<CommandResult> {
+    const suppliedPlan = await this.registryPlanFor(operation)
+    const canPassRegistry = this.management === undefined || this.management.capabilities().registry.available
+    const plan = canPassRegistry && suppliedPlan !== undefined && suppliedPlan.length > 0 ? suppliedPlan : [undefined]
+    let result: CommandResult | undefined
+    for (let index = 0; index < plan.length; index += 1) {
+      this.checkDeadline(operation)
+      const registry = plan[index]
+      const current = registry === undefined ? request : { ...request, registry }
+      result = await this.managedPackageCall(() => install(current), operation, request.packageName, true)
+      if (result.exitCode === 0 && !result.timedOut && result.aborted !== true
+        && result.management?.application !== 'failed') return result
+      if (index + 1 >= plan.length || !this.shouldTryNextRegistry(result)) return result
+      this.update(operation, operation.phase, `当前安装源失败，正在尝试备用安装源（${index + 2}/${plan.length}）`)
+    }
+    return result!
+  }
+
   /** HMR Desktop rejects installBundle for a dependency that already exists. */
   private async replaceInstalledDesktopPackage(packageName: string, spec: string, operation: Operation, install: () => Promise<CommandResult>): Promise<CommandResult> {
     const selected = readProfileBundles(this.options.profileDir).includes(packageName)
@@ -581,7 +635,7 @@ export class SkinLifecycle {
     try {
       const removed = await this.options.runner(this.options.profile, ['remove', packageName], { signal })
       this.acceptManagement(removed, operation)
-      const installed = await this.managedPackageCall(install, operation, packageName, true)
+      const installed = await install()
       this.acceptManagement(installed, operation)
       if (selected && this.management !== undefined) {
         const restored = await this.management.setBundleEnabled(packageName, true, { signal })
@@ -1810,10 +1864,13 @@ export class SkinLifecycle {
     const ensurePnpm = this.options.runner.ensurePnpm
     if (ensurePnpm !== undefined) await ensurePnpm({ signal: controller?.signal, timeoutMs: this.remainingTime(operation) })
     const effectiveArgs = pluginArgsFor(this.options.profileDir, args)
+    const registryPlan = this.options.runner.registryPlan === undefined
+      ? undefined : await this.registryPlanFor(operation)
     let attempt = 0
     try {
       await runPnpmWithRecovery(effectiveArgs, {
         profileDir: this.options.profileDir,
+        registryPlan,
         attempt: async (attemptArgs, attemptOptions) => {
           this.checkDeadline(operation)
           const tracker = operation === undefined ? undefined : new PnpmProgressTracker()
@@ -2033,7 +2090,7 @@ export class SkinLifecycle {
       }
       if (this.management !== undefined) {
         operation.cancelable = this.management.capabilities().cancel.available
-        const result = await this.managedPackageCall(() => installPlugin(this.options.profile, { ...request, receiptId: randomUUID() }, {
+        const result = await this.managedInstallWithRegistryRecovery(request, operation, currentRequest => installPlugin(this.options.profile, { ...currentRequest, receiptId: randomUUID() }, {
           signal: controller?.signal,
           timeoutMs: this.remainingTime(operation),
           onStdout: chunk => tracker.push(chunk, operation),
@@ -2043,14 +2100,14 @@ export class SkinLifecycle {
               this.update(operation, 'validating', '下载已完成，正在由宿主应用插件')
             } else if (progress.phase === 'installing') operation.cancelable = this.management?.capabilities().cancel.available === true
           },
-        }), operation, skin.package, true)
+        }))
         const replaced = current !== undefined && result.management?.application === 'failed' && result.management.error?.code === 'already-installed'
-          ? await this.replaceInstalledDesktopPackage(skin.package, plan.target, operation, () => installPlugin(this.options.profile, { ...request, receiptId: randomUUID() }, {
+          ? await this.replaceInstalledDesktopPackage(skin.package, plan.target, operation, () => this.managedInstallWithRegistryRecovery(request, operation, currentRequest => installPlugin(this.options.profile, { ...currentRequest, receiptId: randomUUID() }, {
             signal: controller?.signal,
             timeoutMs: this.remainingTime(operation),
             onStdout: chunk => tracker.push(chunk, operation),
             onStderr: chunk => tracker.push(chunk, operation),
-          }))
+          })))
           : result
         this.acceptManagement(replaced, operation)
         if (replaced.management?.version !== undefined && replaced.management.version !== skin.install.version) throw new Error('官方宿主安装的版本与已核验目标不一致')
@@ -2060,7 +2117,10 @@ export class SkinLifecycle {
         if (this.management.installRequiresRestart) operation.restartRequired = true
         return
       }
+      const registryPlan = this.options.runner.registryPlan === undefined
+        ? undefined : await this.registryPlanFor(operation)
       await runPnpmWithRecovery(request.pnpmOptions ?? [], {
+        registryPlan,
         attempt: (pnpmOptions) => {
           this.checkDeadline(operation)
           this.startCommand(operation, ['add'], (operation.attempt ?? 0) + 1, false)

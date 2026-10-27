@@ -373,6 +373,19 @@ export function marketUpdateNotice(operation: { failure?: Operation['failure']; 
   const manual = manualInstallNotice('皮肤市场更新失败', operation.failure?.manualSpec)
   if (manual !== undefined) return manual
   const raw = (operation.failure?.message ?? operation.message ?? '').trim()
+  const fallbackSpec = operation.failure?.fallbackSpec?.trim()
+  if (fallbackSpec !== undefined && fallbackSpec !== '') {
+    const explanation = failureExplanation(operation.failure?.kind, raw, operation.failure?.code)
+    return {
+      title: '皮肤市场更新失败',
+      what: explanation.problem,
+      why: raw.includes('已打开官方插件页')
+        ? raw
+        : `已保留经过验证的精确版本 ${fallbackSpec}；正在打开官方插件页并预填，请在官方面板确认安装。`,
+      links: [],
+      copySpec: fallbackSpec,
+    }
+  }
   if (operation.failure?.kind === 'release-age' && operation.failure.action === 'approve-release-age' && operation.failure.releaseAgeTarget !== undefined) {
     return {
       title: '更新需要允许新版本',

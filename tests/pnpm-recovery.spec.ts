@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { classifyPnpmFailure, failureDiagnostic, PnpmCommandError, runPnpmWithRecovery } from '../src/pnpm-recovery.ts'
+import { classifyPnpmFailure, failureDiagnostic, PnpmCommandError, runPnpmWithRecovery, withRegistry } from '../src/pnpm-recovery.ts'
 import type { CommandResult } from '../src/commands.ts'
 
 function failed(output: string): CommandResult {
@@ -14,6 +14,27 @@ function success(): CommandResult {
 }
 
 describe('pnpm recovery', () => {
+  it('tries the host registry plan in order for package operations', async () => {
+    const calls: Array<readonly string[]> = []
+    await runPnpmWithRecovery(['add', '@example/skin@1.0.0', '--prefer-offline'], {
+      registryPlan: ['https://primary.example/npm', 'https://fallback.example/npm'],
+      attempt: async args => {
+        calls.push(args)
+        return calls.length === 1 ? failed('TypeError: fetch failed') : success()
+      },
+    })
+
+    expect(calls).toEqual([
+      ['add', '--registry=https://primary.example/npm', '@example/skin@1.0.0', '--prefer-offline'],
+      ['add', '--registry=https://fallback.example/npm', '@example/skin@1.0.0', '--prefer-offline'],
+    ])
+  })
+
+  it('adds a registry to legacy Desktop option-only install arguments', () => {
+    expect(withRegistry(['--prefer-offline', '--reporter=ndjson'], 'https://registry.example/npm'))
+      .toEqual(['--prefer-offline', '--reporter=ndjson', '--registry=https://registry.example/npm'])
+  })
+
   it.each([
     ['ERR_PNPM_OUTDATED_LOCKFILE', 'lockfile-outdated'],
     ['ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY', 'lockfile-broken'],

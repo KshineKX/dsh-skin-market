@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { officialDesktopRunner, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
+import { officialDesktopRunner, normalizeOfficialRegistryPlan, type OfficialPluginManagerLike } from '../src/official-desktop.ts'
 import { createMarketUpdater, MARKET_NPM_PACKAGE } from '../src/self-update.ts'
 import type { DshRuntime } from '../src/types.ts'
 import { runPnpmWithRecovery } from '../src/pnpm-recovery.ts'
@@ -44,6 +44,35 @@ function fullManager(): OfficialPluginManagerLike {
 }
 
 describe('official Desktop runner', () => {
+  it('exposes the host registry plan without duplicating mirror addresses', async () => {
+    const registries = vi.fn(async () => ({
+      registry: 'https://registry.npmjs.org/',
+      fallbackRegistries: ['https://registry.npmmirror.com/', 'https://registry.npmmirror.com'],
+      resolved: 'https://registry.npmjs.org/',
+    }))
+    const runner = officialDesktopRunner(() => ({
+      installBundle: vi.fn(), removeBundle: vi.fn(), registries,
+    }), runtime('0.2.1-rc.3'))
+
+    await expect(runner.management?.registries?.()).resolves.toEqual([
+      'https://registry.npmjs.org', 'https://registry.npmmirror.com',
+    ])
+    expect(registries).toHaveBeenCalledOnce()
+  })
+
+  it('keeps a resolved private registry isolated from public fallbacks', () => {
+    expect(normalizeOfficialRegistryPlan({
+      registry: 'https://registry.npmjs.org',
+      fallbackRegistries: ['https://registry.npmmirror.com'],
+      resolved: 'https://private.example/npm',
+    })).toEqual(['https://private.example/npm'])
+    expect(normalizeOfficialRegistryPlan({
+      registry: null,
+      fallbackRegistries: ['https://registry.npmjs.org'],
+      resolved: 'https://private.example/npm',
+    })).toEqual(['https://private.example/npm'])
+  })
+
   it('installs through the profile plugin manager without enabling the bundle first', async () => {
     const installBundle = vi.fn(async () => ({ changed: 'applied' }))
     const manager: OfficialPluginManagerLike = {
@@ -60,6 +89,22 @@ describe('official Desktop runner', () => {
 
     expect(result.exitCode).toBe(0)
     expect(installBundle).toHaveBeenCalledWith('dsh-theme-endfield@1.0.1', { enabled: false, requestId: 'receipt-1' })
+  })
+
+  it('passes a selected host registry to an official managed install', async () => {
+    const installBundle = vi.fn(async () => ({ changed: true, application: 'applied' }))
+    const manager: OfficialPluginManagerLike = {
+      installBundle,
+      removeBundle: vi.fn(),
+    }
+    const runner = officialDesktopRunner(() => manager, runtime('0.2.1-rc.3'))
+
+    await expect(runner.installPlugin!('desktop', {
+      packageName: 'dsh-theme-endfield', packageVersion: '1.0.1', receiptId: 'receipt-registry', registry: 'https://registry.example/npm',
+    })).resolves.toMatchObject({ exitCode: 0 })
+    expect(installBundle).toHaveBeenCalledWith('dsh-theme-endfield@1.0.1', {
+      enabled: false, requestId: 'receipt-registry', registry: 'https://registry.example/npm', saveExact: true,
+    })
   })
 
   it('routes remove through the same manager and surfaces manager failures', async () => {

@@ -2,12 +2,15 @@ import { randomUUID } from 'node:crypto'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from './commands.ts'
 import { compareVersions } from './semver.ts'
 import { officialOperationFailure } from './official-failure.ts'
+import { normalizeRegistryBase, registryPlanFromSnapshot } from './registry-plan.ts'
 import type { DshRuntime } from './types.ts'
 
 /** Structural Host service contract; no Electron or generated Client proxy dependency. */
 export interface OfficialPluginManagerLike {
   installBundle(spec: string, options?: Record<string, unknown>): Promise<unknown>
   removeBundle(name: string): Promise<unknown>
+  /** DSH 0.2.1 exposes the configured registry and its ordered fallbacks. */
+  registries?(): Promise<unknown>
   cancelInstall?(requestId: string): Promise<unknown>
   waitForInstall?(requestId: string): Promise<unknown>
   setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>
@@ -85,6 +88,18 @@ export interface OfficialManagementAdapter {
   inspect(spec: string, options?: OfficialInspectionOptions): Promise<unknown>
   listBundles(): Promise<unknown>
   listPlugins(): Promise<unknown>
+  /** Ordered registry bases supplied by the official host, when available. */
+  registries?(): Promise<string[] | undefined>
+}
+
+/**
+ * Convert the official manager's registry snapshot into a safe ordered plan.
+ * `registry: null` means "whatever pnpm resolves"; in that case `resolved`
+ * becomes the first candidate. A resolved private override must not fall
+ * through to public registries that could leak the package name.
+ */
+export function normalizeOfficialRegistryPlan(value: unknown): string[] | undefined {
+  return registryPlanFromSnapshot(value)
 }
 
 const CORE_VERSION = '0.1.6-alpha.2'
@@ -306,10 +321,8 @@ export function officialDesktopRunner(
       const installOptions: Record<string, unknown> = { enabled: false, requestId }
       if (request.registry !== undefined) {
         if (!caps.registry.available) throw new Error(caps.registry.reason)
-        if (request.registry !== null) {
-          const url = new URL(request.registry)
-          if (!['http:', 'https:'].includes(url.protocol) || url.username !== '' || url.password !== '') throw new Error('安装源必须是无凭据的 HTTP(S) 地址')
-        }
+        const normalized = request.registry === null ? null : normalizeRegistryBase(request.registry)
+        if (request.registry !== null && normalized === null) throw new Error('安装源必须是无凭据的 HTTP(S) 地址')
         installOptions.registry = request.registry
       }
       if (request.approvedBuilds !== undefined) {
@@ -384,6 +397,16 @@ export function officialDesktopRunner(
       if (typeof manager?.listPlugins !== 'function') throw new Error('官方 pluginManager 未提供可用的插件清单')
       return readManagerResult(await manager.listPlugins())
     },
+    async registries() {
+      const manager = getManager()
+      if (!coreVersion || typeof manager?.registries !== 'function') return undefined
+      try {
+        return normalizeOfficialRegistryPlan(await manager.registries())
+      } catch {
+        return undefined
+      }
+    },
   }
+  runner.registryPlan = async () => runner.management?.registries?.()
   return runner
 }
