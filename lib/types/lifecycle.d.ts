@@ -73,6 +73,7 @@ export declare class SkinLifecycle {
     private disposeEvent?;
     private disposed;
     private readonly pendingLifecycle;
+    private startupReplay?;
     private unresolvedManager;
     private readonly unverifiedRestartSkinIds;
     private readonly componentUndo;
@@ -157,7 +158,7 @@ export declare class SkinLifecycle {
     private replayLocked;
     states(): SkinRuntimeState[];
     /** Official inventory separates a saved toggle from actual fiber health. */
-    runtimeStates(): Promise<SkinRuntimeState[]>;
+    runtimeStates(skipStartupReplay?: boolean): Promise<SkinRuntimeState[]>;
     private inspectRuntimeStates;
     private describeRestartVerification;
     private liveOperations;

@@ -229,7 +229,7 @@ function pinnedSkinIds(state: PersistedMarketState): string[] {
 
 function baseEnabledSkinIds(state: PersistedMarketState, installedSkinIds: readonly string[] = []): Set<string> {
   const disabled = new Set(state.disabledSkinIds)
-  const enabled = new Set(state.activeSkinId === null ? [] : [state.activeSkinId])
+  const enabled = new Set([...(state.activeSkinId === null ? [] : [state.activeSkinId]), ...pinnedSkinIds(state)])
   const hasSelection = state.activeSkinId !== null || (state.pinnedSkinIds?.length ?? 0) > 0 || state.disabledSkinIds.length > 0
   if (hasSelection) for (const id of installedSkinIds) if (!disabled.has(id)) enabled.add(id)
   return enabled
@@ -284,6 +284,7 @@ export class SkinLifecycle {
   private disposeEvent?: () => void
   private disposed = false
   private readonly pendingLifecycle = new Set<Promise<unknown>>()
+  private startupReplay?: Promise<void>
   private unresolvedManager = false
   private readonly unverifiedRestartSkinIds = new Set<string>()
   private readonly componentUndo = new Map<string, Map<string, { skin: SkinEntry; entryId: string; enabled: boolean }>>()
@@ -1007,7 +1008,13 @@ export class SkinLifecycle {
 
   start(): void {
     if (this.disposed) return
-    void this.replay().catch(error => logEvent('error', 'startup-replay', errorMessage(error)))
+    this.startupReplay = (async () => {
+      try {
+        await this.replay()
+      } catch (error) {
+        logEvent('error', 'startup-replay', errorMessage(error))
+      }
+    })()
     // The official manager owns native-page changes. Do not interpret a new
     // Host fiber as a request to restore the market's older selection.
     if (this.management !== undefined) return
@@ -1310,7 +1317,7 @@ export class SkinLifecycle {
     }
     const enabled = this.enabledSkinIds(state)
     if (previousRestart !== undefined) {
-      const runtime = this.management === undefined ? [] : await this.runtimeStates()
+      const runtime = this.management === undefined ? [] : await this.runtimeStates(true)
       const unresolved = previousRestart.skinIds.filter(id => enabled.has(id) && runtime.some(item => item.skinId === id && (item.activation === 'unavailable' || item.activation === 'switching')))
       for (const id of previousRestart.skinIds) {
         if (unresolved.includes(id)) this.unverifiedRestartSkinIds.add(id)
@@ -1374,7 +1381,8 @@ export class SkinLifecycle {
   }
 
   /** Official inventory separates a saved toggle from actual fiber health. */
-  async runtimeStates(): Promise<SkinRuntimeState[]> {
+  async runtimeStates(skipStartupReplay = false): Promise<SkinRuntimeState[]> {
+    if (!skipStartupReplay && this.startupReplay !== undefined) await this.startupReplay
     const pending = readMarketState(this.options.profileDir).pendingRestart
     if (this.management !== undefined && pending?.pid === process.pid && Object.keys(pending.inferredInstalls ?? {}).length > 0
       && this.profileLockOwner === null && this.waitingReason === undefined) {
@@ -2633,7 +2641,8 @@ export class SkinLifecycle {
       for (const id of preserved) this.assertPreservedSkinApproved(operation, this.skin(id))
     }
     const persistentPinned = pinnedSkinIds(previous)
-    const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: persistentPinned }
+    const nextPinned = requestedPreserved === undefined ? persistentPinned : persistentPinned.filter(id => preserved.includes(id))
+    const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: nextPinned }
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)
     this.reconcileDisabledSkinIds(next, new Set([skin.id, ...preserved]))
     const enabled = this.enabledSkinIds(next)

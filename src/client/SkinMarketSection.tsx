@@ -726,7 +726,11 @@ function CatalogSortOptions({ value, onChange }: { value: CatalogSort; onChange:
 export function compareInstalledSkinOrder(a: CatalogSkin, b: CatalogSkin, states: RuntimeSkin[]): number {
   const aState = runtimeFor(states, a.id)
   const bState = runtimeFor(states, b.id)
-  const priority = (state: RuntimeSkin) => state.primary === true ? 0 : state.pinned === true ? 1 : 2
+  const priority = (state: RuntimeSkin) => {
+    if (state.activation === 'active') return state.primary === true ? 0 : state.pinned === true ? 1 : 2
+    if (state.activation === 'switching' || state.activation === 'restart-required') return state.primary === true ? 3 : state.pinned === true ? 4 : 5
+    return 6
+  }
   const priorityDifference = priority(aState) - priority(bState)
   if (priorityDifference !== 0) return priorityDifference
   const aTime = Date.parse(aState.lastOperatedAt ?? aState.installedAt ?? '')

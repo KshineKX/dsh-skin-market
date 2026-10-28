@@ -44,6 +44,10 @@ export function readMarketState(profileDir: string): PersistedMarketState {
   const value = readJson<PersistedMarketState>(marketStateFile(profileDir), fallback)
   if (value.version !== 1 || !Array.isArray(value.disabledSkinIds)) return fallback
   if (value.pinnedSkinIds !== undefined && !Array.isArray(value.pinnedSkinIds)) delete value.pinnedSkinIds
+  // Current enablement is represented by disabledSkinIds. Ignore fields from
+  // the removed temporary-retention model during state migration.
+  delete (value as PersistedMarketState & { retainedSkinIds?: unknown }).retainedSkinIds
+  delete (value as PersistedMarketState & { suppressedPinnedSkinIds?: unknown }).suppressedPinnedSkinIds
   if (value.activity !== undefined && (typeof value.activity !== 'object' || value.activity === null || Array.isArray(value.activity))) delete value.activity
   if (value.artifactAcknowledgements !== undefined) {
     if (!isRecord(value.artifactAcknowledgements)) delete value.artifactAcknowledgements

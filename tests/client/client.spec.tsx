@@ -684,6 +684,21 @@ describe('client market', () => {
     expect([older, recent, pinned, current].sort((a, b) => compareInstalledSkinOrder(a, b, states)).map(item => item.id)).toEqual(['current', 'pinned', 'recent', 'older'])
   })
 
+  it('puts every currently active installed skin above inactive skins', () => {
+    const current = { ...skin, id: 'current-active' }
+    const pinned = { ...skin, id: 'pinned-active' }
+    const secondary = { ...skin, id: 'secondary-active' }
+    const inactive = { ...skin, id: 'inactive' }
+    const states = [
+      { skinId: current.id, installation: 'installed' as const, activation: 'active' as const, primary: true, pinned: false, installedVersion: '1', updateAvailable: false },
+      { skinId: pinned.id, installation: 'installed' as const, activation: 'active' as const, primary: false, pinned: true, installedVersion: '1', updateAvailable: false },
+      { skinId: secondary.id, installation: 'installed' as const, activation: 'active' as const, primary: false, pinned: false, installedVersion: '1', updateAvailable: false },
+      { skinId: inactive.id, installation: 'installed' as const, activation: 'inactive' as const, primary: false, pinned: false, installedVersion: '1', updateAvailable: false },
+    ]
+    expect([inactive, secondary, pinned, current].sort((a, b) => compareInstalledSkinOrder(a, b, states)).map(item => item.id))
+      .toEqual(['current-active', 'pinned-active', 'secondary-active', 'inactive'])
+  })
+
   it('restores the visible list anchor after background reordering', () => {
     const list = document.createElement('div')
     const card = document.createElement('button')
