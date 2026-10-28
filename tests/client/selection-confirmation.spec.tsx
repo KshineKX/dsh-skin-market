@@ -119,6 +119,22 @@ beforeEach(() => { shownDialogs.length = 0; window.localStorage.setItem('dsh-ski
 afterEach(() => { cleanup(); setGeneratedMediaSources(undefined); window.localStorage.clear(); window.sessionStorage.clear(); vi.unstubAllGlobals() })
 
 describe('combined selection confirmation', () => {
+  it('shows cross-category conflicts in one dialog and sends the selected retained skins once', async () => {
+    const pet = { ...target, category: 'pet' }
+    const app = market({ skin: pet })
+    await choose()
+    const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
+    expect(dialog.textContent).toContain(old.name.zh)
+    expect(within(dialog).getAllByRole('switch')).toHaveLength(1)
+    expect(within(dialog).getByRole('switch').getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(within(dialog).getByRole('switch'))
+    expect(within(dialog).getByRole('switch').getAttribute('aria-checked')).toBe('true')
+    expect(within(dialog).getByRole('button', { name: '解除覆盖并常驻 1 个插件并继续' })).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并常驻 1 个插件并继续' }))
+    await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
+    expect(JSON.parse(String(app.posts('/activate')[0]![1]!.body)).preservedSkinIds).toEqual([old.id])
+  })
+
   it('combines incompatibility, first-use, artifact risk and shared repair before the first activation', async () => {
     window.localStorage.removeItem('dsh-skin-market:activation-warning-accepted')
     const incompatible = { ...target, compatibility: { ...target.compatibility, dsh: '<0.2.0-rc.2' } }

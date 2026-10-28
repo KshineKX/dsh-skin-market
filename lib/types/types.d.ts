@@ -238,6 +238,8 @@ export interface Operation {
     id: string;
     kind: OperationKind;
     skinId: string;
+    /** Explicit secondary skins selected in the combined activation confirmation. */
+    preservedSkinIds?: string[];
     phase: OperationPhase;
     message?: string;
     cancelable?: boolean;

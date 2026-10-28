@@ -27,6 +27,7 @@ export declare function readSkinMutation(request: IncomingMessage, limit?: numbe
     artifactContext?: string;
     configurationContext?: string;
     sourceContext?: string;
+    preservedSkinIds?: string[];
 }>;
 export declare function readSelectionPlan(request: IncomingMessage, limit?: number): Promise<{
     skinId: string;

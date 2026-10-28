@@ -158,17 +158,25 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     if (!method(request, response, 'POST')) return
     if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
     try {
-      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext, sourceContext } = await readSkinMutation(request)
+      const { skinId, acknowledgeCompatibility, compatibilityContext, artifactContext, configurationContext, sourceContext, preservedSkinIds } = await readSkinMutation(request)
       if (sourceContext !== undefined && kind !== 'migrate') throw new Error('invalid source context')
       if (updaterBusy() !== undefined) return sendJson(response, 409, { error: updaterBusy() })
       if (configurationContext !== undefined && !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) throw new Error('invalid configuration context')
-      const operation = sourceContext !== undefined
-        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, sourceContext)
-        : configurationContext !== undefined
-        ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, configurationContext)
-        : artifactContext === undefined
-          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
-          : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext)
+      const operation = preservedSkinIds === undefined
+        ? sourceContext !== undefined
+          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, sourceContext)
+          : configurationContext !== undefined
+          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, configurationContext)
+          : artifactContext === undefined
+            ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext)
+            : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext)
+        : sourceContext !== undefined
+          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, sourceContext, preservedSkinIds)
+          : configurationContext !== undefined
+          ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, configurationContext, undefined, preservedSkinIds)
+          : artifactContext === undefined
+            ? lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, undefined, preservedSkinIds)
+            : lifecycle.begin(kind, skinId, undefined, acknowledgeCompatibility, compatibilityContext, undefined, artifactContext, undefined, undefined, undefined, preservedSkinIds)
       sendJson(response, 202, { operationId: operation.id })
     } catch (error) {
       sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })

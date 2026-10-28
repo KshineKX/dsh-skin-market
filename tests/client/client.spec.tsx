@@ -2171,6 +2171,7 @@ describe('client market', () => {
     expect(await screen.findByRole('button', { name: '测试皮肤 已安装卡片' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '测试皮肤 界面预览' })).toBeTruthy()
     expect(screen.getAllByRole('button', { name: '使用' })).toHaveLength(2)
+    expect(screen.getByRole('button', { name: '常驻' })).toBeTruthy()
     expect(screen.getAllByRole('button', { name: '更新' })).toHaveLength(2)
     await openSkinCard()
     const use = screen.getByRole('button', { name: '使用' })

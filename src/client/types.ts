@@ -142,6 +142,7 @@ export interface Operation {
   id: string
   kind: 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
   skinId: string
+  preservedSkinIds?: string[]
   phase: 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
   message?: string
   cancelable?: boolean

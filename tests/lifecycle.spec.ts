@@ -1291,6 +1291,19 @@ describe('skin lifecycle', () => {
     expect(entries.get(two.rowId)?.fiber).toEqual({ state: 2 })
   })
 
+  it('applies an explicit activation selection and promotes retained secondary skins to pins', async () => {
+    const { dir, skins: [one, two, pinned], entries, lifecycle, updates } = webSelectionFixture()
+    updates.length = 0
+
+    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, [one.id, pinned.id])
+    expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [one.id, pinned.id] })
+    expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [one.id, pinned.id], disabledSkinIds: [] })
+    expect(entries.get(one.rowId)?.options.disabled).not.toBe(true)
+    expect(entries.get(two.rowId)?.options.disabled).not.toBe(true)
+    expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
+    expect(updates).toEqual([`${two.rowId}:null`, `${pinned.rowId}:null`])
+  })
+
   it('reports the complete browser selection on ordinary runtime rows and treats unknown managed package identities conservatively', () => {
     const { dir, skins: [one, two, pinned], lifecycle } = webSelectionFixture()
     expect(lifecycle.states().find(state => state.skinId === one.id)).toMatchObject({ activation: 'active', selectionHostApplied: true,
