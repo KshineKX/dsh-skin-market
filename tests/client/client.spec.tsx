@@ -2427,6 +2427,27 @@ describe('client market', () => {
     expect(header.dataset.compact).toBeUndefined()
   })
 
+  it('places a live operation below the docked discovery toolbar', async () => {
+    const startedAt = new Date().toISOString()
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/catalog')
+      ? { skins: [skin] }
+      : { skins: [], operations: [{ id: 'installing', skinId: skin.id, kind: 'install', phase: 'downloading', startedAt }] } })))
+    render(<SkinMarketSection t={key => key} />)
+    await screen.findByText('正在下载“测试皮肤”')
+
+    const header = document.querySelector('header')!
+    const title = document.querySelector('[class*="discoverTitle"]') as HTMLElement
+    const feed = document.querySelector('[class*="homeContent"]')!
+    vi.spyOn(title, 'getBoundingClientRect').mockReturnValue({ top: 0, height: 28 } as DOMRect)
+    vi.spyOn(header, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect)
+    vi.spyOn(feed, 'getBoundingClientRect').mockReturnValue({ top: 0 } as DOMRect)
+    fireEvent.scroll(feed)
+
+    const docked = await within(header).findByRole('heading', { name: '发现更多' })
+    const banner = within(header).getByRole('status')
+    expect(docked.compareDocumentPosition(banner) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('shows all embedded results when viewport observation is unavailable', async () => {
     const skins = Array.from({ length: HOME_CATALOG_BATCH_SIZE + 5 }, (_, index) => ({
       ...skin, id: `test.skin-${index}`, package: `skin-${index}`,
@@ -2543,6 +2564,31 @@ describe('client market', () => {
     expect(await screen.findByText('重启会断开当前会话连接，请先保存工作。')).toBeTruthy()
     expect(screen.getByRole('button', { name: '确认重启' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '取消' })).toBeTruthy()
+  })
+
+  it('clears a Web selection restart receipt when the client module is already active', async () => {
+    const fetchMock = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => url.endsWith('/catalog')
+        ? { skins: [skin] }
+        : {
+          hostKind: 'dsh', runtime: dshRuntime, skins: [{
+            skinId: skin.id, installation: 'installed', activation: 'restart-required', restartSource: 'selection', primary: true,
+            clientModule: true, selectionHostApplied: true, selectionHostStatus: 'applied', selectionClientTargets: [{ package: skin.package, active: true }], installedVersion: '1.0.0', updateAvailable: false,
+          }],
+        },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    const clientRuntime = {
+      setActive: vi.fn(async () => true),
+      probeActive: vi.fn(() => 'active' as const),
+      probeSyncing: vi.fn(() => false),
+    }
+    render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
+
+    expect(await screen.findAllByText('使用中')).not.toHaveLength(0)
+    expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
   })
 
   it('shows the official Desktop restart instruction without posting to the market restart route', async () => {

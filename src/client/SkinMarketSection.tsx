@@ -1086,7 +1086,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       // The browser state now owns this tab's client-only reminder, including
       // asynchronous recovery after an earlier missing-entry observation.
       if (clientRuntime.probeActive !== undefined) clientRestartNotices.current.delete(item.skinId)
-      if (status.status === 'applied') return softSelection && item.selectionHostApplied === true && hasCompleteTargets
+      if (status.status === 'applied') return softSelection && item.selectionHostApplied === true
+        && (hasCompleteTargets || packages.length > 0)
         ? { ...item, activation: selected.has(item.skinId) ? 'active' : 'inactive', error: undefined } : item
       return { ...item, activation: status.status === 'unavailable' ? 'unavailable' : status.status, error: hostError ?? webClientSelectionError(status) }
     })
@@ -2679,17 +2680,17 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           {marketUpdate?.updateBlockedReason !== undefined && <p className={css.notice} role="status">{marketUpdate.updateBlockedReason}</p>}
           <Input className={css.homeSearch} value={homeQuery} onChange={event => setHomeQuery(event.currentTarget.value)} icon={<IconSearchOutline />} placeholder={t('search')} aria-label={t('search')} />
           <div className={css.homeSearchPlaceholder} aria-hidden="true" />
-          {renderSkinOperationBanner(css.homeOperation)}
-          {renderMarketOperationBanner(css.homeOperation)}
-          {renderCompletedUninstallBanner(css.homeOperation)}
-          {renderPendingRestartBanner(css.homeOperation)}
-          {profileBusy !== undefined && <p className={css.notice} role="status">{profileBusy}</p>}
           {discoverDocked && <DiscoverToolbar className={css.headerDiscover} headingId="discover-skins-title" label={homeQuery.trim() === '' ? '发现更多' : '搜索结果'} enabledCategories={enabledCategories} onToggleCategory={category => setEnabledCategories(current => {
             const next = new Set(current)
             if (next.has(category)) next.delete(category)
             else next.add(category)
             return next
           })} sortBy={sortBy} onSortBy={setSortBy} />}
+          {renderSkinOperationBanner(css.homeOperation)}
+          {renderMarketOperationBanner(css.homeOperation)}
+          {renderCompletedUninstallBanner(css.homeOperation)}
+          {renderPendingRestartBanner(css.homeOperation)}
+          {profileBusy !== undefined && <p className={css.notice} role="status">{profileBusy}</p>}
         </header>
 
         <div className={css.homeContent} ref={homeRef} onScroll={event => {
