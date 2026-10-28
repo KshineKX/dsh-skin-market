@@ -28,9 +28,14 @@ compatibility:
   dsh: unverified
   platform:
     - web
+marketScreenshots:
+  - skin-screenshots/AKS1st__dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/home.png
+  - skin-screenshots/AKS1st__dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/conversation.png
+  - skin-screenshots/AKS1st__dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/settings.png
 screenshots:
   - https://raw.githubusercontent.com/AKS1st/dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/assets/image_light.png
   - https://raw.githubusercontent.com/AKS1st/dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/assets/image_dark.png
+  - skin-screenshots/AKS1st__dsh-cyber-particle/e08111d59df009454d9de6b8384907f697e038f6/home.gif
 review:
   compatibility: unverified
   preview: verified

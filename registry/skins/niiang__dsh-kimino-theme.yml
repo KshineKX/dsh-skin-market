@@ -28,6 +28,10 @@ compatibility:
   dsh: unverified
   platform:
     - web
+marketScreenshots:
+  - skin-screenshots/niiang__dsh-kimino-theme/dfd97996162474bc904659e22b1044b01a514815/home.png
+  - skin-screenshots/niiang__dsh-kimino-theme/dfd97996162474bc904659e22b1044b01a514815/conversation.png
+  - skin-screenshots/niiang__dsh-kimino-theme/dfd97996162474bc904659e22b1044b01a514815/settings.png
 screenshots:
   - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/0d066fe583be48341fcf8064fd6dfc4ea760bc8a/docs/screenshots/home-hero.png
   - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/0d066fe583be48341fcf8064fd6dfc4ea760bc8a/docs/screenshots/sidebar.png
@@ -36,7 +40,7 @@ screenshots:
   - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/bd9125b18eee0c8958a6106dfdd86e2060bb4c72/docs/screenshots/sidebar.png
   - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/bd9125b18eee0c8958a6106dfdd86e2060bb4c72/docs/screenshots/chat-main.png
   - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/4c01c9701690c5e4ccfe0253225f4cba9254414f/docs/screenshots/home-hero.png
-  - https://raw.githubusercontent.com/niiang/dsh-kimino-theme/4c01c9701690c5e4ccfe0253225f4cba9254414f/docs/screenshots/sidebar.png
+  - skin-screenshots/niiang__dsh-kimino-theme/dfd97996162474bc904659e22b1044b01a514815/home.gif
 listScreenshot: https://raw.githubusercontent.com/niiang/dsh-kimino-theme/6fe01e978adb382cf5819bac0afe0f20ab0517b5/docs/screenshots/home-hero.png
 review:
   compatibility: unverified

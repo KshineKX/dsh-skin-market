@@ -32,6 +32,7 @@ marketScreenshots:
 screenshots:
   - https://raw.githubusercontent.com/wawo77/dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/docs/pet.png
   - https://raw.githubusercontent.com/wawo77/dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/docs/animation.png
+  - skin-screenshots/wawo77__dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/home.gif
 listScreenshot: https://raw.githubusercontent.com/wawo77/dsh-opencode-go-usage/e6a39c3f44a9ca3bde24cb70b51edec818e43ac6/docs/pet.png
 review:
   compatibility: unverified
