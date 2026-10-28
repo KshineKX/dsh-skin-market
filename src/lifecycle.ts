@@ -228,7 +228,8 @@ function pinnedSkinIds(state: PersistedMarketState): string[] {
 }
 
 function enabledSkinIds(state: PersistedMarketState): Set<string> {
-  return new Set([...(state.activeSkinId === null ? [] : [state.activeSkinId]), ...pinnedSkinIds(state)])
+  const suppressed = new Set(state.suppressedPinnedSkinIds ?? [])
+  return new Set([...(state.activeSkinId === null ? [] : [state.activeSkinId]), ...pinnedSkinIds(state).filter(id => !suppressed.has(id)), ...(state.retainedSkinIds ?? [])])
 }
 
 function isWebClientPackage(profileDir: string, packageName: string): boolean {
@@ -496,7 +497,7 @@ export class SkinLifecycle {
     return JSON.stringify({
       kind, skinId, profile: this.options.profile, profileDir: this.options.profileDir, runtime: this.runtime,
       capabilities: this.management?.capabilities(),
-      selection: { activeSkinId: state.activeSkinId, pinnedSkinIds: pinnedSkinIds(state), requestedPreservedSkinIds: preservedOverride === undefined ? undefined : [...new Set(preservedOverride)], disabledSkinIds: state.disabledSkinIds, bundles: readProfileBundles(this.options.profileDir) },
+      selection: { activeSkinId: state.activeSkinId, pinnedSkinIds: pinnedSkinIds(state), retainedSkinIds: state.retainedSkinIds ?? [], suppressedPinnedSkinIds: state.suppressedPinnedSkinIds ?? [], requestedPreservedSkinIds: preservedOverride === undefined ? undefined : [...new Set(preservedOverride)], disabledSkinIds: state.disabledSkinIds, bundles: readProfileBundles(this.options.profileDir) },
       profilePatch: snapshotFile(profilePatchFile(this.options.profileDir)),
       targets: targets.map(target => {
         const skin = this.skin(target.skinId)
@@ -2610,19 +2611,25 @@ export class SkinLifecycle {
     const requestedPreserved = operation.preservedSkinIds
     const preserved = requestedPreserved === undefined ? pinnedSkinIds(previous) : [...new Set(requestedPreserved)]
     if (operation.selectionContext !== undefined) {
-      const targets = this.selectionTargets('activate', skin.id, requestedPreserved)
       const currentContext = await this.selectionContextLocked('activate', skin.id, requestedPreserved)
-      if (currentContext !== operation.selectionContext) throw new Error('常驻选择已变化，请重新确认')
+      if (currentContext !== operation.selectionContext) throw new Error('保留选择已变化，请重新确认')
     }
     if (requestedPreserved !== undefined) {
       const dependencies = readDependencies(this.options.profileDir)
       const invalid = preserved.find(id => id === skin.id || !this.skinById.has(id) || dependencies[this.skin(id).package] === undefined)
       if (invalid !== undefined) throw new Error(`无法保留未安装或不存在的皮肤：${invalid}`)
       const approvals = operation.preservedSkinApprovals ?? {}
-      if (preserved.length !== Object.keys(approvals).length || preserved.some(id => approvals[id] === undefined)) throw new Error('常驻选择已变化，请重新确认')
+      if (preserved.length !== Object.keys(approvals).length || preserved.some(id => approvals[id] === undefined)) throw new Error('保留选择已变化，请重新确认')
       for (const id of preserved) this.assertPreservedSkinApproved(operation, this.skin(id))
     }
-    const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: preserved }
+    const persistentPinned = pinnedSkinIds(previous)
+    const retained = requestedPreserved === undefined ? [] : preserved.filter(id => !persistentPinned.includes(id))
+    const suppressedPinned = requestedPreserved === undefined ? [] : persistentPinned.filter(id => !preserved.includes(id))
+    const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: persistentPinned }
+    if (retained.length > 0) next.retainedSkinIds = retained
+    else delete next.retainedSkinIds
+    if (suppressedPinned.length > 0) next.suppressedPinnedSkinIds = suppressedPinned
+    else delete next.suppressedPinnedSkinIds
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)
     this.reconcileDisabledSkinIds(next)
     const enabled = enabledSkinIds(next)
@@ -2713,6 +2720,8 @@ export class SkinLifecycle {
     const selection = this.selectionSnapshot()
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: [...new Set([...pinnedSkinIds(previous), skin.id])] }
+    next.suppressedPinnedSkinIds = (previous.suppressedPinnedSkinIds ?? []).filter(id => id !== skin.id)
+    if (next.suppressedPinnedSkinIds.length === 0) delete next.suppressedPinnedSkinIds
     this.reconcileDisabledSkinIds(next)
     try {
       await this.registerSkin( skin, false)
@@ -2728,7 +2737,7 @@ export class SkinLifecycle {
       if (operation.restartRequired === true) {
         operation.message = 'pin saved; restart DSH to load this skin'
       } else {
-        operation.message = active.found && active.live ? 'skin is pinned and active' : '常驻选择已保存，但皮肤组件尚未运行；请在官方插件页检查加载状态'
+        operation.message = active.found && active.live ? 'skin is pinned and active' : '常驻设置已保存，但皮肤组件尚未运行；请在官方插件页检查状态'
       }
     } catch (error) {
       if (await this.retainSavedOfficialSelection(error, operation, previous, next, skin)) return
@@ -2748,6 +2757,8 @@ export class SkinLifecycle {
     if (!pinnedSkinIds(previous).includes(skin.id)) throw new Error('skin is not pinned')
     this.update(operation, 'activating')
     const next: PersistedMarketState = { ...previous, pinnedSkinIds: pinnedSkinIds(previous).filter(id => id !== skin.id) }
+    next.suppressedPinnedSkinIds = (previous.suppressedPinnedSkinIds ?? []).filter(id => id !== skin.id)
+    if (next.suppressedPinnedSkinIds.length === 0) delete next.suppressedPinnedSkinIds
     this.reconcileDisabledSkinIds(next)
     try {
       if (next.activeSkinId !== skin.id) {

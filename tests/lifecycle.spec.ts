@@ -1292,7 +1292,7 @@ describe('skin lifecycle', () => {
     expect(entries.get(two.rowId)?.fiber).toEqual({ state: 2 })
   })
 
-  it('applies an explicit activation selection and promotes retained secondary skins to pins', async () => {
+  it('retains selected secondary skins for the current activation without making them pins', async () => {
     const { dir, skins: [one, two, pinned], entries, lifecycle, updates } = webSelectionFixture()
     updates.length = 0
 
@@ -1301,18 +1301,34 @@ describe('skin lifecycle', () => {
     const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
     const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, approvals, plan.selectionContext)
     expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [one.id, pinned.id] })
-    expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [one.id, pinned.id], disabledSkinIds: [] })
+    expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [], retainedSkinIds: [one.id, pinned.id], disabledSkinIds: [] })
     expect(entries.get(one.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(two.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
     expect(updates).toEqual([`${two.rowId}:null`, `${pinned.rowId}:null`])
+    await finished(lifecycle.begin('activate', one.id))
+    expect(readMarketState(dir).retainedSkinIds).toBeUndefined()
+  })
+
+  it('can close a pinned skin for one activation without cancelling its persistent pin', async () => {
+    const { dir, skins: [one, two, pinned], entries, lifecycle } = webSelectionFixture()
+    writeMarketState(dir, { ...readMarketState(dir), pinnedSkinIds: [pinned.id] })
+    const preserved: string[] = []
+    const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
+    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, {}, plan.selectionContext)
+    expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [] })
+    expect(readMarketState(dir)).toMatchObject({ pinnedSkinIds: [pinned.id], suppressedPinnedSkinIds: [pinned.id] })
+    expect(entries.get(pinned.rowId)?.options.disabled).toBe(true)
+    await finished(lifecycle.begin('activate', one.id))
+    expect(readMarketState(dir).suppressedPinnedSkinIds).toBeUndefined()
+    expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
   })
 
   it('rejects an explicit activation selection when a preserved skin approval is missing', async () => {
     const { dir, skins: [one, two, pinned], lifecycle } = webSelectionFixture()
     const approvals = { [one.id]: { compatibilityContext: compatibilityContext(one, null) } }
     const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, [one.id, pinned.id], approvals, 'a'.repeat(64))
-    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '常驻选择已变化，请重新确认' })
+    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '保留选择已变化，请重新确认' })
     expect(readMarketState(dir).activeSkinId).toBe(one.id)
   })
 
@@ -1323,7 +1339,7 @@ describe('skin lifecycle', () => {
     const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
     writeMarketState(dir, { ...readMarketState(dir), pinnedSkinIds: [pinned.id] })
     const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, approvals, plan.selectionContext)
-    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '常驻选择已变化，请重新确认' })
+    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '保留选择已变化，请重新确认' })
     expect(readMarketState(dir).activeSkinId).toBe(one.id)
   })
 

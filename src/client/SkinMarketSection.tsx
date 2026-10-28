@@ -104,7 +104,7 @@ function activationConflicts(target: CatalogSkin, catalog: readonly CatalogSkin[
       || state.activation !== 'active' && state.primary !== true && state.pinned !== true) return []
     const skin = catalog.find(item => item.id === state.skinId)
     if (skin === undefined || marketCategory(skin) === targetCategory) return []
-    return [{ skin, state, keep: state.pinned === true, assessment: installCompatibility(skin, 'dsh', runtime), artifactRisk: state.artifactRisk }]
+    return [{ skin, state, keep: true, assessment: installCompatibility(skin, 'dsh', runtime), artifactRisk: state.artifactRisk }]
   })
 }
 
@@ -147,9 +147,9 @@ function activationSelectionSnapshot(target: CatalogSkin, catalog: readonly Cata
 function activationSelectionLabel(conflicts: readonly ActivationConflict[]): string {
   const kept = conflicts.filter(conflict => conflict.keep).length
   const disabled = conflicts.length - kept
-  if (kept === 0) return `停用 ${disabled} 个插件并继续`
-  if (disabled === 0) return `常驻 ${kept} 个插件并继续`
-  return `停用 ${disabled} 个插件，常驻 ${kept} 个插件并继续`
+  if (kept === 0) return `关闭 ${disabled} 个插件并继续`
+  if (disabled === 0) return `保留 ${kept} 个插件并继续`
+  return `关闭 ${disabled} 个插件，保留 ${kept} 个插件并继续`
 }
 
 function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed, hasConflictSelection, conflicts }: {
@@ -174,17 +174,22 @@ function describeUseConfirmation({ name, version, assessment, artifactRisk, firs
     if (conflict.artifactRisk !== undefined) details.push('构件未核验')
     return details.length === 0 ? [] : [`「${conflict.skin.name.zh}」${details.join('、')}`]
   })
-  return `${name}（版本 ${version}）。${changed ? '皮肤或运行环境已变化，请重新确认。' : ''}${risks.length > 0 ? `${risks.join('，且')}，使用后可能导致页面异常。` : ''}${preservedRisks.length > 0 ? `常驻选择中有${preservedRisks.join('、')}，继续即一并确认。` : ''}${pin ? '常驻后会与其他皮肤同时启用，可能产生冲突。' : firstUse && !hasConflictSelection ? '使用后将停用其他普通皮肤，保留常驻项。' : ''}`
+  const lead = hasConflictSelection
+    ? `当前正在使用以下插件，可能与「${name}」冲突，请选择是否保留。`
+    : `${name}（版本 ${version}）。`
+  const targetRisks = risks.length > 0 ? `「${name}」${risks.join('，且')}，使用后可能导致页面异常。` : ''
+  const secondaryRiskText = preservedRisks.length > 0 ? `需要注意：${preservedRisks.join('、')}。` : ''
+  return `${lead}${changed ? '皮肤或运行环境已变化，请重新确认。' : ''}${targetRisks}${secondaryRiskText}${pin ? '设置常驻后，其他皮肤仍可能继续使用。' : firstUse && !hasConflictSelection ? '使用后会关闭其他未常驻的皮肤。' : ''}`
 }
 
 function ConfigurationChanges({ plan, skins }: { plan: ConfigurationOverrideBatchPlan; skins: readonly CatalogSkin[] }) {
   return <div className={css.interceptNotice}>
-    <p>确认后将自动备份、解除以下共享开关覆盖，再完成本次操作。</p>
+    <p>继续后会先备份，并移除以下共享开关：</p>
     {plan.changes.map(change => <div key={change.skinId}>
       <p>「{skins.find(skin => skin.id === change.skinId)?.name.zh ?? change.skinId}」：移除 <code>disabled: {String(change.previousDisabled)}</code>，保留其他设置。</p>
-      <p>共享配置：<code>{change.file}</code>；组件 <code>{change.rowId}</code>。</p>
+      <p>配置：<code>{change.file}</code>；组件：<code>{change.rowId}</code>。</p>
     </div>)}
-    <p>此配置影响同一 DSH 目录下的所有 profile；修改前会自动备份。继续后，各 profile 按自己的开关设置生效。</p>
+    <p>这会影响这个 DSH 目录下的其他 profile。</p>
   </div>
 }
 
@@ -3031,12 +3036,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         </> : <><Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(false)}>取消</Button><Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>{compatibilityConfirmation?.configurationPlan !== undefined ? '解除覆盖并' : compatibilityConfirmation?.artifactRisk !== undefined || compatibilityConfirmation?.assessment.decision === 'incompatible' ? '仍然' : '确认'}{compatibilityConfirmation?.actionLabel}</Button></>}
       >
         {activationDialogConflicts.length > 0 && <div className={css.activationConflicts}>
-          <p>以下插件可能与目标插件冲突，继续即接受：</p>
           <div className={css.activationConflictList}>
             {activationDialogConflicts.map(conflict => <div className={css.activationConflictRow} key={conflict.skin.id}>
               <span>{conflict.skin.name.zh}</span>
-              <span className={css.activationConflictState}>{conflict.keep ? '常驻' : '停用'}</span>
-              <button type="button" role="switch" aria-checked={conflict.keep} aria-label={`${conflict.keep ? '常驻' : '停用'} ${conflict.skin.name.zh}`} className={css.activationSwitch} data-checked={conflict.keep ? 'true' : undefined} onClick={() => toggleActivationConflict(conflict.skin.id)}><span /></button>
+              <span className={css.activationConflictState}>{conflict.keep ? '保留' : '关闭'}</span>
+              <button type="button" role="switch" aria-checked={conflict.keep} aria-label={`${conflict.keep ? '保留' : '关闭'} ${conflict.skin.name.zh}`} className={css.activationSwitch} data-checked={conflict.keep ? 'true' : undefined} onClick={() => toggleActivationConflict(conflict.skin.id)}><span /></button>
             </div>)}
           </div>
         </div>}

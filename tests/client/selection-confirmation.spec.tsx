@@ -129,11 +129,9 @@ describe('combined selection confirmation', () => {
     const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
     expect(dialog.textContent).toContain(old.name.zh)
     expect(within(dialog).getAllByRole('switch')).toHaveLength(1)
-    expect(within(dialog).getByRole('switch').getAttribute('aria-checked')).toBe('false')
-    fireEvent.click(within(dialog).getByRole('switch'))
     expect(within(dialog).getByRole('switch').getAttribute('aria-checked')).toBe('true')
-    expect(within(dialog).getByRole('button', { name: '解除覆盖并常驻 1 个插件并继续' })).toBeTruthy()
-    fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并常驻 1 个插件并继续' }))
+    expect(within(dialog).getByRole('button', { name: '解除覆盖并保留 1 个插件并继续' })).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并保留 1 个插件并继续' }))
     await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
     expect(JSON.parse(String(app.posts('/activate')[0]![1]!.body)).preservedSkinIds).toEqual([old.id])
   })
@@ -149,15 +147,14 @@ describe('combined selection confirmation', () => {
     expect(JSON.parse(String(app.posts('/activate')[0]![1]!.body)).preservedSkinIds).toEqual([sameCategoryPinned.id])
   })
 
-  it('shows and submits compatibility approval for a secondary skin promoted to pinned', async () => {
+  it('shows and submits compatibility approval for a secondary skin retained in this activation', async () => {
     const pet = { ...target, category: 'pet' }
     const incompatibleExisting = { ...old, compatibility: { ...old.compatibility, dsh: '<0.1.0-rc.1' } }
     const app = market({ skin: pet, oldSkin: incompatibleExisting, selectionContext: 'c'.repeat(64) })
     await choose()
     const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
     expect(dialog.textContent).toContain('兼容性未确认')
-    fireEvent.click(within(dialog).getByRole('switch'))
-    fireEvent.click(within(dialog).getByRole('button', { name: /常驻 1 个插件并继续/ }))
+    fireEvent.click(within(dialog).getByRole('button', { name: /保留 1 个插件并继续/ }))
     await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
     const body = JSON.parse(String(app.posts('/activate')[0]![1]!.body))
     expect(body.preservedSkinIds).toEqual([incompatibleExisting.id])
@@ -176,7 +173,7 @@ describe('combined selection confirmation', () => {
     app.state.used = true
     fireEvent.focus(window)
     await waitFor(() => expect(app.fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequestsBefore))
-    fireEvent.click(within(dialog).getByRole('button', { name: /停用 1 个插件并继续/ }))
+    fireEvent.click(within(dialog).getByRole('button', { name: /保留 1 个插件并继续/ }))
     await waitFor(() => expect(screen.getByRole('dialog', { name: '使用前确认' }).textContent).toContain('已变化'))
     expect(app.posts('/activate')).toHaveLength(0)
     expect(dialog).toBe(screen.getByRole('dialog', { name: '使用前确认' }))
@@ -188,7 +185,7 @@ describe('combined selection confirmation', () => {
     const app = market({ skin: incompatible, risk: artifactRisk })
     await choose()
     const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
-    for (const text of ['不在作者声明的兼容范围', '安装包未通过市场核验', '保留常驻', target.rowId, '备份']) expect(dialog.textContent).toContain(text)
+    for (const text of ['不在作者声明的兼容范围', '安装包未通过市场核验', '关闭其他未常驻的皮肤', target.rowId, '备份']) expect(dialog.textContent).toContain(text)
     expect(app.posts()).toHaveLength(0)
     expect(app.posts('/selection-plan').length).toBeGreaterThan(0)
     fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并使用' }))
