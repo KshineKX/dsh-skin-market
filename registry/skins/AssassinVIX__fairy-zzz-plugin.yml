@@ -1,6 +1,52 @@
-url: https://github.com/AssassinVIX/fairy-zzz-plugin
+id: assassinvix.fairy.zzz.plugin
 name:
   zh: Fairy Ⅲ · 绝区零 H.D.D
   en: Fairy Ⅲ · ZZZ H.D.D
 author: AssassinVIX
 description: 把 DSH Web 界面换成《绝区零》Fairy 的 H.D.D 终端——带音效的整屏开机动画、可拖动的动态眼徽（待机/思考/完成）、按时段问候、Fairy 模式预设，以及可选的本地 GPT-SoVITS 朗读。
+repo: https://github.com/AssassinVIX/fairy-zzz-plugin
+package: dsh-fairy-zzz
+rowId: fairy-zzz-skin
+category: skin
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:AssassinVIX/fairy-zzz-plugin#0c72cb22736a62fbcc85dedb62149b57f2e502af
+  version: 1.0.1
+  commit: 0c72cb22736a62fbcc85dedb62149b57f2e502af
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/AssassinVIX/fairy-zzz-plugin/0c72cb22736a62fbcc85dedb62149b57f2e502af/screenshots/01-boot.png
+  - https://raw.githubusercontent.com/AssassinVIX/fairy-zzz-plugin/0c72cb22736a62fbcc85dedb62149b57f2e502af/screenshots/02-greet.png
+  - https://raw.githubusercontent.com/AssassinVIX/fairy-zzz-plugin/0c72cb22736a62fbcc85dedb62149b57f2e502af/screenshots/03-eye-states.png
+  - https://raw.githubusercontent.com/AssassinVIX/fairy-zzz-plugin/0c72cb22736a62fbcc85dedb62149b57f2e502af/screenshots/04-settings.png
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: improve
+    topic: pass
+  suggestions:
+    - 建议在 README 或 package.json 中明确声明支持的 DSH Web 版本范围（例如 0.1.0-rc.6 或兼容区间），方便用户在安装前确认环境。
+    - 建议在 README 中补充可复制的 DSH 安装命令，方便用户直接使用。
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 5
+releaseUpdatedAt: 2026-10-28T01:36:01.943Z
+metadataUpdatedAt: 2026-10-28T01:36:01.943Z
+starsUpdatedAt: 2026-10-28T01:36:01.943Z
+updatedAt: 2026-10-28T01:36:01.943Z
