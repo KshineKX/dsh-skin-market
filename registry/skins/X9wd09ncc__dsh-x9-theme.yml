@@ -29,8 +29,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/x9wd09ncc.dsh-x9-theme
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -62,3 +61,8 @@ releaseUpdatedAt: 2026-08-23T05:32:36.076Z
 metadataUpdatedAt: 2026-08-26T03:27:46.441Z
 starsUpdatedAt: 2026-09-18T21:38:55.528Z
 updatedAt: 2026-09-18T21:38:55.528Z
+
+marketScreenshots:
+  - skin-screenshots/X9wd09ncc__dsh-x9-theme/9af49294ab82a3ca1e6c5ab9df46179a5bd9489b/home.png
+  - skin-screenshots/X9wd09ncc__dsh-x9-theme/9af49294ab82a3ca1e6c5ab9df46179a5bd9489b/conversation.png
+  - skin-screenshots/X9wd09ncc__dsh-x9-theme/9af49294ab82a3ca1e6c5ab9df46179a5bd9489b/settings.png

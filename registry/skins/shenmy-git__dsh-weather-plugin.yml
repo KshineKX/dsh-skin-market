@@ -27,7 +27,7 @@ compatibility:
   platform:
     - web
 screenshots:
-  - https://opengraph.githubassets.com/placeholder/shenmy-git.dsh-weather-plugin
+  - skin-screenshots/shenmy-git__dsh-weather-plugin/3f94f1569a0f9193a7ff5bb7bb8000b8e6b05a36/home.gif
 review:
   compatibility: verified
   preview: repository-card
@@ -64,3 +64,8 @@ releaseUpdatedAt: 2026-09-08T21:49:04.035Z
 metadataUpdatedAt: 2026-09-08T21:49:04.035Z
 starsUpdatedAt: 2026-08-16 13:57:34.783000+00:00
 updatedAt: 2026-09-08T21:49:04.035Z
+
+marketScreenshots:
+  - skin-screenshots/shenmy-git__dsh-weather-plugin/3f94f1569a0f9193a7ff5bb7bb8000b8e6b05a36/home.png
+  - skin-screenshots/shenmy-git__dsh-weather-plugin/3f94f1569a0f9193a7ff5bb7bb8000b8e6b05a36/conversation.png
+  - skin-screenshots/shenmy-git__dsh-weather-plugin/3f94f1569a0f9193a7ff5bb7bb8000b8e6b05a36/settings.png

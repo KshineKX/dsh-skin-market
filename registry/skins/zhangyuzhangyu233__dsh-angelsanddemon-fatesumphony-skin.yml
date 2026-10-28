@@ -28,8 +28,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/zhangyuzhangyu233.dsh-angelsanddemon-fatesumphony-skin
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -63,3 +62,8 @@ releaseUpdatedAt: 2026-08-23T05:32:46.817Z
 metadataUpdatedAt: 2026-08-23T05:32:46.817Z
 starsUpdatedAt: 2026-09-09T21:41:26.652Z
 updatedAt: 2026-09-09T21:41:26.652Z
+
+marketScreenshots:
+  - skin-screenshots/zhangyuzhangyu233__dsh-angelsanddemon-fatesumphony-skin/32f389260a6bef7af235fda58ad6acd75e054dda/home.png
+  - skin-screenshots/zhangyuzhangyu233__dsh-angelsanddemon-fatesumphony-skin/32f389260a6bef7af235fda58ad6acd75e054dda/conversation.png
+  - skin-screenshots/zhangyuzhangyu233__dsh-angelsanddemon-fatesumphony-skin/32f389260a6bef7af235fda58ad6acd75e054dda/settings.png

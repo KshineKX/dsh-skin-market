@@ -25,8 +25,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/jayliu2025-vip.dsh-theme-huluwa
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -59,3 +58,8 @@ releaseUpdatedAt: 2026-08-23T05:33:48.101Z
 metadataUpdatedAt: 2026-08-23T05:33:48.101Z
 starsUpdatedAt: 2026-09-09T21:40:58.167Z
 updatedAt: 2026-09-09T21:40:58.167Z
+
+marketScreenshots:
+  - skin-screenshots/Jayliu2025-vip__dsh-theme-huluwa/0ab3d4227105ebb20f9e8a5ffd951c38969089df/home.png
+  - skin-screenshots/Jayliu2025-vip__dsh-theme-huluwa/0ab3d4227105ebb20f9e8a5ffd951c38969089df/conversation.png
+  - skin-screenshots/Jayliu2025-vip__dsh-theme-huluwa/0ab3d4227105ebb20f9e8a5ffd951c38969089df/settings.png

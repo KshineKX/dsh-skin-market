@@ -25,8 +25,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/caisiyang123.dsh-theme-dodger-17
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -59,3 +58,8 @@ releaseUpdatedAt: 2026-08-23T05:33:06.282Z
 metadataUpdatedAt: 2026-08-23T05:33:06.282Z
 starsUpdatedAt: 2026-09-15T03:04:45.459Z
 updatedAt: 2026-09-15T03:04:45.459Z
+
+marketScreenshots:
+  - skin-screenshots/caisiyang123__dsh-theme-dodger-17/07e35f228bc9ba0db7f964c2bfed3536781d2fae/home.png
+  - skin-screenshots/caisiyang123__dsh-theme-dodger-17/07e35f228bc9ba0db7f964c2bfed3536781d2fae/conversation.png
+  - skin-screenshots/caisiyang123__dsh-theme-dodger-17/07e35f228bc9ba0db7f964c2bfed3536781d2fae/settings.png

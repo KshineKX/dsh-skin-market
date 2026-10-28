@@ -26,8 +26,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/wuzhong962-alt.dsh-matrix-theme
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -61,3 +60,8 @@ releaseUpdatedAt: 2026-08-23T05:32:33.445Z
 metadataUpdatedAt: 2026-08-23T05:32:33.445Z
 starsUpdatedAt: 2026-09-09T21:40:38.008Z
 updatedAt: 2026-09-09T21:40:38.008Z
+
+marketScreenshots:
+  - skin-screenshots/wuzhong962-alt__dsh-matrix-theme/6f451fb54d5f77359712e7fb4055fc8b025b6b68/home.png
+  - skin-screenshots/wuzhong962-alt__dsh-matrix-theme/6f451fb54d5f77359712e7fb4055fc8b025b6b68/conversation.png
+  - skin-screenshots/wuzhong962-alt__dsh-matrix-theme/6f451fb54d5f77359712e7fb4055fc8b025b6b68/settings.png

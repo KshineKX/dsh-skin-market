@@ -26,8 +26,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/nineandnine-9.dsh-theme-rheostat
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -60,3 +59,8 @@ releaseUpdatedAt: 2026-08-23T05:32:05.643Z
 metadataUpdatedAt: 2026-08-23T05:32:05.643Z
 starsUpdatedAt: 2026-10-20T22:16:12.288Z
 updatedAt: 2026-10-20T22:16:12.288Z
+
+marketScreenshots:
+  - skin-screenshots/nineandnine-9__dsh-theme-rheostat/f535e6817e4ac0c2a78f383adf4943f5807b88b4/home.png
+  - skin-screenshots/nineandnine-9__dsh-theme-rheostat/f535e6817e4ac0c2a78f383adf4943f5807b88b4/conversation.png
+  - skin-screenshots/nineandnine-9__dsh-theme-rheostat/f535e6817e4ac0c2a78f383adf4943f5807b88b4/settings.png

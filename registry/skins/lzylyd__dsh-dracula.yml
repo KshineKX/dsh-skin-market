@@ -25,8 +25,7 @@ compatibility:
   dsh: ^0.1.0-rc.6
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/lzylyd.dsh-dracula
+screenshots: []
 review:
   compatibility: verified
   preview: repository-card
@@ -63,3 +62,8 @@ releaseUpdatedAt: 2026-08-23T05:31:51.316Z
 metadataUpdatedAt: 2026-08-23T05:31:51.316Z
 starsUpdatedAt: 2026-09-09T21:40:27.778Z
 updatedAt: 2026-09-09T21:40:27.778Z
+
+marketScreenshots:
+  - skin-screenshots/lzylyd__dsh-dracula/d03495118b21019a9e45f63044985faf6962e5f6/home.png
+  - skin-screenshots/lzylyd__dsh-dracula/d03495118b21019a9e45f63044985faf6962e5f6/conversation.png
+  - skin-screenshots/lzylyd__dsh-dracula/d03495118b21019a9e45f63044985faf6962e5f6/settings.png
