@@ -29,8 +29,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/cerrda.dsh-cerrda-theme
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -63,3 +62,8 @@ releaseUpdatedAt: 2026-08-23T05:33:09.345Z
 metadataUpdatedAt: 2026-08-23T05:33:09.345Z
 starsUpdatedAt: 2026-09-09T21:40:49.870Z
 updatedAt: 2026-09-09T21:40:49.870Z
+
+marketScreenshots:
+  - skin-screenshots/Cerrda__dsh-cerrda-theme/4bdf404f7edac640ac32f4ae470c57ab53327634/home.png
+  - skin-screenshots/Cerrda__dsh-cerrda-theme/4bdf404f7edac640ac32f4ae470c57ab53327634/conversation.png
+  - skin-screenshots/Cerrda__dsh-cerrda-theme/4bdf404f7edac640ac32f4ae470c57ab53327634/settings.png

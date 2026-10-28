@@ -24,7 +24,8 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots: []
+screenshots:
+  - skin-screenshots/MouQianDi0__dsh-ascii-sharks-wallpaper/d0ac0d9f283dc11b1f4632b23d557567a93a39a1/home.gif
 review:
   compatibility: unverified
   preview: repository-card
@@ -59,3 +60,8 @@ releaseUpdatedAt: 2026-10-27T23:01:16.356Z
 metadataUpdatedAt: 2026-10-27T23:01:16.356Z
 starsUpdatedAt: 2026-10-27T07:45:48.931Z
 updatedAt: 2026-10-27T23:01:16.356Z
+
+marketScreenshots:
+  - skin-screenshots/MouQianDi0__dsh-ascii-sharks-wallpaper/d0ac0d9f283dc11b1f4632b23d557567a93a39a1/home.png
+  - skin-screenshots/MouQianDi0__dsh-ascii-sharks-wallpaper/d0ac0d9f283dc11b1f4632b23d557567a93a39a1/conversation.png
+  - skin-screenshots/MouQianDi0__dsh-ascii-sharks-wallpaper/d0ac0d9f283dc11b1f4632b23d557567a93a39a1/settings.png

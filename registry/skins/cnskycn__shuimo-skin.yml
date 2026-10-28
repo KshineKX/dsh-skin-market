@@ -25,8 +25,7 @@ compatibility:
   dsh: unverified
   platform:
     - web
-screenshots:
-  - https://opengraph.githubassets.com/placeholder/cnskycn.shuimo-skin
+screenshots: []
 review:
   compatibility: unverified
   preview: repository-card
@@ -59,3 +58,8 @@ releaseUpdatedAt: 2026-08-23T05:33:13.614Z
 metadataUpdatedAt: 2026-08-23T05:33:13.614Z
 starsUpdatedAt: 2026-09-09T21:40:14.994Z
 updatedAt: 2026-09-09T21:40:14.994Z
+
+marketScreenshots:
+  - skin-screenshots/cnskycn__shuimo-skin/6f8470414dc42541f0cfa182b0f85659cc0efc9c/home.png
+  - skin-screenshots/cnskycn__shuimo-skin/6f8470414dc42541f0cfa182b0f85659cc0efc9c/conversation.png
+  - skin-screenshots/cnskycn__shuimo-skin/6f8470414dc42541f0cfa182b0f85659cc0efc9c/settings.png
