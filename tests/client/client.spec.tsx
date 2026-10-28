@@ -1339,6 +1339,42 @@ describe('client market', () => {
     expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/restart') && init?.method === 'POST')).toBe(false)
   })
 
+  it('does not show a restart prompt when a Web install receipt is followed by an active hot activation', async () => {
+    let installed = false
+    let active = false
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({
+        hostKind: 'dsh', runtime: dshRuntime,
+        skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: active ? 'restart-required' : 'inactive', primary: active, clientModule: active, installedVersion: '1.0.0', updateAvailable: false }] : [],
+      }) }
+      if (url.endsWith('/install') && init?.method === 'POST') {
+        installed = true
+        return { ok: true, json: async () => ({ operationId: 'hot-install' }) }
+      }
+      if (url.endsWith('/operations/hot-install')) return { ok: true, json: async () => ({ id: 'hot-install', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      if (url.endsWith('/activate') && init?.method === 'POST') {
+        active = true
+        return { ok: true, json: async () => ({ operationId: 'hot-activate' }) }
+      }
+      if (url.endsWith('/operations/hot-activate')) return { ok: true, json: async () => ({ id: 'hot-activate', kind: 'activate', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const clientRuntime = {
+      setActive: vi.fn(async () => true),
+      probeActive: vi.fn(() => 'active' as const),
+      probeSyncing: vi.fn(() => false),
+    }
+    render(<SkinMarketSection t={key => key} clientRuntime={clientRuntime} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: '安装并使用' }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/operations/hot-activate'))).toBe(true))
+    expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    expect(fetchMock.mock.calls.some(([url, request]) => url.endsWith('/restart') && request?.method === 'POST')).toBe(false)
+  })
+
   it.each([
     ['discovery', false, false, '0.2.1-alpha.3', false], ['detail', false, false, '0.2.1-alpha.3', false],
     ['discovery', true, false, '0.2.1-alpha.3', false], ['detail', true, false, '0.2.1-alpha.3', false],

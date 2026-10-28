@@ -2027,19 +2027,61 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
                 : kind === 'activate' ? `已启用“${target.name.zh}”，重启后生效。`
                   : `“${target.name.zh}”${kind === 'uninstall' ? '已卸载' : kind === 'deactivate' ? '的停用选择已保存' : kind === 'update' ? '已更新' : '的设置已保存'}，重启后生效。`,
               startedAt: new Date().toISOString() }
+            // An install-and-use action has not finished until the follow-up
+            // activation completes. Keep this receipt only for failure
+            // recovery; the continuation suppresses it until activation has
+            // supplied the actual client restart result.
             if (kind === 'install' && operation.restartRequired === true) installRestartNotices.current.set(target.id, restartNotice)
             if (continueInstallAndUse) continuingInstallActivation.current.add(target.id)
             else continuingInstallActivation.current.delete(target.id)
             inflightSkinIds.current.delete(target.id)
-            const refreshed = await refresh(false, continueInstallAndUse ? undefined : restartNotice)
+            // Activation owns the final restart decision. Let it read the
+            // host state without opening the dialog; only the post-activation
+            // client probe may present a real remaining receipt.
+            const deferRestartPresentation = kind === 'activate' && hostKind !== 'desktop'
+            const refreshed = await refresh(false, continueInstallAndUse || deferRestartPresentation ? undefined : restartNotice, deferRestartPresentation ? false : true)
             if (continueInstallAndUse) return true
-            if (clientNeedsRestart && refreshed.hostKind !== 'desktop') {
-              const notice: PendingRestartNotice = { ...restartNotice, source: 'client', instanceId: refreshed.instanceId,
-                description: `“${target.name.zh}”的客户端组件尚未加载，重启后生效。` }
-              clientRestartNotices.current.set(target.id, notice)
-              presentRestartNotice(notice, refreshed)
+            const forgetDeferredPromptReceipt = () => {
+              if (!deferRestartPresentation) return
+              const key = restartPromptKey(refreshed, { kind: 'skin', skinId: target.id })
+              restartPrompts.current.delete(key)
+              try {
+                const saved = JSON.parse(window.sessionStorage.getItem(RESTART_PROMPTS_KEY) ?? '[]')
+                if (Array.isArray(saved)) window.sessionStorage.setItem(RESTART_PROMPTS_KEY, JSON.stringify(saved.filter(item => item !== key)))
+              } catch { /* storage may be unavailable */ }
             }
-            const needsRestart = clientNeedsRestart || runtimeFor(refreshed.skins, target.id).activation === 'restart-required'
+            const refreshedTarget = runtimeFor(refreshed.skins, target.id)
+            const clientApplied = refreshed.hostKind !== 'desktop' && clientRuntime?.probeActive?.(target.package) === 'active'
+            if (clientApplied) {
+              forgetDeferredPromptReceipt()
+              clientNeedsRestart = false
+              clientRestartNotices.current.delete(target.id)
+              installRestartNotices.current.delete(target.id)
+              if (pendingRestartRef.current?.target.kind === 'skin' && pendingRestartRef.current.target.skinId === target.id) {
+                pendingRestartRef.current = null
+                setPendingRestart(null)
+              }
+              if (restartTargetRef.current?.kind === 'skin' && restartTargetRef.current.skinId === target.id) {
+                restartTargetRef.current = null
+                setRestartTarget(null)
+                setConfirmRestart(false)
+              }
+            }
+            // A completed hot activation is authoritative for this action;
+            // do not retain the install operation's restart receipt after the
+            // browser module is confirmed active.
+            const needsRestart = !clientApplied && (clientNeedsRestart || refreshedTarget.activation === 'restart-required')
+            if (needsRestart) {
+              forgetDeferredPromptReceipt()
+              if (clientNeedsRestart && refreshed.hostKind !== 'desktop') {
+                const notice: PendingRestartNotice = { ...restartNotice, source: 'client', instanceId: refreshed.instanceId,
+                  description: `“${target.name.zh}”的客户端组件尚未加载，重启后生效。` }
+                clientRestartNotices.current.set(target.id, notice)
+                presentRestartNotice(notice, refreshed)
+              } else if (refreshedTarget.activation === 'restart-required') {
+                presentRestartNotice(restartNotice, refreshed)
+              }
+            }
             if (kind === 'uninstall' && !needsRestart) {
               setCompletedUninstall({ skinId: target.id, title: `${target.name.zh} 已卸载`, startedAt: restartNotice.startedAt })
             }
