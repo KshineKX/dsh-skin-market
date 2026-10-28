@@ -7,7 +7,7 @@ description: 为 DeepSeek Harness 打造的桌面看板娘插件。 一只会陪
 repo: https://github.com/Sutera-Diffusus/dsh-whale-musume
 package: dsh-whale-musume
 rowId: dsh-whale-musume
-category: skin
+category: pet
 tags:
   - motion
   - token-theme
