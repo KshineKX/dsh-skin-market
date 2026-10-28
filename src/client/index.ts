@@ -160,7 +160,7 @@ export function createClientSkinRuntime(loader: ClientLoader, events?: Pick<Clie
 
 export const name = 'dsh-skin-market'
 export const inject = ['slots', 'locale', 'loader']
-export const REQUIRED_PRIMITIVES = ['Button', 'Input', 'Modal', 'Pill'] as const
+export const REQUIRED_PRIMITIVES = ['Button', 'Input', 'Modal', 'Pill', 'Switch'] as const
 
 export function missingPrimitives(module: Record<string, unknown>): string[] {
   return REQUIRED_PRIMITIVES.filter(key => module[key] === undefined)

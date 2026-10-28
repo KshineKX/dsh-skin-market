@@ -11,6 +11,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
     Button: ({ icon: leading, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { icon?: React.ReactNode }) => React.createElement('button', props, leading, children),
     Input: ({ icon: leading, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon?: React.ReactNode }) => React.createElement('label', null, leading, React.createElement('input', props)),
     Pill: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => React.createElement('button', props, children),
+    Switch: ({ checked, onChange, label, ...props }: { checked: boolean; onChange: (next: boolean) => void; label: string; className?: string }) => React.createElement('button', { ...props, type: 'button', role: 'switch', 'aria-checked': checked, 'aria-label': label, onClick: () => onChange(!checked) }),
     Modal: ({
       open,
       title,
@@ -1037,7 +1038,7 @@ describe('client market', () => {
   })
 
   it('guards missing native primitives', () => {
-    expect(missingPrimitives({ Button: true })).toEqual(['Input', 'Modal', 'Pill'])
+    expect(missingPrimitives({ Button: true })).toEqual(['Input', 'Modal', 'Pill', 'Switch'])
   })
 
   it('keeps the legacy market settings entry and mounts the same market UI when the new bundle configuration slot becomes available', () => {
@@ -3083,6 +3084,14 @@ describe('client market', () => {
       expect(screen.queryByText('使用中', { exact: true })).toBeNull()
       expect(screen.getAllByText('未生效', { exact: true }).length).toBeGreaterThan(0)
       expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
+    it('shows an enabled secondary plugin as active without treating it as pinned', async () => {
+      serveWebState(() => [webSkin({ primary: false, pinned: false })])
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => 'active', probeSyncing: () => false }} />)
+      expect((await screen.findAllByText('使用中', { exact: true })).length).toBeGreaterThan(0)
+      expect(screen.queryByRole('button', { name: '使用' })).toBeNull()
+      expect(screen.getByRole('button', { name: '常驻' })).toBeTruthy()
     })
 
     it('waits for graph settlement and clears a real delayed-client reminder in the same tab', async () => {

@@ -10,6 +10,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => {
     Button: ({ icon: leading, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { icon?: React.ReactNode }) => React.createElement('button', props, leading, children),
     Input: ({ icon: _icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon?: React.ReactNode }) => React.createElement('input', props),
     Pill: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => React.createElement('button', props, children),
+    Switch: ({ checked, onChange, label, ...props }: { checked: boolean; onChange: (next: boolean) => void; label: string; className?: string }) => React.createElement('button', { ...props, type: 'button', role: 'switch', 'aria-checked': checked, 'aria-label': label, onClick: () => onChange(!checked) }),
     Modal: ({ open, title, description, children, footer, onClose, closeLabel = '关闭', className }: {
       open: boolean; title: string; description?: string; children?: React.ReactNode; footer?: React.ReactNode
       onClose?: () => void; closeLabel?: string; className?: string

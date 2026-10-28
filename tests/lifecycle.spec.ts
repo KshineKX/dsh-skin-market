@@ -1292,7 +1292,7 @@ describe('skin lifecycle', () => {
     expect(entries.get(two.rowId)?.fiber).toEqual({ state: 2 })
   })
 
-  it('retains selected secondary skins for the current activation without making them pins', async () => {
+  it('keeps selected secondary skins enabled without making them pins', async () => {
     const { dir, skins: [one, two, pinned], entries, lifecycle, updates } = webSelectionFixture()
     updates.length = 0
 
@@ -1301,13 +1301,16 @@ describe('skin lifecycle', () => {
     const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
     const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, approvals, plan.selectionContext)
     expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [one.id, pinned.id] })
-    expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [], retainedSkinIds: [one.id, pinned.id], disabledSkinIds: [] })
+    expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [], disabledSkinIds: [] })
     expect(entries.get(one.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(two.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
+    expect(lifecycle.states().find(state => state.skinId === one.id)).toMatchObject({ activation: 'active', primary: false, pinned: false })
+    expect(lifecycle.states().find(state => state.skinId === pinned.id)).toMatchObject({ primary: false, pinned: false })
+    expect(lifecycle.states().find(state => state.skinId === pinned.id)?.activation).not.toBe('inactive')
     expect(updates).toEqual([`${two.rowId}:null`, `${pinned.rowId}:null`])
     await finished(lifecycle.begin('activate', one.id))
-    expect(readMarketState(dir).retainedSkinIds).toBeUndefined()
+    expect(readMarketState(dir).disabledSkinIds).toEqual(expect.arrayContaining([two.id, pinned.id]))
   })
 
   it('can close a pinned skin for one activation without cancelling its persistent pin', async () => {
@@ -1317,10 +1320,11 @@ describe('skin lifecycle', () => {
     const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
     const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, {}, plan.selectionContext)
     expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [] })
-    expect(readMarketState(dir)).toMatchObject({ pinnedSkinIds: [pinned.id], suppressedPinnedSkinIds: [pinned.id] })
+    expect(readMarketState(dir)).toMatchObject({ pinnedSkinIds: [pinned.id] })
+    expect(readMarketState(dir).disabledSkinIds).toEqual(expect.arrayContaining([pinned.id]))
     expect(entries.get(pinned.rowId)?.options.disabled).toBe(true)
     await finished(lifecycle.begin('activate', one.id))
-    expect(readMarketState(dir).suppressedPinnedSkinIds).toBeUndefined()
+    expect(readMarketState(dir).disabledSkinIds).not.toContain(pinned.id)
     expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
   })
 
@@ -1382,6 +1386,8 @@ describe('skin lifecycle', () => {
     if (kind === 'unpin') {
       entries.get(two.rowId)!.options.disabled = null
       entries.get(two.rowId)!.fiber = { state: 2 }
+      entries.get('selection-pinned')!.options.disabled = null
+      entries.get('selection-pinned')!.fiber = { state: 2 }
     }
     expect(await finished(lifecycle.begin(kind, one.id))).toMatchObject({ phase: 'done' })
     expect(browserEntry.options.disabled).toBe(true)

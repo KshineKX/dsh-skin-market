@@ -566,11 +566,7 @@
 .activationConflictRow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; min-height: 34px; align-items: center; gap: 10px; color: var(--dsw-alias-label-primary); font-size: 12px; line-height: 18px; }
 .activationConflictRow > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .activationConflictState { color: var(--dsw-alias-label-caption); font-size: 11px; }
-.activationSwitch { position: relative; display: inline-flex; width: 34px; min-width: 34px; height: 20px; min-height: 20px; align-items: center; padding: 2px; cursor: pointer; border: 0; border-radius: 999px; background: var(--dsw-alias-border-l2); transition: background var(--ds-transition-duration) var(--ds-ease-in-out); }
-.activationSwitch > span { display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--dsw-alias-label-caption); transform: translateX(0); transition: background var(--ds-transition-duration) var(--ds-ease-in-out), transform var(--ds-transition-duration) var(--ds-ease-in-out); }
-.activationSwitch[data-checked="true"] { background: var(--dsw-alias-brand-primary); }
-.activationSwitch[data-checked="true"] > span { background: var(--dsw-alias-bg-layer-1); transform: translateX(14px); }
-.activationSwitch:focus-visible { outline: 2px solid var(--dsw-alias-link); outline-offset: 2px; }
+.activationSwitch { justify-self: end; }
 .repairPromptFallback { box-sizing: border-box; width: 100%; resize: vertical; padding: 10px; border: 1px solid currentColor; border-radius: var(--dsw-radius-sm); color: inherit; background: transparent; font: inherit; line-height: 1.5; }
 .interceptHelp { margin-top: 8px; }
 

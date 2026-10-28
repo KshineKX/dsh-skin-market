@@ -1466,7 +1466,7 @@ function latestOperationAt(installedAt: string | null, activity?: SkinActivity):
   return timestamps.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null
 }
 
-export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds: string[] = [], activity?: SkinActivity, hostKind: MarketHostKind = 'dsh'): SkinRuntimeState {
+export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds: string[] = [], activity?: SkinActivity, hostKind: MarketHostKind = 'dsh', enabledSkinIds?: string[]): SkinRuntimeState {
   const dependencies = readDependencies(profileDir)
   const spec = dependencies[skin.package] ?? null
   const primary = activeSkinId === skin.id
@@ -1480,7 +1480,7 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
   if (!validation.ok) {
     return { skinId: skin.id, installation: 'broken', activation: 'inactive', primary, pinned, installedVersion: null, installedSpec: spec, installedAt, lastOperatedAt, updateAvailable: false, error: validation.reason }
   }
-  const selected = primary || pinned
+  const selected = primary || (enabledSkinIds === undefined ? pinned : enabledSkinIds.includes(skin.id))
   const activation = selected ? (loaderFound && loaderLive ? 'active' : 'unavailable') : 'inactive'
   const pinnedSpecMatches = reviewedInstalledSpecMatches(profileDir, skin, spec, { allowArtifactRisk: true, hostKind })
   const updateAvailable = validation.version !== skin.install.version || !pinnedSpecMatches || companionsNeedInstall(profileDir, skin)
@@ -1491,6 +1491,7 @@ export function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: 
     activation,
     primary,
     pinned,
+
     installedVersion: validation.version ?? null,
     installedSpec: spec,
     installedAt,

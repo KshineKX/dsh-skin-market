@@ -264,10 +264,7 @@ export interface PersistedMarketState {
   activeSkinId: string | null
   disabledSkinIds: string[]
   pinnedSkinIds?: string[]
-  /** Skins kept only for the current activation selection; unlike pins, this is replaced on the next activation. */
-  retainedSkinIds?: string[]
-  /** Explicit pins turned off only for the current activation selection. */
-  suppressedPinnedSkinIds?: string[]
+
   /** Exact reviewed target and installed bytes acknowledged by the user. */
   artifactAcknowledgements?: Record<string, string>
   pendingRestart?: {

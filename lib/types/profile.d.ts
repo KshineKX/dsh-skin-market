@@ -170,4 +170,4 @@ export declare function snapshotFile(file: string): FileSnapshot;
 export declare function restoreFile(file: string, snapshot: FileSnapshot): void;
 export declare function snapshotManifest(profileDir: string): FileSnapshot;
 export declare function restoreManifest(profileDir: string, snapshot: FileSnapshot): void;
-export declare function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds?: string[], activity?: SkinActivity, hostKind?: MarketHostKind): SkinRuntimeState;
+export declare function runtimeState(profileDir: string, skin: SkinEntry, activeSkinId: string | null, loaderLive: boolean, loaderFound: boolean, pinnedSkinIds?: string[], activity?: SkinActivity, hostKind?: MarketHostKind, enabledSkinIds?: string[]): SkinRuntimeState;

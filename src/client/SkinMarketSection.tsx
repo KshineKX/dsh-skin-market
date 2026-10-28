@@ -53,6 +53,8 @@ export function resolvePrimitiveIcon(module: Record<string, unknown>, currentNam
 }
 
 const primitiveModule = primitiveExports as unknown as Record<string, unknown>
+type PrimitiveSwitchProps = { checked: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean; title?: string; className?: string }
+const Switch = primitiveModule.Switch as ComponentType<PrimitiveSwitchProps>
 const IconChevronLeftOutline = resolvePrimitiveIcon(primitiveModule, 'IconChevronLeftOutlineRegular', 'IconChevronLeftOutline14')
 const IconCheckOutline = resolvePrimitiveIcon(primitiveModule, 'IconCheckOutlineRegular', 'IconCheckOutline16')
 const IconCopyOutline = resolvePrimitiveIcon(primitiveModule, 'IconCopyOutlineRegular', 'IconCopyOutline16')
@@ -1000,8 +1002,13 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       setWebClientRetryAt(null)
       return state
     }
-    const selected = new Set(state.skins.filter(item => item.primary === true || item.pinned === true
-      || item.primary === undefined && item.pinned === undefined && item.activation === 'active').map(item => item.skinId))
+    const completeTargets = state.skins.find(item => item.selectionClientTargets !== undefined)?.selectionClientTargets
+    const activePackages = new Set((completeTargets ?? []).filter(target => target.active).map(target => target.package))
+    const selected = new Set(state.skins.filter(item => {
+      const skin = skinsRef.current.find(candidate => candidate.id === item.skinId)
+      return item.primary === true || item.pinned === true || item.activation === 'active'
+        || activePackages.has(skin?.package ?? '')
+    }).map(item => item.skinId))
     const installedClients = new Set((state.installedClientPlugins ?? []).map(item => item.package))
     for (const item of state.skins) {
       if (item.installation !== 'installed') { webClientPackages.current.delete(item.skinId); webSelectionSkinIds.current.delete(item.skinId); continue }
@@ -1014,7 +1021,6 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       for (const companion of skin.install.companions ?? []) if (installedClients.has(companion.package)) packages.add(companion.package)
       if (packages.size > 0) webClientPackages.current.set(item.skinId, [...packages])
     }
-    const completeTargets = state.skins.find(item => item.selectionClientTargets !== undefined)?.selectionClientTargets
     const hasCompleteTargets = completeTargets !== undefined
     const fallbackTargets = new Map<string, boolean>()
     for (const [skinId, packages] of webClientPackages.current) {
@@ -3040,7 +3046,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
             {activationDialogConflicts.map(conflict => <div className={css.activationConflictRow} key={conflict.skin.id}>
               <span>{conflict.skin.name.zh}</span>
               <span className={css.activationConflictState}>{conflict.keep ? '保留' : '关闭'}</span>
-              <button type="button" role="switch" aria-checked={conflict.keep} aria-label={`${conflict.keep ? '保留' : '关闭'} ${conflict.skin.name.zh}`} className={css.activationSwitch} data-checked={conflict.keep ? 'true' : undefined} onClick={() => toggleActivationConflict(conflict.skin.id)}><span /></button>
+              <Switch checked={conflict.keep} onChange={() => toggleActivationConflict(conflict.skin.id)} label={`${conflict.keep ? '保留' : '关闭'} ${conflict.skin.name.zh}`} className={css.activationSwitch} />
             </div>)}
           </div>
         </div>}
