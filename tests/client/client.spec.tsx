@@ -2197,6 +2197,32 @@ describe('client market', () => {
     expect(use.compareDocumentPosition(pin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
+  it('activates a newly installed Web skin before honoring an install restart requirement', async () => {
+    let installed = false
+    let activated = false
+    const installOperation: Operation = { id: 'install-new-skin', kind: 'install', skinId: skin.id, phase: 'done', restartRequired: true, startedAt: new Date().toISOString() }
+    const activateOperation: Operation = { id: 'activate-new-skin', kind: 'activate', skinId: skin.id, phase: 'done', startedAt: new Date().toISOString() }
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
+      if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'dsh', runtime: dshRuntime, skins: [{
+        skinId: skin.id, installation: installed ? 'installed' : 'missing', activation: activated ? 'active' : 'inactive',
+        installedVersion: installed ? skin.install.version : undefined, updateAvailable: false,
+      }] }) }
+      if (url.endsWith('/install') && init?.method === 'POST') { installed = true; return { ok: true, json: async () => ({ operationId: installOperation.id }) } }
+      if (url.endsWith('/activate') && init?.method === 'POST') { activated = true; return { ok: true, json: async () => ({ operationId: activateOperation.id }) } }
+      if (url.endsWith(`/operations/${installOperation.id}`)) return { ok: true, json: async () => installOperation }
+      if (url.endsWith(`/operations/${activateOperation.id}`)) return { ok: true, json: async () => activateOperation }
+      throw new Error(`Unexpected request: ${url} ${init?.method ?? 'GET'}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<SkinMarketSection t={key => key} />)
+    await openSkinCard()
+
+    fireEvent.click(screen.getByRole('button', { name: '安装并使用' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/activate') && init?.method === 'POST')).toHaveLength(1))
+    expect(activated).toBe(true)
+  })
+
   it('exposes Stop on active installed cards', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => ({
       ok: true,

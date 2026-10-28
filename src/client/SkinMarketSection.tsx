@@ -1987,12 +1987,12 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
                 setConfirmRestart(false)
               }
             }
-            // Official hosts can save their enabled selection before restart,
-            // even when newly installed modules are not live in this process.
-            // Finish both steps before showing the restart status.
+            // Installation and activation are separate lifecycle operations.
+            // Finish both steps before showing the restart status. A newly
+            // installed Web module may not be in the current loader yet, but
+            // its activation selection must still be persisted before restart.
             const continueInstallAndUse = kind === 'install'
               && pendingInstallActivation.current.has(target.id)
-              && management?.official === true
             let clientNeedsRestart = false
             if (management?.official === true) {
               // The host applies both halves of an official bundle. Do not
