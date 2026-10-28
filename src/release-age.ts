@@ -21,6 +21,40 @@ export function parseReleaseAgeTarget(packageName: string, version: string): Rel
   return { packageName, version }
 }
 
+const DEFAULT_RELEASE_AGE_WINDOW_MS = 24 * 60 * 60 * 1000
+
+/** Read the observable pnpm fresh-release window; unknown config is not guessed. */
+export function readMinimumReleaseAgeMs(profileDir: string): number | null {
+  const read = (file: string, key: RegExp): number | 'invalid' | null => {
+    let source: string
+    try { source = readFileSync(file, 'utf8') } catch { return null }
+    if (!key.test(source)) return null
+    const match = key.source.includes('minimumReleaseAge')
+      ? /^minimumReleaseAge\s*:\s*(\d+)\s*(?:#.*)?$/m.exec(source)
+      : /^minimum-release-age\s*=\s*(\d+)\s*(?:#.*)?$/mi.exec(source)
+    if (match === null) return 'invalid'
+    const minutes = Number(match[1])
+    return Number.isFinite(minutes) ? minutes * 60 * 1000 : 'invalid'
+  }
+  const workspace = read(join(profileDir, 'pnpm-workspace.yaml'), /^minimumReleaseAge\s*:/m)
+  if (workspace === 'invalid') return null
+  if (typeof workspace === 'number') return workspace
+  const npmrc = read(join(profileDir, '.npmrc'), /^minimum-release-age\s*=/mi)
+  if (npmrc === 'invalid') return null
+  if (typeof npmrc === 'number') return npmrc
+  return DEFAULT_RELEASE_AGE_WINDOW_MS
+}
+
+/** Whether a precise local exception already allows this package version. */
+export function isReleaseAgeExcluded(profileDir: string, packageName: string, version: string): boolean {
+  try {
+    const workspace = readWorkspace(profileDir)
+    return groups(workspace).get(packageName)?.some(rule => rule.versions === null || rule.versions.includes(version)) === true
+  } catch {
+    return false
+  }
+}
+
 export class ReleaseAgeConfigurationError extends Error {
   constructor(public readonly code: 'unavailable' | 'unsafe' | 'changed' | 'write-failed' | 'invalid-target') {
     super({

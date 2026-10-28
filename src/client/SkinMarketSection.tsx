@@ -178,6 +178,8 @@ interface MarketUpdateStatus {
   currentVersion: string
   latestVersion: string
   updateAvailable: boolean
+  updateBlockedReason?: string
+  updateAvailableAt?: string
 }
 
 interface MarketUpdateOperation {
@@ -2541,6 +2543,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               <Button className={css.homeSubmitAction} variant="outline" size="sm" icon={<UploadSimpleIcon size={15} aria-hidden="true" />} onClick={() => { setShowSubmission(true); setSubmissionCopied(false) }}>提交皮肤</Button>
             </div>
           </div>
+          {marketUpdate?.updateBlockedReason !== undefined && <p className={css.notice} role="status">{marketUpdate.updateBlockedReason}</p>}
           <Input className={css.homeSearch} value={homeQuery} onChange={event => setHomeQuery(event.currentTarget.value)} icon={<IconSearchOutline />} placeholder={t('search')} aria-label={t('search')} />
           <div className={css.homeSearchPlaceholder} aria-hidden="true" />
           {renderSkinOperationBanner(css.homeOperation)}

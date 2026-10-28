@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parse } from 'yaml'
-import { allowReleaseAgeVersion, parseReleaseAgeTarget, ReleaseAgeConfigurationError, repairReleaseAgeExcludes } from '../src/release-age.ts'
+import { allowReleaseAgeVersion, parseReleaseAgeTarget, readMinimumReleaseAgeMs, ReleaseAgeConfigurationError, repairReleaseAgeExcludes } from '../src/release-age.ts'
 import { officialOperationFailure } from '../src/official-failure.ts'
 import type { CommandResult } from '../src/commands.ts'
 
@@ -37,6 +37,29 @@ afterEach(() => {
   concurrent.file = ''
   concurrent.value = ''
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
+})
+
+describe('minimum release-age policy reading', () => {
+  it('reads the Desktop workspace value in minutes', () => {
+    const { directory } = fixture('minimumReleaseAge: 90 # fresh-release window\n')
+    expect(readMinimumReleaseAgeMs(directory)).toBe(90 * 60 * 1000)
+  })
+
+  it('falls back to the npmrc spelling', () => {
+    const { directory } = fixture()
+    writeFileSync(join(directory, '.npmrc'), 'minimum-release-age=45\n')
+    expect(readMinimumReleaseAgeMs(directory)).toBe(45 * 60 * 1000)
+  })
+
+  it('uses pnpm default when neither Desktop config spelling is present', () => {
+    const { directory } = fixture()
+    expect(readMinimumReleaseAgeMs(directory)).toBe(24 * 60 * 60 * 1000)
+  })
+
+  it('fails closed when a configured value is malformed', () => {
+    const { directory } = fixture('minimumReleaseAge: soon\n')
+    expect(readMinimumReleaseAgeMs(directory)).toBeNull()
+  })
 })
 
 describe('precise release-age authorizations', () => {

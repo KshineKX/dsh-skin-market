@@ -771,7 +771,7 @@ describe('client market', () => {
     expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用皮肤市场更新' })).toBeNull()
   })
 
-  it('keeps updates and skin actions available without guessing protection from publication age', async () => {
+  it('explains a Desktop release-age hold without offering a guaranteed-to-fail button', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
       if (url.endsWith('/state')) return { ok: true, json: async () => ({ skins: [], runtime: dshRuntime }) }
@@ -782,13 +782,9 @@ describe('client market', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     render(<SkinMarketSection t={key => key} />)
-    const update = await screen.findByRole('button', { name: '更新皮肤市场到 0.1.61' })
-    expect(update.textContent).toBe('更新')
-    expect(update.hasAttribute('disabled')).toBe(false)
-    expect(screen.queryByText(/旧版服务推断/)).toBeNull()
+    expect(screen.queryByRole('button', { name: '更新皮肤市场到 0.1.61' })).toBeNull()
+    expect(await screen.findByText('旧版服务推断的新包保护')).toBeTruthy()
     expect((await screen.findByRole('button', { name: '安装并使用' })).hasAttribute('disabled')).toBe(false)
-    fireEvent.click(update)
-    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url.endsWith('/market-update') && init?.method === 'POST')).toBe(true))
   })
 
   it('keeps the real Desktop restart reminder while a market update is available', async () => {
