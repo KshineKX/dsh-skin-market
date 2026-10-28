@@ -154,7 +154,7 @@ export declare class SkinLifecycle {
     private selectionHostStatus;
     private selectionClientTargets;
     private selectionArtifactHash;
-    replay(repairComponents?: boolean): Promise<void>;
+    replay(repairComponents?: boolean, startup?: boolean): Promise<void>;
     private replayLocked;
     states(): SkinRuntimeState[];
     /** Official inventory separates a saved toggle from actual fiber health. */

@@ -1010,7 +1010,7 @@ export class SkinLifecycle {
     if (this.disposed) return
     this.startupReplay = (async () => {
       try {
-        await this.replay()
+        await this.replay(true, true)
       } catch (error) {
         logEvent('error', 'startup-replay', errorMessage(error))
       }
@@ -1278,15 +1278,15 @@ export class SkinLifecycle {
     return createHash('sha256').update(JSON.stringify(artifacts)).digest('hex')
   }
 
-  async replay(repairComponents = true): Promise<void> {
+  async replay(repairComponents = true, startup = false): Promise<void> {
     if (this.disposed || this.waitingReason !== undefined) return
     // Startup reconciliation writes the same profile as explicit actions.
     // Keep its inventory reads and follow-up writes in that same queue.
     const replay: Operation = { id: randomUUID(), skinId: '', kind: 'activate', phase: 'activating', startedAt: new Date().toISOString() }
-    await this.withProfileLock(replay, () => this.replayLocked(repairComponents))
+    await this.withProfileLock(replay, () => this.replayLocked(repairComponents, startup))
   }
 
-  private async replayLocked(repairComponents = true): Promise<void> {
+  private async replayLocked(repairComponents = true, startup = false): Promise<void> {
     if (this.disposed || this.waitingReason !== undefined) return
     if (this.management !== undefined) {
       try { this.repairReleaseAgePolicy() }
@@ -1294,7 +1294,10 @@ export class SkinLifecycle {
     }
     const state = readMarketState(this.options.profileDir)
     const preserveNativeSelection = this.management !== undefined
-    const previousRestart = state.pendingRestart?.pid !== process.pid ? state.pendingRestart : undefined
+    // A fresh host process must verify and consume receipts from the previous
+    // process even when the restart scheduler reused its PID. Ordinary catalog
+    // replay in the same process must not consume a live operation's receipt.
+    const previousRestart = startup || state.pendingRestart?.pid !== process.pid ? state.pendingRestart : undefined
     const dependencies = readDependencies(this.options.profileDir)
     const installed = this.catalog.filter(skin => dependencies[skin.package] !== undefined)
     const rootBundles = new Set(readProfileBundles(this.options.profileDir))

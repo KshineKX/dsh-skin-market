@@ -1163,6 +1163,22 @@ describe('skin lifecycle', () => {
     expect(readDependencies(dir)[skin.package]).toBeUndefined()
   })
 
+  it('clears a previous Web restart receipt during startup replay even when the pid is reused', async () => {
+    const dir = fixture()
+    const probe = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+    const skin = firstInstallable(probe)
+    materializeReviewedSkin(dir, skin)
+    writeMarketState(dir, { version: 1, activeSkinId: skin.id, disabledSkinIds: [], pinnedSkinIds: [], pendingRestart: { pid: process.pid, skinIds: [skin.id], id: 'stale-restart' } })
+    const entry: LoaderEntry = { options: { id: skin.rowId, name: skin.package }, fiber: { state: 2 }, update: async () => undefined }
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => [entry] } }, { profile: 'test', profileDir: dir, runner: async () => success() }, [skin])
+
+    lifecycle.start()
+    await lifecycle.runtimeStates()
+
+    expect(readMarketState(dir).pendingRestart).toBeUndefined()
+    await lifecycle.dispose()
+  })
+
   it('keeps pinned skins enabled across switches and replay, then disables a secondary skin when unpinned', async () => {
     const dir = fixture()
     let lifecycle!: SkinLifecycle
