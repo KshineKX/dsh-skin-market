@@ -104,9 +104,10 @@ export declare class SkinLifecycle {
     /** Derive the same main-component directions as the ordinary selection transition. */
     private selectionTargets;
     private selectionBinding;
+    private selectionContextLocked;
     private selectionPlanLocked;
     /** Background preflight is read-only and never creates a visible Operation. */
-    selectionPlan(kind: SelectionOperationKind, skinId: string): Promise<ConfigurationOverrideBatchPlan>;
+    selectionPlan(kind: SelectionOperationKind, skinId: string, preservedOverride?: readonly string[]): Promise<ConfigurationOverrideBatchPlan>;
     private releaseAgeContext;
     private repairReleaseAgePolicy;
     private applyReleaseAgeApproval;
@@ -129,6 +130,7 @@ export declare class SkinLifecycle {
     private assertCompatibilityContext;
     /** Revalidate the shown artifact inside the profile queue before changing selection. */
     private assertArtifactUseApproved;
+    private assertPreservedSkinApproved;
     private assertLegacyOfficialPeers;
     private applyCompatibility;
     private syncPnpmMetadata;
@@ -160,7 +162,10 @@ export declare class SkinLifecycle {
     private liveOperations;
     currentOperations(): Operation[];
     currentOperation(): Operation | null;
-    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string, preservedSkinIds?: readonly string[]): Operation;
+    begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string, preservedSkinIds?: readonly string[], preservedSkinApprovals?: Record<string, {
+        compatibilityContext: string;
+        artifactContext?: string;
+    }>, selectionContext?: string): Operation;
     retry(id: string, action: OperationRetryAction, acknowledgeCompatibility?: boolean, acknowledgedContext?: string, acknowledgedArtifactContext?: string, configurationContext?: string): Operation;
     private update;
     cancel(id: string): Operation;

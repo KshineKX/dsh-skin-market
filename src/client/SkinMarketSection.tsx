@@ -71,13 +71,15 @@ export interface SkinMarketSectionProps {
 }
 
 type MutationKind = Operation['kind']
-type UseConsentContext = { context: string; artifactContext?: string; configurationContext?: string; preservedSkinIds?: string[] }
+type UseConsentContext = { context: string; artifactContext?: string; configurationContext?: string; preservedSkinIds?: string[]; preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>; selectionContext?: string }
 type CompatibilityConsent = { decision: 'not-required' | 'cancelled' } | ({ decision: 'accepted' } & UseConsentContext)
 
 interface ActivationConflict {
   skin: CatalogSkin
   state: RuntimeSkin
   keep: boolean
+  assessment: CompatibilityAssessment | null
+  artifactRisk?: RuntimeSkin['artifactRisk']
 }
 
 interface CompatibilityConfirmation {
@@ -92,16 +94,17 @@ interface CompatibilityConfirmation {
   configurationPlan?: ConfigurationOverrideBatchPlan
   kind: MutationKind
   conflicts?: ActivationConflict[]
+  activationSnapshot?: string
 }
 
-function activationConflicts(target: CatalogSkin, catalog: readonly CatalogSkin[], states: readonly RuntimeSkin[]): ActivationConflict[] {
+function activationConflicts(target: CatalogSkin, catalog: readonly CatalogSkin[], states: readonly RuntimeSkin[], runtime: DshRuntime | null): ActivationConflict[] {
   const targetCategory = marketCategory(target)
   return states.flatMap(state => {
     if (state.skinId === target.id || state.installation !== 'installed'
       || state.activation !== 'active' && state.primary !== true && state.pinned !== true) return []
     const skin = catalog.find(item => item.id === state.skinId)
     if (skin === undefined || marketCategory(skin) === targetCategory) return []
-    return [{ skin, state, keep: state.pinned === true }]
+    return [{ skin, state, keep: state.pinned === true, assessment: installCompatibility(skin, 'dsh', runtime), artifactRisk: state.artifactRisk }]
   })
 }
 
@@ -114,6 +117,33 @@ function preservedSkinIds(states: readonly RuntimeSkin[], conflicts: readonly Ac
   return [...preserved]
 }
 
+function applyPreservedSelection(conflicts: readonly ActivationConflict[], ids: readonly string[]): ActivationConflict[] {
+  const selected = new Set(ids)
+  return conflicts.map(conflict => ({ ...conflict, keep: selected.has(conflict.skin.id) }))
+}
+
+function preservedSkinApprovals(states: readonly RuntimeSkin[], catalog: readonly CatalogSkin[], ids: readonly string[], runtime: DshRuntime | null): Record<string, { compatibilityContext: string; artifactContext?: string }> {
+  return Object.fromEntries(ids.flatMap(id => {
+    const skin = catalog.find(item => item.id === id)
+    const state = states.find(item => item.skinId === id)
+    if (skin === undefined || state === undefined) return []
+    return [[id, { compatibilityContext: skinCompatibilityContext(skin, runtime), ...(state.artifactRisk === undefined ? {} : { artifactContext: state.artifactRisk.context }) }]]
+  }))
+}
+
+function activationSelectionSnapshot(target: CatalogSkin, catalog: readonly CatalogSkin[], states: readonly RuntimeSkin[], runtime: DshRuntime | null): string {
+  return JSON.stringify({
+    target: skinCompatibilityContext(target, runtime),
+    states: states.filter(state => state.installation === 'installed'
+      && (state.activation === 'active' || state.primary === true || state.pinned === true))
+      .map(state => {
+        const skin = catalog.find(item => item.id === state.skinId)
+        return [state.skinId, skin === undefined ? undefined : skinCompatibilityContext(skin, runtime), state.installation, state.activation, state.primary === true, state.pinned === true, state.installedVersion, state.artifactRisk?.context]
+      })
+      .sort((left, right) => String(left[0]).localeCompare(String(right[0]))),
+  })
+}
+
 function activationSelectionLabel(conflicts: readonly ActivationConflict[]): string {
   const kept = conflicts.filter(conflict => conflict.keep).length
   const disabled = conflicts.length - kept
@@ -122,7 +152,7 @@ function activationSelectionLabel(conflicts: readonly ActivationConflict[]): str
   return `停用 ${disabled} 个插件，常驻 ${kept} 个插件并继续`
 }
 
-function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed, hasConflictSelection }: {
+function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed, hasConflictSelection, conflicts }: {
   name: string
   version: string
   assessment?: CompatibilityAssessment | null
@@ -131,12 +161,20 @@ function describeUseConfirmation({ name, version, assessment, artifactRisk, firs
   pin?: boolean
   changed?: boolean
   hasConflictSelection?: boolean
+  conflicts?: readonly ActivationConflict[]
 }): string {
   const risks: string[] = []
   if (assessment?.decision === 'incompatible') risks.push('不在作者声明的兼容范围')
   else if (assessment?.decision === 'unknown') risks.push('尚未确认兼容性')
   if (artifactRisk !== undefined) risks.push('安装包未通过市场核验')
-  return `${name}（版本 ${version}）。${changed ? '皮肤或运行环境已变化，请重新确认。' : ''}${risks.length > 0 ? `${risks.join('，且')}，使用后可能导致页面异常。` : ''}${pin ? '常驻后会与其他皮肤同时启用，可能产生冲突。' : firstUse && !hasConflictSelection ? '使用后将停用其他普通皮肤，保留常驻项。' : ''}`
+  const preservedRisks = (conflicts ?? []).flatMap(conflict => {
+    const details: string[] = []
+    if (conflict.assessment?.decision === 'incompatible') details.push('兼容性未确认')
+    else if (conflict.assessment?.decision === 'unknown') details.push('兼容性未知')
+    if (conflict.artifactRisk !== undefined) details.push('构件未核验')
+    return details.length === 0 ? [] : [`「${conflict.skin.name.zh}」${details.join('、')}`]
+  })
+  return `${name}（版本 ${version}）。${changed ? '皮肤或运行环境已变化，请重新确认。' : ''}${risks.length > 0 ? `${risks.join('，且')}，使用后可能导致页面异常。` : ''}${preservedRisks.length > 0 ? `常驻选择中有${preservedRisks.join('、')}，继续即一并确认。` : ''}${pin ? '常驻后会与其他皮肤同时启用，可能产生冲突。' : firstUse && !hasConflictSelection ? '使用后将停用其他普通皮肤，保留常驻项。' : ''}`
 }
 
 function ConfigurationChanges({ plan, skins }: { plan: ConfigurationOverrideBatchPlan; skins: readonly CatalogSkin[] }) {
@@ -155,6 +193,8 @@ interface SkinOperationOptions {
   artifactContext?: string
   configurationContext?: string
   preservedSkinIds?: string[]
+  preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>
+  selectionContext?: string
   sourceContext?: string
   installAndUse?: boolean
   cancelled?: () => boolean
@@ -1707,15 +1747,16 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const currentActionReason = useRef(actionReason)
   currentActionReason.current = actionReason
 
-  const prepareSelection = useCallback(async (skinId: string, kind: MutationKind): Promise<ConfigurationOverrideBatchPlan | undefined> => {
-    if (management?.official !== true || !selectionPlanAvailable || !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) return undefined
+  const prepareSelection = useCallback(async (skinId: string, kind: MutationKind, preservedSkinIds?: readonly string[]): Promise<{ plan?: ConfigurationOverrideBatchPlan; selectionContext?: string }> => {
+    if ((!selectionPlanAvailable && preservedSkinIds === undefined) || !['activate', 'deactivate', 'pin', 'unpin'].includes(kind)) return {}
     const plan = await json<ConfigurationOverrideBatchPlan>('/dsh-skin-market/selection-plan', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId, kind }),
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId, kind, ...(preservedSkinIds === undefined ? {} : { preservedSkinIds }) }),
     })
     if (!Array.isArray(plan.changes) || !['repairable', 'blocked', 'none'].includes(plan.status)
-      || plan.status === 'repairable' && (!/^[a-f0-9]{64}$/.test(plan.context ?? '') || plan.changes.length === 0)) throw new Error('启停预检未返回有效方案，请更新皮肤市场后重试。')
-    return plan.status === 'repairable' ? plan : undefined
-  }, [management, selectionPlanAvailable])
+      || plan.status === 'repairable' && (!/^[a-f0-9]{64}$/.test(plan.context ?? '') || plan.changes.length === 0)
+      || plan.selectionContext !== undefined && !/^[a-f0-9]{64}$/.test(plan.selectionContext)) throw new Error('启停预检未返回有效方案，请更新皮肤市场后重试。')
+    return { selectionContext: plan.selectionContext, ...(plan.status === 'repairable' ? { plan } : {}) }
+  }, [selectionPlanAvailable])
 
   const requestCompatibilityConsent = useCallback(async (skin: CatalogSkin, kind: MutationKind, _installAndUse = false, changed = false, configurationPlan?: ConfigurationOverrideBatchPlan, conflicts: readonly ActivationConflict[] = [], onCancel?: () => void): Promise<CompatibilityConsent> => {
     const use = kind === 'activate' || kind === 'pin'
@@ -1733,7 +1774,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         if (value === null && mounted.current) onCancel?.()
         resolve(value)
       }
-      const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), artifactRisk, firstUse, pin: kind === 'pin', changed, configurationPlan, kind, conflicts: conflicts.length === 0 ? undefined : conflicts.map(conflict => ({ ...conflict })) }
+      const confirmation = { skin: target, assessment, actionLabel, context: skinCompatibilityContext(target, runtimeRef.current), artifactRisk, firstUse, pin: kind === 'pin', changed, configurationPlan, kind, conflicts: conflicts.length === 0 ? undefined : conflicts.map(conflict => ({ ...conflict })), activationSnapshot: kind === 'activate' ? activationSelectionSnapshot(target, skinsRef.current, statesRef.current, runtimeRef.current) : undefined }
       compatibilityConfirmationRef.current = confirmation
       setCompatibilityConfirmation(confirmation)
     })
@@ -1748,9 +1789,11 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       if (target !== undefined) {
         const context = skinCompatibilityContext(target, runtimeRef.current)
         const artifactRisk = confirmation.kind === 'activate' || confirmation.kind === 'pin' ? runtimeFor(statesRef.current, target.id).artifactRisk : undefined
-        if (context !== confirmation.context || artifactRisk?.context !== confirmation.artifactRisk?.context) {
+        const currentConflicts = confirmation.kind === 'activate' ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : []
+        const currentSnapshot = confirmation.kind === 'activate' ? activationSelectionSnapshot(target, skinsRef.current, statesRef.current, runtimeRef.current) : confirmation.activationSnapshot
+        if (context !== confirmation.context || artifactRisk?.context !== confirmation.artifactRisk?.context || currentSnapshot !== confirmation.activationSnapshot) {
           const updated = { ...confirmation, skin: target, assessment: installCompatibility(target, 'dsh', runtimeRef.current)!, context, artifactRisk, changed: true,
-            conflicts: confirmation.conflicts === undefined ? undefined : activationConflicts(target, skinsRef.current, statesRef.current) }
+            conflicts: confirmation.kind === 'activate' && currentConflicts.length > 0 ? currentConflicts : undefined, activationSnapshot: currentSnapshot }
           compatibilityConfirmationRef.current = updated
           setCompatibilityConfirmation(updated)
           return
@@ -1768,7 +1811,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     const preserved = accepted && confirmation?.conflicts !== undefined
       ? (preservedOverride ?? preservedSkinIds(statesRef.current, confirmation.conflicts)).filter(id => id !== confirmation.skin.id)
       : undefined
-    resolve?.(accepted && confirmation !== null ? { context: confirmation.context, ...(confirmation.artifactRisk === undefined ? {} : { artifactContext: confirmation.artifactRisk.context }), ...(confirmation.configurationPlan?.context === undefined ? {} : { configurationContext: confirmation.configurationPlan.context }), ...(preserved === undefined ? {} : { preservedSkinIds: preserved }) } : null)
+    const approvals = preserved === undefined ? undefined : preservedSkinApprovals(statesRef.current, skinsRef.current, preserved, runtimeRef.current)
+    resolve?.(accepted && confirmation !== null ? { context: confirmation.context, ...(confirmation.artifactRisk === undefined ? {} : { artifactContext: confirmation.artifactRisk.context }), ...(confirmation.configurationPlan?.context === undefined ? {} : { configurationContext: confirmation.configurationPlan.context }), ...(preserved === undefined ? {} : { preservedSkinIds: preserved, preservedSkinApprovals: approvals }) } : null)
   }, [])
 
   const restoreInstallRestartNotice = useCallback(async (skinId: string, autoPrompt = true, activationUncertain = false) => {
@@ -1815,16 +1859,20 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       let artifactContext = options.artifactContext
       let configurationContext = options.configurationContext
       let preservedSelection = options.preservedSkinIds
+      let preservedApprovals = options.preservedSkinApprovals
+      let selectionContext = options.selectionContext
       if (existingOperationId === undefined) {
         const reason = actionReason(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? actionReason('activate') : null)
         if (reason !== null) { setError(reason); await stopContinuation(); return false }
         const preflight = management?.official === true && selectionPlanAvailable && ['activate', 'deactivate', 'pin', 'unpin'].includes(kind)
-        let configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
+        let selectionPreflight = preflight ? await prepareSelection(target.id, kind) : {}
+        let configurationPlan = selectionPreflight.plan
+        selectionContext = selectionPreflight.selectionContext
         if (!mounted.current || options.cancelled?.()) return false
         target = skinsRef.current.find(skin => skin.id === skinId)
         if (target === undefined) { await stopContinuation(); return false }
         let changed = acceptedContext !== undefined
-        let conflicts = kind === 'activate' ? activationConflicts(target, skinsRef.current, statesRef.current) : []
+        let conflicts = kind === 'activate' ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : []
         while (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(target, runtimeRef.current)
           || configurationContext !== configurationPlan?.context
           || (kind === 'activate' || kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, target.id).artifactRisk?.context
@@ -1835,16 +1883,20 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           artifactContext = consent.decision === 'accepted' ? consent.artifactContext : undefined
           configurationContext = consent.decision === 'accepted' ? consent.configurationContext : undefined
           preservedSelection = consent.decision === 'accepted' ? consent.preservedSkinIds : undefined
+          preservedApprovals = consent.decision === 'accepted' ? consent.preservedSkinApprovals : undefined
           target = skinsRef.current.find(skin => skin.id === skinId)
           if (target === undefined) { await stopContinuation(); return false }
           if (consent.decision === 'not-required') break
           // Recheck the whole selection without changing it. A newly discovered
           // shared edit needs another click on the same combined confirmation.
-          configurationPlan = preflight ? await prepareSelection(target.id, kind) : undefined
+          selectionPreflight = preflight || preservedSelection !== undefined ? await prepareSelection(target.id, kind, preservedSelection) : {}
+          configurationPlan = selectionPreflight.plan
+          selectionContext = selectionPreflight.selectionContext
           if (!mounted.current || options.cancelled?.()) return false
           target = skinsRef.current.find(skin => skin.id === skinId)
           if (target === undefined) { await stopContinuation(); return false }
-          conflicts = kind === 'activate' ? activationConflicts(target, skinsRef.current, statesRef.current) : []
+          conflicts = kind === 'activate' ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : []
+          if (preservedSelection !== undefined) conflicts = applyPreservedSelection(conflicts, preservedSelection)
           changed = true
         }
         const currentReason = currentActionReason.current(kind) ?? (kind === 'install' && options.installAndUse === true && officialDesktop ? currentActionReason.current('activate') : null)
@@ -1884,7 +1936,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       }
       try {
         const operationId = existingOperationId ?? (await json<{ operationId: string }>(`/dsh-skin-market/${kind}`, {
-          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...((kind === 'activate' || kind === 'pin') && acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(configurationContext !== undefined && { configurationContext }), ...(kind === 'activate' && preservedSelection !== undefined && { preservedSkinIds: preservedSelection }), ...(kind === 'migrate' && options.sourceContext !== undefined && { sourceContext: options.sourceContext }) }),
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id, ...((kind === 'activate' || kind === 'pin') && acceptedContext !== undefined && { acknowledgeCompatibility: true, compatibilityContext: acceptedContext }), ...(artifactContext !== undefined && { artifactContext }), ...(configurationContext !== undefined && { configurationContext }), ...(kind === 'activate' && selectionContext !== undefined && { selectionContext }), ...(kind === 'activate' && preservedSelection !== undefined && { preservedSkinIds: preservedSelection, preservedSkinApprovals: preservedApprovals }), ...(kind === 'migrate' && options.sourceContext !== undefined && { sourceContext: options.sourceContext }) }),
         })).operationId
         if (acceptedContext !== undefined) operationCompatibilityContexts.current.set(operationId, { skinId: target.id, kind, context: acceptedContext, artifactContext })
         for (;;) {
@@ -2106,8 +2158,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       let acceptedContext = combinedConsent?.context ?? (boundContext === skinCompatibilityContext(skin, runtimeRef.current) ? boundContext : undefined)
       let artifactContext = combinedConsent !== undefined ? combinedConsent.artifactContext : acceptedContext !== undefined ? previous?.artifactContext : undefined
       let preservedSelection = combinedConsent?.preservedSkinIds ?? operation.preservedSkinIds
+      let preservedApprovals = combinedConsent?.preservedSkinApprovals ?? operation.preservedSkinApprovals
+      let selectionContext = combinedConsent?.selectionContext ?? operation.selectionContext
       if (action === 'approve-artifact') acceptedContext = skinCompatibilityContext(skin, runtimeRef.current)
-      let conflicts = operation.kind === 'activate' ? activationConflicts(skin, skinsRef.current, statesRef.current) : []
+      let conflicts = operation.kind === 'activate' ? activationConflicts(skin, skinsRef.current, statesRef.current, runtimeRef.current) : []
       while (action !== 'approve-artifact' && (acceptedContext === undefined || acceptedContext !== skinCompatibilityContext(skin, runtimeRef.current)
         || (operation.kind === 'activate' || operation.kind === 'pin') && artifactContext !== runtimeFor(statesRef.current, skin.id).artifactRisk?.context
         || conflicts.length > 0 && preservedSelection === undefined)) {
@@ -2116,9 +2170,10 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
         acceptedContext = consent.decision === 'accepted' ? consent.context : undefined
         artifactContext = consent.decision === 'accepted' ? consent.artifactContext : undefined
         preservedSelection = consent.decision === 'accepted' ? consent.preservedSkinIds : undefined
+        preservedApprovals = consent.decision === 'accepted' ? consent.preservedSkinApprovals : undefined
         skin = skinsRef.current.find(item => item.id === operation.skinId)
         if (skin === undefined) return
-        conflicts = operation.kind === 'activate' ? activationConflicts(skin, skinsRef.current, statesRef.current) : []
+        conflicts = operation.kind === 'activate' ? activationConflicts(skin, skinsRef.current, statesRef.current, runtimeRef.current) : []
         if (consent.decision === 'not-required') break
       }
       const reason = currentActionReason.current(operation.kind)
@@ -2133,7 +2188,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       })
       operationCompatibilityContexts.current.delete(operation.id)
       setOperations(list => list.filter(item => item.id !== operation.id))
-      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext, artifactContext, preservedSkinIds: preservedSelection })
+      const retried = await runForSkin(operation.skinId, operation.kind, result.operationId, { compatibilityContext: acceptedContext, artifactContext, preservedSkinIds: preservedSelection, preservedSkinApprovals: preservedApprovals, selectionContext })
       if (retried && operation.kind === 'install' && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason)
@@ -2409,6 +2464,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const selectedBusy = selected === undefined ? undefined : liveOperationFor(operations, selected.id)
   const selectedInstallAndUsePending = selected !== undefined && continuingInstallActivation.current.has(selected.id)
   const activationDialogConflicts = compatibilityConfirmation?.kind === 'activate' ? compatibilityConfirmation.conflicts ?? [] : []
+  const allClosedPreservedSkinIds = preservedSkinIds(statesRef.current, activationDialogConflicts.map(conflict => ({ ...conflict, keep: false })))
   const toggleActivationConflict = (skinId: string) => {
     const current = compatibilityConfirmationRef.current
     if (current === null || current.conflicts === undefined) return
@@ -2970,7 +3026,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
           hasConflictSelection: activationDialogConflicts.length > 0,
         })}
         footer={activationDialogConflicts.length > 0 ? <>
-          <Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(true, [])}>全部关闭并继续</Button>
+          <Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(true, allClosedPreservedSkinIds)}>全部关闭并继续</Button>
           <Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>{compatibilityConfirmation?.configurationPlan !== undefined ? '解除覆盖并' : compatibilityConfirmation?.artifactRisk !== undefined || compatibilityConfirmation?.assessment.decision === 'incompatible' ? '仍然' : ''}{activationSelectionLabel(activationDialogConflicts)}</Button>
         </> : <><Button variant="outline" size="sm" onClick={() => finishCompatibilityConfirmation(false)}>取消</Button><Button variant="primary" size="sm" onClick={() => finishCompatibilityConfirmation(true)}>{compatibilityConfirmation?.configurationPlan !== undefined ? '解除覆盖并' : compatibilityConfirmation?.artifactRisk !== undefined || compatibilityConfirmation?.assessment.decision === 'incompatible' ? '仍然' : '确认'}{compatibilityConfirmation?.actionLabel}</Button></>}
       >

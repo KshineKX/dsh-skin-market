@@ -16,6 +16,8 @@ export interface ConfigurationOverridePlan {
 export interface ConfigurationOverrideBatchPlan {
   status: 'repairable' | 'blocked' | 'none'
   context?: string
+  /** Binds the reviewed selection to the current market/profile state. */
+  selectionContext?: string
   changes: Array<ConfigurationOverridePlan & { skinId: string }>
   reason: string
 }

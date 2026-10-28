@@ -301,151 +301,151 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var SkinMarket_module_css_default = {
-			"mobileBack": "VqXecW_mobileBack",
-			"homeHeader": "VqXecW_homeHeader",
-			"changelog": "VqXecW_changelog",
-			"copyCapsule": "VqXecW_copyCapsule",
-			"discoveryGrid": "VqXecW_discoveryGrid",
-			"pinWarning": "VqXecW_pinWarning",
-			"previewPlaceholder": "VqXecW_previewPlaceholder",
-			"actionRow": "VqXecW_actionRow",
-			"cardStars": "VqXecW_cardStars",
 			"installedRow": "VqXecW_installedRow",
-			"hero": "VqXecW_hero",
-			"skinCardBody": "VqXecW_skinCardBody",
-			"homeGithubAction": "VqXecW_homeGithubAction",
-			"discoverTitle": "VqXecW_discoverTitle",
-			"homeTitleRow": "VqXecW_homeTitleRow",
-			"operationMessage": "VqXecW_operationMessage",
-			"aboutGrid": "VqXecW_aboutGrid",
-			"tags": "VqXecW_tags",
-			"activationConflicts": "VqXecW_activationConflicts",
-			"heroNav": "VqXecW_heroNav",
-			"lightboxClose": "VqXecW_lightboxClose",
-			"homeSection": "VqXecW_homeSection",
-			"discoverHeading": "VqXecW_discoverHeading",
-			"installCommandLabel": "VqXecW_installCommandLabel",
-			"activationConflictList": "VqXecW_activationConflictList",
-			"loadMoreHint": "VqXecW_loadMoreHint",
-			"operationCopyLog": "VqXecW_operationCopyLog",
-			"feedMeta": "VqXecW_feedMeta",
-			"externalPlugin": "VqXecW_externalPlugin",
-			"homeSubmitAction": "VqXecW_homeSubmitAction",
-			"filters": "VqXecW_filters",
-			"skeletonCard": "VqXecW_skeletonCard",
-			"description": "VqXecW_description",
-			"operation": "VqXecW_operation",
-			"lightboxNext": "VqXecW_lightboxNext",
-			"srOnly": "VqXecW_srOnly",
-			"homeCardMedia": "VqXecW_homeCardMedia",
-			"stars": "VqXecW_stars",
-			"warningModal": "VqXecW_warningModal",
-			"healthSuggestion": "VqXecW_healthSuggestion",
-			"home": "VqXecW_home",
-			"browserContent": "VqXecW_browserContent",
-			"interceptHelp": "VqXecW_interceptHelp",
-			"filterBar": "VqXecW_filterBar",
-			"notice": "VqXecW_notice",
-			"skinList": "VqXecW_skinList",
-			"catalogTitleMain": "VqXecW_catalogTitleMain",
-			"loading": "VqXecW_loading",
-			"recommendations": "VqXecW_recommendations",
-			"homeLoadMore": "VqXecW_homeLoadMore",
 			"cardActionProgress": "VqXecW_cardActionProgress",
-			"thumbnailProgress": "VqXecW_thumbnailProgress",
-			"homeGithubLabel": "VqXecW_homeGithubLabel",
-			"detail": "VqXecW_detail",
-			"homeOperation": "VqXecW_homeOperation",
-			"manualInstallGuide": "VqXecW_manualInstallGuide",
-			"homeSectionTitle": "VqXecW_homeSectionTitle",
-			"skeletonShimmer": "VqXecW_skeletonShimmer",
-			"galleryGroup": "VqXecW_galleryGroup",
-			"galleryProgress": "VqXecW_galleryProgress",
-			"lightboxThumbnails": "VqXecW_lightboxThumbnails",
-			"root": "VqXecW_root",
-			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
-			"operationElapsed": "VqXecW_operationElapsed",
-			"thumbnailFrame": "VqXecW_thumbnailFrame",
-			"homeOperations": "VqXecW_homeOperations",
-			"headerDiscover": "VqXecW_headerDiscover",
-			"version": "VqXecW_version",
-			"repairPromptFallback": "VqXecW_repairPromptFallback",
-			"operationCancel": "VqXecW_operationCancel",
-			"browserPanel": "VqXecW_browserPanel",
-			"homeError": "VqXecW_homeError",
-			"lightboxStage": "VqXecW_lightboxStage",
-			"homeUpdateAction": "VqXecW_homeUpdateAction",
-			"titleBlock": "VqXecW_titleBlock",
-			"activationConflictRow": "VqXecW_activationConflictRow",
-			"modalSurface": "VqXecW_modalSurface",
-			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
-			"homeCardCopy": "VqXecW_homeCardCopy",
-			"submission": "VqXecW_submission",
-			"lightboxNav": "VqXecW_lightboxNav",
-			"statusLabel": "VqXecW_statusLabel",
-			"actionDivider": "VqXecW_actionDivider",
-			"operationDetails": "VqXecW_operationDetails",
-			"homeCardFooter": "VqXecW_homeCardFooter",
-			"empty": "VqXecW_empty",
-			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
-			"catalogTitle": "VqXecW_catalogTitle",
-			"homeCardOpen": "VqXecW_homeCardOpen",
-			"homeActions": "VqXecW_homeActions",
-			"operationDiagnostics": "VqXecW_operationDiagnostics",
-			"repoLink": "VqXecW_repoLink",
-			"healthList": "VqXecW_healthList",
-			"cardAction": "VqXecW_cardAction",
-			"iconOnlyButton": "VqXecW_iconOnlyButton",
-			"error": "VqXecW_error",
-			"browserHomeBack": "VqXecW_browserHomeBack",
-			"listLoading": "VqXecW_listLoading",
-			"heroOpen": "VqXecW_heroOpen",
-			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
-			"cardDescription": "VqXecW_cardDescription",
-			"heroPrev": "VqXecW_heroPrev",
-			"thumbnails": "VqXecW_thumbnails",
-			"installSegmented": "VqXecW_installSegmented",
-			"homeLoading": "VqXecW_homeLoading",
-			"listSkeleton": "VqXecW_listSkeleton",
-			"skinCard": "VqXecW_skinCard",
-			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
 			"interceptNotice": "VqXecW_interceptNotice",
-			"detailHeader": "VqXecW_detailHeader",
-			"skinAvatar": "VqXecW_skinAvatar",
-			"activationConflictState": "VqXecW_activationConflictState",
-			"skinCardPreview": "VqXecW_skinCardPreview",
-			"homeCardRepo": "VqXecW_homeCardRepo",
-			"cardInlineActions": "VqXecW_cardInlineActions",
-			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
-			"repoMeta": "VqXecW_repoMeta",
-			"catalog": "VqXecW_catalog",
-			"cardMetaLine": "VqXecW_cardMetaLine",
-			"operationActions": "VqXecW_operationActions",
-			"homeCardTitleRow": "VqXecW_homeCardTitleRow",
-			"installOptions": "VqXecW_installOptions",
-			"heroNext": "VqXecW_heroNext",
-			"browser": "VqXecW_browser",
-			"installedMoreCard": "VqXecW_installedMoreCard",
-			"homeCardDescription": "VqXecW_homeCardDescription",
-			"lightboxPrev": "VqXecW_lightboxPrev",
-			"collectionTitle": "VqXecW_collectionTitle",
-			"activationSwitch": "VqXecW_activationSwitch",
-			"detailSkeleton": "VqXecW_detailSkeleton",
-			"catalogHeader": "VqXecW_catalogHeader",
-			"cardTitle": "VqXecW_cardTitle",
-			"operationDismiss": "VqXecW_operationDismiss",
-			"homeCard": "VqXecW_homeCard",
-			"homeSearch": "VqXecW_homeSearch",
-			"marketUpdateButton": "VqXecW_marketUpdateButton",
-			"installCommandGroup": "VqXecW_installCommandGroup",
-			"homeContent": "VqXecW_homeContent",
-			"spin": "VqXecW_spin",
+			"homeLoading": "VqXecW_homeLoading",
+			"cardStars": "VqXecW_cardStars",
+			"lightboxStage": "VqXecW_lightboxStage",
+			"stars": "VqXecW_stars",
+			"installedSkeletonCard": "VqXecW_installedSkeletonCard",
 			"cardMeta": "VqXecW_cardMeta",
 			"lightbox": "VqXecW_lightbox",
+			"skinCardBody": "VqXecW_skinCardBody",
+			"installSegmented": "VqXecW_installSegmented",
+			"submission": "VqXecW_submission",
+			"activationConflictRow": "VqXecW_activationConflictRow",
+			"detailHeader": "VqXecW_detailHeader",
+			"thumbnailFrame": "VqXecW_thumbnailFrame",
+			"galleryProgress": "VqXecW_galleryProgress",
+			"modalSurface": "VqXecW_modalSurface",
+			"repoMeta": "VqXecW_repoMeta",
+			"cardMetaLine": "VqXecW_cardMetaLine",
+			"skinList": "VqXecW_skinList",
+			"filterBar": "VqXecW_filterBar",
+			"skeletonCard": "VqXecW_skeletonCard",
+			"homeTitleRow": "VqXecW_homeTitleRow",
+			"skinAvatar": "VqXecW_skinAvatar",
+			"operationCopyLog": "VqXecW_operationCopyLog",
+			"operation": "VqXecW_operation",
+			"interceptHelp": "VqXecW_interceptHelp",
+			"previewPlaceholder": "VqXecW_previewPlaceholder",
+			"heroNext": "VqXecW_heroNext",
+			"pinWarning": "VqXecW_pinWarning",
+			"repoLink": "VqXecW_repoLink",
+			"cardTitle": "VqXecW_cardTitle",
+			"installCommandGroup": "VqXecW_installCommandGroup",
+			"titleBlock": "VqXecW_titleBlock",
+			"homeCardCopy": "VqXecW_homeCardCopy",
+			"homeContent": "VqXecW_homeContent",
+			"lightboxNav": "VqXecW_lightboxNav",
+			"homeSectionTitle": "VqXecW_homeSectionTitle",
+			"lightboxClose": "VqXecW_lightboxClose",
+			"skeletonShimmer": "VqXecW_skeletonShimmer",
+			"operationActions": "VqXecW_operationActions",
+			"mobileBack": "VqXecW_mobileBack",
+			"skinCardPreview": "VqXecW_skinCardPreview",
+			"discoveryGrid": "VqXecW_discoveryGrid",
+			"empty": "VqXecW_empty",
+			"homeCardFooter": "VqXecW_homeCardFooter",
+			"actionDivider": "VqXecW_actionDivider",
+			"actionRow": "VqXecW_actionRow",
+			"description": "VqXecW_description",
+			"operationDetails": "VqXecW_operationDetails",
+			"home": "VqXecW_home",
+			"browser": "VqXecW_browser",
+			"activationSwitch": "VqXecW_activationSwitch",
+			"thumbnails": "VqXecW_thumbnails",
+			"discoverTitle": "VqXecW_discoverTitle",
+			"cardAction": "VqXecW_cardAction",
+			"listSkeleton": "VqXecW_listSkeleton",
+			"thumbnailProgress": "VqXecW_thumbnailProgress",
+			"lightboxNext": "VqXecW_lightboxNext",
+			"mediaLazyPlaceholder": "VqXecW_mediaLazyPlaceholder",
+			"lightboxThumbnails": "VqXecW_lightboxThumbnails",
+			"tags": "VqXecW_tags",
+			"error": "VqXecW_error",
+			"homeCard": "VqXecW_homeCard",
+			"marketUpdateLabel": "VqXecW_marketUpdateLabel",
+			"catalogTitle": "VqXecW_catalogTitle",
+			"iconOnlyButton": "VqXecW_iconOnlyButton",
+			"homeLoadMore": "VqXecW_homeLoadMore",
+			"filters": "VqXecW_filters",
+			"installOptions": "VqXecW_installOptions",
+			"headerDiscover": "VqXecW_headerDiscover",
+			"homeHeader": "VqXecW_homeHeader",
+			"homeGithubAction": "VqXecW_homeGithubAction",
+			"homeError": "VqXecW_homeError",
 			"segmented": "VqXecW_segmented",
-			"author": "VqXecW_author",
+			"root": "VqXecW_root",
+			"loading": "VqXecW_loading",
+			"warningModal": "VqXecW_warningModal",
+			"marketUpdateButton": "VqXecW_marketUpdateButton",
+			"installedMoreCard": "VqXecW_installedMoreCard",
+			"homeCardTitleRow": "VqXecW_homeCardTitleRow",
+			"operationElapsed": "VqXecW_operationElapsed",
+			"homeActions": "VqXecW_homeActions",
+			"operationMessage": "VqXecW_operationMessage",
+			"browserContent": "VqXecW_browserContent",
+			"notice": "VqXecW_notice",
+			"homeCardOpen": "VqXecW_homeCardOpen",
+			"srOnly": "VqXecW_srOnly",
 			"operationMeta": "VqXecW_operationMeta",
-			"browserModal": "VqXecW_browserModal"
+			"aboutGrid": "VqXecW_aboutGrid",
+			"loadMoreHint": "VqXecW_loadMoreHint",
+			"operationDismiss": "VqXecW_operationDismiss",
+			"healthList": "VqXecW_healthList",
+			"healthSuggestion": "VqXecW_healthSuggestion",
+			"activationConflictState": "VqXecW_activationConflictState",
+			"homeSection": "VqXecW_homeSection",
+			"catalogTitleMain": "VqXecW_catalogTitleMain",
+			"homeSearchPlaceholder": "VqXecW_homeSearchPlaceholder",
+			"homeSearch": "VqXecW_homeSearch",
+			"homeCardDescription": "VqXecW_homeCardDescription",
+			"browserHomeBack": "VqXecW_browserHomeBack",
+			"detail": "VqXecW_detail",
+			"catalogHeader": "VqXecW_catalogHeader",
+			"installCommandLabel": "VqXecW_installCommandLabel",
+			"statusLabel": "VqXecW_statusLabel",
+			"operationDiagnostics": "VqXecW_operationDiagnostics",
+			"author": "VqXecW_author",
+			"spin": "VqXecW_spin",
+			"discoverHeading": "VqXecW_discoverHeading",
+			"homeSubmitAction": "VqXecW_homeSubmitAction",
+			"browserModal": "VqXecW_browserModal",
+			"catalog": "VqXecW_catalog",
+			"hero": "VqXecW_hero",
+			"homeCardMedia": "VqXecW_homeCardMedia",
+			"homeOperations": "VqXecW_homeOperations",
+			"recommendations": "VqXecW_recommendations",
+			"externalPlugin": "VqXecW_externalPlugin",
+			"operationCancel": "VqXecW_operationCancel",
+			"homeOperation": "VqXecW_homeOperation",
+			"cardInlineActions": "VqXecW_cardInlineActions",
+			"manualInstallGuide": "VqXecW_manualInstallGuide",
+			"copyCapsuleButton": "VqXecW_copyCapsuleButton",
+			"collectionTitle": "VqXecW_collectionTitle",
+			"copyCapsuleInput": "VqXecW_copyCapsuleInput",
+			"activationConflicts": "VqXecW_activationConflicts",
+			"copyCapsule": "VqXecW_copyCapsule",
+			"browserPanel": "VqXecW_browserPanel",
+			"heroPrev": "VqXecW_heroPrev",
+			"heroOpen": "VqXecW_heroOpen",
+			"listLoading": "VqXecW_listLoading",
+			"homeGithubLabel": "VqXecW_homeGithubLabel",
+			"heroNav": "VqXecW_heroNav",
+			"detailSkeleton": "VqXecW_detailSkeleton",
+			"cardDescription": "VqXecW_cardDescription",
+			"repairPromptFallback": "VqXecW_repairPromptFallback",
+			"activationConflictList": "VqXecW_activationConflictList",
+			"skinCard": "VqXecW_skinCard",
+			"changelog": "VqXecW_changelog",
+			"version": "VqXecW_version",
+			"homeCardRepo": "VqXecW_homeCardRepo",
+			"galleryGroup": "VqXecW_galleryGroup",
+			"feedMeta": "VqXecW_feedMeta",
+			"homeUpdateAction": "VqXecW_homeUpdateAction",
+			"lightboxPrev": "VqXecW_lightboxPrev"
 		};
 		//#endregion
 		//#region \0dsh-skin-market-css:/Users/leon/Code/liang-intensity-calibrator/code/dsh-skin-market/src/client/media-hover.module.css.mjs
@@ -1563,7 +1563,7 @@ url: https://github.com/<owner>/<repo>
 		const IconRefreshOutline = resolvePrimitiveIcon(primitiveModule, "IconRefreshOutlineRegular", "IconRefreshOutline16");
 		const IconSearchOutline = resolvePrimitiveIcon(primitiveModule, "IconSearchOutlineRegular", "IconSearchOutline16");
 		const IconTrashOutline = resolvePrimitiveIcon(primitiveModule, "IconTrashOutlineRegular", "IconTrashOutline16");
-		function activationConflicts(target, catalog, states) {
+		function activationConflicts(target, catalog, states, runtime) {
 			const targetCategory = marketCategory(target);
 			return states.flatMap((state) => {
 				if (state.skinId === target.id || state.installation !== "installed" || state.activation !== "active" && state.primary !== true && state.pinned !== true) return [];
@@ -1572,7 +1572,9 @@ url: https://github.com/<owner>/<repo>
 				return [{
 					skin,
 					state,
-					keep: state.pinned === true
+					keep: state.pinned === true,
+					assessment: installCompatibility(skin, "dsh", runtime),
+					artifactRisk: state.artifactRisk
 				}];
 			});
 		}
@@ -1582,6 +1584,42 @@ url: https://github.com/<owner>/<repo>
 			else preserved.delete(conflict.skin.id);
 			return [...preserved];
 		}
+		function applyPreservedSelection(conflicts, ids) {
+			const selected = new Set(ids);
+			return conflicts.map((conflict) => ({
+				...conflict,
+				keep: selected.has(conflict.skin.id)
+			}));
+		}
+		function preservedSkinApprovals(states, catalog, ids, runtime) {
+			return Object.fromEntries(ids.flatMap((id) => {
+				const skin = catalog.find((item) => item.id === id);
+				const state = states.find((item) => item.skinId === id);
+				if (skin === void 0 || state === void 0) return [];
+				return [[id, {
+					compatibilityContext: compatibilityContext(skin, runtime),
+					...state.artifactRisk === void 0 ? {} : { artifactContext: state.artifactRisk.context }
+				}]];
+			}));
+		}
+		function activationSelectionSnapshot(target, catalog, states, runtime) {
+			return JSON.stringify({
+				target: compatibilityContext(target, runtime),
+				states: states.filter((state) => state.installation === "installed" && (state.activation === "active" || state.primary === true || state.pinned === true)).map((state) => {
+					const skin = catalog.find((item) => item.id === state.skinId);
+					return [
+						state.skinId,
+						skin === void 0 ? void 0 : compatibilityContext(skin, runtime),
+						state.installation,
+						state.activation,
+						state.primary === true,
+						state.pinned === true,
+						state.installedVersion,
+						state.artifactRisk?.context
+					];
+				}).sort((left, right) => String(left[0]).localeCompare(String(right[0])))
+			});
+		}
 		function activationSelectionLabel(conflicts) {
 			const kept = conflicts.filter((conflict) => conflict.keep).length;
 			const disabled = conflicts.length - kept;
@@ -1589,12 +1627,19 @@ url: https://github.com/<owner>/<repo>
 			if (disabled === 0) return `常驻 ${kept} 个插件并继续`;
 			return `停用 ${disabled} 个插件，常驻 ${kept} 个插件并继续`;
 		}
-		function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed, hasConflictSelection }) {
+		function describeUseConfirmation({ name, version, assessment, artifactRisk, firstUse, pin, changed, hasConflictSelection, conflicts }) {
 			const risks = [];
 			if (assessment?.decision === "incompatible") risks.push("不在作者声明的兼容范围");
 			else if (assessment?.decision === "unknown") risks.push("尚未确认兼容性");
 			if (artifactRisk !== void 0) risks.push("安装包未通过市场核验");
-			return `${name}（版本 ${version}）。${changed ? "皮肤或运行环境已变化，请重新确认。" : ""}${risks.length > 0 ? `${risks.join("，且")}，使用后可能导致页面异常。` : ""}${pin ? "常驻后会与其他皮肤同时启用，可能产生冲突。" : firstUse && !hasConflictSelection ? "使用后将停用其他普通皮肤，保留常驻项。" : ""}`;
+			const preservedRisks = (conflicts ?? []).flatMap((conflict) => {
+				const details = [];
+				if (conflict.assessment?.decision === "incompatible") details.push("兼容性未确认");
+				else if (conflict.assessment?.decision === "unknown") details.push("兼容性未知");
+				if (conflict.artifactRisk !== void 0) details.push("构件未核验");
+				return details.length === 0 ? [] : [`「${conflict.skin.name.zh}」${details.join("、")}`];
+			});
+			return `${name}（版本 ${version}）。${changed ? "皮肤或运行环境已变化，请重新确认。" : ""}${risks.length > 0 ? `${risks.join("，且")}，使用后可能导致页面异常。` : ""}${preservedRisks.length > 0 ? `常驻选择中有${preservedRisks.join("、")}，继续即一并确认。` : ""}${pin ? "常驻后会与其他皮肤同时启用，可能产生冲突。" : firstUse && !hasConflictSelection ? "使用后将停用其他普通皮肤，保留常驻项。" : ""}`;
 		}
 		function ConfigurationChanges({ plan, skins }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
@@ -3317,28 +3362,32 @@ url: https://github.com/<owner>/<repo>
 			]);
 			const currentActionReason = (0, react.useRef)(actionReason);
 			currentActionReason.current = actionReason;
-			const prepareSelection = (0, react.useCallback)(async (skinId, kind) => {
-				if (management?.official !== true || !selectionPlanAvailable || ![
+			const prepareSelection = (0, react.useCallback)(async (skinId, kind, preservedSkinIds) => {
+				if (!selectionPlanAvailable && preservedSkinIds === void 0 || ![
 					"activate",
 					"deactivate",
 					"pin",
 					"unpin"
-				].includes(kind)) return void 0;
+				].includes(kind)) return {};
 				const plan = await json("/dsh-skin-market/selection-plan", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
 					body: JSON.stringify({
 						skinId,
-						kind
+						kind,
+						...preservedSkinIds === void 0 ? {} : { preservedSkinIds }
 					})
 				});
 				if (!Array.isArray(plan.changes) || ![
 					"repairable",
 					"blocked",
 					"none"
-				].includes(plan.status) || plan.status === "repairable" && (!/^[a-f0-9]{64}$/.test(plan.context ?? "") || plan.changes.length === 0)) throw new Error("启停预检未返回有效方案，请更新皮肤市场后重试。");
-				return plan.status === "repairable" ? plan : void 0;
-			}, [management, selectionPlanAvailable]);
+				].includes(plan.status) || plan.status === "repairable" && (!/^[a-f0-9]{64}$/.test(plan.context ?? "") || plan.changes.length === 0) || plan.selectionContext !== void 0 && !/^[a-f0-9]{64}$/.test(plan.selectionContext)) throw new Error("启停预检未返回有效方案，请更新皮肤市场后重试。");
+				return {
+					selectionContext: plan.selectionContext,
+					...plan.status === "repairable" ? { plan } : {}
+				};
+			}, [selectionPlanAvailable]);
 			const requestCompatibilityConsent = (0, react.useCallback)(async (skin, kind, _installAndUse = false, changed = false, configurationPlan, conflicts = [], onCancel) => {
 				const use = kind === "activate" || kind === "pin";
 				if (!use && configurationPlan === void 0 && conflicts.length === 0) return { decision: "not-required" };
@@ -3366,7 +3415,8 @@ url: https://github.com/<owner>/<repo>
 						changed,
 						configurationPlan,
 						kind,
-						conflicts: conflicts.length === 0 ? void 0 : conflicts.map((conflict) => ({ ...conflict }))
+						conflicts: conflicts.length === 0 ? void 0 : conflicts.map((conflict) => ({ ...conflict })),
+						activationSnapshot: kind === "activate" ? activationSelectionSnapshot(target, skinsRef.current, statesRef.current, runtimeRef.current) : void 0
 					};
 					compatibilityConfirmationRef.current = confirmation;
 					setCompatibilityConfirmation(confirmation);
@@ -3384,7 +3434,9 @@ url: https://github.com/<owner>/<repo>
 					if (target !== void 0) {
 						const context = compatibilityContext(target, runtimeRef.current);
 						const artifactRisk = confirmation.kind === "activate" || confirmation.kind === "pin" ? runtimeFor(statesRef.current, target.id).artifactRisk : void 0;
-						if (context !== confirmation.context || artifactRisk?.context !== confirmation.artifactRisk?.context) {
+						const currentConflicts = confirmation.kind === "activate" ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : [];
+						const currentSnapshot = confirmation.kind === "activate" ? activationSelectionSnapshot(target, skinsRef.current, statesRef.current, runtimeRef.current) : confirmation.activationSnapshot;
+						if (context !== confirmation.context || artifactRisk?.context !== confirmation.artifactRisk?.context || currentSnapshot !== confirmation.activationSnapshot) {
 							const updated = {
 								...confirmation,
 								skin: target,
@@ -3392,7 +3444,8 @@ url: https://github.com/<owner>/<repo>
 								context,
 								artifactRisk,
 								changed: true,
-								conflicts: confirmation.conflicts === void 0 ? void 0 : activationConflicts(target, skinsRef.current, statesRef.current)
+								conflicts: confirmation.kind === "activate" && currentConflicts.length > 0 ? currentConflicts : void 0,
+								activationSnapshot: currentSnapshot
 							};
 							compatibilityConfirmationRef.current = updated;
 							setCompatibilityConfirmation(updated);
@@ -3411,11 +3464,15 @@ url: https://github.com/<owner>/<repo>
 					setActivationWarningAccepted(true);
 				}
 				const preserved = accepted && confirmation?.conflicts !== void 0 ? (preservedOverride ?? preservedSkinIds(statesRef.current, confirmation.conflicts)).filter((id) => id !== confirmation.skin.id) : void 0;
+				const approvals = preserved === void 0 ? void 0 : preservedSkinApprovals(statesRef.current, skinsRef.current, preserved, runtimeRef.current);
 				resolve?.(accepted && confirmation !== null ? {
 					context: confirmation.context,
 					...confirmation.artifactRisk === void 0 ? {} : { artifactContext: confirmation.artifactRisk.context },
 					...confirmation.configurationPlan?.context === void 0 ? {} : { configurationContext: confirmation.configurationPlan.context },
-					...preserved === void 0 ? {} : { preservedSkinIds: preserved }
+					...preserved === void 0 ? {} : {
+						preservedSkinIds: preserved,
+						preservedSkinApprovals: approvals
+					}
 				} : null);
 			}, []);
 			const restoreInstallRestartNotice = (0, react.useCallback)(async (skinId, autoPrompt = true, activationUncertain = false) => {
@@ -3468,6 +3525,8 @@ url: https://github.com/<owner>/<repo>
 					let artifactContext = options.artifactContext;
 					let configurationContext = options.configurationContext;
 					let preservedSelection = options.preservedSkinIds;
+					let preservedApprovals = options.preservedSkinApprovals;
+					let selectionContext = options.selectionContext;
 					if (existingOperationId === void 0) {
 						const reason = actionReason(kind) ?? (kind === "install" && options.installAndUse === true && officialDesktop ? actionReason("activate") : null);
 						if (reason !== null) {
@@ -3481,7 +3540,9 @@ url: https://github.com/<owner>/<repo>
 							"pin",
 							"unpin"
 						].includes(kind);
-						let configurationPlan = preflight ? await prepareSelection(target.id, kind) : void 0;
+						let selectionPreflight = preflight ? await prepareSelection(target.id, kind) : {};
+						let configurationPlan = selectionPreflight.plan;
+						selectionContext = selectionPreflight.selectionContext;
 						if (!mounted.current || options.cancelled?.()) return false;
 						target = skinsRef.current.find((skin) => skin.id === skinId);
 						if (target === void 0) {
@@ -3489,7 +3550,7 @@ url: https://github.com/<owner>/<repo>
 							return false;
 						}
 						let changed = acceptedContext !== void 0;
-						let conflicts = kind === "activate" ? activationConflicts(target, skinsRef.current, statesRef.current) : [];
+						let conflicts = kind === "activate" ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : [];
 						while (acceptedContext === void 0 || acceptedContext !== compatibilityContext(target, runtimeRef.current) || configurationContext !== configurationPlan?.context || (kind === "activate" || kind === "pin") && artifactContext !== runtimeFor(statesRef.current, target.id).artifactRisk?.context || conflicts.length > 0 && preservedSelection === void 0) {
 							const consent = await requestCompatibilityConsent(target, kind, options.installAndUse, changed, configurationPlan, conflicts, options.onHandled);
 							if (consent.decision === "cancelled" || !mounted.current || options.cancelled?.()) {
@@ -3500,20 +3561,24 @@ url: https://github.com/<owner>/<repo>
 							artifactContext = consent.decision === "accepted" ? consent.artifactContext : void 0;
 							configurationContext = consent.decision === "accepted" ? consent.configurationContext : void 0;
 							preservedSelection = consent.decision === "accepted" ? consent.preservedSkinIds : void 0;
+							preservedApprovals = consent.decision === "accepted" ? consent.preservedSkinApprovals : void 0;
 							target = skinsRef.current.find((skin) => skin.id === skinId);
 							if (target === void 0) {
 								await stopContinuation();
 								return false;
 							}
 							if (consent.decision === "not-required") break;
-							configurationPlan = preflight ? await prepareSelection(target.id, kind) : void 0;
+							selectionPreflight = preflight || preservedSelection !== void 0 ? await prepareSelection(target.id, kind, preservedSelection) : {};
+							configurationPlan = selectionPreflight.plan;
+							selectionContext = selectionPreflight.selectionContext;
 							if (!mounted.current || options.cancelled?.()) return false;
 							target = skinsRef.current.find((skin) => skin.id === skinId);
 							if (target === void 0) {
 								await stopContinuation();
 								return false;
 							}
-							conflicts = kind === "activate" ? activationConflicts(target, skinsRef.current, statesRef.current) : [];
+							conflicts = kind === "activate" ? activationConflicts(target, skinsRef.current, statesRef.current, runtimeRef.current) : [];
+							if (preservedSelection !== void 0) conflicts = applyPreservedSelection(conflicts, preservedSelection);
 							changed = true;
 						}
 						const currentReason = currentActionReason.current(kind) ?? (kind === "install" && options.installAndUse === true && officialDesktop ? currentActionReason.current("activate") : null);
@@ -3578,7 +3643,11 @@ url: https://github.com/<owner>/<repo>
 								},
 								...artifactContext !== void 0 && { artifactContext },
 								...configurationContext !== void 0 && { configurationContext },
-								...kind === "activate" && preservedSelection !== void 0 && { preservedSkinIds: preservedSelection },
+								...kind === "activate" && selectionContext !== void 0 && { selectionContext },
+								...kind === "activate" && preservedSelection !== void 0 && {
+									preservedSkinIds: preservedSelection,
+									preservedSkinApprovals: preservedApprovals
+								},
 								...kind === "migrate" && options.sourceContext !== void 0 && { sourceContext: options.sourceContext }
 							})
 						})).operationId;
@@ -3823,17 +3892,20 @@ url: https://github.com/<owner>/<repo>
 					let acceptedContext = combinedConsent?.context ?? (boundContext === compatibilityContext(skin, runtimeRef.current) ? boundContext : void 0);
 					let artifactContext = combinedConsent !== void 0 ? combinedConsent.artifactContext : acceptedContext !== void 0 ? previous?.artifactContext : void 0;
 					let preservedSelection = combinedConsent?.preservedSkinIds ?? operation.preservedSkinIds;
+					let preservedApprovals = combinedConsent?.preservedSkinApprovals ?? operation.preservedSkinApprovals;
+					let selectionContext = combinedConsent?.selectionContext ?? operation.selectionContext;
 					if (action === "approve-artifact") acceptedContext = compatibilityContext(skin, runtimeRef.current);
-					let conflicts = operation.kind === "activate" ? activationConflicts(skin, skinsRef.current, statesRef.current) : [];
+					let conflicts = operation.kind === "activate" ? activationConflicts(skin, skinsRef.current, statesRef.current, runtimeRef.current) : [];
 					while (action !== "approve-artifact" && (acceptedContext === void 0 || acceptedContext !== compatibilityContext(skin, runtimeRef.current) || (operation.kind === "activate" || operation.kind === "pin") && artifactContext !== runtimeFor(statesRef.current, skin.id).artifactRisk?.context || conflicts.length > 0 && preservedSelection === void 0)) {
 						const consent = await requestCompatibilityConsent(skin, operation.kind, installAndUse, boundContext !== void 0 || acceptedContext !== void 0, void 0, conflicts);
 						if (consent.decision === "cancelled" || !mounted.current) return;
 						acceptedContext = consent.decision === "accepted" ? consent.context : void 0;
 						artifactContext = consent.decision === "accepted" ? consent.artifactContext : void 0;
 						preservedSelection = consent.decision === "accepted" ? consent.preservedSkinIds : void 0;
+						preservedApprovals = consent.decision === "accepted" ? consent.preservedSkinApprovals : void 0;
 						skin = skinsRef.current.find((item) => item.id === operation.skinId);
 						if (skin === void 0) return;
-						conflicts = operation.kind === "activate" ? activationConflicts(skin, skinsRef.current, statesRef.current) : [];
+						conflicts = operation.kind === "activate" ? activationConflicts(skin, skinsRef.current, statesRef.current, runtimeRef.current) : [];
 						if (consent.decision === "not-required") break;
 					}
 					const reason = currentActionReason.current(operation.kind);
@@ -3864,7 +3936,9 @@ url: https://github.com/<owner>/<repo>
 					if (await runForSkin(operation.skinId, operation.kind, result.operationId, {
 						compatibilityContext: acceptedContext,
 						artifactContext,
-						preservedSkinIds: preservedSelection
+						preservedSkinIds: preservedSelection,
+						preservedSkinApprovals: preservedApprovals,
+						selectionContext
 					}) && operation.kind === "install" && pendingInstallActivation.current.has(operation.skinId)) activateSkin(operation.skinId, acceptedContext);
 				} catch (reason) {
 					const message = reason instanceof Error ? reason.message : String(reason);
@@ -4268,6 +4342,10 @@ url: https://github.com/<owner>/<repo>
 			const selectedBusy = selected === void 0 ? void 0 : liveOperationFor(operations, selected.id);
 			const selectedInstallAndUsePending = selected !== void 0 && continuingInstallActivation.current.has(selected.id);
 			const activationDialogConflicts = compatibilityConfirmation?.kind === "activate" ? compatibilityConfirmation.conflicts ?? [] : [];
+			const allClosedPreservedSkinIds = preservedSkinIds(statesRef.current, activationDialogConflicts.map((conflict) => ({
+				...conflict,
+				keep: false
+			})));
 			const toggleActivationConflict = (skinId) => {
 				const current = compatibilityConfirmationRef.current;
 				if (current === null || current.conflicts === void 0) return;
@@ -5658,7 +5736,7 @@ url: https://github.com/<owner>/<repo>
 						footer: activationDialogConflicts.length > 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 							variant: "outline",
 							size: "sm",
-							onClick: () => finishCompatibilityConfirmation(true, []),
+							onClick: () => finishCompatibilityConfirmation(true, allClosedPreservedSkinIds),
 							children: "全部关闭并继续"
 						}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 							variant: "primary",

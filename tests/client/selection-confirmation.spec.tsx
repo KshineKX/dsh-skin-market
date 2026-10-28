@@ -53,8 +53,10 @@ function repairPlan(changes = [change(target)], context = 'a'.repeat(64)): Selec
   return { status: 'repairable', context, changes, reason: '继续前需审核共享覆盖。' }
 }
 
-function market(options: { skin?: CatalogSkin; plan?: SelectionPlan; risk?: RuntimeSkin['artifactRisk']; official?: boolean; selectionPlanAvailable?: boolean; networkRetry?: boolean; configurationFailure?: boolean; active?: boolean; kind?: 'activate' | 'pin' | 'deactivate'; failRecheck?: 'network' | 'server'; holdInitial?: boolean; holdRecheck?: boolean } = {}) {
+function market(options: { skin?: CatalogSkin; oldSkin?: CatalogSkin; extraSkins?: CatalogSkin[]; pinnedSkinIds?: string[]; plan?: SelectionPlan; risk?: RuntimeSkin['artifactRisk']; official?: boolean; selectionPlanAvailable?: boolean; networkRetry?: boolean; configurationFailure?: boolean; active?: boolean; kind?: 'activate' | 'pin' | 'deactivate'; failRecheck?: 'network' | 'server'; holdInitial?: boolean; holdRecheck?: boolean; selectionContext?: string } = {}) {
   const skin = options.skin ?? target
+  const existing = options.oldSkin ?? old
+  const extraSkins = options.extraSkins ?? []
   const state = { plan: options.plan ?? repairPlan(), used: options.active ?? false, risk: options.risk, retried: false, catalogSkin: skin as CatalogSkin }
   let selectionRequests = 0
   let releaseInitial: (() => void) | undefined
@@ -62,15 +64,16 @@ function market(options: { skin?: CatalogSkin; plan?: SelectionPlan; risk?: Runt
   const pendingInitial = options.holdInitial ? new Promise<void>(resolve => { releaseInitial = resolve }) : undefined
   const pendingRecheck = options.holdRecheck ? new Promise<void>(resolve => { releaseRecheck = resolve }) : undefined
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [state.catalogSkin, old] }) }
+    if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [state.catalogSkin, existing, ...extraSkins] }) }
     if (url.endsWith('/state')) return { ok: true, json: async () => ({ hostKind: 'desktop', runtime, selectionPlanAvailable: options.selectionPlanAvailable !== false,
       ...(options.official === false ? {} : { management }), skins: [
         { skinId: skin.id, installation: 'installed', activation: state.used ? 'active' : 'inactive', primary: state.used, installedVersion: skin.install.version, updateAvailable: false, ...(state.risk !== undefined && { artifactRisk: state.risk }) },
-        { skinId: old.id, installation: 'installed', activation: state.used ? 'inactive' : 'active', primary: !state.used, installedVersion: old.install.version, updateAvailable: false },
+          { skinId: existing.id, installation: 'installed', activation: state.used ? 'inactive' : 'active', primary: !state.used, installedVersion: existing.install.version, updateAvailable: false },
+        ...extraSkins.map(item => ({ skinId: item.id, installation: 'installed' as const, activation: 'active' as const, primary: false, pinned: options.pinnedSkinIds?.includes(item.id) === true, installedVersion: item.install.version, updateAvailable: false })),
       ] }) }
     if (url.endsWith('/market-update')) return { ok: true, json: async () => ({ updateAvailable: false }) }
     if (url.endsWith('/selection-plan') && init?.method === 'POST') {
-      expect(JSON.parse(String(init.body))).toEqual({ skinId: skin.id, kind: options.kind ?? 'activate' })
+      expect(JSON.parse(String(init.body))).toEqual(expect.objectContaining({ skinId: skin.id, kind: options.kind ?? 'activate' }))
       selectionRequests += 1
       if (selectionRequests === 1 && pendingInitial !== undefined) await pendingInitial
       if (selectionRequests === 2) {
@@ -78,7 +81,7 @@ function market(options: { skin?: CatalogSkin; plan?: SelectionPlan; risk?: Runt
         if (options.failRecheck === 'server') return { ok: false, status: 503, json: async () => ({ error: '共享配置检查暂不可用' }) }
         if (pendingRecheck !== undefined) await pendingRecheck
       }
-      return { ok: true, json: async () => state.plan }
+      return { ok: true, json: async () => ({ ...state.plan, ...(options.selectionContext === undefined ? {} : { selectionContext: options.selectionContext }) }) }
     }
     if (/\/(?:activate|pin|deactivate)$/.test(url) && init?.method === 'POST') {
       if (options.configurationFailure) state.risk = artifactRisk
@@ -133,6 +136,50 @@ describe('combined selection confirmation', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: '解除覆盖并常驻 1 个插件并继续' }))
     await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
     expect(JSON.parse(String(app.posts('/activate')[0]![1]!.body)).preservedSkinIds).toEqual([old.id])
+  })
+
+  it('keeps an unlisted same-category pinned skin when closing all displayed conflicts', async () => {
+    const pet = { ...target, category: 'pet' }
+    const sameCategoryPinned = { ...pet, id: 'pinned.pet', package: 'pinned-pet', rowId: 'ui-pinned-pet', name: { zh: '已常驻宠物', en: 'Pinned Pet' } }
+    const app = market({ skin: pet, extraSkins: [sameCategoryPinned], pinnedSkinIds: [sameCategoryPinned.id] })
+    await choose()
+    const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
+    fireEvent.click(within(dialog).getByRole('button', { name: '全部关闭并继续' }))
+    await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
+    expect(JSON.parse(String(app.posts('/activate')[0]![1]!.body)).preservedSkinIds).toEqual([sameCategoryPinned.id])
+  })
+
+  it('shows and submits compatibility approval for a secondary skin promoted to pinned', async () => {
+    const pet = { ...target, category: 'pet' }
+    const incompatibleExisting = { ...old, compatibility: { ...old.compatibility, dsh: '<0.1.0-rc.1' } }
+    const app = market({ skin: pet, oldSkin: incompatibleExisting, selectionContext: 'c'.repeat(64) })
+    await choose()
+    const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
+    expect(dialog.textContent).toContain('兼容性未确认')
+    fireEvent.click(within(dialog).getByRole('switch'))
+    fireEvent.click(within(dialog).getByRole('button', { name: /常驻 1 个插件并继续/ }))
+    await waitFor(() => expect(app.posts('/activate')).toHaveLength(1))
+    const body = JSON.parse(String(app.posts('/activate')[0]![1]!.body))
+    expect(body.preservedSkinIds).toEqual([incompatibleExisting.id])
+    expect(body.preservedSkinApprovals[incompatibleExisting.id].compatibilityContext).toBe(compatibilityContext(incompatibleExisting, runtime))
+    expect(body.selectionContext).toBe('c'.repeat(64))
+    const selectionPlans = app.fetchMock.mock.calls.filter(([url, init]) => url.endsWith('/selection-plan') && init?.method === 'POST')
+    expect(JSON.parse(String(selectionPlans.at(-1)![1]!.body)).preservedSkinIds).toEqual([incompatibleExisting.id])
+  })
+
+  it('refreshes the same confirmation when the active selection changes while it is open', async () => {
+    const pet = { ...target, category: 'pet' }
+    const app = market({ skin: pet })
+    await choose()
+    const dialog = await screen.findByRole('dialog', { name: '使用前确认' })
+    const stateRequestsBefore = app.fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length
+    app.state.used = true
+    fireEvent.focus(window)
+    await waitFor(() => expect(app.fetchMock.mock.calls.filter(([url]) => url.endsWith('/state')).length).toBeGreaterThan(stateRequestsBefore))
+    fireEvent.click(within(dialog).getByRole('button', { name: /停用 1 个插件并继续/ }))
+    await waitFor(() => expect(screen.getByRole('dialog', { name: '使用前确认' }).textContent).toContain('已变化'))
+    expect(app.posts('/activate')).toHaveLength(0)
+    expect(dialog).toBe(screen.getByRole('dialog', { name: '使用前确认' }))
   })
 
   it('combines incompatibility, first-use, artifact risk and shared repair before the first activation', async () => {

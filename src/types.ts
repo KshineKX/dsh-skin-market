@@ -237,6 +237,10 @@ export interface Operation {
   skinId: string
   /** Explicit secondary skins selected in the combined activation confirmation. */
   preservedSkinIds?: string[]
+  /** Per-skin contexts accepted in the combined activation confirmation. */
+  preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>
+  /** Binds the activation selection to the state shown before confirmation. */
+  selectionContext?: string
   phase: OperationPhase
   message?: string
   cancelable?: boolean

@@ -466,12 +466,12 @@ export class SkinLifecycle {
   }
 
   /** Derive the same main-component directions as the ordinary selection transition. */
-  private selectionTargets(kind: SelectionOperationKind, skinId: string): ConfigurationOverrideTarget[] {
+  private selectionTargets(kind: SelectionOperationKind, skinId: string, preservedOverride?: readonly string[]): ConfigurationOverrideTarget[] {
     const skin = this.skin(skinId)
     const dependencies = readDependencies(this.options.profileDir)
     if (dependencies[skin.package] === undefined) return []
     const previous = readMarketState(this.options.profileDir)
-    const pinned = pinnedSkinIds(previous)
+    const pinned = preservedOverride === undefined ? pinnedSkinIds(previous) : [...new Set(preservedOverride)]
     let requests: Array<{ skin: SkinEntry; enabled: boolean }>
     if (kind === 'activate') {
       const enabled = new Set([skinId, ...pinned])
@@ -491,12 +491,12 @@ export class SkinLifecycle {
     }).map(({ skin: item, enabled }) => ({ skinId: item.id, packageName: item.package, rowId: item.rowId, enabled }))
   }
 
-  private selectionBinding(kind: SelectionOperationKind, skinId: string, targets: readonly ConfigurationOverrideTarget[]): string {
+  private selectionBinding(kind: SelectionOperationKind, skinId: string, targets: readonly ConfigurationOverrideTarget[], preservedOverride?: readonly string[]): string {
     const state = readMarketState(this.options.profileDir)
     return JSON.stringify({
       kind, skinId, profile: this.options.profile, profileDir: this.options.profileDir, runtime: this.runtime,
       capabilities: this.management?.capabilities(),
-      selection: { activeSkinId: state.activeSkinId, pinnedSkinIds: pinnedSkinIds(state), disabledSkinIds: state.disabledSkinIds, bundles: readProfileBundles(this.options.profileDir) },
+      selection: { activeSkinId: state.activeSkinId, pinnedSkinIds: pinnedSkinIds(state), requestedPreservedSkinIds: preservedOverride === undefined ? undefined : [...new Set(preservedOverride)], disabledSkinIds: state.disabledSkinIds, bundles: readProfileBundles(this.options.profileDir) },
       profilePatch: snapshotFile(profilePatchFile(this.options.profileDir)),
       targets: targets.map(target => {
         const skin = this.skin(target.skinId)
@@ -507,13 +507,35 @@ export class SkinLifecycle {
     })
   }
 
-  private async selectionPlanLocked(kind: SelectionOperationKind, skinId: string): Promise<{ plan: ConfigurationOverrideBatchPlan; targets: ConfigurationOverrideTarget[]; editorContext?: string }> {
+  private async selectionContextLocked(kind: SelectionOperationKind, skinId: string, preservedOverride?: readonly string[]): Promise<string> {
+    const targets = this.selectionTargets(kind, skinId, preservedOverride)
+    const binding = this.selectionBinding(kind, skinId, targets, preservedOverride)
+    let identities: Array<{ skinId: string; entryId?: string; enabled?: boolean }> = []
+    if (this.management !== undefined) {
+      try {
+        for (const target of targets) {
+          const skin = this.skin(target.skinId)
+          const manifest = packageManifest(this.options.profileDir, skin.package)
+          const component = await this.officialComponent(skin, (manifest?.dsh as { bundle?: unknown } | undefined)?.bundle !== undefined)
+          identities.push({ skinId: target.skinId, ...component })
+        }
+      } catch {
+        // The activation path will report the precise manager error. Keep this
+        // read-only context usable so old hosts retain their existing preflight.
+        identities = []
+      }
+    }
+    return createHash('sha256').update(JSON.stringify({ binding, identities })).digest('hex')
+  }
+
+  private async selectionPlanLocked(kind: SelectionOperationKind, skinId: string, preservedOverride?: readonly string[]): Promise<{ plan: ConfigurationOverrideBatchPlan; targets: ConfigurationOverrideTarget[]; editorContext?: string }> {
     this.skin(skinId)
-    if (this.management === undefined) return { targets: [], plan: { status: 'none', changes: [], reason: '当前宿主使用原有启停流程。' } }
-    const targets = this.selectionTargets(kind, skinId)
+    const targets = this.selectionTargets(kind, skinId, preservedOverride)
+    const selectionContext = await this.selectionContextLocked(kind, skinId, preservedOverride)
+    if (this.management === undefined) return { targets, plan: { status: 'none', changes: [], reason: '当前宿主使用原有启停流程。', selectionContext } }
     const batch = inspectConfigurationOverrides(this.options.configurationOverride ?? {}, targets)
-    if (batch.status !== 'repairable' || batch.context === undefined) return { targets, plan: batch }
-    const binding = this.selectionBinding(kind, skinId, targets)
+    if (batch.status !== 'repairable' || batch.context === undefined) return { targets, plan: { ...batch, selectionContext } }
+    const binding = this.selectionBinding(kind, skinId, targets, preservedOverride)
     const identities: Array<{ skinId: string; entryId?: string; enabled?: boolean }> = []
     try {
       for (const target of targets) {
@@ -527,21 +549,21 @@ export class SkinLifecycle {
       }
       if (this.disposed) throw new Error('皮肤市场宿主已停止，配置未修改。')
       if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
-      const freshTargets = this.selectionTargets(kind, skinId)
+      const freshTargets = this.selectionTargets(kind, skinId, preservedOverride)
       const freshBatch = inspectConfigurationOverrides(this.options.configurationOverride ?? {}, freshTargets)
-      if (binding !== this.selectionBinding(kind, skinId, freshTargets) || batch.context !== freshBatch.context) throw new Error('目标或配置已变化，请重新检查后确认。')
+      if (binding !== this.selectionBinding(kind, skinId, freshTargets, preservedOverride) || batch.context !== freshBatch.context) throw new Error('目标或配置已变化，请重新检查后确认。')
     } catch (error) {
-      return { targets, plan: { ...batch, status: 'blocked', context: undefined, reason: sanitizeLogText(errorMessage(error)).slice(0, 280) } }
+      return { targets, plan: { ...batch, status: 'blocked', context: undefined, selectionContext, reason: sanitizeLogText(errorMessage(error)).slice(0, 280) } }
     }
     const context = createHash('sha256').update(JSON.stringify({ configuration: batch.context, binding, identities })).digest('hex')
-    return { targets, plan: { ...batch, context }, editorContext: batch.context }
+    return { targets, plan: { ...batch, context, selectionContext }, editorContext: batch.context }
   }
 
   /** Background preflight is read-only and never creates a visible Operation. */
-  async selectionPlan(kind: SelectionOperationKind, skinId: string): Promise<ConfigurationOverrideBatchPlan> {
+  async selectionPlan(kind: SelectionOperationKind, skinId: string, preservedOverride?: readonly string[]): Promise<ConfigurationOverrideBatchPlan> {
     if (!isSelectionOperation(kind)) throw new Error('invalid selection operation')
     const inspection: Operation = { id: randomUUID(), kind, skinId, phase: 'validating', startedAt: new Date().toISOString() }
-    return await this.withProfileLock(inspection, async () => (await this.selectionPlanLocked(kind, skinId)).plan)
+    return await this.withProfileLock(inspection, async () => (await this.selectionPlanLocked(kind, skinId, preservedOverride)).plan)
   }
 
   private releaseAgeContext(operation: Pick<Operation, 'kind' | 'skinId'>): string {
@@ -867,12 +889,12 @@ export class SkinLifecycle {
   }
 
   /** Revalidate the shown artifact inside the profile queue before changing selection. */
-  private assertArtifactUseApproved(operation: Operation, skin: SkinEntry): void {
+  private assertArtifactUseApproved(operation: Operation, skin: SkinEntry, artifactContextOverride?: string): void {
     const artifact = snapshotInstalledArtifact(this.options.profileDir, skin.package)
     if (!artifact.ok) throw new Error(artifact.reason)
     this.assertSkinLoaderConflicts(skin)
     if (this.management === undefined) this.assertRuntimeLoaderConflicts(skin, [{ id: skin.rowId, name: skin.package, packageName: skin.package }])
-    const context = this.artifactContexts.get(operation.id)
+    const context = artifactContextOverride ?? this.artifactContexts.get(operation.id)
     const risk = inspectSkinArtifactRisk(this.options.profileDir, skin, this.hostKind)
     if (context !== undefined) {
       if (risk?.context !== context || !acknowledgeSkinArtifactRisk(this.options.profileDir, skin, context, this.hostKind)) {
@@ -892,6 +914,14 @@ export class SkinLifecycle {
       const validation = validateDesktopArtifact(this.options.profileDir, skin)
       if (!validation.ok) throw new Error(validation.reason)
     }
+  }
+
+  private assertPreservedSkinApproved(operation: Operation, skin: SkinEntry): void {
+    const approval = operation.preservedSkinApprovals?.[skin.id]
+    if (approval === undefined || approval.compatibilityContext !== compatibilityContext(skin, this.runtime)) {
+      throw new Error(`皮肤「${skin.name.zh}」的兼容性或选择状态已变化，请重新确认`)
+    }
+    this.assertArtifactUseApproved(operation, skin, approval.artifactContext)
   }
 
   private assertLegacyOfficialPeers(manifest: Record<string, unknown> | null): void {
@@ -1452,13 +1482,18 @@ export class SkinLifecycle {
     return [...live].sort((left, right) => rank(left) - rank(right) || Date.parse(left.startedAt) - Date.parse(right.startedAt))[0] ?? null
   }
 
-  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string, preservedSkinIds?: readonly string[]): Operation {
+  begin(kind: OperationKind, skinId: string, approvedBuildKeys?: readonly string[] | string, acknowledgeCompatibility = false, acknowledgedContext?: string, releaseAgeApproval?: ReleaseAgeApproval, artifactContext?: string, configurationRepair?: ConfigurationRepairApproval, selectionConfigurationContext?: string, sourceContext?: string, preservedSkinIds?: readonly string[], preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>, selectionContext?: string): Operation {
     if (this.disposed) throw new Error('皮肤市场宿主已停止，不能开始新的操作')
     if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
     if (selectionConfigurationContext !== undefined && (!isSelectionOperation(kind) || !/^[a-f0-9]{64}$/.test(selectionConfigurationContext) || configurationRepair !== undefined)) throw new Error('invalid configuration context')
     if (sourceContext !== undefined && (kind !== 'migrate' || sourceContext.length !== 64 || !/^[a-f0-9]{64}$/.test(sourceContext))) throw new Error('invalid source context')
     if (preservedSkinIds !== undefined && (kind !== 'activate' || preservedSkinIds.length > 512
       || preservedSkinIds.some(id => typeof id !== 'string' || id.length === 0 || id.length > 128))) throw new Error('invalid preserved skin ids')
+    if (preservedSkinApprovals !== undefined && (kind !== 'activate' || Object.keys(preservedSkinApprovals).length > 512
+      || Object.entries(preservedSkinApprovals).some(([id, approval]) => id.length === 0 || id.length > 128 || approval === undefined || typeof approval.compatibilityContext !== 'string' || approval.compatibilityContext.length === 0 || approval.compatibilityContext.length > 4096 || approval.artifactContext !== undefined && (approval.artifactContext.length === 0 || approval.artifactContext.length > 4096)))) throw new Error('invalid preserved skin approvals')
+    if ((preservedSkinIds === undefined) !== (preservedSkinApprovals === undefined)) throw new Error('preserved skin approvals required')
+    if (preservedSkinIds !== undefined && selectionContext === undefined) throw new Error('selection context required')
+    if (selectionContext !== undefined && (kind !== 'activate' || !/^[a-f0-9]{64}$/.test(selectionContext))) throw new Error('invalid selection context')
     const action = kind === 'install' ? 'install' : kind === 'update' || kind === 'migrate' ? 'update' : kind === 'activate' || kind === 'pin' ? 'enable' : kind === 'uninstall' ? 'remove' : 'disable'
     const capability = this.management?.capabilities()[action]
     if (capability?.available === false) throw new Error(capability.reason ?? '当前宿主不支持此操作，请使用官方插件页')
@@ -1485,6 +1520,8 @@ export class SkinLifecycle {
     const operation: Operation = {
       id: randomUUID(), kind, skinId, phase: 'queued', startedAt: new Date().toISOString(),
       ...(preservedSkinIds === undefined ? {} : { preservedSkinIds: [...new Set(preservedSkinIds)] }),
+      ...(preservedSkinApprovals === undefined ? {} : { preservedSkinApprovals: Object.fromEntries(Object.entries(preservedSkinApprovals).map(([id, approval]) => [id, { ...approval }])) }),
+      ...(selectionContext === undefined ? {} : { selectionContext }),
       cancelable: (kind === 'install' || kind === 'update' || kind === 'migrate') && this.management?.capabilities().cancel.available !== false,
     }
     this.operations.set(operation.id, operation)
@@ -1552,7 +1589,7 @@ export class SkinLifecycle {
     }
     const approvedBuildKeys = action === 'approve-build' ? this.pendingBuildKeys.get(id) : undefined
     if (action === 'approve-build' && (approvedBuildKeys === undefined || approvedBuildKeys.length === 0)) throw new Error('未找到需要批准的精确构建项')
-    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair, undefined, this.sourceMigrationContexts.get(id)?.context, failed.preservedSkinIds)
+    return this.begin(failed.kind, failed.skinId, approvedBuildKeys, acknowledgeCompatibility, acknowledgedContext, releaseAgeApproval, artifactContext, configurationRepair, undefined, this.sourceMigrationContexts.get(id)?.context, failed.preservedSkinIds, failed.preservedSkinApprovals, failed.selectionContext)
   }
 
   private update(operation: Operation, phase: Operation['phase'], message?: string): void {
@@ -1599,7 +1636,7 @@ export class SkinLifecycle {
       this.pendingSelectionConfigurations.delete(operation.id)
       if (selectionContext !== undefined) {
         if (!isSelectionOperation(operation.kind)) throw new Error('invalid selection operation')
-        const prepared = await this.selectionPlanLocked(operation.kind, operation.skinId)
+        const prepared = await this.selectionPlanLocked(operation.kind, operation.skinId, operation.preservedSkinIds)
         if (this.disposed) throw new Error('皮肤市场宿主已停止，配置未修改')
         if (this.waitingReason !== undefined) throw new Error(this.waitingReason)
         this.checkDeadline(operation)
@@ -1611,8 +1648,7 @@ export class SkinLifecycle {
               this.assertCompatibilityContext(operation, skin)
               this.assertArtifactUseApproved(operation, skin)
             } else {
-              if (assessCompatibility(skin, this.runtime).decision === 'incompatible') throw new Error('需要先单独确认常驻皮肤的兼容性。')
-              this.assertArtifactUseApproved({ ...operation, id: `${operation.id}:configuration:${skin.id}` }, skin)
+              this.assertPreservedSkinApproved(operation, skin)
             }
           }
         }
@@ -2573,10 +2609,18 @@ export class SkinLifecycle {
     const selection = this.selectionSnapshot()
     const requestedPreserved = operation.preservedSkinIds
     const preserved = requestedPreserved === undefined ? pinnedSkinIds(previous) : [...new Set(requestedPreserved)]
+    if (operation.selectionContext !== undefined) {
+      const targets = this.selectionTargets('activate', skin.id, requestedPreserved)
+      const currentContext = await this.selectionContextLocked('activate', skin.id, requestedPreserved)
+      if (currentContext !== operation.selectionContext) throw new Error('常驻选择已变化，请重新确认')
+    }
     if (requestedPreserved !== undefined) {
       const dependencies = readDependencies(this.options.profileDir)
       const invalid = preserved.find(id => id === skin.id || !this.skinById.has(id) || dependencies[this.skin(id).package] === undefined)
       if (invalid !== undefined) throw new Error(`无法保留未安装或不存在的皮肤：${invalid}`)
+      const approvals = operation.preservedSkinApprovals ?? {}
+      if (preserved.length !== Object.keys(approvals).length || preserved.some(id => approvals[id] === undefined)) throw new Error('常驻选择已变化，请重新确认')
+      for (const id of preserved) this.assertPreservedSkinApproved(operation, this.skin(id))
     }
     const next: PersistedMarketState = { ...previous, version: 1, activeSkinId: skin.id, pinnedSkinIds: preserved }
     recordActivity(next, skin.id, 'usedAt', operation.startedAt)

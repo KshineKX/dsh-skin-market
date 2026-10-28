@@ -28,10 +28,16 @@ export declare function readSkinMutation(request: IncomingMessage, limit?: numbe
     configurationContext?: string;
     sourceContext?: string;
     preservedSkinIds?: string[];
+    preservedSkinApprovals?: Record<string, {
+        compatibilityContext: string;
+        artifactContext?: string;
+    }>;
+    selectionContext?: string;
 }>;
 export declare function readSelectionPlan(request: IncomingMessage, limit?: number): Promise<{
     skinId: string;
     kind: SelectionOperationKind;
+    preservedSkinIds?: string[];
 }>;
 export declare function readSkinId(request: IncomingMessage, limit?: number): Promise<string>;
 export declare function readOperationRetry(request: IncomingMessage, limit?: number): Promise<{

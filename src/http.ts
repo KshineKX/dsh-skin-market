@@ -114,26 +114,48 @@ function artifactAcknowledgement(body: Record<string, unknown>): { artifactConte
   return { artifactContext: body.artifactContext }
 }
 
-export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string; sourceContext?: string; preservedSkinIds?: string[] }> {
+function preservedSkinApprovals(body: Record<string, unknown>): Record<string, { compatibilityContext: string; artifactContext?: string }> | undefined {
+  if (body.preservedSkinApprovals === undefined) return undefined
+  if (body.preservedSkinApprovals === null || typeof body.preservedSkinApprovals !== 'object' || Array.isArray(body.preservedSkinApprovals)) throw new Error('invalid preserved skin approvals')
+  const entries = Object.entries(body.preservedSkinApprovals)
+  if (entries.length > 512) throw new Error('invalid preserved skin approvals')
+  const result: Record<string, { compatibilityContext: string; artifactContext?: string }> = {}
+  for (const [skinId, value] of entries) {
+    if (skinId.length === 0 || skinId.length > 128 || value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid preserved skin approvals')
+    const approval = value as Record<string, unknown>
+    if (typeof approval.compatibilityContext !== 'string' || approval.compatibilityContext.length === 0 || approval.compatibilityContext.length > 4096) throw new Error('invalid preserved skin approvals')
+    if (approval.artifactContext !== undefined && (typeof approval.artifactContext !== 'string' || approval.artifactContext.length === 0 || approval.artifactContext.length > 4096)) throw new Error('invalid preserved skin approvals')
+    result[skinId] = { compatibilityContext: approval.compatibilityContext, ...(typeof approval.artifactContext === 'string' ? { artifactContext: approval.artifactContext } : {}) }
+  }
+  return result
+}
+
+export async function readSkinMutation(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; acknowledgeCompatibility: boolean; compatibilityContext?: string; artifactContext?: string; configurationContext?: string; sourceContext?: string; preservedSkinIds?: string[]; preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>; selectionContext?: string }> {
   const body = await readJsonBody(request, limit)
   if (typeof body.skinId !== 'string' || body.skinId.length > 128) throw new Error('invalid skinId')
   if (body.preservedSkinIds !== undefined && (!Array.isArray(body.preservedSkinIds) || body.preservedSkinIds.length > 512
     || body.preservedSkinIds.some(id => typeof id !== 'string' || id.length === 0 || id.length > 128))) throw new Error('invalid preserved skin ids')
   if (body.sourceContext !== undefined && (typeof body.sourceContext !== 'string' || body.sourceContext.length !== 64 || !/^[a-f0-9]{64}$/.test(body.sourceContext))) throw new Error('invalid source context')
   if (body.configurationContext !== undefined && (typeof body.configurationContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.configurationContext))) throw new Error('invalid configuration context')
-  if (body.configurationContext !== undefined && Object.keys(body).some(key => !['skinId', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext', 'preservedSkinIds'].includes(key))) throw new Error('invalid configuration repair request')
+  if (body.selectionContext !== undefined && (typeof body.selectionContext !== 'string' || !/^[a-f0-9]{64}$/.test(body.selectionContext))) throw new Error('invalid selection context')
+  const approvals = preservedSkinApprovals(body)
+  if (body.configurationContext !== undefined && Object.keys(body).some(key => !['skinId', 'configurationContext', 'acknowledgeCompatibility', 'compatibilityContext', 'artifactContext', 'preservedSkinIds', 'preservedSkinApprovals', 'selectionContext'].includes(key))) throw new Error('invalid configuration repair request')
   return { skinId: body.skinId, ...compatibilityAcknowledgement(body), ...artifactAcknowledgement(body),
     ...(typeof body.configurationContext === 'string' ? { configurationContext: body.configurationContext } : {}),
     ...(typeof body.sourceContext === 'string' ? { sourceContext: body.sourceContext } : {}),
-    ...(Array.isArray(body.preservedSkinIds) ? { preservedSkinIds: [...new Set(body.preservedSkinIds as string[])] } : {}) }
+    ...(Array.isArray(body.preservedSkinIds) ? { preservedSkinIds: [...new Set(body.preservedSkinIds as string[])] } : {}),
+    ...(approvals === undefined ? {} : { preservedSkinApprovals: approvals }),
+    ...(typeof body.selectionContext === 'string' ? { selectionContext: body.selectionContext } : {}) }
 }
 
-export async function readSelectionPlan(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; kind: SelectionOperationKind }> {
+export async function readSelectionPlan(request: IncomingMessage, limit = 8192): Promise<{ skinId: string; kind: SelectionOperationKind; preservedSkinIds?: string[] }> {
   const body = await readJsonBody(request, limit)
-  if (Object.keys(body).some(key => key !== 'skinId' && key !== 'kind')) throw new Error('invalid selection plan request')
+  if (Object.keys(body).some(key => key !== 'skinId' && key !== 'kind' && key !== 'preservedSkinIds')) throw new Error('invalid selection plan request')
   if (typeof body.skinId !== 'string' || body.skinId.length === 0 || body.skinId.length > 128) throw new Error('invalid skinId')
   if (body.kind !== 'activate' && body.kind !== 'deactivate' && body.kind !== 'pin' && body.kind !== 'unpin') throw new Error('invalid selection operation')
-  return { skinId: body.skinId, kind: body.kind }
+  if (body.preservedSkinIds !== undefined && (!Array.isArray(body.preservedSkinIds) || body.preservedSkinIds.length > 512
+    || body.preservedSkinIds.some(id => typeof id !== 'string' || id.length === 0 || id.length > 128))) throw new Error('invalid preserved skin ids')
+  return { skinId: body.skinId, kind: body.kind, ...(Array.isArray(body.preservedSkinIds) ? { preservedSkinIds: [...new Set(body.preservedSkinIds as string[])] } : {}) }
 }
 
 export async function readSkinId(request: IncomingMessage, limit = 8192): Promise<string> {

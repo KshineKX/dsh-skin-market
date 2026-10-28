@@ -5,6 +5,7 @@ import { basename, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parse, stringify } from 'yaml'
 import { maxParallelDownloads, SkinLifecycle } from '../src/lifecycle.ts'
+import { compatibilityContext } from '../src/compatibility.ts'
 import { atomicWriteJson, atomicWriteText, compatibilityPatchFile, ensurePatchedDependency, patchedDependenciesNeedSync, pnpmWorkspaceFile, profilePatchFile, readDependencies, readMarketState, writeMarketState } from '../src/profile.ts'
 import type { CommandOptions, CommandResult, PluginInstallRequest, PluginRunner } from '../src/commands.ts'
 import type { LoaderEntry, Operation, SkinEntry } from '../src/types.ts'
@@ -1295,13 +1296,35 @@ describe('skin lifecycle', () => {
     const { dir, skins: [one, two, pinned], entries, lifecycle, updates } = webSelectionFixture()
     updates.length = 0
 
-    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, [one.id, pinned.id])
+    const approvals = Object.fromEntries([one, pinned].map(skin => [skin.id, { compatibilityContext: compatibilityContext(skin, null) }]))
+    const preserved = [one.id, pinned.id]
+    const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
+    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, approvals, plan.selectionContext)
     expect(await finished(operation)).toMatchObject({ phase: 'done', preservedSkinIds: [one.id, pinned.id] })
     expect(readMarketState(dir)).toMatchObject({ activeSkinId: two.id, pinnedSkinIds: [one.id, pinned.id], disabledSkinIds: [] })
     expect(entries.get(one.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(two.rowId)?.options.disabled).not.toBe(true)
     expect(entries.get(pinned.rowId)?.options.disabled).not.toBe(true)
     expect(updates).toEqual([`${two.rowId}:null`, `${pinned.rowId}:null`])
+  })
+
+  it('rejects an explicit activation selection when a preserved skin approval is missing', async () => {
+    const { dir, skins: [one, two, pinned], lifecycle } = webSelectionFixture()
+    const approvals = { [one.id]: { compatibilityContext: compatibilityContext(one, null) } }
+    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, [one.id, pinned.id], approvals, 'a'.repeat(64))
+    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '常驻选择已变化，请重新确认' })
+    expect(readMarketState(dir).activeSkinId).toBe(one.id)
+  })
+
+  it('rejects an activation when the selection context changes after confirmation', async () => {
+    const { dir, skins: [one, two, pinned], lifecycle } = webSelectionFixture()
+    const preserved = [one.id, pinned.id]
+    const approvals = Object.fromEntries([one, pinned].map(skin => [skin.id, { compatibilityContext: compatibilityContext(skin, null) }]))
+    const plan = await lifecycle.selectionPlan('activate', two.id, preserved)
+    writeMarketState(dir, { ...readMarketState(dir), pinnedSkinIds: [pinned.id] })
+    const operation = lifecycle.begin('activate', two.id, undefined, false, undefined, undefined, undefined, undefined, undefined, undefined, preserved, approvals, plan.selectionContext)
+    expect(await finished(operation)).toMatchObject({ phase: 'failed', message: '常驻选择已变化，请重新确认' })
+    expect(readMarketState(dir).activeSkinId).toBe(one.id)
   })
 
   it('reports the complete browser selection on ordinary runtime rows and treats unknown managed package identities conservatively', () => {

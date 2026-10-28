@@ -143,6 +143,8 @@ export interface Operation {
   kind: 'install' | 'activate' | 'deactivate' | 'pin' | 'unpin' | 'update' | 'migrate' | 'uninstall'
   skinId: string
   preservedSkinIds?: string[]
+  preservedSkinApprovals?: Record<string, { compatibilityContext: string; artifactContext?: string }>
+  selectionContext?: string
   phase: 'queued' | 'resolving' | 'downloading' | 'installing' | 'validating' | 'activating' | 'waiting' | 'cancelling' | 'cancelled' | 'done' | 'failed'
   message?: string
   cancelable?: boolean
