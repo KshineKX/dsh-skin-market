@@ -28,12 +28,13 @@ compatibility:
   platform:
     - web
 marketScreenshots:
-  - https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/ymh0000123__dsh-theme-endfield/48ad12921bd6d36286d67fa483472eb32d90b6ee/home.png
-  - https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/ymh0000123__dsh-theme-endfield/48ad12921bd6d36286d67fa483472eb32d90b6ee/conversation.png
-  - https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/ymh0000123__dsh-theme-endfield/48ad12921bd6d36286d67fa483472eb32d90b6ee/settings.png
+  - skin-screenshots/ymh0000123__dsh-theme-endfield/359bfad889b4f3d2e79515c4145f624f34ba84f1/home.png
+  - skin-screenshots/ymh0000123__dsh-theme-endfield/359bfad889b4f3d2e79515c4145f624f34ba84f1/conversation.png
+  - skin-screenshots/ymh0000123__dsh-theme-endfield/359bfad889b4f3d2e79515c4145f624f34ba84f1/settings.png
 screenshots:
   - https://raw.githubusercontent.com/ymh0000123/dsh-theme-endfield/8659518c38e629505d9769e5cb3c9493d5a3e1fb/assets/screenshots1.webp
   - https://raw.githubusercontent.com/ymh0000123/dsh-theme-endfield/8659518c38e629505d9769e5cb3c9493d5a3e1fb/assets/screenshots2.webp
+  - skin-screenshots/ymh0000123__dsh-theme-endfield/359bfad889b4f3d2e79515c4145f624f34ba84f1/home.gif
 listScreenshot: https://raw.githubusercontent.com/ymh0000123/dsh-theme-endfield/a8dd2ee46a942f409acef876fa59781a12509293/assets/screenshots1.webp
 review:
   compatibility: unverified
