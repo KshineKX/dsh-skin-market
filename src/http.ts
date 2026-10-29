@@ -57,7 +57,16 @@ export function sameOrigin(request: IncomingMessage, trustedHosts: readonly stri
   if (origin === undefined) return true
   try {
     const parsed = new URL(origin)
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.host === authority(host ?? '')?.host
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+    if (parsed.host === authority(host ?? '')?.host) return true
+    // Chrome 151+ omits the explicit port from same-origin loopback Origins.
+    // Keep exact-port matching for declared public hosts; only the loopback
+    // fence may accept the omitted port, and the hostname must still match.
+    if (parsed.port === '' && host !== undefined && loopbackAuthority(host)) {
+      const hostAuthority = authority(host)
+      return hostAuthority !== null && parsed.hostname === hostAuthority.hostname
+    }
+    return false
   } catch { return false }
 }
 

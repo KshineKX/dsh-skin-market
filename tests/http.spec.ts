@@ -12,6 +12,9 @@ function jsonRequest(body: Record<string, unknown>): IncomingMessage {
 describe('HTTP guards', () => {
   it('accepts same-origin requests and Desktop proxy requests', () => {
     expect(sameOrigin({ headers: { origin: 'http://127.0.0.1:3080', host: '127.0.0.1:3080' } } as IncomingMessage)).toBe(true)
+    expect(sameOrigin({ headers: { origin: 'http://127.0.0.1', host: '127.0.0.1:3080' } } as IncomingMessage)).toBe(true)
+    expect(sameOrigin({ headers: { origin: 'http://127.0.0.1:3081', host: '127.0.0.1:3080' } } as IncomingMessage)).toBe(false)
+    expect(sameOrigin({ headers: { origin: 'http://localhost', host: 'localhost:3080' } } as IncomingMessage)).toBe(true)
     expect(sameOrigin({ headers: { origin: 'https://evil.example', host: '127.0.0.1:3080' } } as IncomingMessage)).toBe(false)
     expect(sameOrigin({ headers: { host: '127.0.0.1:3080' } } as IncomingMessage)).toBe(true)
     expect(sameOrigin({ headers: {} } as IncomingMessage)).toBe(true)

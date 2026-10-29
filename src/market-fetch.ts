@@ -71,9 +71,32 @@ export function marketNetworkMode(env: NodeJS.ProcessEnv = process.env): MarketN
  */
 export const marketFetch: typeof fetch = async (input, init) => {
   const config = proxyConfig(process.env)
-  const response = await undiciFetch(input as string, {
-    ...init,
-    dispatcher: dispatcher(config),
-  } as Parameters<typeof undiciFetch>[1])
-  return response as unknown as Response
+  try {
+    const response = await undiciFetch(input as string, {
+      ...init,
+      dispatcher: dispatcher(config),
+    } as Parameters<typeof undiciFetch>[1])
+    return response as unknown as Response
+  } catch (error) {
+    // Desktop may expose a loopback proxy for its own child processes while
+    // refusing external market hosts. Going direct is safe only for a proxy
+    // on this machine; a remote proxy may be an intentional network boundary.
+    const proxy = config.https ?? config.http
+    if (!isLoopbackProxy(proxy) || init?.signal?.aborted === true) throw error
+    const response = await undiciFetch(input as string, {
+      ...init,
+      dispatcher: dispatcher({ http: null, https: null, noProxy: null, mode: 'direct' }),
+    } as Parameters<typeof undiciFetch>[1])
+    return response as unknown as Response
+  }
+}
+
+function isLoopbackProxy(proxy: string | null): boolean {
+  if (proxy === null) return false
+  try {
+    const host = new URL(proxy).hostname.replace(/^\[|\]$/gu, '')
+    return host === '127.0.0.1' || host === 'localhost' || host === '::1'
+  } catch {
+    return false
+  }
 }
