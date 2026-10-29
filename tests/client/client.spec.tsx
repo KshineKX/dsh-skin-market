@@ -1345,7 +1345,7 @@ describe('client market', () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith('/catalog')) return { ok: true, json: async () => ({ skins: [skin] }) }
       if (url.endsWith('/state')) return { ok: true, json: async () => ({
-        hostKind: 'dsh', runtime: dshRuntime,
+        hostKind: 'dsh', restartNoticeId: 'hot-receipt', runtime: dshRuntime,
         skins: installed ? [{ skinId: skin.id, installation: 'installed', activation: active ? 'restart-required' : 'inactive', primary: active, clientModule: active, installedVersion: '1.0.0', updateAvailable: false }] : [],
       }) }
       if (url.endsWith('/install') && init?.method === 'POST') {
@@ -1358,6 +1358,7 @@ describe('client market', () => {
         return { ok: true, json: async () => ({ operationId: 'hot-activate' }) }
       }
       if (url.endsWith('/operations/hot-activate')) return { ok: true, json: async () => ({ id: 'hot-activate', kind: 'activate', skinId: skin.id, phase: 'done', restartRequired: true }) }
+      if (url.endsWith('/restart/clear') && init?.method === 'POST') return { ok: true, json: async () => ({ cleared: true, skinId: skin.id }) }
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -1373,6 +1374,7 @@ describe('client market', () => {
     expect(screen.queryByRole('button', { name: '重启以应用' })).toBeNull()
     expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
     expect(fetchMock.mock.calls.some(([url, request]) => url.endsWith('/restart') && request?.method === 'POST')).toBe(false)
+    expect(fetchMock.mock.calls.some(([url, request]) => url.endsWith('/restart/clear') && request?.method === 'POST')).toBe(true)
   })
 
   it.each([
