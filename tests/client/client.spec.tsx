@@ -3247,6 +3247,20 @@ describe('client market', () => {
       expect(unsubscribe).toHaveBeenCalledOnce()
     })
 
+    it('does not flash a restart dialog while an active Web client is settling', async () => {
+      let phase = 'loading' as 'loading' | 'active'
+      let notify!: () => void
+      serveWebState(() => [webSkin({ restartSource: undefined })])
+      render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => phase, probeSyncing: () => false,
+        observe: listener => { notify = listener; return () => undefined } }} />)
+
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+      phase = 'active'
+      act(() => notify())
+      await waitFor(() => expect(screen.getAllByText('使用中', { exact: true }).length).toBeGreaterThan(0))
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
+    })
+
     it.each(['soft receipt', 'already applied receipt'] as const)('rechecks a loading Host with a state-only read before reporting success (%s)', async receipt => {
       let hostReady = false
       const fetchMock = serveWebState(() => [webSkin({ selectionHostApplied: hostReady, selectionHostStatus: hostReady ? 'applied' : 'switching',

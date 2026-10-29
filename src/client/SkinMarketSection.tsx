@@ -927,6 +927,7 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
   const webClientPackages = useRef(new Map<string, string[]>())
   const webSelectionSkinIds = useRef(new Set<string>())
   const webClientGrace = useRef<{ key: string; startedAt: number } | null>(null)
+  const webRestartGrace = useRef(new Map<string, { key: string; startedAt: number }>())
   const webHostReview = useRef<{ key: string; attempts: number; nextAt: number } | null>(null)
   const webClientResult = useRef('')
   const hostStateRead = useRef<Promise<void> | null>(null)
@@ -1069,6 +1070,34 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
       }
     } else webClientGrace.current = null
     setWebClientRetryAt(retryAt)
+    if (clientRuntime !== undefined) {
+      const currentIds = new Set<string>()
+      const now = Date.now()
+      for (const item of state.skins) {
+        if (item.activation !== 'restart-required' || item.restartSource === 'selection' || !selected.has(item.skinId)) continue
+        const skin = skinsRef.current.find(candidate => candidate.id === item.skinId)
+        if (skin === undefined) continue
+        currentIds.add(item.skinId)
+        const key = JSON.stringify([state.instanceId, state.restartNoticeId, item.skinId, skin.package])
+        const probe = probeClientSkinSelection(clientRuntime, [{ package: skin.package, active: true }])
+        if (probe.status === 'applied') {
+          webRestartGrace.current.delete(item.skinId)
+          continue
+        }
+        const previous = webRestartGrace.current.get(item.skinId)
+        const grace = previous?.key === key ? previous : { key, startedAt: now }
+        webRestartGrace.current.set(item.skinId, grace)
+        const deadline = grace.startedAt + WEB_CLIENT_SETTLE_MS
+        if (now < deadline) {
+          retryAt = Math.min(retryAt ?? deadline, deadline)
+          currentIds.add(item.skinId)
+        } else {
+          webRestartGrace.current.delete(item.skinId)
+        }
+      }
+      for (const id of webRestartGrace.current.keys()) if (!currentIds.has(id)) webRestartGrace.current.delete(id)
+      setWebClientRetryAt(retryAt)
+    } else webRestartGrace.current.clear()
     const skins = state.skins.map<RuntimeSkin>(item => {
       const softSelection = item.activation === 'restart-required' && item.restartSource === 'selection'
       // A Web restart receipt is only useful while the requested module is
@@ -1164,7 +1193,8 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     }
     const pendingFor = (target: RestartTarget) => target.kind === 'market-update'
       ? state.marketUpdateRestartRequired === true
-      : runtimeFor(state.skins, target.skinId).activation === 'restart-required' || clientRestartNotices.current.has(target.skinId)
+      : !webRestartGrace.current.has(target.skinId)
+        && (runtimeFor(state.skins, target.skinId).activation === 'restart-required' || clientRestartNotices.current.has(target.skinId))
     // Acknowledged prompts and closed banners stay quiet for this receipt.
     // Rearm a legacy reminder only after the host clears this pending target.
     for (const [storageKey, records] of [[RESTART_PROMPTS_KEY, restartPrompts.current], [DISMISSED_RESTART_BANNERS_KEY, dismissedRestartBanners.current]] as const) {
