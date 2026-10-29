@@ -318,6 +318,19 @@ export function mountRoutes(host: SkinMarketHost, options: RouteOptions): () => 
     register({ kind: 'exact', path: '/dsh-skin-market/update', handler: mutation('update') }),
     register({ kind: 'exact', path: '/dsh-skin-market/migrate', handler: mutation('migrate') }),
     register({ kind: 'exact', path: '/dsh-skin-market/uninstall', handler: mutation('uninstall') }),
+    register({ kind: 'exact', path: '/dsh-skin-market/restart/clear', handler: async (request, response) => {
+      if (!method(request, response, 'POST')) return
+      if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })
+      if (hostKind === 'desktop') return sendJson(response, 409, { error: 'Desktop 皮肤不能由浏览器确认重启回执' })
+      try {
+        const target = await readRestartTarget(request)
+        if (target.kind !== 'skin') return sendJson(response, 400, { error: 'skin restart target required' })
+        await lifecycle.clearWebRestartReceipt(target.skinId)
+        sendJson(response, 200, { cleared: true, skinId: target.skinId })
+      } catch (error) {
+        sendJson(response, 409, { error: error instanceof Error ? error.message : String(error) })
+      }
+    } }),
     register({ kind: 'exact', path: '/dsh-skin-market/restart', handler: async (request, response) => {
       if (!method(request, response, 'POST')) return
       if (!matchesOrigin(request)) return sendJson(response, 403, { error: 'same-origin request required' })

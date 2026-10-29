@@ -1179,6 +1179,22 @@ describe('skin lifecycle', () => {
     await lifecycle.dispose()
   })
 
+  it('clears only the confirmed Web skin from a shared restart receipt', async () => {
+    const dir = fixture()
+    const lifecycle = new SkinLifecycle({ loader: { entries: () => [] } }, { profile: 'test', profileDir: dir, runner: async () => success() })
+    const skin = firstInstallable(lifecycle)
+    const other = { ...skin, id: 'other.skin', package: 'other-skin', rowId: 'other-skin' }
+    writeMarketState(dir, { version: 1, activeSkinId: skin.id, disabledSkinIds: [], pinnedSkinIds: [], pendingRestart: {
+      pid: process.pid, skinIds: [skin.id, other.id], id: 'shared-restart', selectionChanges: [skin.id],
+      selectionArtifacts: { [skin.id]: 'artifact' }, inferredInstalls: { [skin.id]: 'install' },
+    } })
+
+    await lifecycle.clearWebRestartReceipt(skin.id)
+
+    expect(readMarketState(dir).pendingRestart).toEqual({ pid: process.pid, skinIds: [other.id], id: 'shared-restart' })
+    await lifecycle.dispose()
+  })
+
   it('keeps pinned skins enabled across switches and replay, then disables a secondary skin when unpinned', async () => {
     const dir = fixture()
     let lifecycle!: SkinLifecycle

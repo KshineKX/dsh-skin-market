@@ -1071,9 +1071,20 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
     setWebClientRetryAt(retryAt)
     const skins = state.skins.map<RuntimeSkin>(item => {
       const softSelection = item.activation === 'restart-required' && item.restartSource === 'selection'
-      // An active old module cannot confirm an installation, update or an
-      // explicit Host restart requirement. Those receipts stay authoritative.
-      if (item.activation === 'restart-required' && !softSelection) return item
+      // A Web restart receipt is only useful while the requested module is
+      // absent. Once the browser loader reports the requested skin active,
+      // the live module is stronger evidence than any earlier install/Host
+      // receipt, regardless of how that receipt was classified.
+      if (item.activation === 'restart-required' && !softSelection && state.hostKind !== 'desktop') {
+        const skin = skinsRef.current.find(candidate => candidate.id === item.skinId)
+        const clientApplied = selected.has(item.skinId) && skin !== undefined
+          && probeClientSkinSelection(clientRuntime, [{ package: skin.package, active: true }]).status === 'applied'
+        if (clientApplied) {
+          clientRestartNotices.current.delete(item.skinId)
+          return { ...item, activation: 'active', error: undefined }
+        }
+        if (!softSelection) return item
+      }
       if (item.activation !== 'active' && item.activation !== 'inactive' && !softSelection) return item
       const packages = webClientPackages.current.get(item.skinId) ?? []
       if (!softSelection && packages.length === 0 && !(hasCompleteTargets && webSelectionSkinIds.current.has(item.skinId))) return item
@@ -2051,8 +2062,14 @@ export function SkinMarketSection({ t, layout = 'fill', clientRuntime, catalogCa
               } catch { /* storage may be unavailable */ }
             }
             const refreshedTarget = runtimeFor(refreshed.skins, target.id)
+            const hostTarget = latestHostMarketState.current === null ? undefined : runtimeFor(latestHostMarketState.current.skins, target.id)
             const clientApplied = refreshed.hostKind !== 'desktop' && clientRuntime?.probeActive?.(target.package) === 'active'
             if (clientApplied) {
+              if (deferRestartPresentation && hostTarget?.activation === 'restart-required' && refreshed.restartNoticeId !== undefined) {
+                await json('/dsh-skin-market/restart/clear', {
+                  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skinId: target.id }),
+                }).catch(() => undefined)
+              }
               forgetDeferredPromptReceipt()
               clientNeedsRestart = false
               clientRestartNotices.current.delete(target.id)

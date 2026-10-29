@@ -123,6 +123,8 @@ export declare class SkinLifecycle {
     private acceptManagement;
     private awaitLifecycle;
     private recordRestart;
+    /** Clear a Web receipt after the browser loader has confirmed the skin live. */
+    clearWebRestartReceipt(skinId: string): Promise<void>;
     private recordSelectionRestart;
     get restartNoticeId(): string | undefined;
     /** Resolve only the curated main component, using both official inventories. */

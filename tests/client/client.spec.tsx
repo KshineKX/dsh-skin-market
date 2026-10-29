@@ -3318,11 +3318,11 @@ describe('client market', () => {
       expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
     })
 
-    it('keeps protected installation, update and legacy receipts despite an active same-name client', async () => {
+    it('clears a protected Web restart receipt when the requested client module is already active', async () => {
       serveWebState(() => [webSkin({ restartSource: undefined })])
       render(<SkinMarketSection t={key => key} clientRuntime={{ setActive: vi.fn(), probeActive: () => 'active', probeSyncing: () => false }} />)
-      expect(await screen.findByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeTruthy()
-      expect(screen.queryByText('使用中', { exact: true })).toBeNull()
+      expect((await screen.findAllByText('使用中', { exact: true })).length).toBeGreaterThan(0)
+      expect(screen.queryByRole('dialog', { name: '需要重启 DSH 应用此皮肤' })).toBeNull()
     })
 
     it('rearms a protected same-version receipt after its soft selection reminder was dismissed', async () => {

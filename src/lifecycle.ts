@@ -745,6 +745,29 @@ export class SkinLifecycle {
     }
   }
 
+  /** Clear a Web receipt after the browser loader has confirmed the skin live. */
+  async clearWebRestartReceipt(skinId: string): Promise<void> {
+    if (this.management !== undefined) throw new Error('仅 Web 皮肤可以确认浏览器重启回执')
+    this.skin(skinId)
+    const operation: Operation = { id: randomUUID(), skinId, kind: 'activate', phase: 'activating', startedAt: new Date().toISOString() }
+    await this.withProfileLock(operation, async () => {
+      const state = readMarketState(this.options.profileDir)
+      const pending = state.pendingRestart
+      if (pending === undefined || !pending.skinIds.includes(skinId)) return
+      const skinIds = pending.skinIds.filter(id => id !== skinId)
+      const selectionChanges = (pending.selectionChanges ?? []).filter(id => id !== skinId)
+      const selectionArtifacts = Object.fromEntries(Object.entries(pending.selectionArtifacts ?? {}).filter(([id]) => id !== skinId))
+      const inferredInstalls = Object.fromEntries(Object.entries(pending.inferredInstalls ?? {}).filter(([id]) => id !== skinId))
+      state.pendingRestart = skinIds.length === 0 ? undefined : {
+        pid: pending.pid, skinIds, id: pending.id,
+        ...(Object.keys(inferredInstalls).length > 0 ? { inferredInstalls } : {}),
+        ...(selectionChanges.length > 0 ? { selectionChanges } : {}),
+        ...(Object.keys(selectionArtifacts).length > 0 ? { selectionArtifacts } : {}),
+      }
+      writeMarketState(this.options.profileDir, state)
+    })
+  }
+
   private recordSelectionRestart(previous: PersistedMarketState, next: PersistedMarketState, skin: SkinEntry, operation: Operation): void {
     if (this.management !== undefined || operation.restartRequired === true) {
       this.recordRestart(next, skin.id, operation.restartRequired === true, false,

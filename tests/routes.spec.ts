@@ -82,7 +82,7 @@ const guardedRequests = [
   ['/dsh-skin-market/market-update/operations/fixture', 'GET'],
   ['/dsh-skin-market/market-update/operations/fixture/cancel', 'POST'],
   ['/dsh-skin-market/market-update/operations/fixture/retry', 'POST'],
-  ...['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'migrate', 'uninstall', 'restart'].map(action => [`/dsh-skin-market/${action}`, 'POST'] as const),
+  ...['install', 'activate', 'deactivate', 'pin', 'unpin', 'update', 'migrate', 'uninstall', 'restart', 'restart/clear'].map(action => [`/dsh-skin-market/${action}`, 'POST'] as const),
 ] as const
 
 it('reports the running host environment independently of the browser user agent', async () => {
