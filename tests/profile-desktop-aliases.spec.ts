@@ -15,6 +15,16 @@ afterEach(() => {
 
 function fixture() {
   const skin = structuredClone(loadCatalog().skins.find(item => item.id === 'king-of-soy-sauce.liang-intensity')!)
+  // This suite verifies Desktop artifact and predecessor rules, not the
+  // registry's current npm/prerelease capability decision.
+  delete skin.install.npm
+  skin.install.desktop = {
+    mode: 'managed',
+    registry: 'npm',
+    packageName: skin.package,
+    packageVersion: skin.install.version,
+    integrity: 'sha512-ZHVtbXktZml4dHVyZS1hcnRpZmFjdA==',
+  }
   const directory = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-aliases-'))
   directories.push(directory)
   const dependencies: Record<string, string> = { [skin.package]: skin.install.version, [legacyPackage]: 'link:/fixture/dsh-liang-skin' }

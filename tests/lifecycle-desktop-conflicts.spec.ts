@@ -35,6 +35,17 @@ interface FixtureOptions {
 
 function fixture(options: FixtureOptions = {}) {
   const skin = structuredClone(loadCatalog().skins.find(item => item.id === 'king-of-soy-sauce.liang-intensity')!)
+  // The registry is refreshed independently of these lifecycle fixtures. Keep
+  // Desktop behavior tests on a stable managed artifact contract instead of
+  // inheriting a current market decision such as manual-only for a prerelease.
+  delete skin.install.npm
+  skin.install.desktop = {
+    mode: 'managed',
+    registry: 'npm',
+    packageName: skin.package,
+    packageVersion: skin.install.version,
+    integrity: 'sha512-ZHVtbXktZml4dHVyZS1hcnRpZmFjdA==',
+  }
   const directory = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-desktop-loader-conflicts-')))
   directories.push(directory)
   const home = join(directory, 'home')
