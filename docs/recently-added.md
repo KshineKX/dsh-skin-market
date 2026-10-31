@@ -4,6 +4,41 @@
 
 安装版本固定到对应收录 commit；预览图使用 registry 中记录的仓库素材。收录市场不等于 DSH 官方、安全团队或市场对皮肤的安全背书；兼容性和素材授权状态请以皮肤仓库说明为准。
 
+<a id="recent-2026-10-31"></a>
+
+## 2026-10-31 · dsh-startup-screen
+
+DeepSeek Harness 启动画面与启动动画：黑幕标识、档案底板、交互式访问授权和揭幕过场。它属于 `splash`，不是普通界面主题。预览图和 GIF 来自固定 commit 在 DSH 0.2.1-rc.2 隔离环境中的运行捕获；作者 README 对第三方风格与音频素材另有权利说明。
+
+- GitHub：[6shenhonghong9/dsh-startup-screen](https://github.com/6shenhonghong9/dsh-startup-screen)
+- 收录版本：`1.2.0`
+- 固定 commit：`1f35ea33810e02a900b31df01f9c806f92f398df`
+- 许可：代码 MIT；第三方素材按仓库说明处理
+
+<img src="https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/home.gif" width="60%" alt="dsh-startup-screen 启动动画">
+
+## 2026-10-31 · dsh-UI美化
+
+玻璃材质、任务与产物卡片、消息气泡、背景、粒子和开屏欢迎等外观设置。预览图来自固定 commit 在 DSH 0.2.1-rc.2 隔离环境中的运行捕获。
+
+- GitHub：[AumiSatori/dsh-ui-beautify](https://github.com/AumiSatori/dsh-ui-beautify)
+- 收录版本：`0.4.4`
+- 固定 commit：`35be68aff6e178a69ba4fb6459bcd1331b2efeb5`
+- 许可：MIT
+
+<img src="https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/home.png" width="60%" alt="dsh-UI美化">
+
+## 2026-10-31 · 气泡与背景
+
+手机优先的气泡与背景主题：用户和 AI 气泡、输入框、顶栏、侧边栏颜色，以及对话背景、渐变和毛玻璃效果。预览图来自固定 commit 在 DSH 0.2.1-rc.2 隔离环境中的运行捕获。
+
+- GitHub：[Elsmm-player/dsh-phone-theme-tool](https://github.com/Elsmm-player/dsh-phone-theme-tool)
+- 收录版本：`1.0.0`
+- 固定 commit：`cd9d99094830a20ec34e91e32a2f1e526963e63a`
+- 许可：MIT
+
+<img src="https://kingofsoysauce.github.io/dsh-skin-market/skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/home.png" width="60%" alt="气泡与背景">
+
 
 <a id="recent-2026-10-22"></a>
 

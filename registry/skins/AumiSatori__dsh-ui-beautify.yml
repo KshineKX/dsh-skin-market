@@ -1,0 +1,70 @@
+id: aumisatori.dsh-ui-beautify
+name:
+  zh: dsh-UI美化
+  en: dsh-UI Beautify
+author: AumiSatori
+description: DeepSeek Harness UI 外观主题：玻璃材质、任务与产物卡片、消息气泡、背景、粒子和开屏欢迎等设置，固定版本已在 DSH Web 0.2.1-rc.2 隔离环境中验证。
+repo: https://github.com/AumiSatori/dsh-ui-beautify
+package: dsh-ui-beautify
+rowId: dsh-ui-beautify
+category: skin
+tags:
+  - appearance
+  - glass
+  - theme
+  - background
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:AumiSatori/dsh-ui-beautify#35be68aff6e178a69ba4fb6459bcd1331b2efeb5
+  version: 0.4.4
+  commit: 35be68aff6e178a69ba4fb6459bcd1331b2efeb5
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证 npm 安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.3.0-0"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/home.png
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/conversation.png
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/settings.png
+screenshots:
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/home.png
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/conversation.png
+  - skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/settings.png
+listScreenshot: skin-screenshots/AumiSatori__dsh-ui-beautify/35be68aff6e178a69ba4fb6459bcd1331b2efeb5/home.png
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions: []
+  scan:
+    commit: 35be68aff6e178a69ba4fb6459bcd1331b2efeb5
+    packageVersion: 0.4.4
+    scannerVersion: static-v2
+    dshVersion: 0.2.1-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-31T06:50:39Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 5
+releaseUpdatedAt: 2026-10-30T02:22:18Z
+metadataUpdatedAt: 2026-10-31T06:50:39Z
+starsUpdatedAt: 2026-10-31T06:50:39Z
+updatedAt: 2026-10-31T06:50:39Z

@@ -1,0 +1,69 @@
+id: elsmm-player.dsh-phone-theme-tool
+name:
+  zh: 气泡与背景
+  en: Phone Theme Tool
+author: Elsmm-player
+description: DeepSeek Harness 手机优先外观主题：自定义用户与 AI 气泡、输入框、顶栏、侧边栏颜色，以及对话背景、渐变和毛玻璃效果。
+repo: https://github.com/Elsmm-player/dsh-phone-theme-tool
+package: dsh-phone-theme-tool
+rowId: chat-bubble-bg
+category: skin
+tags:
+  - theme
+  - bubble
+  - background
+  - mobile
+modes:
+  - light
+  - dark
+install:
+  target: github:Elsmm-player/dsh-phone-theme-tool#cd9d99094830a20ec34e91e32a2f1e526963e63a
+  version: 1.0.0
+  commit: cd9d99094830a20ec34e91e32a2f1e526963e63a
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证 npm 安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: ">=0.2.0-rc.2"
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/home.png
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/conversation.png
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/settings.png
+screenshots:
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/home.png
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/conversation.png
+  - skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/settings.png
+listScreenshot: skin-screenshots/Elsmm-player__dsh-phone-theme-tool/cd9d99094830a20ec34e91e32a2f1e526963e63a/home.png
+review:
+  compatibility: verified
+  preview: verified
+  installation: verified
+health:
+  status: healthy
+  checks:
+    readmeScreenshots: pass
+    compatibility: pass
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions: []
+  scan:
+    commit: cd9d99094830a20ec34e91e32a2f1e526963e63a
+    packageVersion: 1.0.0
+    scannerVersion: static-v2
+    dshVersion: 0.2.1-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-31T06:50:39Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-22T06:09:00Z
+metadataUpdatedAt: 2026-10-31T06:50:39Z
+starsUpdatedAt: 2026-10-31T06:50:39Z
+updatedAt: 2026-10-31T06:50:39Z

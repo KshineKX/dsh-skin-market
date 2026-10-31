@@ -1,0 +1,68 @@
+id: 6shenhonghong9.dsh-startup-screen
+name:
+  zh: dsh-startup-screen
+  en: DSH Startup Screen
+author: 6shenhonghong9
+description: DeepSeek Harness 启动画面与启动动画：黑幕标识、过曝洗白、暖白或暗色档案底板、交互式访问授权序列和揭幕过场。它是启动画面，不是普通界面主题。
+repo: https://github.com/6shenhonghong9/dsh-startup-screen
+package: dsh-startup-screen
+rowId: dsh-startup-screen
+category: splash
+tags:
+  - boot
+  - startup
+  - animation
+modes:
+  - light
+  - dark
+install:
+  target: github:6shenhonghong9/dsh-startup-screen#1f35ea33810e02a900b31df01f9c806f92f398df
+  version: 1.2.0
+  commit: 1f35ea33810e02a900b31df01f9c806f92f398df
+  desktop:
+    mode: manual-only
+    reason: 尚无与此固定版本对应的经验证 npm 安装包，请使用项目说明中的安装方式。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+marketScreenshots:
+  - skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/home.png
+  - skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/conversation.png
+  - skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/settings.png
+screenshots:
+  - skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/home.gif
+listScreenshot: skin-screenshots/6shenhonghong9__dsh-startup-screen/1f35ea33810e02a900b31df01f9c806f92f398df/home.gif
+review:
+  compatibility: unverified
+  preview: verified
+  installation: verified
+health:
+  status: improvements
+  checks:
+    readmeScreenshots: pass
+    compatibility: improve
+    installation: pass
+    installCommand: pass
+    topic: pass
+  suggestions:
+    - 作者未在 package.json 或 README 中声明可机器解析的 DSH 版本范围；本次已在 DSH 0.2.1-rc.2 隔离环境中完成运行截图，但兼容范围仍需后续确认。
+  scan:
+    commit: 1f35ea33810e02a900b31df01f9c806f92f398df
+    packageVersion: 1.2.0
+    scannerVersion: static-v2
+    dshVersion: 0.2.1-rc.2
+    mode: static
+    result: pass
+    checkedAt: 2026-10-31T06:50:39Z
+    findings: []
+license:
+  code: MIT
+  commercialUse: true
+  notice: 代码与原创文案按 MIT；README 另行声明第三方风格与音频素材不随 MIT 授权，使用者需自行确认相关权利。
+featuredRank: 1000
+starsSnapshot: 655
+releaseUpdatedAt: 2026-10-27T13:05:00Z
+metadataUpdatedAt: 2026-10-31T06:50:39Z
+starsUpdatedAt: 2026-10-31T06:50:39Z
+updatedAt: 2026-10-31T06:50:39Z
