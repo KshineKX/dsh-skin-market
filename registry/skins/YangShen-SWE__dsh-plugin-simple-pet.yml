@@ -1,0 +1,45 @@
+id: yangshen-swe.dsh-plugin-simple-pet
+name:
+  zh: dsh-plugin-simple-pet
+  en: dsh-plugin-simple-pet
+author: YangShen-SWE
+description: A Windows companion with DeepSeek balances, unified embedded Codex subscription, account panels and opt-in current-account warmup.
+repo: https://github.com/YangShen-SWE/dsh-plugin-simple-pet
+package: dsh-plugin-simple-pet
+rowId: dsh-plugin-simple-pet
+category: pet
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:YangShen-SWE/dsh-plugin-simple-pet#c013c3555a94d522c9019bb51d4842b275f20da0
+  version: 1.1.3
+  commit: c013c3555a94d522c9019bb51d4842b275f20da0
+  desktop:
+    mode: manual-only
+    reason: 原生宠物窗口和会话联动尚未完成官方 Desktop 实机验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+    - windows
+screenshots:
+  - https://raw.githubusercontent.com/YangShen-SWE/dsh-plugin-simple-pet/c013c3555a94d522c9019bb51d4842b275f20da0/docs/screenshots/deepseek.png
+  - https://raw.githubusercontent.com/YangShen-SWE/dsh-plugin-simple-pet/c013c3555a94d522c9019bb51d4842b275f20da0/docs/screenshots/codex.png
+listScreenshot: https://raw.githubusercontent.com/YangShen-SWE/dsh-plugin-simple-pet/c013c3555a94d522c9019bb51d4842b275f20da0/docs/screenshots/deepseek.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: false
+  notice: 代码MIT；默认图集允许随原样插件分发并保留声明，单独复用或用于其他产品须另获授权。
+featuredRank: 1000
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

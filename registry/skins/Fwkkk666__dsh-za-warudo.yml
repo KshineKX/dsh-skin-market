@@ -1,0 +1,43 @@
+id: fwkkk666.dsh-za-warudo
+name:
+  zh: dsh-za-warudo
+  en: dsh-za-warudo
+author: Fwkkk666
+description: A JoJo-inspired time-stop transition for the DeepSeek Harness light/dark appearance switch. · 为 DSH 明暗外观切换加入时停动效和音效。
+repo: https://github.com/Fwkkk666/dsh-za-warudo
+package: dsh-za-warudo
+rowId: za-warudo
+category: skin
+tags:
+  - boot
+modes:
+  - light
+  - dark
+install:
+  target: github:Fwkkk666/dsh-za-warudo#3ac4ac1c46e5cf0a35381472f664e3198f8eac9b
+  version: 1.0.1
+  commit: 3ac4ac1c46e5cf0a35381472f664e3198f8eac9b
+  desktop:
+    mode: manual-only
+    reason: 动效和音效尚未完成固定版本实机验收。
+compatibility:
+  dsh: ">=0.1.0-rc.7"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Fwkkk666/dsh-za-warudo/3ac4ac1c46e5cf0a35381472f664e3198f8eac9b/media/dark.png
+  - https://raw.githubusercontent.com/Fwkkk666/dsh-za-warudo/3ac4ac1c46e5cf0a35381472f664e3198f8eac9b/media/light.png
+listScreenshot: https://raw.githubusercontent.com/Fwkkk666/dsh-za-warudo/3ac4ac1c46e5cf0a35381472f664e3198f8eac9b/media/dark.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

@@ -1,0 +1,44 @@
+id: eric-song-dev.dsh-ikun-pet
+name:
+  zh: dsh-ikun-pet
+  en: dsh-ikun-pet
+author: eric-song-dev
+description: dsh-ikun-pet · ikun 桌宠 —— DeepSeek Harness 永久插件：在 DSH Deep diving 回答期间，用坤宠动图填满深潜状态行下方区块，进度 0%→100%，每 20% 切换动作与文案，完成时系统级播放提示音
+repo: https://github.com/eric-song-dev/dsh-ikun-pet
+package: dsh-ikun-pet
+rowId: dsh-ikun-pet
+category: pet
+tags:
+  - pet
+  - motion
+  - status
+modes:
+  - light
+  - dark
+install:
+  target: github:eric-song-dev/dsh-ikun-pet#ada74e3755730bbff1e619ca0f8ff7926d03ba98
+  version: 2.2.0
+  commit: ada74e3755730bbff1e619ca0f8ff7926d03ba98
+  desktop:
+    mode: manual-only
+    reason: 尚未完成与该固定版本对应的官方 Desktop 实机验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/eric-song-dev/dsh-ikun-pet/ada74e3755730bbff1e619ca0f8ff7926d03ba98/docs/demo.gif
+listScreenshot: https://raw.githubusercontent.com/eric-song-dev/dsh-ikun-pet/ada74e3755730bbff1e619ca0f8ff7926d03ba98/docs/demo.gif
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 10
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

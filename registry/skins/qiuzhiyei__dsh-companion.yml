@@ -1,0 +1,43 @@
+id: qiuzhiyei.dsh-companion
+name:
+  zh: dsh-companion
+  en: dsh-companion
+author: qiuzhiyei
+description: DSH 伴侣 — DeepSeek Harness 伴飞插件：用量统计、桌宠陪伴、预算告警，以及对宿主界面的持续增强。
+repo: https://github.com/qiuzhiyei/dsh-companion
+package: '@qiuzhiyei/dsh-companion'
+rowId: dsh-companion
+category: pet
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:qiuzhiyei/dsh-companion#8d97a73422c245a3522cc6169b3bddd5ca1c1371
+  version: 1.0.4
+  commit: 8d97a73422c245a3522cc6169b3bddd5ca1c1371
+  desktop:
+    mode: manual-only
+    reason: 首次使用需要 Electron 辅助进程和原生桌宠验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+    - windows
+screenshots:
+  - https://raw.githubusercontent.com/qiuzhiyei/dsh-companion/8d97a73422c245a3522cc6169b3bddd5ca1c1371/docs/images/pet.png
+listScreenshot: https://raw.githubusercontent.com/qiuzhiyei/dsh-companion/8d97a73422c245a3522cc6169b3bddd5ca1c1371/docs/images/pet.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

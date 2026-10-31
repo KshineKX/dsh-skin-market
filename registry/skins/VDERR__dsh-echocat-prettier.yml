@@ -1,0 +1,44 @@
+id: vderr.dsh-echocat-prettier
+name:
+  zh: dsh-echocat-prettier
+  en: dsh-echocat-prettier
+author: VDERR
+description: EchoCat Prettier：为 DSH AI 回复提供多风格排版、emoji、主题表情包与长回复性能保护。
+repo: https://github.com/VDERR/dsh-echocat-prettier
+package: dsh-echocat-prettier
+rowId: echocat-prettier
+category: skin
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:VDERR/dsh-echocat-prettier#8af04d93f2378acd7d421d9d9eb86af4bf9f9310
+  version: 0.23.6
+  commit: 8af04d93f2378acd7d421d9d9eb86af4bf9f9310
+  desktop:
+    mode: manual-only
+    reason: 尚未完成固定版本的 DSH Desktop 排版验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/VDERR/dsh-echocat-prettier/8af04d93f2378acd7d421d9d9eb86af4bf9f9310/docs/images/echocat-prettier-before-after-v2.3.4.png
+  - https://raw.githubusercontent.com/VDERR/dsh-echocat-prettier/8af04d93f2378acd7d421d9d9eb86af4bf9f9310/docs/images/echocat-prettier-settings-v2.3.4.png
+  - https://raw.githubusercontent.com/VDERR/dsh-echocat-prettier/8af04d93f2378acd7d421d9d9eb86af4bf9f9310/docs/images/echocat-prettier-terminal-v2.3.4.png
+listScreenshot: https://raw.githubusercontent.com/VDERR/dsh-echocat-prettier/8af04d93f2378acd7d421d9d9eb86af4bf9f9310/docs/images/echocat-prettier-before-after-v2.3.4.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

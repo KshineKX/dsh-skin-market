@@ -1,10 +1,30 @@
 # 近期收录
 
-这里记录审核后新增的社区主题与外观扩展，按进入市场主分支的日期倒序排列，一条皮肤一节。已有条目的版本变更在“自动同步更新”中单独记录，单纯补录截图不重复计为新增。
+这里记录审核后新增的社区主题与外观扩展，按进入市场主分支的日期倒序排列，按条目标注固定版本与许可边界。已有条目的版本变更在“自动同步更新”中单独记录，单纯补录截图不重复计为新增。
 
 安装版本固定到对应收录 commit；预览图使用 registry 中记录的仓库素材。收录市场不等于 DSH 官方、安全团队或市场对皮肤的安全背书；兼容性和素材授权状态请以皮肤仓库说明为准。
 
 <a id="recent-2026-10-31"></a>
+
+## 2026-10-31 · 旧审批队列补录（11 项）
+
+这批条目按本轮审批口径收录：桌宠使用固定版本仓库中的角色图、控制面板或效果预览；它们支持市场展示和人工范围判断，但不冒充本轮隔离 DSH 实机截图。涉及独立原生窗口、配套插件或素材授权的限制仍以条目说明和上游仓库为准。
+
+| 条目 | 类型 | 固定版本 | 许可与边界 |
+| --- | --- | --- | --- |
+| [dsh-ikun-pet](https://github.com/eric-song-dev/dsh-ikun-pet) | `pet` | `2.2.0` · [`ada74e3`](https://github.com/eric-song-dev/dsh-ikun-pet/tree/ada74e3755730bbff1e619ca0f8ff7926d03ba98) | MIT |
+| [dsh-pet-desktop](https://github.com/qiqibabyy/dsh-pet-desktop) | `pet` | `0.1.0` · [`4d19c08`](https://github.com/qiqibabyy/dsh-pet-desktop/tree/4d19c08fdeef54cfd38d8bfd7e6b4ad17fdea22b) | Apache-2.0；桌宠为独立 Desktop 窗口 |
+| [dsh-companion](https://github.com/qiuzhiyei/dsh-companion) | `pet` | `1.0.4` · [`8d97a73`](https://github.com/qiuzhiyei/dsh-companion/tree/8d97a73422c245a3522cc6169b3bddd5ca1c1371) | MIT；含原生伴侣窗口 |
+| [dsh-plugin-simple-pet](https://github.com/YangShen-SWE/dsh-plugin-simple-pet) | `pet` | `1.1.3` · [`c013c35`](https://github.com/YangShen-SWE/dsh-plugin-simple-pet/tree/c013c3555a94d522c9019bb51d4842b275f20da0) | 代码 MIT；图集按作者声明使用 |
+| [drool-whale-pet-for-dsh](https://github.com/yunxiiQwQ/drool-whale-pet-for-dsh) | `pet` | `0.1.0` · [`8805f63`](https://github.com/yunxiiQwQ/drool-whale-pet-for-dsh/tree/8805f63bcd6a45eef5c430f37a900725cdac83ea) | BSD-3-Clause；Windows helper |
+| [dsh-pet-companion](https://github.com/hasan-aghayev/dsh-pet-companion) | `pet` | `0.1.1` · [`c10ffa3`](https://github.com/hasan-aghayev/dsh-pet-companion/tree/c10ffa313b38ec2802c0c0cc781470615a993c2b) | MIT；独立透明窗口 |
+| [dsh-za-warudo](https://github.com/Fwkkk666/dsh-za-warudo) | `skin` | `1.0.1` · [`3ac4ac1`](https://github.com/Fwkkk666/dsh-za-warudo/tree/3ac4ac1c46e5cf0a35381472f664e3198f8eac9b) | MIT；明暗切换时停动效 |
+| [dsh-effort-ultra-skin](https://github.com/LoveIrishCoffee/dsh-effort-ultra-skin) | `skin` | `0.1.0` · [`203cd90`](https://github.com/LoveIrishCoffee/dsh-effort-ultra-skin/tree/203cd9078bd7be5af6fa1fad497ef512e7eb7b52) | MIT；依赖 `@hytime/dsh-thinking-effort` |
+| [dsh-echocat-prettier](https://github.com/VDERR/dsh-echocat-prettier) | `skin` | `0.23.6` · [`8af04d9`](https://github.com/VDERR/dsh-echocat-prettier/tree/8af04d93f2378acd7d421d9d9eb86af4bf9f9310) | MIT |
+| [dsh-nailong-pet](https://github.com/zhangkk833-byte/dsh-nailong-pet/tree/4010d9868892179d80c5ecf8a72221d7a1efdbb1/plugin) | `pet` | `0.1.0` · [`4010d98`](https://github.com/zhangkk833-byte/dsh-nailong-pet/tree/4010d9868892179d80c5ecf8a72221d7a1efdbb1/plugin) | MIT；角色素材按仓库声明处理 |
+| [dsh-deep-diving-skin](https://github.com/Menghuan1918/dsh-deep-diving-skin) | `skin` | `0.1.0` · [`8cc4c62`](https://github.com/Menghuan1918/dsh-deep-diving-skin/tree/8cc4c62a0275261886542f7a33c0126748c8dbaa) | MIT |
+
+<a id="recent-2026-10-31-runtime"></a>
 
 ## 2026-10-31 · dsh-startup-screen
 

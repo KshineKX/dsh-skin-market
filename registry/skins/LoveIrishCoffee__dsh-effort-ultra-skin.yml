@@ -1,0 +1,43 @@
+id: loveirishcoffee.dsh-effort-ultra-skin
+name:
+  zh: dsh-effort-ultra-skin
+  en: dsh-effort-ultra-skin
+author: LoveIrishCoffee
+description: "DeepSeek Harness 推理档位皮肤：把 @hytime/dsh-thinking-effort 的推理等级控件重绘成蓝紫渐变、带星点与流光的档位条。 / A skin for the DSH reasoning-tier control: a blue→violet pill with a starfield and a sheen sweep."
+repo: https://github.com/LoveIrishCoffee/dsh-effort-ultra-skin
+package: dsh-effort-ultra-skin
+rowId: effort-ultra-skin
+category: skin
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:LoveIrishCoffee/dsh-effort-ultra-skin#203cd9078bd7be5af6fa1fad497ef512e7eb7b52
+  version: 0.1.0
+  commit: 203cd9078bd7be5af6fa1fad497ef512e7eb7b52
+  desktop:
+    mode: manual-only
+    reason: 依赖 @hytime/dsh-thinking-effort，尚未完成固定版本实机验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/LoveIrishCoffee/dsh-effort-ultra-skin/203cd9078bd7be5af6fa1fad497ef512e7eb7b52/docs/screenshots/01-light.png
+  - https://raw.githubusercontent.com/LoveIrishCoffee/dsh-effort-ultra-skin/203cd9078bd7be5af6fa1fad497ef512e7eb7b52/docs/screenshots/02-dark.png
+listScreenshot: https://raw.githubusercontent.com/LoveIrishCoffee/dsh-effort-ultra-skin/203cd9078bd7be5af6fa1fad497ef512e7eb7b52/docs/screenshots/01-light.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

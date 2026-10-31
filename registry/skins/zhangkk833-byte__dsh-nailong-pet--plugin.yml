@@ -1,0 +1,47 @@
+id: zhangkk833-byte.dsh-nailong-pet-zhangkk8
+name:
+  zh: dsh-nailong-pet-zhangkk8
+  en: dsh-nailong-pet-zhangkk8
+author: zhangkk833-byte
+description: 奶龙桌宠 · 随 DeepSeek Harness 启动的透明置顶桌面宠物：13 组动作、定时自动表演、点一下弹出动作面板
+repo: https://github.com/zhangkk833-byte/dsh-nailong-pet
+subpath: plugin
+package: dsh-nailong-pet
+rowId: nailong-pet
+category: pet
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:zhangkk833-byte/dsh-nailong-pet#4010d9868892179d80c5ecf8a72221d7a1efdbb1&path:/plugin
+  version: 0.1.0
+  commit: 4010d9868892179d80c5ecf8a72221d7a1efdbb1
+  desktop:
+    mode: manual-only
+    reason: 需要 DSH Desktop 透明置顶窗口验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+    - windows
+screenshots:
+  - https://raw.githubusercontent.com/zhangkk833-byte/dsh-nailong-pet/4010d9868892179d80c5ecf8a72221d7a1efdbb1/docs/img/on-desktop.png
+  - https://raw.githubusercontent.com/zhangkk833-byte/dsh-nailong-pet/4010d9868892179d80c5ecf8a72221d7a1efdbb1/docs/img/panel.png
+  - https://raw.githubusercontent.com/zhangkk833-byte/dsh-nailong-pet/4010d9868892179d80c5ecf8a72221d7a1efdbb1/docs/img/actions.png
+listScreenshot: https://raw.githubusercontent.com/zhangkk833-byte/dsh-nailong-pet/4010d9868892179d80c5ecf8a72221d7a1efdbb1/docs/img/on-desktop.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+  notice: 角色与第三方美术素材按仓库声明处理。
+featuredRank: 1000
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

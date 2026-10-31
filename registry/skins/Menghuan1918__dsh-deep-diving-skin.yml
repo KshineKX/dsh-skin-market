@@ -1,0 +1,42 @@
+id: menghuan1918.dsh-deep-diving-skin
+name:
+  zh: dsh-deep-diving-skin
+  en: dsh-deep-diving-skin
+author: Menghuan1918
+description: 替换 DSH 运行状态行（「深度求索中，用时 …」）的图标、文本与颜色；默认图标为旋转太极，默认文本「少女祈祷中」，默认颜色为红色。
+repo: https://github.com/Menghuan1918/dsh-deep-diving-skin
+package: dsh-deep-diving-skin
+rowId: deep-diving-skin
+category: skin
+tags:
+  - appearance
+modes:
+  - light
+  - dark
+install:
+  target: github:Menghuan1918/dsh-deep-diving-skin#8cc4c62a0275261886542f7a33c0126748c8dbaa
+  version: 0.1.0
+  commit: 8cc4c62a0275261886542f7a33c0126748c8dbaa
+  desktop:
+    mode: manual-only
+    reason: 尚未完成固定版本的 DSH Desktop 实机验收。
+compatibility:
+  dsh: ">=0.2.0-rc.1 <0.3.0"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/Menghuan1918/dsh-deep-diving-skin/8cc4c62a0275261886542f7a33c0126748c8dbaa/icon.svg
+listScreenshot: https://raw.githubusercontent.com/Menghuan1918/dsh-deep-diving-skin/8cc4c62a0275261886542f7a33c0126748c8dbaa/icon.svg
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

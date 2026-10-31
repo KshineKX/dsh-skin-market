@@ -1,0 +1,43 @@
+id: hasan-aghayev.dsh-pet-companion
+name:
+  zh: dsh-pet-companion
+  en: dsh-pet-companion
+author: hasan-aghayev
+description: A floating desktop companion for DeepSeek Harness with activity-aware pets and a growing local collection.
+repo: https://github.com/hasan-aghayev/dsh-pet-companion
+package: dsh-pet-companion
+rowId: pet-companion
+category: pet
+tags:
+  - pet
+modes:
+  - light
+  - dark
+install:
+  target: github:hasan-aghayev/dsh-pet-companion#c10ffa313b38ec2802c0c0cc781470615a993c2b
+  version: 0.1.1
+  commit: c10ffa313b38ec2802c0c0cc781470615a993c2b
+  desktop:
+    mode: manual-only
+    reason: 需要图形桌面和独立透明窗的运行验收。
+compatibility:
+  dsh: ">=0.2.1-rc.2 <0.2.2"
+  platform:
+    - web
+screenshots:
+  - https://raw.githubusercontent.com/hasan-aghayev/dsh-pet-companion/c10ffa313b38ec2802c0c0cc781470615a993c2b/assets/readme/companion-controls.png
+  - https://raw.githubusercontent.com/hasan-aghayev/dsh-pet-companion/c10ffa313b38ec2802c0c0cc781470615a993c2b/assets/readme/professor-leo.png
+listScreenshot: https://raw.githubusercontent.com/hasan-aghayev/dsh-pet-companion/c10ffa313b38ec2802c0c0cc781470615a993c2b/assets/readme/companion-controls.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: MIT
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 0
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z

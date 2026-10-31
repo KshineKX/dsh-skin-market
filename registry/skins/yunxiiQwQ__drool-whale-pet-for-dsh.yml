@@ -1,0 +1,45 @@
+id: yunxiiqwq.drool-whale-pet-for-dsh
+name:
+  zh: drool-whale-pet-for-dsh
+  en: drool-whale-pet-for-dsh
+author: yunxiiQwQ
+description: Standalone animated whale desktop companion for DeepSeek Harness
+repo: https://github.com/yunxiiQwQ/drool-whale-pet-for-dsh
+package: '@dsh-external/dsh-client-plugin-drool-whale-pet'
+rowId: drool-whale-pet
+category: pet
+tags:
+  - pet
+  - motion
+modes:
+  - light
+  - dark
+install:
+  target: github:yunxiiQwQ/drool-whale-pet-for-dsh#8805f63bcd6a45eef5c430f37a900725cdac83ea
+  version: 0.1.0
+  commit: 8805f63bcd6a45eef5c430f37a900725cdac83ea
+  desktop:
+    mode: manual-only
+    reason: 需要 Windows x64 原生辅助进程和启停验收。
+compatibility:
+  dsh: unverified
+  platform:
+    - web
+    - windows
+screenshots:
+  - https://raw.githubusercontent.com/yunxiiQwQ/drool-whale-pet-for-dsh/8805f63bcd6a45eef5c430f37a900725cdac83ea/preview/pet-working.png
+  - https://raw.githubusercontent.com/yunxiiQwQ/drool-whale-pet-for-dsh/8805f63bcd6a45eef5c430f37a900725cdac83ea/assets/pet/01-idle.png
+listScreenshot: https://raw.githubusercontent.com/yunxiiQwQ/drool-whale-pet-for-dsh/8805f63bcd6a45eef5c430f37a900725cdac83ea/preview/pet-working.png
+review:
+  compatibility: unverified
+  preview: repository-card
+  installation: verified
+license:
+  code: BSD-3-Clause
+  commercialUse: true
+featuredRank: 1000
+starsSnapshot: 1
+releaseUpdatedAt: 2026-10-31T11:28:16Z
+metadataUpdatedAt: 2026-10-31T11:28:16Z
+starsUpdatedAt: 2026-10-31T11:28:16Z
+updatedAt: 2026-10-31T11:28:16Z
